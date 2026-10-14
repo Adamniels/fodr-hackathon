@@ -1,0 +1,331 @@
+{
+  "_info": "Facit för Krubba-testanalyserna. Jämför AI:ns avläsning mot forvantade_varden_per_kg_ts.",
+  "_kalla": "Växa foderstatistik skördeår 2026, hela Sverige (NorFor FAS), utdrag 2026-10-11",
+  "analyser": [
+    {
+      "id": "A01-medel-skord1",
+      "fil": "pdf/A01-medel-skord1.pdf",
+      "lab": "A",
+      "paket": "Komplett",
+      "fodertyp": "Hösilage",
+      "provnr": "TA-2026-20114",
+      "skordedatum": "2026-06-10",
+      "statistikgrupp": "Ensilage, blandvall (1–50 % klöver), skörd 1",
+      "percentilval": "medel för alla parametrar",
+      "rapportens_enhet": "per kg ts",
+      "syfte": "Rikssnittet för vanligaste fodret. Basfall: OK energi, högt protein, lågt selen.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 39.7,
+        "aska": 71,
+        "rp": 150,
+        "ndf": 464,
+        "socker": 61,
+        "omd": 75.6,
+        "oe_hast": 10.2,
+        "smbrp_hast": 104,
+        "kvot_smbrp_oe": 10.2,
+        "makro_g_per_kg_ts": {
+          "Ca": 5.3,
+          "P": 2.66,
+          "Mg": 1.71,
+          "K": 23.4,
+          "Na": 0.83,
+          "S": 2.02
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 180,
+          "Mn": 58,
+          "Zn": 32,
+          "Cu": 6,
+          "Se": 0.03
+        },
+        "ca_p_kvot": 2.0
+      },
+      "forvantade_flaggor": [
+        "Hög proteinkvot (10.2 g smb rp/MJ) – över 6,5; mer protein än vuxen häst behöver, passar unghäst/dräktigt sto.",
+        "Selen 0.03 mg/kg ts – mycket lågt; tillskott behövs."
+      ]
+    },
+    {
+      "id": "A02-sen-skord-fiberrik",
+      "fil": "pdf/A02-sen-skord-fiberrik.pdf",
+      "lab": "A",
+      "paket": "Standard",
+      "fodertyp": "Hösilage",
+      "provnr": "TA-2026-20391",
+      "skordedatum": "2026-07-15",
+      "statistikgrupp": "Ensilage, blandvall (1–50 % klöver), skörd 1",
+      "percentilval": {
+        "TS": "p90",
+        "OMD": "p10",
+        "RP": "p10",
+        "NDF": "p90",
+        "Socker": "medel",
+        "Aska": "p10"
+      },
+      "rapportens_enhet": "per kg ts",
+      "syfte": "Sen skörd: lägre energi och protein, mer fiber. Kvoten hamnar strax över vuxenbehov men under unghästens 8–9.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 56.6,
+        "aska": 57,
+        "rp": 109,
+        "ndf": 541,
+        "socker": 61,
+        "omd": 69.4,
+        "oe_hast": 9.5,
+        "smbrp_hast": 69,
+        "kvot_smbrp_oe": 7.3,
+        "makro_g_per_kg_ts": {
+          "Ca": 5.3,
+          "P": 2.66,
+          "Mg": 1.71,
+          "K": 23.4,
+          "Na": 0.83,
+          "S": 2.02
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 180,
+          "Mn": 58,
+          "Zn": 32,
+          "Cu": 6,
+          "Se": 0.03
+        },
+        "ca_p_kvot": 2.0
+      },
+      "forvantade_flaggor": [
+        "Hög proteinkvot (7.3 g smb rp/MJ) – över 6,5; mer protein än vuxen häst behöver, passar unghäst/dräktigt sto.",
+        "Selen 0.03 mg/kg ts – mycket lågt; tillskott behövs."
+      ]
+    },
+    {
+      "id": "A03-tidig-skord-proteinrik",
+      "fil": "pdf/A03-tidig-skord-proteinrik.pdf",
+      "lab": "A",
+      "paket": "Komplett",
+      "fodertyp": "Ensilage",
+      "provnr": "TA-2026-21007",
+      "skordedatum": "2026-07-28",
+      "statistikgrupp": "Ensilage, blandvall (1–50 % klöver), skörd 2",
+      "percentilval": {
+        "TS": "p10",
+        "OMD": "p90",
+        "RP": "p90",
+        "NDF": "p10",
+        "Ca": "p90",
+        "K": "p90"
+      },
+      "rapportens_enhet": "per kg ts",
+      "syfte": "Blött, energirikt och proteinrikt. Kvoten smb rp/OE blir hög; risk för överutfodring av vuxen häst.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 30.3,
+        "aska": 78,
+        "rp": 186,
+        "ndf": 410,
+        "socker": 65,
+        "omd": 77.4,
+        "oe_hast": 10.3,
+        "smbrp_hast": 136,
+        "kvot_smbrp_oe": 13.2,
+        "makro_g_per_kg_ts": {
+          "Ca": 9.4,
+          "P": 2.79,
+          "Mg": 2.27,
+          "K": 30.4,
+          "Na": 1.09,
+          "S": 2.31
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 153,
+          "Mn": 70,
+          "Zn": 33,
+          "Cu": 7,
+          "Se": 0.03
+        },
+        "ca_p_kvot": 3.4
+      },
+      "forvantade_flaggor": [
+        "Hög proteinkvot (13.2 g smb rp/MJ) – över 6,5; mer protein än vuxen häst behöver, passar unghäst/dräktigt sto.",
+        "Selen 0.03 mg/kg ts – mycket lågt; tillskott behövs.",
+        "Ca:P-kvot 3.4 – hög; fosfor kan behöva kompletteras.",
+        "TS 30.3 % – blött foder; hästen behöver äta mycket vara och hållbarheten efter öppning är kort."
+      ]
+    },
+    {
+      "id": "B04-hoga-socker-ho",
+      "fil": "pdf/B04-hoga-socker-ho.pdf",
+      "lab": "B",
+      "paket": "Häst Plus",
+      "fodertyp": "Hö",
+      "provnr": "B-26-4410",
+      "skordedatum": "2026-06-22",
+      "statistikgrupp": "Hö, blandvall (0–50 % baljväxter)",
+      "percentilval": {
+        "Socker": "p90",
+        "OMD": "p90",
+        "RP": "medel"
+      },
+      "rapportens_enhet": "per kg vara",
+      "syfte": "Hö med socker över 100 g/kg ts: varning för EMS/fång. Rapporten anges per kg vara (måste räknas om).",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 84.1,
+        "aska": 53,
+        "rp": 80,
+        "ndf": 571,
+        "socker": 159,
+        "omd": 71.6,
+        "oe_hast": 9.8,
+        "smbrp_hast": 44,
+        "kvot_smbrp_oe": 4.5,
+        "makro_g_per_kg_ts": {
+          "Ca": 3.52,
+          "P": 1.83,
+          "Mg": 1.31,
+          "K": 14.4,
+          "Na": 0.31,
+          "S": 1.37
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 107,
+          "Mn": 73,
+          "Zn": 22,
+          "Cu": 5
+        },
+        "ca_p_kvot": 1.9
+      },
+      "forvantade_flaggor": [
+        "Låg proteinkvot (4.5 g smb rp/MJ) – under 5,5; för lite protein även för vuxen häst i underhåll.",
+        "Socker 159 g/kg ts – över 100; olämpligt utan åtgärd för häst med EMS eller fånghistorik.",
+        "Selen ej analyserat. Svenskt vallfoder är nästan alltid selenfattigt (rikssnitt ~0,03 mg/kg ts) – tillskott behövs."
+      ]
+    },
+    {
+      "id": "A05-bas-utan-mineraler",
+      "fil": "pdf/A05-bas-utan-mineraler.pdf",
+      "lab": "A",
+      "paket": "Bas",
+      "fodertyp": "Hösilage",
+      "provnr": "TA-2026-21533",
+      "skordedatum": "2026-06-05",
+      "statistikgrupp": "Ensilage, gräs (0 % klöver), skörd 1",
+      "percentilval": "medel för alla parametrar",
+      "rapportens_enhet": "per kg ts",
+      "syfte": "Billigaste paketet saknar mineraler. Appen ska säga vad som saknas och använda schablon.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 46.0,
+        "aska": 65,
+        "rp": 131,
+        "ndf": 494,
+        "socker": 66,
+        "omd": 73.1,
+        "oe_hast": 9.9,
+        "smbrp_hast": 88,
+        "kvot_smbrp_oe": 8.9,
+        "makro_g_per_kg_ts": {},
+        "spar_mg_per_kg_ts": {}
+      },
+      "forvantade_flaggor": [
+        "Hög proteinkvot (8.9 g smb rp/MJ) – över 6,5; mer protein än vuxen häst behöver, passar unghäst/dräktigt sto.",
+        "Mineraler ej analyserade – foderstaten måste räkna med schablonvärden; mineralfoder rekommenderas."
+      ]
+    },
+    {
+      "id": "B06-tredje-skord-hog-aska",
+      "fil": "pdf/B06-tredje-skord-hog-aska.pdf",
+      "lab": "B",
+      "paket": "Häst Plus",
+      "fodertyp": "Hösilage",
+      "provnr": "B-26-5187",
+      "skordedatum": "2026-08-30",
+      "statistikgrupp": "Ensilage, blandvall (1–50 % klöver), skörd 3",
+      "percentilval": {
+        "Aska": "p90",
+        "Fe": "p90",
+        "Ca": "p90",
+        "Mg": "p90",
+        "Socker": "p10"
+      },
+      "rapportens_enhet": "per kg vara",
+      "syfte": "Hög aska/järn tyder på jordinblandning. Högt Ca, lågt socker. Selen nära rikssnittet men lågt.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 45.7,
+        "aska": 94,
+        "rp": 159,
+        "ndf": 432,
+        "socker": 28,
+        "omd": 74.7,
+        "oe_hast": 9.8,
+        "smbrp_hast": 112,
+        "kvot_smbrp_oe": 11.4,
+        "makro_g_per_kg_ts": {
+          "Ca": 11.8,
+          "P": 2.71,
+          "Mg": 3.25,
+          "K": 22.6,
+          "Na": 1.29,
+          "S": 2.55
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 279,
+          "Mn": 76,
+          "Zn": 33,
+          "Cu": 7,
+          "Se": 0.04
+        },
+        "ca_p_kvot": 4.4
+      },
+      "forvantade_flaggor": [
+        "Hög proteinkvot (11.4 g smb rp/MJ) – över 6,5; mer protein än vuxen häst behöver, passar unghäst/dräktigt sto.",
+        "Järn 279 mg/kg ts – högt, stöder misstanke om jordinblandning.",
+        "Selen 0.04 mg/kg ts – mycket lågt; tillskott behövs.",
+        "Ca:P-kvot 4.4 – hög; fosfor kan behöva kompletteras."
+      ]
+    },
+    {
+      "id": "A07-ho-lagt-protein",
+      "fil": "pdf/A07-ho-lagt-protein.pdf",
+      "lab": "A",
+      "paket": "Komplett",
+      "fodertyp": "Hö",
+      "provnr": "TA-2026-22018",
+      "skordedatum": "2026-07-20",
+      "statistikgrupp": "Hö, blandvall (0–50 % baljväxter)",
+      "percentilval": {
+        "OMD": "p10",
+        "NDF": "p90"
+      },
+      "rapportens_enhet": "per kg ts",
+      "syfte": "Sent skördat hö: proteinkvot under 5,5 och socker över 100. Behöver proteintillskott; olämpligt för EMS-häst.",
+      "forvantade_varden_per_kg_ts": {
+        "ts_pct": 84.1,
+        "aska": 53,
+        "rp": 80,
+        "ndf": 631,
+        "socker": 122,
+        "omd": 60.9,
+        "oe_hast": 8.4,
+        "smbrp_hast": 44,
+        "kvot_smbrp_oe": 5.2,
+        "makro_g_per_kg_ts": {
+          "Ca": 3.52,
+          "P": 1.83,
+          "Mg": 1.31,
+          "K": 14.4,
+          "Na": 0.31,
+          "S": 1.37
+        },
+        "spar_mg_per_kg_ts": {
+          "Fe": 107,
+          "Mn": 73,
+          "Zn": 22,
+          "Cu": 5
+        },
+        "ca_p_kvot": 1.9
+      },
+      "forvantade_flaggor": [
+        "Låg proteinkvot (5.2 g smb rp/MJ) – under 5,5; för lite protein även för vuxen häst i underhåll.",
+        "Socker 122 g/kg ts – över 100; olämpligt utan åtgärd för häst med EMS eller fånghistorik.",
+        "Selen ej analyserat. Svenskt vallfoder är nästan alltid selenfattigt (rikssnitt ~0,03 mg/kg ts) – tillskott behövs."
+      ]
+    }
+  ]
+}

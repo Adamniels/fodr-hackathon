@@ -1,0 +1,135 @@
+{
+  "_info": "Produkter som urvalet får välja. Dos i gram per 100 kg kroppsvikt och dag, omräknad för hand från tillverkarens text (granngarden.se, hämtad 2026-10-14). Granska varje rad mot förpackningen.",
+  "produkter": {
+    "gg-1195802": {
+      "dos": [
+        13,
+        24
+      ],
+      "dosKalla": "Cirka 80 g vuxen häst i vila eller lätt arbete, 120 g i medelhårt eller hårt arbete, max 300 g/dag. Omräknat för cirka 550 kg."
+    },
+    "gg-1195803": {
+      "dos": [
+        13,
+        24
+      ],
+      "dosKalla": "Samma familj som Krafft Miner Original (80–120 g/dag).",
+      "antaganden": [
+        "Dosen antas vara densamma som för Krafft Miner Original."
+      ]
+    },
+    "gg-1195800": {
+      "dos": [
+        13,
+        24
+      ],
+      "dosKalla": "Samma familj som Krafft Miner Original (80–120 g/dag).",
+      "antaganden": [
+        "Dosen antas vara densamma som för Krafft Miner Original."
+      ]
+    },
+    "gg-1195799": {
+      "dos": [
+        13,
+        24
+      ],
+      "dosKalla": "Samma familj som Krafft Miner Original (80–120 g/dag).",
+      "antaganden": [
+        "Dosen antas vara densamma som för Krafft Miner Original."
+      ]
+    },
+    "gg-1236441": {
+      "dos": [
+        6,
+        9
+      ],
+      "dosKalla": "Skopa 20 g. Ponny 1 skopa, häst 2 skopor, stor häst över 600 kg 2,5 skopor per dag."
+    },
+    "gg-1238586": {
+      "dos": [
+        20,
+        25
+      ],
+      "dosKalla": "20 g per 100 kg vid underhåll, 25 g per 100 kg vid lätt till medelhårt arbete.",
+      "kategori": "mineralfoder"
+    },
+    "gg-2000040": {
+      "dos": [
+        12,
+        20
+      ],
+      "dosKalla": "20 ml per 100 kg och dag, 100 ml motsvarar 80 g.",
+      "perKgFranAnnanBas": {
+        "bas": "100ml (80g)",
+        "gram": 80
+      },
+      "kategori": "mineralfoder"
+    },
+    "gg-1238714": {
+      "dos": [
+        3,
+        10
+      ],
+      "dosKalla": "Cirka 5 ml per 100 kg vid normalt arbete, 10 ml vid hård träning. Mått 15 ml.",
+      "antaganden": [
+        "1 ml räknas som 1 g."
+      ]
+    },
+    "gg-1011728": {
+      "dos": [
+        8,
+        12
+      ],
+      "dosKalla": "50 g per dag för hästar över 300 kg, 25 g under 300 kg."
+    },
+    "gg-1011686": {
+      "dos": [
+        3,
+        12
+      ],
+      "dosKalla": "Skopa 30 g. Ponny 0,5 skopa, häst 1 skopa, hårt arbete 2 skopor per dag."
+    },
+    "gg-1238737": {
+      "dos": [
+        2,
+        5
+      ],
+      "dosKalla": "Skopa 10 g. Ponny 1 skopa, häst 2 skopor, stor häst 2,5 skopor per dag."
+    },
+    "gg-2003702": {
+      "dos": [
+        1,
+        3
+      ],
+      "dosKalla": "2 ml per 100 kg och dag, 10 ml motsvarar 10 g."
+    },
+    "gg-1136816": {
+      "dos": [
+        2,
+        6
+      ],
+      "dosKalla": "1–3 skopor à 10 g per dag beroende på foderstatens kalcium och fosfor."
+    },
+    "gg-2003704": {
+      "dos": [
+        2,
+        3.2
+      ],
+      "dosKalla": "6 ml, motsvarande 3,2 g, per 100 kg och dag."
+    },
+    "800801-00-00000": {
+      "dos": [
+        0,
+        25
+      ],
+      "dosKalla": "Saltgiva efter natriumbehov (SLU tabell 15).",
+      "kategori": "salt",
+      "perKg": {
+        "na": 393
+      },
+      "antaganden": [
+        "Näringsdata saknas hos Hööks. Räknas som ren koksalt, 39,3 % natrium."
+      ]
+    }
+  }
+}
