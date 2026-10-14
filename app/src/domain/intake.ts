@@ -61,3 +61,8 @@ export function kostnadPerManad(produkt: Produkt, gramPerDag: number): number {
   const krPerKg = produkt.prisKr / produkt.forpackningKg
   return ((gramPerDag * 30) / 1000) * krPerKg
 }
+
+/** Produktnamn utan butikens kategoriprefix, t.ex. "Hästfoder Pavo SportsFit 15kg" blir "Pavo SportsFit 15kg". */
+export function visningsnamn(produkt: Produkt): string {
+  return produkt.namn.replace(/^(Hästfoder|Mineralfoder|Fodertillskott|Foderråvara|Kompletteringsfoder)\s+/, '')
+}

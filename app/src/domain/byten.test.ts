@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysKomplett, demoHast } from '../data/exempel'
 import produkterJson from '../data/products.json'
 import { hittaBilligareLiknande } from './byten'
-import { kostnadPerManad } from './intake'
+import { kostnadPerManad, visningsnamn } from './intake'
 import { skapaPlan } from './plan'
 import type { Produkt } from './types'
 
@@ -47,6 +47,6 @@ describe('billigare liknande foder', () => {
     const hast = { ...demoHast, nuvarandeFoder: [{ produktId: mineral.id, namn: mineral.namn, gramPerDag: 100 }] }
     const plan = skapaPlan(hast, analysKomplett, produkter)
     const valdes = plan.urval?.poster.some((p) => p.produkt.id === mineral.id)
-    if (!valdes) expect(plan.atgarder.some((a) => a.text.includes(mineral.namn))).toBe(true)
+    if (!valdes) expect(plan.atgarder.some((a) => a.text.includes(visningsnamn(mineral)))).toBe(true)
   })
 })

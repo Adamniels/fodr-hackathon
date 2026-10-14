@@ -1,6 +1,6 @@
 import { NUTRIENT_KEYS, type NutrientKey } from './nutrients'
 import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
-import { grovfoderIntag, kostnadPerManad, laggTill, type Foderpost, type Intag } from './intake'
+import { grovfoderIntag, kostnadPerManad, laggTill, visningsnamn as namn, type Foderpost, type Intag } from './intake'
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './kvalitet'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './kanslighet'
@@ -128,7 +128,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       behallna = behallna.filter((p) => p !== k)
       atgarder.push({
         typ: 'ta_bort',
-        text: `Ta bort ${k.produkt.namn} (${k.gramPerDag} g/dag). Grovfodret täcker energibehovet ändå.`,
+        text: `Ta bort ${namn(k.produkt)} (${k.gramPerDag} g/dag). Grovfodret täcker energibehovet ändå.`,
       })
       if (energiFor(grovKg, behallna) <= energiBehov * ENERGI_OVER) break
     }
@@ -143,10 +143,17 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     byten.push(b)
     atgarder.push({
       typ: 'byt',
-      text: `Byt ${p.produkt.namn} (${p.gramPerDag} g/dag) mot ${b.till.produkt.namn} (${b.till.gramPerDag} g/dag), ${b.skal}. Sparar cirka ${kr(b.besparingKrPerManad)} i månaden.`,
+      text: `Byt ${namn(p.produkt)} (${p.gramPerDag} g) mot ${b.till.gramPerDag} g ${namn(b.till.produkt)}: ${b.skal}, ${kr(b.besparingKrPerManad)} billigare i månaden.`,
     })
     return b.till
   })
+  // Två foder kan bytas mot samma produkt; då blir det en rad med den sammanlagda givan.
+  behallna = behallna.reduce<Foderpost[]>((ut, p) => {
+    const finns = ut.find((x) => x.produkt.id === p.produkt.id)
+    if (finns) finns.gramPerDag += p.gramPerDag
+    else ut.push({ ...p })
+    return ut
+  }, [])
 
   // SLU: i andra hand minskas grovfodret, dock aldrig under 1 kg ts per 100 kg.
   const energiPerKgFoder = (analys.perKgTs.energi ?? 0) * ts
@@ -233,8 +240,8 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
         typ: 'tillskott',
         text:
           kvar.gramPerDag === gammal.gramPerDag
-            ? `Fortsätt med ${kvar.gramPerDag} g/dag ${kvar.produkt.namn}.`
-            : `Ändra ${kvar.produkt.namn} från ${gammal.gramPerDag} till ${kvar.gramPerDag} g/dag.`,
+            ? `Fortsätt med ${kvar.gramPerDag} g/dag ${namn(kvar.produkt)}.`
+            : `Ändra ${namn(kvar.produkt)} från ${gammal.gramPerDag} till ${kvar.gramPerDag} g/dag.`,
       })
       continue
     }
@@ -252,7 +259,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       const efter = kostnadPerManad(ersattare.produkt, ersattare.gramPerDag)
       const skal =
         efter < fore - 1
-          ? `täcker behovet och kostar cirka ${kr(fore - efter)} mindre i månaden`
+          ? `täcker behovet, ${kr(fore - efter)} billigare i månaden`
           : 'täcker det som saknas bättre med ditt grovfoder'
       byten.push({
         fran: gammal,
@@ -264,18 +271,18 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       })
       atgarder.push({
         typ: 'byt',
-        text: `Byt ${gammal.produkt.namn} (${gammal.gramPerDag} g/dag) mot ${ersattare.gramPerDag} g/dag ${ersattare.produkt.namn}, ${skal}.`,
+        text: `Byt ${namn(gammal.produkt)} (${gammal.gramPerDag} g) mot ${ersattare.gramPerDag} g ${namn(ersattare.produkt)}: ${skal}.`,
       })
     } else {
       atgarder.push({
         typ: 'ta_bort',
-        text: `Sluta med ${gammal.produkt.namn} (${gammal.gramPerDag} g/dag, cirka ${kr(fore)} i månaden). Grovfodret och förslaget täcker behovet utan den.`,
+        text: `Sluta med ${namn(gammal.produkt)} (${gammal.gramPerDag} g/dag, ${kr(fore)} i månaden). Behovet täcks utan den.`,
       })
     }
   }
   for (const p of nyaPoster) {
     if (hanterade.has(p.produkt.id)) continue
-    atgarder.push({ typ: 'tillskott', text: `Ge ${p.gramPerDag} g/dag ${p.produkt.namn}.` })
+    atgarder.push({ typ: 'tillskott', text: `Ge ${p.gramPerDag} g/dag ${namn(p.produkt)}.` })
   }
 
   const slutIntag = urval?.intag ?? bas

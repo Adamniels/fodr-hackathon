@@ -93,6 +93,6 @@ export function hittaBilligareLiknande(fran: Foderpost, produkter: Produkt[], ha
 
 function skalText(fran: Produkt, till: Produkt): string {
   const bas = (namn: string) => namn.replace(/\s*[\d,]+\s*(kg|l)\b.*$/i, '').trim()
-  if (bas(fran.namn) === bas(till.namn)) return 'samma foder i en förpackning som är billigare per kilo'
-  return 'liknande energi och protein per kilo, inte mer stärkelse'
+  if (bas(fran.namn) === bas(till.namn)) return 'samma foder i billigare förpackning'
+  return 'samma energi, liknande protein, inte mer stärkelse'
 }
