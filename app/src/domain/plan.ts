@@ -34,6 +34,8 @@ export interface Plan {
   atgarder: Atgard[]
   grovfoderKgPerDag: number
   behallnaFoder: Foderpost[]
+  /** Foder hästen får i dag som planen tar bort. */
+  borttagnaFoder: Foderpost[]
   urval: Urval | null
   alternativ: Urval | null
   resultat: Balansrad[]
@@ -221,6 +223,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     atgarder,
     grovfoderKgPerDag: grovKg,
     behallnaFoder: behallna,
+    borttagnaFoder: nuvarande.filter((p) => !behallna.includes(p)),
     urval: urval ?? null,
     alternativ: alternativ ?? null,
     resultat,

@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { forklaraPlan } from '../api'
+import { byggBoxkort } from '../domain/boxkort'
 import { kostnadPerManad } from '../domain/intake'
+import type { NutrientKey } from '../domain/nutrients'
 import type { Balansrad, Plan, Status } from '../domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '../domain/types'
 import { enhet, etikett, kr, tal } from '../format'
+import { Boxkort } from './Boxkort'
 
 const STATUS: Record<Status, [string, string]> = {
   brist: ['Brist', 'brist'],
@@ -14,6 +17,10 @@ const STATUS: Record<Status, [string, string]> = {
   osaker: ['Osäkert', 'okand'],
   ej_krav: ['', 'okand'],
 }
+
+// Ämnen som visas som staplar. Övriga finns i tabellen under "Alla näringsämnen".
+const STAPLAR: NutrientKey[] = ['energi', 'smbRp', 'ca', 'p', 'mg', 'na', 'se', 'vitE', 'cu', 'zn']
+const datumText = (iso: string) => new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })
 
 export function PlanStep({
   hast,
@@ -28,6 +35,7 @@ export function PlanStep({
 }) {
   const [forklaring, setForklaring] = useState<string | null>(null)
   const [forklaringFel, setForklaringFel] = useState<string | null>(null)
+  const kort = useMemo(() => byggBoxkort(plan, analys.typ), [plan, analys.typ])
 
   useEffect(() => {
     let avbruten = false
@@ -41,206 +49,214 @@ export function PlanStep({
     }
   }, [hast, analys, plan])
 
-  const u = plan.urval
-  const nyKostnad = u?.kostnadPerManad ?? 0
-  const behallnaKostnad = plan.behallnaFoder.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
-  const totalNy = nyKostnad + behallnaKostnad
-  const besparing = plan.nulageKostnadPerManad - totalNy
-  // "Kalcium (Ca)" blir "kalcium", men "Vitamin E" behåller sin bokstav.
-  const kortNamn = (r: Balansrad) => etikett(r.amne).replace(/\s*\(.*\)$/, '').replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
-  const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map(kortNamn)
-  const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
-  const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
+  const poster = [...plan.behallnaFoder, ...(plan.urval?.poster ?? [])]
+  const kostnad = poster.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
 
   return (
-    <div className="plan">
-      <section className="kort hjalte">
-        <div className="hjalte-text">
-          <h2>Foderplan för {hast.namn}</h2>
-          <p className="ingress">
-            Behov {tal(plan.behov.behov.energi!.min, 0)} MJ och {tal(plan.behov.behov.smbRp!.min, 0)} g smältbart
-            protein per dag, räknat på {tal(plan.behov.berakningsviktKg, 0)} kg
-            {plan.behov.arbetsMJ > 0 && <>, varav {tal(plan.behov.arbetsMJ, 1)} MJ för arbete</>}
-            {plan.behov.kylaMJ > 0 && <> och {tal(plan.behov.kylaMJ, 1)} MJ för kyla</>}.
-          </p>
-          {(nulageBrister.length > 0 || nulageEnergi.status === 'overskott') && (
-            <p className="nulage">
-              Med dagens foder:{' '}
-              {[
-                nulageEnergi.status === 'overskott' && `${energiProcent} % mer energi än behovet`,
-                nulageBrister.length > 0 && `för lite ${nulageBrister.join(', ')}`,
-              ]
-                .filter(Boolean)
-                .join(', och ')}
-              .
+    <div className="plan-layout">
+      <div className="plan-kort">
+        <Boxkort
+          namn={hast.namn}
+          datum={datumText(new Date().toISOString().slice(0, 10))}
+          kort={kort}
+          kostnadPerManad={kostnad}
+          kostnadIdag={plan.nulageKostnadPerManad}
+        >
+          <div className="boxkort-knappar">
+            <button className="knapp" onClick={onSparaIJournal}>
+              Spara i journalen
+            </button>
+            <button className="knapp sekundar" onClick={() => window.print()}>
+              Skriv ut boxkortet
+            </button>
+          </div>
+        </Boxkort>
+
+        <section className="inkop" aria-labelledby="inkop-rubrik">
+          <h2 id="inkop-rubrik">Att köpa</h2>
+          <ul>
+            {poster.map((p) => (
+              <li key={p.produkt.id}>
+                <span className="inkop-namn">{p.produkt.namn}</span>
+                <span className="inkop-detalj">
+                  {kr(p.produkt.prisKr)} för {tal(p.produkt.forpackningKg)}&nbsp;kg hos{' '}
+                  {p.produkt.url ? (
+                    <a href={p.produkt.url} target="_blank" rel="noreferrer">
+                      {p.produkt.butik}
+                    </a>
+                  ) : (
+                    p.produkt.butik
+                  )}
+                  , räcker {Math.round((p.produkt.forpackningKg * 1000) / p.gramPerDag)} dagar
+                </span>
+                {p.produkt.dosKalla && <span className="inkop-kalla">Tillverkarens dos: {p.produkt.dosKalla}</span>}
+                {p.produkt.antaganden.length > 0 && (
+                  <span className="inkop-kalla">Antagande: {p.produkt.antaganden.join(' ')}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {plan.alternativ && (
+            <p className="alternativ">
+              Alternativ: {plan.alternativ.poster.map((p) => `${p.produkt.namn}, ${p.gramPerDag}\u00a0g`).join(' och ')}, cirka{' '}
+              {kr(plan.alternativ.kostnadPerManad + plan.behallnaFoder.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0))} per månad.
             </p>
           )}
-        </div>
-        <div className="kostnad">
-          <div className="kostnad-belopp">{kr(totalNy)}</div>
-          <div className="kostnad-text">per månad med förslaget</div>
-          {plan.nulageKostnadPerManad > 0 && (
-            <div className={`kostnad-jmf ${besparing >= 0 ? 'ok' : ''}`}>
-              {besparing >= 0 ? `${kr(besparing)} billigare` : `${kr(-besparing)} dyrare`} än i dag (
-              {kr(plan.nulageKostnadPerManad)})
+        </section>
+      </div>
+
+      <div className="plan-varfor">
+        {plan.varningar.length > 0 && (
+          <div className="obs" role="note">
+            <span className="obs-etikett">Viktigt</span>
+            <div>
+              {plan.varningar.map((v) => (
+                <p key={v}>{v}</p>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
-
-      {plan.varningar.length > 0 && (
-        <div className="ruta varn">
-          {plan.varningar.map((v) => (
-            <p key={v}>{v}</p>
-          ))}
-        </div>
-      )}
-
-      {(plan.kansligheter.length > 0 || plan.bortvalda.length > 0) && (
-        <section className="kort">
-          <h3>Anpassat efter {hast.namn}s hälsa</h3>
-          <div className="kvalitet">
-            {plan.kansligheter.map((k) => (
-              <div key={k.text} className={`kvalitet-rad ${k.niva}`}>
-                <span>{k.text}</span>
-                <span className="liten">{k.kalla}</span>
-              </div>
-            ))}
           </div>
-          {plan.bortvalda.length > 0 && (
-            <details className="bortvalda">
-              <summary>{plan.bortvalda.length} produkter valdes bort</summary>
-              <ul>
-                {plan.bortvalda.map((b) => (
-                  <li key={b.namn}>
-                    {b.namn}: {b.skal.join(', ')}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </section>
-      )}
+        )}
 
-      {plan.grovfoderkvalitet.length > 0 && (
-        <section className="kort">
-          <h3>Om ditt grovfoder</h3>
-          <div className="kvalitet">
-            {plan.grovfoderkvalitet.map((f) => (
-              <div key={f.rubrik} className={`kvalitet-rad ${f.niva}`}>
-                <strong>{f.rubrik}</strong>
-                <span>{f.text}</span>
-                <span className="liten">{f.kalla}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="kolumner-lika">
-        <section className="kort">
-          <h3>Gör så här</h3>
-          <ol className="atgarder">
-            <li>
-              Ge {tal(plan.grovfoderKgPerDag, 1)} kg {analys.typ === 'hosilage' ? 'hösilage' : 'hö'} per dag.
-            </li>
+        <section className="del-plan" aria-labelledby="varfor-rubrik">
+          <h2 id="varfor-rubrik">Därför</h2>
+          <p className="nulage-text">{nulageText(hast.namn, plan)}</p>
+          <ul className="atgarder">
             {plan.atgarder.map((a) => (
               <li key={a.text} className={a.typ}>
                 {a.text}
               </li>
             ))}
-          </ol>
-          <h3 className="rubrik">Inköpslista</h3>
-          {u && u.poster.length > 0 ? (
-            <table className="tabell lista">
-              <tbody>
-                {[...plan.behallnaFoder, ...u.poster].map((p) => (
-                  <tr key={p.produkt.id}>
-                    <td>
-                      <strong>{p.produkt.namn}</strong>
-                      <span className="liten">
-                        {p.produkt.url ? (
-                          <a href={p.produkt.url} target="_blank" rel="noreferrer">
-                            {p.produkt.butik}
-                          </a>
-                        ) : (
-                          p.produkt.butik
-                        )}{' '}
-                        · {kr(p.produkt.prisKr)} för {tal(p.produkt.forpackningKg)} kg
-                      </span>
-                      {p.produkt.dosKalla && (
-                        <span className="liten" title={p.produkt.antaganden.join(' ')}>
-                          Tillverkarens dos: {p.produkt.dosKalla}
-                        </span>
-                      )}
-                    </td>
-                    <td className="hoger">{p.gramPerDag} g/dag</td>
-                    <td className="hoger">{kr(kostnadPerManad(p.produkt, p.gramPerDag))}/mån</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>Inga tillskott behövs utöver grovfodret.</p>
-          )}
-          <div className="atgardsrad">
-            <button className="knapp sekundar" onClick={onSparaIJournal}>
-              Spara planen i journalen
-            </button>
-          </div>
-          {plan.alternativ && (
-            <p className="alternativ">
-              Alternativ:{' '}
-              {plan.alternativ.poster.map((p) => `${p.produkt.namn} ${p.gramPerDag} g`).join(' + ')}, cirka{' '}
-              {kr(plan.alternativ.kostnadPerManad + behallnaKostnad)}/mån.
-            </p>
-          )}
+          </ul>
         </section>
 
-        <section className="kort forklaring">
-          <h3>
-            <span className="ai-bricka">AI</span> Vad betyder det här?
-          </h3>
+        <section className="del-plan" aria-labelledby="balans-rubrik">
+          <h2 id="balans-rubrik">Behov och tillförsel med planen</h2>
+          <p className="del-ingress">Andel av SLU:s rekommenderade dagsbehov. Strecket är 100 %.</p>
+          <Balansstaplar rader={plan.resultat} />
+          <details className="alla-siffror">
+            <summary>Alla näringsämnen och källor</summary>
+            <Balanstabell rader={plan.resultat} />
+            <p className="liten">
+              Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under
+              behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler. Ca/P-kvot{' '}
+              {tal(plan.caP ?? undefined, 2)}, SLU rekommenderar minst 1,1.
+            </p>
+          </details>
+        </section>
+
+        {(plan.kansligheter.length > 0 || plan.bortvalda.length > 0) && (
+          <section className="del-plan" aria-labelledby="halsa-rubrik">
+            <h2 id="halsa-rubrik">Anpassat efter {hast.namn}s hälsa</h2>
+            <ul className="noter">
+              {plan.kansligheter.map((k) => (
+                <li key={k.text} className={k.niva}>
+                  {k.text} <span className="kalla-text">{k.kalla}</span>
+                </li>
+              ))}
+            </ul>
+            {plan.bortvalda.length > 0 && (
+              <details className="alla-siffror">
+                <summary>{plan.bortvalda.length} produkter valdes bort</summary>
+                <ul className="noter">
+                  {plan.bortvalda.map((b) => (
+                    <li key={b.namn}>
+                      {b.namn}: {b.skal.join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </section>
+        )}
+
+        {plan.grovfoderkvalitet.length > 0 && (
+          <section className="del-plan" aria-labelledby="grov-rubrik">
+            <h2 id="grov-rubrik">Om grovfodret</h2>
+            <ul className="noter">
+              {plan.grovfoderkvalitet.map((f) => (
+                <li key={f.rubrik} className={f.niva}>
+                  <strong>{f.rubrik}.</strong> {f.text} <span className="kalla-text">{f.kalla}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="del-plan forklaring" aria-labelledby="ai-rubrik" aria-live="polite">
+          <h2 id="ai-rubrik">
+            Förklarat <span className="ai-markor">AI</span>
+          </h2>
           {forklaring ? (
             forklaring.split(/\n+/).map((s, i) => <p key={i}>{s}</p>)
           ) : forklaringFel ? (
-            <p className="liten">Förklaringen kunde inte hämtas ({forklaringFel}). Planen ovan gäller ändå.</p>
+            <p className="liten">Förklaringen kunde inte hämtas: {forklaringFel} Planen ovan gäller ändå.</p>
           ) : (
-            <p className="laddar-text">Skriver förklaring…</p>
-          )}
-          {plan.kvaveOverskottKgPerAr > 1 && (
-            <div className="miljo">
-              <strong>{tal(plan.kvaveOverskottKgPerAr, 0)} kg kväve per år</strong> hamnar i gödseln från protein
-              hästen inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.
-            </div>
+            <p className="laddar-text">Skriver förklaringen…</p>
           )}
         </section>
-      </div>
 
-      <section className="kort">
-        <h3>Behov och tillförsel per dag</h3>
-        <p className="liten">
-          Behov enligt SLU. Tillförsel från grovfodret och förslaget. Ca/P-kvot {tal(plan.caP ?? undefined, 2)} (SLU:
-          minst 1,1, helst 1,2–1,8).
-        </p>
-        <Balanstabell rader={plan.resultat} />
-        {plan.resultat.some((r) => r.status === 'okand' || r.status === 'osaker') && (
-          <p className="liten">
-            Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under
-            behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler, och
-            hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete. Analysera
-            grovfodret om du vill veta säkert.
+        {plan.kvaveOverskottKgPerAr > 1 && (
+          <p className="miljo">
+            Proteinöverskottet motsvarar ungefär {tal(plan.kvaveOverskottKgPerAr, 0)}&nbsp;kg kväve per år i gödseln. Ett
+            grovfoder med lägre proteinhalt sänker både kostnaden och utsläppen.
           </p>
         )}
-        {plan.noteringar.length > 0 && (
-          <ul className="noteringar">
-            {plan.noteringar.map((n) => (
-              <li key={n}>{n}</li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </div>
     </div>
+  )
+}
+
+function nulageText(namn: string, plan: Plan): string {
+  const energi = plan.nulage.find((r) => r.amne === 'energi')!
+  const delar: string[] = []
+  if (energi.status === 'overskott') {
+    delar.push(`${Math.round((energi.intag / energi.behovMin! - 1) * 100)} % mer energi än behovet`)
+  } else if (energi.status === 'brist') {
+    delar.push(`${Math.round((1 - energi.intag / energi.behovMin!) * 100)} % för lite energi`)
+  }
+  const brister = plan.nulage
+    .filter((r) => r.status === 'brist' && r.amne !== 'energi')
+    .map((r) => etikett(r.amne).replace(/\s*\(.*\)$/, '').replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase()))
+  if (brister.length) delar.push(`för lite ${brister.join(', ')}`)
+  const behov = `Behovet är ${tal(plan.behov.behov.energi!.min, 0)} MJ och ${tal(plan.behov.behov.smbRp!.min, 0)} g smältbart protein per dag, räknat på ${tal(plan.behov.berakningsviktKg, 0)} kg.`
+  return delar.length ? `Med dagens foder får ${namn} ${delar.join(' och ')}. ${behov}` : `Dagens foder täcker behoven. ${behov}`
+}
+
+function Balansstaplar({ rader }: { rader: Balansrad[] }) {
+  const visade = rader.filter(
+    (r) => STAPLAR.includes(r.amne) && r.behovMin && r.status !== 'okand' && r.status !== 'ej_krav',
+  )
+  return (
+    <ul className="staplar">
+      {visade.map((r) => {
+        const andel = r.intag / r.behovMin!
+        const bredd = (Math.min(andel, 2) / 2) * 100
+        const maxAndel = r.behovMax ? r.behovMax / r.behovMin! : undefined
+        const klass =
+          r.status === 'brist' || r.status === 'over_max'
+            ? 'brist'
+            : r.status === 'osaker'
+              ? 'osaker'
+              : r.status === 'overskott' || (r.amne === 'smbRp' && andel > 1.3)
+                ? 'varn'
+                : 'ok'
+        return (
+          <li key={r.amne} className={`stapel ${klass}`}>
+            <span className="stapel-namn">{etikett(r.amne)}</span>
+            <span className="stapel-spar" role="img" aria-label={`${Math.round(andel * 100)} procent av behovet`}>
+              <span className="stapel-fyll" style={{ width: `${bredd}%` }} />
+              <span className="stapel-behov" />
+              {maxAndel !== undefined && maxAndel <= 2 && (
+                <span className="stapel-max" style={{ left: `${(maxAndel / 2) * 100}%` }} />
+              )}
+            </span>
+            <span className="stapel-varde">
+              {andel >= 2 ? '>200' : Math.round(andel * 100)}&nbsp;%
+            </span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

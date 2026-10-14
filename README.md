@@ -1,4 +1,4 @@
-# Krubba, hackathon-PoC
+# Fodr, hackathon-PoC
 
 Ladda upp grovfoderanalysen, beskriv hästen, få en foderplan med produkter, gram per dag och kronor per månad. Målbild och scope finns i `malbild.md`.
 
@@ -34,16 +34,13 @@ Utan API-nyckel fungerar allt utom AI-delarna (läsa uppladdad rapport, fylla pr
 
 AI:n förstår, frågar och förklarar. Modellen räknar. Siffror i förklaringen kommer bara från beräkningen.
 
-## Demomanus (cirka 2 minuter)
+## Demomanus (cirka 3 minuter)
 
-0. **Inloggning.** Visa startsidan och klicka "Testa med demokontot".
-1. **Hästen.** Visa Sixten (12 år, halvblod, 550 kg, hull 7, rids 4 dagar, fång för två år sedan, 1 kg pellets). Visa AI-rutan: skriv "en liter pellets morgon och kväll" och visa att fälten fylls i. Agenten frågar vad en liter väger i stället för att gissa (testat 2026-10-14).
-2. **Analysen.** Ladda upp `testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf` (rikssnittet för hösilage). Visa att alla värden syns och går att rätta.
-3. **Planen.** Grovfodret är proteinrikt, energirikt och blött (SLU tabell 32 och sid 30). I dag 15 % för mycket energi och för lite natrium och selen. Ta bort pelletsen (olämpliga vid fång, visas under "Anpassat efter Sixtens hälsa"), 66 g Krafft Miner Original och 14 g salt, 88 kr/mån mot 374 kr i dag. Fångvarning och veterinärhänvisning. Kryssa gärna i "Luftvägsbesvär" live och visa att pulverprodukter väljs bort. 16 kg kväve per år i onödan.
-4. **Förtroende.** Scrolla till tabellen: behov, tillförsel, maxgräns och källa på varje rad.
-5. **Journalen.** Klicka "Spara planen i journalen". Visa trenden (570 till 550 kg, hull 8 till 7, under 1 % per vecka) och klicka "Analysera journalen". AI:n bör koppla den lösa magen till hösilagebytet och flagga veterinär för de ömma framhovarna, med tanke på fånghistoriken. Testat 2026-10-14: fungerar.
-
-Backup om nätet krånglar: "Exempel: komplett analys" ger samma plan utan AI-anrop.
+0. **Startsidan.** Boxkortet till vänster är det man får. Klicka "Testa med demokontot".
+1. **Hästen.** Sixten i stallet till vänster. Visa profilens avsnitt och AI-rutan överst: skriv "en liter pellets morgon och kväll" och klicka "Fyll i profilen". Agenten frågar vad en liter väger.
+2. **Analysen.** Fliken Analys. Dra in `testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf` eller klicka och välj den. Visa att alla värden går att rätta. Reserv utan nät: "Använd en exempelanalys".
+3. **Foderplanen.** Boxkortet: 8 kg hösilage morgon och kväll, Krafft Miner Original på morgonen, salt delat, pelletsen överstruken, 88 kr/mån mot 374 kr. Till höger "Därför": staplarna visar att allt täcks och att proteinet ligger på 169 %, fångvarningen och grovfoderflaggorna. Kryssa gärna i "Luftvägsbesvär" i profilen och visa att pulverprodukter väljs bort. "Skriv ut boxkortet" ger bara kortet.
+4. **Journalen.** "Spara i journalen". Visa trenden (570 till 550 kg, hull 8 till 7) och klicka "Analysera journalen". AI:n kopplar den lösa magen till hösilagebytet och flaggar veterinär för de ömma framhovarna.
 
 ## Att göra före demo
 

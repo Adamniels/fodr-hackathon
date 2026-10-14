@@ -5,6 +5,8 @@ import { hittaRas } from '../domain/raser'
 import type { Hastprofil } from '../domain/types'
 import { HULL_TEXT, kr, tal } from '../format'
 
+const datum = (iso: string) => new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })
+
 interface Props {
   hast: Hastprofil
   poster: Journalpost[]
@@ -20,7 +22,6 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
   return (
     <div className="plan">
       <section className="kort">
-        <h2>Journal för {hast.namn}</h2>
         <p className="ingress">Väg, hullbedöm och skriv vad som fungerar. Planen räknas om när vikt och hull ändras.</p>
         <div className="trendrad">
           <Trendruta
@@ -39,7 +40,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
           />
           <Trendruta
             rubrik="Nästa uppföljning"
-            varde={trend.nastaUppfoljning ?? 'Väg nu'}
+            varde={trend.nastaUppfoljning ? datum(trend.nastaUppfoljning) : 'Väg nu'}
             under={trend.uppfoljningForfallen ? 'Dags att väga och hullbedöma' : '4 veckor efter senaste mätning'}
             markerad={trend.uppfoljningForfallen || !trend.nastaUppfoljning}
           />
@@ -52,7 +53,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
       </section>
 
       <div className="kolumner-lika">
-        <NyAnteckning hast={hast} idag={idag} onLaggTill={onLaggTill} />
+        <NyAnteckning idag={idag} onLaggTill={onLaggTill} />
         <AiAnalys hast={hast} poster={poster} trend={trend} aktuellPlan={aktuellPlan} />
       </div>
 
@@ -62,7 +63,9 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
         <ol className="tidslinje">
           {tidslinje.map((p) => (
             <li key={p.id}>
-              <div className="tid-datum">{p.datum}</div>
+              <time className="tid-datum" dateTime={p.datum}>
+                {datum(p.datum)}
+              </time>
               <div className="tid-innehall">
                 {(p.viktKg !== undefined || p.hull !== undefined) && (
                   <div className="tid-matt">
@@ -100,11 +103,9 @@ function Trendruta({ rubrik, varde, under, markerad }: { rubrik: string; varde: 
 }
 
 function NyAnteckning({
-  hast,
   idag,
   onLaggTill,
 }: {
-  hast: Hastprofil
   idag: string
   onLaggTill: (post: Journalpost, uppdateraProfil: boolean) => void
 }) {
@@ -139,7 +140,7 @@ function NyAnteckning({
         </label>
         <label className="falt">
           <span className="falt-label">Vikt (kg)</span>
-          <input type="number" value={vikt} placeholder={String(hast.viktKg)} onChange={(e) => setVikt(e.target.value)} />
+          <input type="number" inputMode="decimal" value={vikt} onChange={(e) => setVikt(e.target.value)} />
         </label>
         <label className="falt">
           <span className="falt-label">Hull</span>
@@ -157,7 +158,7 @@ function NyAnteckning({
         <span className="falt-label">Vad har du sett?</span>
         <textarea
           rows={3}
-          placeholder="T.ex. piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg"
+          placeholder="Till exempel: piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg…"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

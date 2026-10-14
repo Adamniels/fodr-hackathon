@@ -24,6 +24,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
   const [fel, setFel] = useState<string | null>(null)
   const [anmarkningar, setAnmarkningar] = useState<string[]>([])
   const [filnamn, setFilnamn] = useState<string | null>(null)
+  const [draOver, setDraOver] = useState(false)
 
   async function laddaUpp(fil: File) {
     setLaddar(true)
@@ -50,36 +51,59 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
   }
 
   return (
-    <section className="kort">
-      <h2>Grovfoderanalysen för {hast.namn}</h2>
-      <p className="ingress">PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.</p>
+    <section className="analys-sida">
+      <p className="ingress">
+        Ladda upp analysen av {hast.namn}s grovfoder. Fodr läser av värdena, och du ser allt som lästes ut och kan rätta det.
+      </p>
 
-      <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
+      <label
+        className={`uppladdning ${laddar ? 'laddar' : ''} ${draOver ? 'dra-over' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDraOver(true)
+        }}
+        onDragLeave={() => setDraOver(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDraOver(false)
+          const fil = e.dataTransfer.files?.[0]
+          if (fil && !laddar) laddaUpp(fil)
+        }}
+      >
         <input
+          className="visuellt-dold"
           type="file"
           accept="application/pdf,image/png,image/jpeg,image/webp"
           onChange={(e) => e.target.files?.[0] && laddaUpp(e.target.files[0])}
           disabled={laddar}
         />
-        {laddar ? (
-          <span>Läser {filnamn}…</span>
-        ) : (
-          <span>
-            <strong>Välj analysrapport</strong> eller dra hit den
-          </span>
-        )}
+        <span aria-live="polite">
+          {laddar ? (
+            <>Läser {filnamn}…</>
+          ) : (
+            <>
+              <strong>Välj analysrapport</strong> eller släpp filen här
+              <small>PDF eller foto, från vilket labb som helst</small>
+            </>
+          )}
+        </span>
       </label>
-      <div className="exempel">
-        Inget underlag till hands?{' '}
+      <p className="exempel">
+        Har du ingen analys till hands?{' '}
         <button className="lank" onClick={() => onAnalys(analysKomplett, [])}>
-          Exempel: komplett analys
+          Använd en exempelanalys
         </button>{' '}
-        ·{' '}
+        eller{' '}
         <button className="lank" onClick={() => onAnalys(analysBas, [])}>
-          Exempel: basanalys
+          en basanalys utan mineraler
         </button>
-      </div>
-      {fel && <div className="ruta fel">{fel}</div>}
+        .
+      </p>
+      {fel && (
+        <p className="fel-rad" role="alert">
+          {fel}
+        </p>
+      )}
 
       {analys && (
         <>
@@ -133,6 +157,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                     <td>{etikett(k)}</td>
                     <td>
                       <input
+                        aria-label={`${etikett(k)}, ${analysEnhet(k)}`}
                         className="smal"
                         value={v ?? ''}
                         placeholder="–"
@@ -163,8 +188,11 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
             </div>
           )}
           <div className="atgardsrad">
+            {analys.perKgTs.energi === undefined && (
+              <span className="villkor">Energin saknas. Fyll i den för att räkna fram en plan.</span>
+            )}
             <button className="knapp" onClick={onVidare} disabled={analys.perKgTs.energi === undefined}>
-              Räkna fram foderplan →
+              Visa foderplanen
             </button>
           </div>
         </>

@@ -1,5 +1,20 @@
 import { useState } from 'react'
 import { DEMOKONTO, loggaIn, type Anvandare } from '../auth'
+import { analysKomplett, demoHast } from '../data/exempel'
+import produkterJson from '../data/products.json'
+import { byggBoxkort } from '../domain/boxkort'
+import { kostnadPerManad } from '../domain/intake'
+import { skapaPlan } from '../domain/plan'
+import type { Produkt } from '../domain/types'
+import { Boxkort } from './Boxkort'
+
+// Exemplet på startsidan räknas fram av samma motor som i appen.
+const exempelPlan = skapaPlan(demoHast, analysKomplett, produkterJson as Produkt[])
+const exempelKort = byggBoxkort(exempelPlan, 'hosilage')
+const exempelKostnad = [...exempelPlan.behallnaFoder, ...(exempelPlan.urval?.poster ?? [])].reduce(
+  (s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag),
+  0,
+)
 
 export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
   const [lage, setLage] = useState<'logga_in' | 'skapa'>('logga_in')
@@ -21,14 +36,15 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
   return (
     <div className="login">
       <section className="login-varumarke">
-        <div className="logga stor">Krubba</div>
-        <p className="login-slogan">Från labbrapport till rätt foder i krubban.</p>
-        <ul className="login-punkter">
-          <li>Ladda upp grovfoderanalysen, PDF eller foto</li>
-          <li>Behov räknade enligt SLU:s rekommendationer</li>
-          <li>Inköpslista med gram per dag och kronor per månad</li>
-          <li>En journal som följer hästen över tid</li>
-        </ul>
+        <div className="logga">Fodr</div>
+        <h1 className="login-rubrik">Från foderanalys till boxkort.</h1>
+        <p className="login-text">
+          Ladda upp grovfoderanalysen och beskriv hästen. Fodr räknar behovet enligt SLU:s rekommendationer och
+          föreslår svenska produkter, i gram per mål och kronor per månad.
+        </p>
+        <div className="login-exempel">
+          <Boxkort namn="Sixten" datum="14 oktober 2026" kort={exempelKort} kostnadPerManad={exempelKostnad} kostnadIdag={exempelPlan.nulageKostnadPerManad} />
+        </div>
       </section>
 
       <section className="login-kort">

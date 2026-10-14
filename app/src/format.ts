@@ -28,3 +28,10 @@ export const HULL_TEXT: Record<number, string> = {
   8: 'Mycket fet',
   9: 'Extremt fet',
 }
+
+/** Kort produktnamn för boxkortet: utan kategoriord först och förpackningsstorlek sist. */
+export function kortProduktnamn(namn: string): string {
+  return namn
+    .replace(/^(Mineralfoder|Fodertillskott|Hästfoder)\s+/i, '')
+    .replace(/\s+\d+(?:[,.]\d+)?\s*(?:kg|g|l|ml)$/i, '')
+}

@@ -4,17 +4,6 @@ import { RASER, hittaRas } from '../domain/raser'
 import { viktFranBrostomfang } from '../domain/slu'
 import { INGREDIENSER, type Halsa, type Hastprofil, type Hasttyp, type Kon, type Miljo, type Prestanda, type Produkt } from '../domain/types'
 import { HULL_TEXT } from '../format'
-import { nyHast } from '../storage'
-
-interface Props {
-  hastar: Hastprofil[]
-  vald: Hastprofil | undefined
-  produkter: Produkt[]
-  onValj: (id: string) => void
-  onAndra: (h: Hastprofil) => void
-  onNy: (h: Hastprofil) => void
-  onVidare: () => void
-}
 
 const PRESTANDA: [Prestanda, string][] = [
   ['fritid', 'Fritid, ridning och körning'],
@@ -32,40 +21,15 @@ const TYPER: [Hasttyp, string, string][] = [
   ['svarfodd', 'Svårfödd', 'Många fullblod'],
 ]
 
-export function HorseStep({ hastar, vald, produkter, onValj, onAndra, onNy, onVidare }: Props) {
-  return (
-    <div className="kolumner">
-      <aside className="hastlista">
-        <h3>Dina hästar</h3>
-        {hastar.length === 0 && <p className="liten">Inga hästar än.</p>}
-        {hastar.map((h) => (
-          <button key={h.id} className={`hastval ${h.id === vald?.id ? 'aktiv' : ''}`} onClick={() => onValj(h.id)}>
-            <strong>{h.namn || 'Namnlös'}</strong>
-            <span>
-              {h.alderAr} år · {h.viktKg} kg
-            </span>
-          </button>
-        ))}
-        <button className="knapp sekundar" onClick={() => onNy(nyHast())}>
-          + Ny häst
-        </button>
-      </aside>
-      {vald ? (
-        <Profilformular key={vald.id} hast={vald} produkter={produkter} onAndra={onAndra} onVidare={onVidare} />
-      ) : (
-        <section className="kort tomt">
-          <h2>Välkommen till Krubba</h2>
-          <p className="ingress">Börja med att lägga till din häst. Det tar ett par minuter.</p>
-          <button className="knapp" onClick={() => onNy(nyHast())}>
-            Lägg till din första häst
-          </button>
-        </section>
-      )}
-    </div>
-  )
-}
+const AVSNITT = [
+  { id: 'grund', namn: 'Grunduppgifter' },
+  { id: 'arbete', namn: 'Arbete' },
+  { id: 'miljo', namn: 'Miljö' },
+  { id: 'foder', namn: 'Foder i dag' },
+  { id: 'halsa', namn: 'Hälsa' },
+] as const
 
-function Profilformular({
+export function HorseStep({
   hast,
   produkter,
   onAndra,
@@ -84,144 +48,158 @@ function Profilformular({
       : null
 
   return (
-    <section className="kort profil">
-      <h2>{hast.namn || 'Ny häst'}</h2>
-      <p className="ingress">Grunddata styr beräkningen. Fyll i så noga du kan.</p>
+    <div className="profil-layout">
+      <nav className="innehall-index" aria-label="Profilens avsnitt">
+        {AVSNITT.map((a) => (
+          <a key={a.id} href={`#avsnitt-${a.id}`} onClick={(e) => {
+            e.preventDefault()
+            document.getElementById(`avsnitt-${a.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}>
+            {a.namn}
+          </a>
+        ))}
+      </nav>
 
-      <div className="grupp">
-        <Falt label="Namn">
-          <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
-        </Falt>
-        <Falt label="Ålder (år)">
-          <Siffra value={hast.alderAr} onChange={(v) => set({ alderAr: v })} />
-        </Falt>
-        <Falt label="Kön">
-          <select value={hast.kon} onChange={(e) => set({ kon: e.target.value as Kon })}>
-            <option value="sto">Sto</option>
-            <option value="valack">Valack</option>
-            <option value="hingst">Hingst</option>
-          </select>
-        </Falt>
-      </div>
+      <div className="profil">
+        <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
 
-      <Falt label="Ras" hjalp={rasHjalp(hast)}>
-        <select
-          value={hast.ras ?? ''}
-          onChange={(e) => {
-            const ras = hittaRas(e.target.value)
-            set({ ras: ras?.id, ...(ras ? { typ: ras.typ } : {}) })
-          }}
-        >
-          <option value="">Annan ras eller korsning</option>
-          {RASER.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.namn}
-            </option>
-          ))}
-        </select>
-      </Falt>
+        <Del id="grund" rubrik="Grunduppgifter" text="Vikt, hull och typ styr energibehovet mest.">
+          <div className="grupp">
+            <Falt label="Namn">
+              <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} autoComplete="off" />
+            </Falt>
+            <Falt label="Ålder (år)">
+              <Siffra value={hast.alderAr} onChange={(v) => set({ alderAr: v })} />
+            </Falt>
+            <Falt label="Kön">
+              <select value={hast.kon} onChange={(e) => set({ kon: e.target.value as Kon })}>
+                <option value="sto">Sto</option>
+                <option value="valack">Valack</option>
+                <option value="hingst">Hingst</option>
+              </select>
+            </Falt>
+          </div>
+          <Falt label="Ras" hjalp={rasHjalp(hast)}>
+            <select
+              value={hast.ras ?? ''}
+              onChange={(e) => {
+                const ras = hittaRas(e.target.value)
+                set({ ras: ras?.id, ...(ras ? { typ: ras.typ } : {}) })
+              }}
+            >
+              <option value="">Annan ras eller korsning</option>
+              {RASER.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.namn}
+                </option>
+              ))}
+            </select>
+          </Falt>
+          <Falt label="Typ" hjalp="Sätts av rasen men kan ändras. Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2)." grupp>
+            <div className="segment" role="radiogroup" aria-label="Typ">
+              {TYPER.map(([id, namn, hjalp]) => (
+                <button key={id} role="radio" aria-checked={hast.typ === id} className={hast.typ === id ? 'aktiv' : ''} onClick={() => set({ typ: id })}>
+                  {namn}
+                  <small>{hjalp}</small>
+                </button>
+              ))}
+            </div>
+          </Falt>
+          <div className="grupp">
+            <Falt label="Vikt (kg)">
+              <Siffra value={hast.viktKg} onChange={(v) => set({ viktKg: v })} />
+            </Falt>
+            <Falt label="Bröstomfång (cm)" hjalp="Om du saknar våg">
+              <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
+            </Falt>
+            <Falt label="Längd armbåge till sittben (cm)">
+              <input inputMode="numeric" value={matt.langd} onChange={(e) => setMatt({ ...matt, langd: e.target.value })} />
+            </Falt>
+          </div>
+          {uppskattadVikt && (
+            <p className="tips">
+              Uppskattad vikt {uppskattadVikt} kg enligt SLU:s formel (bröstomfång² × längd / 8900).{' '}
+              <button className="lank" onClick={() => set({ viktKg: uppskattadVikt })}>
+                Använd {uppskattadVikt} kg
+              </button>
+            </p>
+          )}
+          <Falt label={`Hull ${hast.hull}, ${HULL_TEXT[hast.hull].toLowerCase()}`} hjalp="SLU:s skala 1–9. 4–5 passar de flesta hästar.">
+            <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
+          </Falt>
+        </Del>
 
-      <Falt label="Typ" hjalp="Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras." grupp>
-        <div className="segment">
-          {TYPER.map(([id, namn, hjalp]) => (
-            <button key={id} className={hast.typ === id ? 'aktiv' : ''} onClick={() => set({ typ: id })} title={hjalp}>
-              {namn}
-              <small>{hjalp}</small>
-            </button>
-          ))}
-        </div>
-      </Falt>
+        <Del id="arbete" rubrik="Arbete" text="Gren och nivå sätter en lägsta nivå. Ridpassen används om de ger mer.">
+          <Falt label="Gren och nivå">
+            <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
+              {PRESTANDA.map(([id, text]) => (
+                <option key={id} value={id}>
+                  {text}
+                </option>
+              ))}
+            </select>
+          </Falt>
+          <div className="grupp">
+            <Falt label="Pass per vecka">
+              <Siffra value={hast.ridning?.passPerVecka ?? 0} onChange={(v) => set({ ridning: { ...ridning(hast), passPerVecka: v } })} />
+            </Falt>
+            <Falt label="Minuter per pass">
+              <Siffra value={hast.ridning?.minuterPerPass ?? 0} onChange={(v) => set({ ridning: { ...ridning(hast), minuterPerPass: v } })} />
+            </Falt>
+            <Falt label="Varav trav och galopp (min)">
+              <Siffra value={hast.ridning?.travGaloppMinPerPass ?? 0} onChange={(v) => set({ ridning: { ...ridning(hast), travGaloppMinPerPass: v } })} />
+            </Falt>
+          </div>
+        </Del>
 
-      <div className="grupp">
-        <Falt label="Vikt (kg)">
-          <Siffra value={hast.viktKg} onChange={(v) => set({ viktKg: v })} />
-        </Falt>
-        <Falt label="Bröstomfång (cm)" hjalp="Saknar du våg?">
-          <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
-        </Falt>
-        <Falt label="Längd armbåge–sittben (cm)">
-          <input inputMode="numeric" value={matt.langd} onChange={(e) => setMatt({ ...matt, langd: e.target.value })} />
-        </Falt>
-      </div>
-      {uppskattadVikt && (
-        <div className="tips">
-          Uppskattad vikt {uppskattadVikt} kg (SLU: bröstomfång² × längd / 8900).{' '}
-          <button className="lank" onClick={() => set({ viktKg: uppskattadVikt })}>
-            Använd
+        <Del id="miljo" rubrik="Miljö" text="Oklippta hästar ute utan täcke behöver mer energi när det är kallt.">
+          <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} onAndra={(miljo) => set({ miljo })} />
+        </Del>
+
+        <Del id="foder" rubrik="Foder i dag" text="Det hästen äter nu. Planen jämför med det här.">
+          <div className="grupp">
+            <Falt label="Grovfoder">
+              <select
+                value={hast.grovfoder.typ}
+                onChange={(e) => set({ grovfoder: { ...hast.grovfoder, typ: e.target.value as 'hosilage' | 'ho' } })}
+              >
+                <option value="hosilage">Hösilage</option>
+                <option value="ho">Hö</option>
+              </select>
+            </Falt>
+            <Falt label="Kg per dag, som det utfodras">
+              <Siffra value={hast.grovfoder.kgPerDag} steg={0.5} onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })} />
+            </Falt>
+          </div>
+          <Foderlista hast={hast} produkter={produkter} onAndra={onAndra} />
+        </Del>
+
+        <Del id="halsa" rubrik="Hälsa" text="Styr vilka produkter som föreslås och vilka råd planen ger.">
+          <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
+          <Falt label="Övrigt">
+            <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
+          </Falt>
+        </Del>
+
+        <div className="atgardsrad">
+          {!hast.namn && <span className="villkor">Ge hästen ett namn för att gå vidare.</span>}
+          <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
+            Fortsätt till analysen
           </button>
         </div>
-      )}
-
-      <Falt label={`Hull: ${hast.hull}, ${HULL_TEXT[hast.hull]}`} hjalp="SLU:s skala 1–9. 4–5 är lagom för de flesta.">
-        <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
-      </Falt>
-
-      <h3 className="rubrik">Arbete</h3>
-      <Falt label="Gren och nivå" hjalp="Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer.">
-        <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
-          {PRESTANDA.map(([id, text]) => (
-            <option key={id} value={id}>
-              {text}
-            </option>
-          ))}
-        </select>
-      </Falt>
-      <div className="grupp">
-        <Falt label="Pass per vecka">
-          <Siffra
-            value={hast.ridning?.passPerVecka ?? 0}
-            onChange={(v) => set({ ridning: { ...ridning(hast), passPerVecka: v } })}
-          />
-        </Falt>
-        <Falt label="Minuter per pass">
-          <Siffra
-            value={hast.ridning?.minuterPerPass ?? 0}
-            onChange={(v) => set({ ridning: { ...ridning(hast), minuterPerPass: v } })}
-          />
-        </Falt>
-        <Falt label="Varav trav och galopp (min)">
-          <Siffra
-            value={hast.ridning?.travGaloppMinPerPass ?? 0}
-            onChange={(v) => set({ ridning: { ...ridning(hast), travGaloppMinPerPass: v } })}
-          />
-        </Falt>
       </div>
+    </div>
+  )
+}
 
-      <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} onAndra={(miljo) => set({ miljo })} />
-
-      <h3 className="rubrik">Grovfoder och foder i dag</h3>
-      <div className="grupp">
-        <Falt label="Grovfoder">
-          <select
-            value={hast.grovfoder.typ}
-            onChange={(e) => set({ grovfoder: { ...hast.grovfoder, typ: e.target.value as 'hosilage' | 'ho' } })}
-          >
-            <option value="hosilage">Hösilage</option>
-            <option value="ho">Hö</option>
-          </select>
-        </Falt>
-        <Falt label="Kg per dag (som det utfodras)">
-          <Siffra
-            value={hast.grovfoder.kgPerDag}
-            steg={0.5}
-            onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
-          />
-        </Falt>
-      </div>
-      <Foderlista hast={hast} produkter={produkter} onAndra={onAndra} />
-
-      <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
-      <Falt label="Övrigt">
-        <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
-      </Falt>
-
-      <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
-
-      <div className="atgardsrad">
-        <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
-          Vidare till analysen →
-        </button>
-      </div>
+function Del({ id, rubrik, text, children }: { id: string; rubrik: string; text: string; children: React.ReactNode }) {
+  return (
+    <section className="del" id={`avsnitt-${id}`} aria-labelledby={`rubrik-${id}`}>
+      <header className="del-huvud">
+        <h2 id={`rubrik-${id}`}>{rubrik}</h2>
+        <p>{text}</p>
+      </header>
+      <div className="del-innehall">{children}</div>
     </section>
   )
 }
@@ -236,7 +214,6 @@ function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) =>
   const set = (patch: Partial<Miljo>) => onAndra({ ...miljo, ...patch })
   return (
     <>
-      <h3 className="rubrik">Miljö</h3>
       <div className="grupp">
         <Falt label="Hållning">
           <select value={miljo.hallning} onChange={(e) => set({ hallning: e.target.value as Miljo['hallning'] })}>
@@ -280,8 +257,6 @@ function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) =>
   const undvik = halsa.undvik ?? []
   return (
     <>
-      <h3 className="rubrik">Hälsa och känsligheter</h3>
-      <p className="falt-hjalp">Styr vilka produkter som föreslås och vilka råd planen ger.</p>
       <div className="kryss">
         {KANSLIGHETER.map(([nyckel, text]) => (
           <label key={nyckel}>
@@ -336,7 +311,7 @@ function Foderlista({ hast, produkter, onAndra }: { hast: Hastprofil; produkter:
         <div className="foderrad" key={i}>
           <input
             list="produktnamn"
-            placeholder="Sök produkt, t.ex. Krafft"
+            placeholder="Sök produkt, till exempel Krafft…"
             value={f.namn}
             className={f.produktId ? '' : 'okand-produkt'}
             title={f.produktId ? undefined : 'Finns inte i produktdatabasen och räknas inte med'}
@@ -433,12 +408,13 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
   return (
     <div className="ai-ruta">
       <div className="ai-rubrik">
-        <span className="ai-bricka">AI</span> Beskriv med egna ord så fyller vi i fälten
+        <h2>Beskriv hästen med egna ord</h2>
+        <p>Fodr fyller i fälten nedan och frågar om det som saknas. Du kan alltid ändra efteråt.</p>
       </div>
       <Falt label="Om hästen och vad den äter i dag">
         <textarea
           rows={3}
-          placeholder="T.ex. islandshäst på lösdrift, oklippt utan täcke, rids några gånger i veckan. Två fulla korgar hösilage om dagen och en liter pellets morgon och kväll"
+          placeholder="Till exempel: islandshäst på lösdrift, oklippt utan täcke, rids tre gånger i veckan. Två korgar hösilage om dagen och en liter pellets morgon och kväll…"
           value={foderText}
           onChange={(e) => setFoderText(e.target.value)}
         />
@@ -446,11 +422,12 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
       <Falt label="Hälsa och historik">
         <textarea
           rows={2}
-          placeholder="T.ex. hade fång för två år sedan, inga besvär nu"
+          placeholder="Till exempel: hade fång för två år sedan, inga besvär nu…"
           value={halsaText}
           onChange={(e) => setHalsaText(e.target.value)}
         />
       </Falt>
+      <div aria-live="polite">
       {fragor.length > 0 && (
         <div className="foljdfragor">
           {fragor.map((f) => (
@@ -460,7 +437,8 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
           ))}
         </div>
       )}
-      {fel && <div className="ruta fel">{fel}</div>}
+      {fel && <p className="fel-rad">{fel}</p>}
+      </div>
       <button
         className="knapp sekundar"
         disabled={laddar || (!foderText && !halsaText)}
@@ -468,7 +446,7 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
           kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))
         }
       >
-        {laddar ? 'Tolkar…' : fragor.length ? 'Svara' : 'Fyll i med AI'}
+        {laddar ? 'Fyller i…' : fragor.length ? 'Skicka svaren' : 'Fyll i profilen'}
       </button>
     </div>
   )

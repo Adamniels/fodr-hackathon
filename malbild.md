@@ -1,4 +1,4 @@
-# Krubba, målbild för hackathon-PoC
+# Fodr, målbild för hackathon-PoC
 
 Senast uppdaterad: 2026-10-14. Lag: två personer. Antagen tid: 4 timmar.
 
@@ -66,7 +66,7 @@ Källa för behoven är SLU Rapport 289, Utfodringsrekommendationer för häst (
 2. **Känsligheter** som styr produktvalet: fång, EMS och PPID; magsår; korsförlamning (PSSM); luftvägar; ingrediensallergi (spannmål, lusern, soja, melass); tandproblem. Proteinkänslighet hanteras som ingrediensallergi plus ett lägre proteintak. Produkter får ingredienslista och foderform.
 3. **Journal per häst.** Datum, vikt, hull och fritext, och varje foderplan sparas som en version. AI hittar mönster och flaggar när veterinär behövs. Koden räknar om planen.
 4. Väntar: dräktiga och digivande ston (om tid finns), unghästar och bete (efter hackathon). Journalen sparas lokalt i webbläsaren.
-5. **Konton (mock).** Inloggning med e-post, lösenordet kontrolleras inte. Hästar och journal sparas per användare i webbläsaren. Demokontot (demo@krubba.se) har Sixten och Pysen. All lagring går genom `auth.ts` och `storage.ts`, så att riktig inloggning och databas kan kopplas in där efter hackathon. En häst ska då kunna ha flera användare, för stallet.
+5. **Konton (mock).** Inloggning med e-post, lösenordet kontrolleras inte. Hästar och journal sparas per användare i webbläsaren. Demokontot (demo@fodr.se) har Sixten och Pysen. All lagring går genom `auth.ts` och `storage.ts`, så att riktig inloggning och databas kan kopplas in där efter hackathon. En häst ska då kunna ha flera användare, för stallet.
 
 ## Produkt- och testdata (2026-10-14)
 

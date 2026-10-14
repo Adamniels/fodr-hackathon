@@ -1,0 +1,224 @@
+/*
+ * Teman. Varje tema sätter samma semantiska variabler; komponenterna använder bara variablerna.
+ * Nytt tema: kopiera ett block, byt namn i [data-tema] och lägg till det i src/teman.ts.
+ *
+ * --primar        sidhuvud, hjälteyta, inloggningssidans vänsterdel
+ * --pa-primar*    text och linjer ovanpå --primar
+ * --accent        framhävning ovanpå --primar (logga, belopp, avatar)
+ * --accent-text   framhävning på ljus yta (länkar, AI-ram)
+ * --knapp-*       primärknapp; --knapp-sek är text och ram på sekundärknapp
+ * --markering     vald häst, valt segment, reglage
+ */
+
+/* Rödklöver: klövern i blandvallen. Aubergine och klöverrosa. Standard. */
+:root,
+:root[data-tema='rodklover'] {
+  color-scheme: light;
+  --bg: #f7f2f5;
+  --yta: #ffffff;
+  --yta-2: #fbf6f9;
+  --falt: #ffffff;
+  --text: #2a1c26;
+  --text-2: #6e5c68;
+  --linje: #e8dce3;
+  --linje-svag: #f1e9ee;
+  --primar: #3a1f33;
+  --pa-primar: #fff5fa;
+  --pa-primar-2: rgba(255, 245, 250, 0.78);
+  --pa-primar-svag: rgba(255, 245, 250, 0.14);
+  --pa-primar-linje: rgba(255, 245, 250, 0.26);
+  --pa-primar-ok: #a8e0b4;
+  --accent: #f2a7c6;
+  --accent-text: #a1285c;
+  --knapp-bg: #3a1f33;
+  --knapp-text: #fff5fa;
+  --knapp-sek: #3a1f33;
+  --markering: #a1285c;
+  --markering-bg: #f8e4ee;
+  --brist: #b42318;
+  --brist-bg: #fdeceb;
+  --ok: #2f6b3c;
+  --ok-bg: #e6f2e8;
+  --varn: #9a6200;
+  --varn-bg: #fdf3dc;
+  --varn-text: #5c3d06;
+  --okand: #6b6470;
+  --okand-bg: #f0ebef;
+  --fokus: #a1285c;
+}
+
+/* Faluröd: den svenska ladan. Faluröd med vita knutar, sotbrun text. */
+:root[data-tema='falurod'] {
+  color-scheme: light;
+  --bg: #f2efed;
+  --yta: #ffffff;
+  --yta-2: #f8f5f3;
+  --falt: #ffffff;
+  --text: #261a16;
+  --text-2: #6b5d57;
+  --linje: #e2dad5;
+  --linje-svag: #eee8e4;
+  --primar: #8b2e22;
+  --pa-primar: #ffffff;
+  --pa-primar-2: rgba(255, 255, 255, 0.8);
+  --pa-primar-svag: rgba(255, 255, 255, 0.16);
+  --pa-primar-linje: rgba(255, 255, 255, 0.32);
+  --pa-primar-ok: #c9f0d1;
+  --accent: #ffe2b0;
+  --accent-text: #8b2e22;
+  --knapp-bg: #8b2e22;
+  --knapp-text: #ffffff;
+  --knapp-sek: #8b2e22;
+  --markering: #8b2e22;
+  --markering-bg: #f8e9e6;
+  /* Brist i bränd orange så att den inte förväxlas med varumärkets röda. */
+  --brist: #c2410c;
+  --brist-bg: #fff1e8;
+  --ok: #2f6b3c;
+  --ok-bg: #e6f2e8;
+  --varn: #9a6200;
+  --varn-bg: #fdf3dc;
+  --varn-text: #5c3d06;
+  --okand: #6b6460;
+  --okand-bg: #efebe8;
+  --fokus: #8b2e22;
+}
+
+/* Ljung: svensk ljunghed. Plommon och ljunglila. */
+:root[data-tema='ljung'] {
+  color-scheme: light;
+  --bg: #f4f2f8;
+  --yta: #ffffff;
+  --yta-2: #f8f6fb;
+  --falt: #ffffff;
+  --text: #241f2e;
+  --text-2: #635c70;
+  --linje: #e1dcea;
+  --linje-svag: #eeebf3;
+  --primar: #2e2540;
+  --pa-primar: #f5f1fc;
+  --pa-primar-2: rgba(245, 241, 252, 0.78);
+  --pa-primar-svag: rgba(245, 241, 252, 0.14);
+  --pa-primar-linje: rgba(245, 241, 252, 0.26);
+  --pa-primar-ok: #a8e0b4;
+  --accent: #c7a6f0;
+  --accent-text: #6b44a0;
+  --knapp-bg: #2e2540;
+  --knapp-text: #f5f1fc;
+  --knapp-sek: #2e2540;
+  --markering: #6b44a0;
+  --markering-bg: #eee6f8;
+  --brist: #b42318;
+  --brist-bg: #fdeceb;
+  --ok: #2f6b3c;
+  --ok-bg: #e6f2e8;
+  --varn: #9a6200;
+  --varn-bg: #fdf3dc;
+  --varn-text: #5c3d06;
+  --okand: #67626f;
+  --okand-bg: #eeecf2;
+  --fokus: #6b44a0;
+}
+
+/* Mässing: läder och mässingsbeslag i sadelkammaren. Mörkt tema. */
+:root[data-tema='massing'] {
+  color-scheme: dark;
+  --bg: #17120e;
+  --yta: #221b16;
+  --yta-2: #2b231d;
+  --falt: #1b1511;
+  --text: #f1e7da;
+  --text-2: #b9a996;
+  --linje: #3a3029;
+  --linje-svag: #2e2620;
+  --primar: #0e0a07;
+  --pa-primar: #f1e7da;
+  --pa-primar-2: rgba(241, 231, 218, 0.75);
+  --pa-primar-svag: rgba(241, 231, 218, 0.1);
+  --pa-primar-linje: rgba(241, 231, 218, 0.2);
+  --pa-primar-ok: #8fd19e;
+  --accent: #d4a24c;
+  --accent-text: #e0b562;
+  --knapp-bg: #d4a24c;
+  --knapp-text: #1a120b;
+  --knapp-sek: #e0b562;
+  --markering: #d4a24c;
+  --markering-bg: #33281a;
+  --brist: #f28b7d;
+  --brist-bg: #3a1d18;
+  --ok: #8fd19e;
+  --ok-bg: #1b2e20;
+  --varn: #e8c06a;
+  --varn-bg: #33270f;
+  --varn-text: #f1dda9;
+  --okand: #a79e93;
+  --okand-bg: #2a241f;
+  --fokus: #e0b562;
+}
+
+/* Granit: neutral bas. Varianterna nedan byter bara accenten. */
+:root[data-tema^='granit'] {
+  color-scheme: light;
+  --bg: #f4f4f2;
+  --yta: #ffffff;
+  --yta-2: #f8f8f6;
+  --falt: #ffffff;
+  --text: #1f2326;
+  --text-2: #5f666c;
+  --linje: #e0e1dd;
+  --linje-svag: #ececea;
+  --primar: #262b30;
+  --pa-primar: #f6f6f4;
+  --pa-primar-2: rgba(246, 246, 244, 0.78);
+  --pa-primar-svag: rgba(246, 246, 244, 0.12);
+  --pa-primar-linje: rgba(246, 246, 244, 0.24);
+  --pa-primar-ok: #a8e0b4;
+  --knapp-bg: #262b30;
+  --knapp-text: #f6f6f4;
+  --knapp-sek: #262b30;
+  --brist: #b42318;
+  --brist-bg: #fdeceb;
+  --ok: #2f6b3c;
+  --ok-bg: #e6f2e8;
+  --varn: #8a6200;
+  --varn-bg: #fdf3dc;
+  --varn-text: #5c3d06;
+  --okand: #63686c;
+  --okand-bg: #eeeeec;
+}
+
+/* Halm: ligger nära varningsfärgen. */
+:root[data-tema='granit'] {
+  --accent: #f2c14e;
+  --accent-text: #8a6200;
+  --markering: #262b30;
+  --markering-bg: #f7efd9;
+  --fokus: #262b30;
+}
+
+/* Klöver: skiljer sig från alla statusfärger. */
+:root[data-tema='granit-klover'] {
+  --accent: #f0a3c4;
+  --accent-text: #a1285c;
+  --markering: #a1285c;
+  --markering-bg: #f8e4ee;
+  --fokus: #a1285c;
+}
+
+/* Ljung: lugnare, också skild från statusfärgerna. */
+:root[data-tema='granit-ljung'] {
+  --accent: #c7a6f0;
+  --accent-text: #6b44a0;
+  --markering: #6b44a0;
+  --markering-bg: #eee6f8;
+  --fokus: #6b44a0;
+}
+
+/* Havtorn: mest energi, men nära varningsfärgen. */
+:root[data-tema='granit-havtorn'] {
+  --accent: #f59a2f;
+  --accent-text: #a85400;
+  --markering: #a85400;
+  --markering-bg: #fdebd5;
+  --fokus: #a85400;
+}

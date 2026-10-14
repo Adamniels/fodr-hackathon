@@ -3,11 +3,12 @@
 
 import { DEMOKONTO } from './auth'
 import { demoHast, demoJournal, ponny } from './data/exempel'
+import type { Omrakning } from './domain/analysis'
 import type { Journalpost } from './domain/journal'
-import type { Hastprofil } from './domain/types'
+import type { Grovfoderanalys, Hastprofil } from './domain/types'
 
 // v2: profilen fick ras, prestanda och miljö.
-const nyckel = (anvandarId: string) => `krubba.hastar.v2.${anvandarId}`
+const nyckel = (anvandarId: string) => `fodr.hastar.v2.${anvandarId}`
 
 export function laddaHastar(anvandarId: string): Hastprofil[] {
   try {
@@ -47,7 +48,7 @@ export function nyHast(): Hastprofil {
 }
 
 // Journal per användare: häst-id till poster.
-const journalNyckel = (anvandarId: string) => `krubba.journal.v1.${anvandarId}`
+const journalNyckel = (anvandarId: string) => `fodr.journal.v1.${anvandarId}`
 
 export function laddaJournal(anvandarId: string): Record<string, Journalpost[]> {
   try {
@@ -64,5 +65,30 @@ export function sparaJournal(anvandarId: string, journal: Record<string, Journal
     localStorage.setItem(journalNyckel(anvandarId), JSON.stringify(journal))
   } catch {
     // Ignorera, journalen finns kvar i minnet under sessionen.
+  }
+}
+
+// Senaste analys per häst, så att analys och plan finns kvar efter omladdning.
+export interface SparadAnalys {
+  analys: Grovfoderanalys
+  omrakningar: Omrakning[]
+}
+const analysNyckel = (anvandarId: string) => `fodr.analyser.v1.${anvandarId}`
+
+export function laddaAnalyser(anvandarId: string): Record<string, SparadAnalys> {
+  try {
+    const raw = localStorage.getItem(analysNyckel(anvandarId))
+    if (raw) return JSON.parse(raw) as Record<string, SparadAnalys>
+  } catch {
+    // Lagring otillgänglig eller trasig.
+  }
+  return {}
+}
+
+export function sparaAnalyser(anvandarId: string, analyser: Record<string, SparadAnalys>) {
+  try {
+    localStorage.setItem(analysNyckel(anvandarId), JSON.stringify(analyser))
+  } catch {
+    // Ignorera, analyserna finns kvar i minnet under sessionen.
   }
 }

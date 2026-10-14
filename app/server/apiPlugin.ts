@@ -35,7 +35,7 @@ const ROUTES: Record<string, (body: unknown) => Promise<unknown>> = {
 
 export function apiPlugin(): Plugin {
   return {
-    name: 'krubba-api',
+    name: 'fodr-api',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const route = req.url ? ROUTES[req.url] : undefined
