@@ -1,5 +1,6 @@
 // Syntetiska testfall. Påhittade hästar och analyser med realistiska värden, inga verkliga personer.
 
+import type { Journalpost } from '../domain/journal'
 import type { Grovfoderanalys, Hastprofil } from '../domain/types'
 
 export const demoHast: Hastprofil = {
@@ -81,4 +82,40 @@ export const analysHo: Grovfoderanalys = {
   tsProcent: 84.1,
   askaGPerKgTs: 53,
   perKgTs: { energi: 8.4, smbRp: 44, socker: 122, ca: 3.52, p: 1.83, mg: 1.31, na: 0.31, fe: 107, mn: 73, zn: 22, cu: 5 },
+}
+
+/** Demojournaler per häst-id. Sixtens sista anteckning ska få AI:n att flagga veterinär (ömma hovar och fånghistorik). */
+export const demoJournal: Record<string, Journalpost[]> = {
+  'demo-sixten': [
+    {
+      id: 'demo-1',
+      datum: '2026-08-31',
+      viktKg: 570,
+      hull: 8,
+      text: 'Startar bantning efter samtal med veterinären. Tog bort havren, behåller pelletsen tills vidare. Han är tjock över manken och svansroten.',
+    },
+    {
+      id: 'demo-2',
+      datum: '2026-09-28',
+      viktKg: 558,
+      hull: 7,
+      text: 'Bytte till nya hösilagebalar förra veckan. Lite lös i magen första dagarna, nu bra igen. Pigg i ridningen.',
+    },
+    {
+      id: 'demo-3',
+      datum: '2026-10-12',
+      viktKg: 550,
+      hull: 7,
+      text: 'Lite öm på framhovarna efter uteritt på grusväg i helgen, gick lite stelt i hagen på morgonen. Annars glad.',
+    },
+  ],
+  'demo-pysen': [
+    {
+      id: 'demo-4',
+      datum: '2026-10-01',
+      viktKg: 280,
+      hull: 5,
+      text: 'Flyttade ut på lösdrift med flocken. Fryser inte, men äter mycket hö.',
+    },
+  ],
 }

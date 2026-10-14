@@ -2,7 +2,8 @@
 // bytas mot API-anrop när riktiga konton och en databas kommer.
 
 import { DEMOKONTO } from './auth'
-import { demoHast, ponny } from './data/exempel'
+import { demoHast, demoJournal, ponny } from './data/exempel'
+import type { Journalpost } from './domain/journal'
 import type { Hastprofil } from './domain/types'
 
 // v2: profilen fick ras, prestanda och miljö.
@@ -42,5 +43,26 @@ export function nyHast(): Hastprofil {
     halsa: { fang: false, ems: false, ovrigt: '' },
     grovfoder: { typ: 'hosilage', kgPerDag: 10 },
     nuvarandeFoder: [],
+  }
+}
+
+// Journal per användare: häst-id till poster.
+const journalNyckel = (anvandarId: string) => `krubba.journal.v1.${anvandarId}`
+
+export function laddaJournal(anvandarId: string): Record<string, Journalpost[]> {
+  try {
+    const raw = localStorage.getItem(journalNyckel(anvandarId))
+    if (raw) return JSON.parse(raw) as Record<string, Journalpost[]>
+  } catch {
+    // Lagring otillgänglig eller trasig.
+  }
+  return anvandarId === DEMOKONTO.id ? demoJournal : {}
+}
+
+export function sparaJournal(anvandarId: string, journal: Record<string, Journalpost[]>) {
+  try {
+    localStorage.setItem(journalNyckel(anvandarId), JSON.stringify(journal))
+  } catch {
+    // Ignorera, journalen finns kvar i minnet under sessionen.
   }
 }

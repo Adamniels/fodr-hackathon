@@ -54,3 +54,12 @@ export const tolkaProfil = (body: {
 }) => post<ProfilTolkning>('/api/profil', body)
 
 export const forklaraPlan = (underlag: unknown) => post<{ text: string }>('/api/forklaring', underlag)
+
+export interface JournalAnalys {
+  sammanfattning: string
+  monster: { iakttagelse: string; mojligKoppling: string | null; datum: string | null }[]
+  veterinar: { behovs: boolean; skal: string | null }
+  nastaSteg: string[]
+}
+
+export const analyseraJournal = (underlag: unknown) => post<JournalAnalys>('/api/journal', underlag)

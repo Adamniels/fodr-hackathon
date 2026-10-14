@@ -4,7 +4,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import Anthropic from '@anthropic-ai/sdk'
 import type { Plugin } from 'vite'
-import { forklaraPlan, lasAnalys, tolkaProfil } from './ai'
+import { analyseraJournal, forklaraPlan, lasAnalys, tolkaProfil } from './ai'
 
 const MAX_BODY_BYTES = 20 * 1024 * 1024
 
@@ -30,6 +30,7 @@ const ROUTES: Record<string, (body: unknown) => Promise<unknown>> = {
   '/api/analys': (b) => lasAnalys(b as Parameters<typeof lasAnalys>[0]),
   '/api/profil': (b) => tolkaProfil(b as Parameters<typeof tolkaProfil>[0]),
   '/api/forklaring': async (b) => ({ text: await forklaraPlan(b) }),
+  '/api/journal': (b) => analyseraJournal(b),
 }
 
 export function apiPlugin(): Plugin {

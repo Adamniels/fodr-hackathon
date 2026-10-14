@@ -15,7 +15,17 @@ const STATUS: Record<Status, [string, string]> = {
   ej_krav: ['', 'okand'],
 }
 
-export function PlanStep({ hast, analys, plan }: { hast: Hastprofil; analys: Grovfoderanalys; plan: Plan }) {
+export function PlanStep({
+  hast,
+  analys,
+  plan,
+  onSparaIJournal,
+}: {
+  hast: Hastprofil
+  analys: Grovfoderanalys
+  plan: Plan
+  onSparaIJournal: () => void
+}) {
   const [forklaring, setForklaring] = useState<string | null>(null)
   const [forklaringFel, setForklaringFel] = useState<string | null>(null)
 
@@ -173,6 +183,11 @@ export function PlanStep({ hast, analys, plan }: { hast: Hastprofil; analys: Gro
           ) : (
             <p>Inga tillskott behövs utöver grovfodret.</p>
           )}
+          <div className="atgardsrad">
+            <button className="knapp sekundar" onClick={onSparaIJournal}>
+              Spara planen i journalen
+            </button>
+          </div>
           {plan.alternativ && (
             <p className="alternativ">
               Alternativ:{' '}

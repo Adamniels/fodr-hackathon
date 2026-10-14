@@ -202,3 +202,17 @@ input.smal { width: 90px; border: 1px solid var(--linje); border-radius: 6px; pa
 .bortvalda { margin-top: 12px; font-size: 14px; color: var(--text-2); }
 .bortvalda summary { cursor: pointer; font-weight: 600; }
 .bortvalda ul { margin: 8px 0 0; padding-left: 18px; }
+
+.trendrad { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 8px; }
+.trendruta { display: flex; flex-direction: column; gap: 2px; background: var(--gradde); border-radius: 10px; padding: 14px 16px; }
+.trendruta strong { font-family: 'Fraunces', serif; font-size: 24px; }
+.trendruta.markerad { background: var(--varn-bg); box-shadow: inset 4px 0 0 var(--guld); }
+.tidslinje { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.tidslinje li { display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid #efe8d8; }
+.tid-datum { font-weight: 700; color: var(--text-2); }
+.tid-innehall p { margin: 6px 0 0; line-height: 1.5; }
+.tid-matt { display: flex; gap: 6px; }
+.tid-plan { margin-top: 6px; background: var(--ok-bg); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+.monster { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.monster li span.liten { display: block; }
+@media (max-width: 640px) { .tidslinje li { grid-template-columns: 1fr; gap: 4px; } }

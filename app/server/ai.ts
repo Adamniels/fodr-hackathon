@@ -126,6 +126,7 @@ Du får fritext om hästen (ras, arbete, miljö), vad den äter i dag och om hä
 - Matcha bara mot produktlistan när det tydligt är samma produkt.
 - Grovfoder (hö, hösilage) hör inte till nuvarandeFoder, utan till grovfoderKgPerDag.
 - Känsligheter sätts bara till true när texten tydligt säger det. Gissa inte diagnoser.
+- Lösdrift betyder ute dygnet runt: sätt timmarUtePerDag till 24 och fråga inte om det.
 - Fråga bara om sådant som påverkar foderplanen. Inga följdfrågor om allt är tydligt.
 Svara på svenska.`
 
@@ -164,7 +165,8 @@ Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan kla
 - Nämn kort det viktigaste under omGrovfodret om det påverkar hästen.
 - Om hästen har känsligheter: säg i en mening hur planen tagit hänsyn till dem.
 - Om det finns varningar om fång, EMS eller sjukdom: avsluta med att rekommendera kontakt med veterinär.
-- Inga förkortningar utan förklaring, inga tabeller, högst 170 ord, 2–4 korta stycken.`
+- Inga förkortningar utan förklaring, inga tabeller.
+- Högst 120 ord i högst tre korta stycken: läget i dag, förslaget och varför, och det hästägaren ska tänka på. Hellre färre siffror än fler.`
 
 export async function forklaraPlan(underlag: unknown): Promise<string> {
   const svar = await anthropic().messages.create({
@@ -185,4 +187,43 @@ function kravSvar<T extends { stop_reason: string | null }>(svar: T): T {
   if (svar.stop_reason === 'refusal') throw new Error('Modellen avböjde att svara på förfrågan.')
   if (svar.stop_reason === 'max_tokens') throw new Error('Svaret blev avklippt. Försök igen.')
   return svar
+}
+
+const JournalSchema = z.object({
+  sammanfattning: z.string().describe('Högst 60 ord om hur det gått över tid'),
+  monster: z
+    .array(
+      z.object({
+        iakttagelse: z.string(),
+        mojligKoppling: z.string().nullable().describe('T.ex. ett foderbyte eller en planändring nära i tid'),
+        datum: z.string().nullable(),
+      }),
+    )
+    .describe('Högst tre mönster eller samband i journalen'),
+  veterinar: z.object({
+    behovs: z.boolean(),
+    skal: z.string().nullable(),
+  }),
+  nastaSteg: z.array(z.string()).describe('Högst tre konkreta saker för ägaren att göra eller följa upp'),
+})
+export type JournalSvar = z.infer<typeof JournalSchema>
+
+const JOURNAL_SYSTEM = `Du läser en hästs foderjournal åt ägaren och letar mönster över tid.
+Du får hästens profil, journalposterna i datumordning, trenden som redan är beräknad och den aktuella foderplanen.
+- Koppla iakttagelser till foderbyten eller planändringar nära i tid, men skriv "kan hänga ihop" och aldrig att något orsakat något.
+- Ge aldrig doser, gram eller nya foderstater. Planen räknas fram separat enligt SLU.
+- Ställ aldrig diagnoser.
+- Sätt veterinar.behovs till true vid tecken som kan vara allvarliga: ömhet i hovar eller stel gång (särskilt vid fånghistorik, EMS eller PPID), kolik, snabb avmagring, aptitförlust, feber, upprepad lös mage eller hosta som inte går över. Förklara kort varför.
+- Nästa steg ska vara praktiska, till exempel när hästen ska vägas eller vad ägaren ska anteckna.
+Svara på enkel svenska.`
+
+export async function analyseraJournal(underlag: unknown): Promise<JournalSvar> {
+  const svar = await anthropic().messages.parse({
+    model: MODEL,
+    max_tokens: 8000,
+    system: JOURNAL_SYSTEM,
+    output_config: { effort: 'medium', format: zodOutputFormat(JournalSchema) },
+    messages: [{ role: 'user', content: JSON.stringify(underlag) }],
+  })
+  return kravSvar(svar).parsed_output!
 }

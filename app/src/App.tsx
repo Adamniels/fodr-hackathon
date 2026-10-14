@@ -4,7 +4,9 @@ import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from './domain/types'
 import type { Omrakning } from './domain/analysis'
 import { skapaPlan } from './domain/plan'
-import { laddaHastar, sparaHastar } from './storage'
+import { laddaHastar, laddaJournal, sparaHastar, sparaJournal } from './storage'
+import { ogonblickAvPlan, nyPost, type Journalpost } from './domain/journal'
+import { JournalStep } from './components/JournalStep'
 import { aktuellAnvandare, loggaUt, type Anvandare } from './auth'
 import { Login } from './components/Login'
 import { HorseStep } from './components/HorseStep'
@@ -12,7 +14,8 @@ import { AnalysisStep } from './components/AnalysisStep'
 import { PlanStep } from './components/PlanStep'
 
 const produkter = produkterJson as Produkt[]
-type Steg = 'hast' | 'analys' | 'plan'
+type Steg = 'hast' | 'analys' | 'plan' | 'journal'
+const idag = () => new Date().toISOString().slice(0, 10)
 
 export default function App() {
   const [anvandare, setAnvandare] = useState<Anvandare | null>(aktuellAnvandare)
@@ -36,7 +39,10 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
 
+  const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => laddaJournal(anvandare.id))
+
   useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
+  useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
   const hast = hastar.find((h) => h.id === valdId) ?? hastar[0]
 
   const plan = useMemo(() => {
@@ -49,6 +55,9 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
   }, [hast, analys])
 
   const uppdateraHast = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
+  const laggTillPost = (hastId: string, post: Journalpost) =>
+    setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
+  const planOgonblick = plan && 'ok' in plan && analys ? ogonblickAvPlan(plan.ok!, analys) : null
 
   return (
     <div className="app">
@@ -60,12 +69,13 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
               ['hast', '1', 'Hästen'],
               ['analys', '2', 'Analysen'],
               ['plan', '3', 'Foderplan'],
+              ['journal', '4', 'Journal'],
             ] as const
           ).map(([id, nr, text]) => (
             <button
               key={id}
               className={`steg-knapp ${steg === id ? 'aktiv' : ''}`}
-              disabled={(id === 'analys' && !hast) || (id === 'plan' && !analys)}
+              disabled={((id === 'analys' || id === 'journal') && !hast) || (id === 'plan' && !analys)}
               onClick={() => setSteg(id)}
             >
               <span className="nr">{nr}</span>
@@ -113,8 +123,30 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
           'fel' in plan ? (
             <div className="ruta fel">{plan.fel}</div>
           ) : (
-            <PlanStep hast={hast} analys={analys} plan={plan.ok!} />
+            <PlanStep
+              hast={hast}
+              analys={analys}
+              plan={plan.ok!}
+              onSparaIJournal={() => {
+                laggTillPost(hast.id, nyPost(idag(), { text: '', plan: planOgonblick! }))
+                setSteg('journal')
+              }}
+            />
           )
+        )}
+        {steg === 'journal' && hast && (
+          <JournalStep
+            hast={hast}
+            poster={journal[hast.id] ?? []}
+            aktuellPlan={planOgonblick}
+            idag={idag()}
+            onLaggTill={(post, uppdateraProfil) => {
+              laggTillPost(hast.id, post)
+              if (uppdateraProfil) {
+                uppdateraHast({ ...hast, viktKg: post.viktKg ?? hast.viktKg, hull: post.hull ?? hast.hull })
+              }
+            }}
+          />
         )}
       </main>
       <footer className="fot">

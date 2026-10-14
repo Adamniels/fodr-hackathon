@@ -83,3 +83,16 @@ Källa för behoven är SLU Rapport 289, Utfodringsrekommendationer för häst (
 - Känsligheter: fång, EMS, PPID och korsförlamning kräver lågt socker och stärkelse; magsår väljer bort spannmål och produkter med över 100 g stärkelse per kg; luftvägar väljer bort pulver; ingredienser att undvika väljs bort; proteinkänslighet väljer bort proteinfoder och varnar för mer än 30 % proteinöverskott. Tandproblem ger råd men påverkar inte urvalet.
 - Bortvalda urvalsprodukter redovisas med skäl. Dagens foder granskas mot samma regler.
 - Svaghet: ingredienserna härleds ur butikernas beskrivningar och missar mycket (t.ex. spannmål i de flesta pellets). Magsårsregeln fångar spannmålsfoder via stärkelsen, men allergifiltret gör det inte. Ingredienslistor för de vanligaste produkterna bör fyllas i för hand.
+
+## Journal (2026-10-14)
+
+- Per häst och användare: datum, vikt, hull, fritext och sparade planversioner. En ny mätning kan uppdatera profilen, och då räknar koden om planen.
+- Utan AI: trend i vikt och hull, viktförändring per vecka, uppföljning 4 veckor efter senaste mätning (SLU: bantning över mer än en månad, regelbunden hullbedömning) och varning vid nedgång över 1 % per vecka (branschpraxis, ej SLU).
+- Med AI: sammanfattning, mönster med möjlig koppling till foderbyten, veterinärflagga och högst tre nästa steg. AI:n ger aldrig doser eller diagnoser.
+- Demojournal för Sixten med tre anteckningar; den sista (ömma framhovar) ska ge veterinärflagga.
+
+## AI testad mot facit (2026-10-14)
+
+- Utläsning: 7 PDF:er och 3 mobilfoton gav alla värden inom 5 % av facit, inklusive omräkning från per kg vara. Enda avvikelsen (koppar i B06, 6,56 mot 7) beror på avrundning i facit. R00 avvisades korrekt som icke-analys. 3–9 s per rapport.
+- Profilfyllning, förklaring och journalanalys fungerar i appen. Journalanalysen flaggar veterinär för Sixtens ömma hovar. Förklaringen begränsad till högst 120 ord i tre stycken.
+- Kör om med `node scripts/utvardera-utlasning.mjs` efter ändringar i prompten eller modellen.
