@@ -66,3 +66,40 @@ export function sparaJournal(anvandarId: string, journal: Record<string, Journal
     // Ignorera, journalen finns kvar i minnet under sessionen.
   }
 }
+
+// Senaste AI-förklaringen per häst. Nyckeln är ett fingeravtryck av underlaget, så samma plan ger
+// samma text utan nytt API-anrop, medan en ändrad plan får en ny förklaring.
+const forklaringNyckel = (hastId: string) => `fodr.forklaring.v1.${hastId}`
+const forklaringMinne = new Map<string, { avtryck: string; text: string }>()
+
+export function laddaForklaring(hastId: string, avtryck: string): string | null {
+  let sparad = forklaringMinne.get(hastId)
+  if (!sparad) {
+    try {
+      const raw = localStorage.getItem(forklaringNyckel(hastId))
+      if (raw) sparad = JSON.parse(raw)
+    } catch {
+      // Lagring otillgänglig eller trasig.
+    }
+  }
+  return sparad?.avtryck === avtryck ? sparad.text : null
+}
+
+export function sparaForklaring(hastId: string, avtryck: string, text: string) {
+  forklaringMinne.set(hastId, { avtryck, text })
+  try {
+    localStorage.setItem(forklaringNyckel(hastId), JSON.stringify({ avtryck, text }))
+  } catch {
+    // Ignorera, texten finns kvar i minnet under sessionen.
+  }
+}
+
+/** Kort, stabilt fingeravtryck av en text (FNV-1a). */
+export function avtryck(text: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return `${(h >>> 0).toString(36)}-${text.length}`
+}

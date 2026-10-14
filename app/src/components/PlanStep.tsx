@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { forklaraPlan } from '../api'
 import { kostnadPerManad } from '../domain/intake'
 import type { Balansrad, Plan, Status } from '../domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '../domain/types'
 import { enhet, etikett, kr, tal } from '../format'
+import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
 
 const STATUS: Record<Status, [string, string]> = {
   brist: ['Brist', 'brist'],
@@ -26,20 +27,33 @@ export function PlanStep({
   plan: Plan
   onSparaIJournal: () => void
 }) {
-  const [forklaring, setForklaring] = useState<string | null>(null)
+  // Förklaringen sparas per häst och underlag. Samma plan visar den sparade texten i stället för
+  // att fråga Claude igen; bara en ändrad plan (eller knappen "Skriv om") ger ett nytt anrop.
+  const forklaringsUnderlag = useMemo(() => underlag(hast, analys, plan), [hast, analys, plan])
+  const nyckel = useMemo(() => avtryck(JSON.stringify(forklaringsUnderlag)), [forklaringsUnderlag])
+  const [forklaring, setForklaring] = useState<string | null>(() => laddaForklaring(hast.id, nyckel))
   const [forklaringFel, setForklaringFel] = useState<string | null>(null)
+  const [omgang, setOmgang] = useState(0)
 
   useEffect(() => {
+    const sparad = omgang === 0 ? laddaForklaring(hast.id, nyckel) : null
+    setForklaringFel(null)
+    if (sparad) {
+      setForklaring(sparad)
+      return
+    }
     let avbruten = false
     setForklaring(null)
-    setForklaringFel(null)
-    forklaraPlan(underlag(hast, analys, plan))
-      .then((r) => !avbruten && setForklaring(r.text))
+    forklaraPlan(forklaringsUnderlag)
+      .then((r) => {
+        sparaForklaring(hast.id, nyckel, r.text)
+        if (!avbruten) setForklaring(r.text)
+      })
       .catch((e) => !avbruten && setForklaringFel(e instanceof Error ? e.message : String(e)))
     return () => {
       avbruten = true
     }
-  }, [hast, analys, plan])
+  }, [hast.id, nyckel, forklaringsUnderlag, omgang])
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
@@ -51,91 +65,21 @@ export function PlanStep({
   const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map(kortNamn)
   const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
   const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
+  const ersatter = (id: string) => plan.byten.find((b) => b.till.produkt.id === id)?.fran.produkt.namn
 
   return (
     <div className="plan">
-      <section className="kort hjalte">
-        <div className="hjalte-text">
-          <h2>Foderplan för {hast.namn}</h2>
-          <p className="ingress">
-            Behov {tal(plan.behov.behov.energi!.min, 0)} MJ och {tal(plan.behov.behov.smbRp!.min, 0)} g smältbart
-            protein per dag, räknat på {tal(plan.behov.berakningsviktKg, 0)} kg
-            {plan.behov.arbetsMJ > 0 && <>, varav {tal(plan.behov.arbetsMJ, 1)} MJ för arbete</>}
-            {plan.behov.kylaMJ > 0 && <> och {tal(plan.behov.kylaMJ, 1)} MJ för kyla</>}.
-          </p>
-          {(nulageBrister.length > 0 || nulageEnergi.status === 'overskott') && (
-            <p className="nulage">
-              Med dagens foder:{' '}
-              {[
-                nulageEnergi.status === 'overskott' && `${energiProcent} % mer energi än behovet`,
-                nulageBrister.length > 0 && `för lite ${nulageBrister.join(', ')}`,
-              ]
-                .filter(Boolean)
-                .join(', och ')}
-              .
-            </p>
-          )}
-        </div>
-        <div className="kostnad">
-          <div className="kostnad-belopp">{kr(totalNy)}</div>
-          <div className="kostnad-text">per månad med förslaget</div>
+      <header className="plan-topp">
+        <h2>Foderplan för {hast.namn}</h2>
+        <div className="kostnadsrad" aria-label="Kostnad per månad">
+          <span className="kostnadsrad-belopp">{kr(totalNy)}/mån</span>
           {plan.nulageKostnadPerManad > 0 && (
-            <div className={`kostnad-jmf ${besparing >= 0 ? 'ok' : ''}`}>
-              {besparing >= 0 ? `${kr(besparing)} billigare` : `${kr(-besparing)} dyrare`} än i dag (
-              {kr(plan.nulageKostnadPerManad)})
-            </div>
+            <span className={`kostnadsrad-jmf ${besparing >= 0 ? 'ok' : ''}`}>
+              {besparing >= 0 ? `${kr(besparing)} billigare` : `${kr(-besparing)} dyrare`} än i dag
+            </span>
           )}
         </div>
-      </section>
-
-      {plan.varningar.length > 0 && (
-        <div className="ruta varn">
-          {plan.varningar.map((v) => (
-            <p key={v}>{v}</p>
-          ))}
-        </div>
-      )}
-
-      {(plan.kansligheter.length > 0 || plan.bortvalda.length > 0) && (
-        <section className="kort">
-          <h3>Anpassat efter {hast.namn}s hälsa</h3>
-          <div className="kvalitet">
-            {plan.kansligheter.map((k) => (
-              <div key={k.text} className={`kvalitet-rad ${k.niva}`}>
-                <span>{k.text}</span>
-                <span className="liten">{k.kalla}</span>
-              </div>
-            ))}
-          </div>
-          {plan.bortvalda.length > 0 && (
-            <details className="bortvalda">
-              <summary>{plan.bortvalda.length} produkter valdes bort</summary>
-              <ul>
-                {plan.bortvalda.map((b) => (
-                  <li key={b.namn}>
-                    {b.namn}: {b.skal.join(', ')}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </section>
-      )}
-
-      {plan.grovfoderkvalitet.length > 0 && (
-        <section className="kort">
-          <h3>Om ditt grovfoder</h3>
-          <div className="kvalitet">
-            {plan.grovfoderkvalitet.map((f) => (
-              <div key={f.rubrik} className={`kvalitet-rad ${f.niva}`}>
-                <strong>{f.rubrik}</strong>
-                <span>{f.text}</span>
-                <span className="liten">{f.kalla}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      </header>
 
       <div className="kolumner-lika">
         <section className="kort">
@@ -158,6 +102,9 @@ export function PlanStep({
                   <tr key={p.produkt.id}>
                     <td>
                       <strong>{p.produkt.namn}</strong>
+                      {ersatter(p.produkt.id) && (
+                        <span className="liten ersatter">Ersätter {ersatter(p.produkt.id)}</span>
+                      )}
                       <span className="liten">
                         {p.produkt.url ? (
                           <a href={p.produkt.url} target="_blank" rel="noreferrer">
@@ -208,6 +155,13 @@ export function PlanStep({
           ) : (
             <p className="laddar-text">Skriver förklaring…</p>
           )}
+          {forklaring && (
+            <div className="forklaring-fot">
+              <button className="lank liten" onClick={() => setOmgang((n) => n + 1)}>
+                Skriv om förklaringen
+              </button>
+            </div>
+          )}
           {plan.kvaveOverskottKgPerAr > 1 && (
             <div className="miljo">
               <strong>{tal(plan.kvaveOverskottKgPerAr, 0)} kg kväve per år</strong> hamnar i gödseln från protein
@@ -216,6 +170,77 @@ export function PlanStep({
           )}
         </section>
       </div>
+
+      {plan.varningar.length > 0 && (
+        <div className="ruta varn">
+          {plan.varningar.map((v) => (
+            <p key={v}>{v}</p>
+          ))}
+        </div>
+      )}
+
+      <section className="kort">
+        <h3>Underlaget för planen</h3>
+        <p className="ingress">
+          Behov {tal(plan.behov.behov.energi!.min, 0)} MJ och {tal(plan.behov.behov.smbRp!.min, 0)} g smältbart
+          protein per dag, räknat på {tal(plan.behov.berakningsviktKg, 0)} kg
+          {plan.behov.arbetsMJ > 0 && <>, varav {tal(plan.behov.arbetsMJ, 1)} MJ för arbete</>}
+          {plan.behov.kylaMJ > 0 && <> och {tal(plan.behov.kylaMJ, 1)} MJ för kyla</>}.
+        </p>
+        {(nulageBrister.length > 0 || nulageEnergi.status === 'overskott') && (
+          <p className="nulage">
+            Med dagens foder:{' '}
+            {[
+              nulageEnergi.status === 'overskott' && `${energiProcent} % mer energi än behovet`,
+              nulageBrister.length > 0 && `för lite ${nulageBrister.join(', ')}`,
+            ]
+              .filter(Boolean)
+              .join(', och ')}
+            .
+          </p>
+        )}
+      </section>
+
+      {(plan.kansligheter.length > 0 || plan.bortvalda.length > 0) && (
+        <section className="kort">
+          <h3>Anpassat efter {hast.namn}s hälsa</h3>
+          <div className="kvalitet">
+            {plan.kansligheter.map((k) => (
+              <div key={k.text} className={`kvalitet-rad ${k.niva}`}>
+                <span>{k.text}</span>
+                <span className="liten">{k.kalla}</span>
+              </div>
+            ))}
+          </div>
+          {plan.bortvalda.length > 0 && (
+            <details className="bortvalda">
+              <summary>{plan.bortvalda.length} produkter valdes bort</summary>
+              <ul>
+                {plan.bortvalda.map((b) => (
+                  <li key={b.namn}>
+                    {b.namn}: {b.skal.join(', ')}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
+      )}
+
+      {plan.grovfoderkvalitet.length > 0 && (
+        <section className="kort">
+          <h3>Om ditt grovfoder</h3>
+          <div className="kvalitet">
+            {plan.grovfoderkvalitet.map((f) => (
+              <div key={f.rubrik} className={`kvalitet-rad ${f.niva}`}>
+                <strong>{f.rubrik}</strong>
+                <span>{f.text}</span>
+                <span className="liten">{f.kalla}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="kort">
         <h3>Behov och tillförsel per dag</h3>
@@ -316,6 +341,13 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
       produkter: plan.alternativ.poster.map((p) => `${p.produkt.namn} ${p.gramPerDag} g/dag`),
       kostnadKrPerManad: Math.round(plan.alternativ.kostnadPerManad),
     },
+    byten: plan.byten.map((b) => ({
+      fran: `${b.fran.produkt.namn} ${b.fran.gramPerDag} g/dag`,
+      till: `${b.till.produkt.namn} ${b.till.gramPerDag} g/dag`,
+      varfor: b.skal,
+      kostnadForeKrPerManad: Math.round(b.kostnadFore),
+      kostnadEfterKrPerManad: Math.round(b.kostnadEfter),
+    })),
     kvaveOverskottKgPerAr: Math.round(plan.kvaveOverskottKgPerAr),
     omGrovfodret: plan.grovfoderkvalitet.map((f) => `${f.rubrik}: ${f.text}`),
     kansligheter: plan.kansligheter.map((k) => k.text),

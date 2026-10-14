@@ -10,7 +10,7 @@ export interface Anvandare {
 const KONTON = 'krubba.konton.v1'
 const SESSION = 'krubba.session.v1'
 
-export const DEMOKONTO: Anvandare = { id: 'demo', namn: 'Anna Demo', epost: 'demo@krubba.se' }
+export const DEMOKONTO: Anvandare = { id: 'demo', namn: 'Anna Demo', epost: 'demo@fodr.se' }
 
 function las<T>(nyckel: string, standard: T): T {
   try {

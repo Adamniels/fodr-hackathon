@@ -4,6 +4,7 @@ import { grovfoderIntag, kostnadPerManad, laggTill, type Foderpost, type Intag }
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './kvalitet'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './kanslighet'
+import { hittaBilligareLiknande, type Byte } from './byten'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -20,7 +21,7 @@ export interface Balansrad {
   status: Status
 }
 
-export type AtgardTyp = 'ta_bort' | 'andra_grovfoder' | 'lagg_till_kraftfoder' | 'protein' | 'tillskott'
+export type AtgardTyp = 'ta_bort' | 'byt' | 'andra_grovfoder' | 'lagg_till_kraftfoder' | 'protein' | 'tillskott'
 
 export interface Atgard {
   typ: AtgardTyp
@@ -49,6 +50,8 @@ export interface Plan {
   kansligheter: Kanslighetsrad[]
   /** Urvalsprodukter som valdes bort på grund av känsligheter, med skäl. */
   bortvalda: { namn: string; skal: string[] }[]
+  /** Dagens foder som byts mot en liknande eller bättre passande produkt, med kostnad före och efter. */
+  byten: Byte[]
 }
 
 const ENERGI_OVER = 1.1
@@ -131,6 +134,20 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     }
   }
 
+  // Dagens kraft- och proteinfoder jämförs med liknande produkter. Finns ett billigare foder med
+  // samma energi och protein byts det, med en giva som ger lika mycket energi.
+  const byten: Byte[] = []
+  behallna = behallna.map((p) => {
+    const b = hittaBilligareLiknande(p, produkter, profil.halsa)
+    if (!b) return p
+    byten.push(b)
+    atgarder.push({
+      typ: 'byt',
+      text: `Byt ${p.produkt.namn} (${p.gramPerDag} g/dag) mot ${b.till.produkt.namn} (${b.till.gramPerDag} g/dag), ${b.skal}. Sparar cirka ${kr(b.besparingKrPerManad)} i månaden.`,
+    })
+    return b.till
+  })
+
   // SLU: i andra hand minskas grovfodret, dock aldrig under 1 kg ts per 100 kg.
   const energiPerKgFoder = (analys.perKgTs.energi ?? 0) * ts
   if (energiPerKgFoder > 0 && energiFor(grovKg, behallna) > energiBehov * ENERGI_OVER) {
@@ -203,7 +220,61 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     produkter: tillatna,
     berakningsviktKg: behovsres.berakningsviktKg,
   })
-  for (const p of urval?.poster ?? []) {
+  // Dagens mineralfoder, tillskott och salt ställs mot urvalet så att det syns vad som byts,
+  // vad som tas bort och vad som är nytt, i stället för att gamla produkter bara försvinner.
+  const nyaPoster = urval?.poster ?? []
+  const ersatta = nuvarande.filter((p) => ERSATTS.includes(p.produkt.kategori))
+  const hanterade = new Set<string>()
+  for (const gammal of ersatta) {
+    const kvar = nyaPoster.find((n) => n.produkt.id === gammal.produkt.id)
+    if (kvar) {
+      hanterade.add(kvar.produkt.id)
+      atgarder.push({
+        typ: 'tillskott',
+        text:
+          kvar.gramPerDag === gammal.gramPerDag
+            ? `Fortsätt med ${kvar.gramPerDag} g/dag ${kvar.produkt.namn}.`
+            : `Ändra ${kvar.produkt.namn} från ${gammal.gramPerDag} till ${kvar.gramPerDag} g/dag.`,
+      })
+      continue
+    }
+    const ersattare = nyaPoster.find(
+      (n) =>
+        // Ett tillskott paras inte ihop med ett annat, de innehåller ofta helt olika saker.
+        n.produkt.kategori === gammal.produkt.kategori &&
+        gammal.produkt.kategori !== 'tillskott' &&
+        !hanterade.has(n.produkt.id) &&
+        !ersatta.some((e) => e.produkt.id === n.produkt.id),
+    )
+    const fore = kostnadPerManad(gammal.produkt, gammal.gramPerDag)
+    if (ersattare) {
+      hanterade.add(ersattare.produkt.id)
+      const efter = kostnadPerManad(ersattare.produkt, ersattare.gramPerDag)
+      const skal =
+        efter < fore - 1
+          ? `täcker behovet och kostar cirka ${kr(fore - efter)} mindre i månaden`
+          : 'täcker det som saknas bättre med ditt grovfoder'
+      byten.push({
+        fran: gammal,
+        till: ersattare,
+        kostnadFore: fore,
+        kostnadEfter: efter,
+        besparingKrPerManad: fore - efter,
+        skal,
+      })
+      atgarder.push({
+        typ: 'byt',
+        text: `Byt ${gammal.produkt.namn} (${gammal.gramPerDag} g/dag) mot ${ersattare.gramPerDag} g/dag ${ersattare.produkt.namn}, ${skal}.`,
+      })
+    } else {
+      atgarder.push({
+        typ: 'ta_bort',
+        text: `Sluta med ${gammal.produkt.namn} (${gammal.gramPerDag} g/dag, cirka ${kr(fore)} i månaden). Grovfodret och förslaget täcker behovet utan den.`,
+      })
+    }
+  }
+  for (const p of nyaPoster) {
+    if (hanterade.has(p.produkt.id)) continue
     atgarder.push({ typ: 'tillskott', text: `Ge ${p.gramPerDag} g/dag ${p.produkt.namn}.` })
   }
 
@@ -239,7 +310,12 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     bortvalda: uteslutna
       .filter((u) => u.produkt.iUrval)
       .map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
+    byten,
   }
+}
+
+function kr(n: number): string {
+  return `${Math.round(n).toLocaleString('sv-SE')} kr`
 }
 
 function fmt(n: number): string {

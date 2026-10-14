@@ -161,6 +161,7 @@ Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan kla
 - Använd bara siffror som finns i underlaget. Räkna inte om och hitta inte på nya värden.
 - Börja med det viktigaste: vad grovfodret täcker och vad som saknas eller är för mycket.
 - Förklara sedan förslaget och varför, och nämn det billigare eller alternativa förslaget om det finns.
+- Om underlaget har byten: säg att dagens produkt byts mot en liknande och vad det sparar per månad. Beskriv det som ett byte, inte som att något tas bort och något annat läggs till.
 - Om något bygger på uppskattade värden (schablon), säg det kort.
 - Nämn kort det viktigaste under omGrovfodret om det påverkar hästen.
 - Om hästen har känsligheter: säg i en mening hur planen tagit hänsyn till dem.

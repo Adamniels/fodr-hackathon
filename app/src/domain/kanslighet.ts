@@ -65,7 +65,7 @@ export function granskaKansligheter(
       rader.push({
         niva: 'varning',
         text: `${produkt.namn}, som hästen får i dag: ${skal.join(', ')}. Överväg att byta.`,
-        kalla: 'Krubbas känslighetsregler',
+        kalla: 'Fodrs känslighetsregler',
       })
     }
   }

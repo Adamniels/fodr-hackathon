@@ -20,53 +20,45 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
 
   return (
     <div className="login">
-      <section className="login-varumarke">
-        <div className="logga stor">Krubba</div>
-        <p className="login-slogan">Från labbrapport till rätt foder i krubban.</p>
-        <ul className="login-punkter">
-          <li>Ladda upp grovfoderanalysen, PDF eller foto</li>
-          <li>Behov räknade enligt SLU:s rekommendationer</li>
-          <li>Inköpslista med gram per dag och kronor per månad</li>
-          <li>En journal som följer hästen över tid</li>
-        </ul>
-      </section>
+      <h2>{lage === 'logga_in' ? 'Logga in på Fodr' : 'Skapa konto'}</h2>
+      <p className="ingress">Dina hästar och foderplaner sparas på ditt konto.</p>
 
-      <section className="login-kort">
-        <h2>{lage === 'logga_in' ? 'Logga in' : 'Skapa konto'}</h2>
-        <form onSubmit={skicka}>
-          {lage === 'skapa' && (
-            <label className="falt">
-              <span className="falt-label">Namn</span>
-              <input value={namn} onChange={(e) => setNamn(e.target.value)} autoComplete="name" required />
-            </label>
-          )}
+      <button className="knapp bred" onClick={() => onInloggad(loggaIn(DEMOKONTO.epost))}>
+        Fortsätt med demohästen Sixten
+      </button>
+      <div className="login-skiljare">
+        <span>eller med e-post</span>
+      </div>
+
+      <form onSubmit={skicka}>
+        {lage === 'skapa' && (
           <label className="falt">
-            <span className="falt-label">E-post</span>
-            <input type="email" value={epost} onChange={(e) => setEpost(e.target.value)} autoComplete="email" required />
+            <span className="falt-label">Namn</span>
+            <input value={namn} onChange={(e) => setNamn(e.target.value)} autoComplete="name" required />
           </label>
-          <label className="falt">
-            <span className="falt-label">Lösenord</span>
-            <input
-              type="password"
-              value={losenord}
-              onChange={(e) => setLosenord(e.target.value)}
-              autoComplete={lage === 'skapa' ? 'new-password' : 'current-password'}
-            />
-          </label>
-          {fel && <div className="ruta fel">{fel}</div>}
-          <button className="knapp bred" type="submit">
-            {lage === 'logga_in' ? 'Logga in' : 'Skapa konto'}
-          </button>
-        </form>
-        <button className="lank" onClick={() => setLage(lage === 'logga_in' ? 'skapa' : 'logga_in')}>
-          {lage === 'logga_in' ? 'Ny här? Skapa konto' : 'Har du redan ett konto? Logga in'}
+        )}
+        <label className="falt">
+          <span className="falt-label">E-post</span>
+          <input type="email" value={epost} onChange={(e) => setEpost(e.target.value)} autoComplete="email" required />
+        </label>
+        <label className="falt">
+          <span className="falt-label">Lösenord</span>
+          <input
+            type="password"
+            value={losenord}
+            onChange={(e) => setLosenord(e.target.value)}
+            autoComplete={lage === 'skapa' ? 'new-password' : 'current-password'}
+          />
+        </label>
+        {fel && <div className="ruta fel">{fel}</div>}
+        <button className="knapp sekundar bred" type="submit">
+          {lage === 'logga_in' ? 'Logga in' : 'Skapa konto'}
         </button>
-        <div className="login-skiljare">eller</div>
-        <button className="knapp sekundar bred" onClick={() => onInloggad(loggaIn(DEMOKONTO.epost))}>
-          Testa med demokontot
-        </button>
-        <p className="liten login-not">Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.</p>
-      </section>
+      </form>
+      <button className="lank login-byt" onClick={() => setLage(lage === 'logga_in' ? 'skapa' : 'logga_in')}>
+        {lage === 'logga_in' ? 'Ny här? Skapa konto' : 'Har du redan ett konto? Logga in'}
+      </button>
+      <p className="liten login-not">Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.</p>
     </div>
   )
 }

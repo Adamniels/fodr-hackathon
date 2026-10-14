@@ -7,10 +7,8 @@ import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
 
 interface Props {
-  hastar: Hastprofil[]
   vald: Hastprofil | undefined
   produkter: Produkt[]
-  onValj: (id: string) => void
   onAndra: (h: Hastprofil) => void
   onNy: (h: Hastprofil) => void
   onVidare: () => void
@@ -32,36 +30,18 @@ const TYPER: [Hasttyp, string, string][] = [
   ['svarfodd', 'Svårfödd', 'Många fullblod'],
 ]
 
-export function HorseStep({ hastar, vald, produkter, onValj, onAndra, onNy, onVidare }: Props) {
-  return (
-    <div className="kolumner">
-      <aside className="hastlista">
-        <h3>Dina hästar</h3>
-        {hastar.length === 0 && <p className="liten">Inga hästar än.</p>}
-        {hastar.map((h) => (
-          <button key={h.id} className={`hastval ${h.id === vald?.id ? 'aktiv' : ''}`} onClick={() => onValj(h.id)}>
-            <strong>{h.namn || 'Namnlös'}</strong>
-            <span>
-              {h.alderAr} år · {h.viktKg} kg
-            </span>
-          </button>
-        ))}
-        <button className="knapp sekundar" onClick={() => onNy(nyHast())}>
-          + Ny häst
-        </button>
-      </aside>
-      {vald ? (
-        <Profilformular key={vald.id} hast={vald} produkter={produkter} onAndra={onAndra} onVidare={onVidare} />
-      ) : (
-        <section className="kort tomt">
-          <h2>Välkommen till Krubba</h2>
-          <p className="ingress">Börja med att lägga till din häst. Det tar ett par minuter.</p>
-          <button className="knapp" onClick={() => onNy(nyHast())}>
-            Lägg till din första häst
-          </button>
-        </section>
-      )}
-    </div>
+export function HorseStep({ vald, produkter, onAndra, onNy, onVidare }: Props) {
+  // Hästlistan ligger i appens sidofält, här visas bara den valda hästens profil.
+  return vald ? (
+    <Profilformular key={vald.id} hast={vald} produkter={produkter} onAndra={onAndra} onVidare={onVidare} />
+  ) : (
+    <section className="kort tomt">
+      <h2>Välkommen till Fodr</h2>
+      <p className="ingress">Börja med att lägga till din häst. Det tar ett par minuter.</p>
+      <button className="knapp" onClick={() => onNy(nyHast())}>
+        Lägg till din första häst
+      </button>
+    </section>
   )
 }
 
@@ -85,8 +65,15 @@ function Profilformular({
 
   return (
     <section className="kort profil">
-      <h2>{hast.namn || 'Ny häst'}</h2>
-      <p className="ingress">Grunddata styr beräkningen. Fyll i så noga du kan.</p>
+      <h2>Om {hast.namn || 'hästen'}</h2>
+      <p className="ingress">
+        Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och
+        rätta det som inte stämmer.
+      </p>
+
+      <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
+
+      <h3 className="rubrik">Grunddata</h3>
 
       <div className="grupp">
         <Falt label="Namn">
@@ -214,8 +201,6 @@ function Profilformular({
       <Falt label="Övrigt">
         <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
       </Falt>
-
-      <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
 
       <div className="atgardsrad">
         <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
