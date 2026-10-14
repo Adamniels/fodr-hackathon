@@ -40,7 +40,8 @@ AI:n förstår, frågar och förklarar. Modellen räknar. Siffror i förklaringe
 1. **Hästen.** Sixten i stallet till vänster. Visa profilens avsnitt och AI-rutan överst: skriv "en liter pellets morgon och kväll" och klicka "Fyll i profilen". Agenten frågar vad en liter väger.
 2. **Analysen.** Fliken Analys. Dra in `testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf` eller klicka och välj den. Visa att alla värden går att rätta. Reserv utan nät: "Använd en exempelanalys".
 3. **Foderplanen.** Boxkortet: 8 kg hösilage morgon och kväll, Krafft Miner Original på morgonen, salt delat, pelletsen överstruken, 88 kr/mån mot 374 kr. Till höger "Därför": staplarna visar att allt täcks och att proteinet ligger på 169 %, fångvarningen och grovfoderflaggorna. Kryssa gärna i "Luftvägsbesvär" i profilen och visa att pulverprodukter väljs bort. "Skriv ut boxkortet" ger bara kortet.
-4. **Journalen.** "Spara i journalen". Visa trenden (570 till 550 kg, hull 8 till 7) och klicka "Analysera journalen". AI:n kopplar den lösa magen till hösilagebytet och flaggar veterinär för de ömma framhovarna.
+4. **Journalen.** "Spara i journalen". Stalltavlan visar anteckningarna i handstil. Visa trenden (570 till 550 kg, hull 8 till 7) och klicka "Analysera journalen". AI:n kopplar den lösa magen till hösilagebytet och flaggar veterinär för de ömma framhovarna.
+5. **Hela stallet.** Klicka "Hela stallet" i menyn: alla hästars boxkort sida vid sida, med totalkostnad och utskrift av alla kort. Det är vyn för stallägaren.
 
 ## Att göra före demo
 

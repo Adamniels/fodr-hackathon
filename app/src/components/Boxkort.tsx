@@ -11,6 +11,7 @@ export function Boxkort({
   kort,
   kostnadPerManad,
   kostnadIdag,
+  box,
   children,
 }: {
   namn: string
@@ -18,13 +19,17 @@ export function Boxkort({
   kort: BoxkortData
   kostnadPerManad: number
   kostnadIdag?: number
+  box?: number
   children?: React.ReactNode
 }) {
   return (
     <article className="boxkort" aria-label={`Boxkort för ${namn}`}>
       <header className="boxkort-huvud">
         <span className="boxkort-namn">{namn}</span>
-        <span className="boxkort-datum">Gäller från {datum}</span>
+        <span className="boxkort-datum">
+          {box !== undefined && <span className="boxkort-box">Box {box}</span>}
+          Gäller från {datum}
+        </span>
       </header>
       <table className="boxkort-tabell">
         <thead>

@@ -57,9 +57,10 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
         <AiAnalys hast={hast} poster={poster} trend={trend} aktuellPlan={aktuellPlan} />
       </div>
 
-      <section className="kort">
-        <h3>Tidslinje</h3>
-        {tidslinje.length === 0 && <p className="liten">Inga anteckningar än.</p>}
+      <section className="kort" aria-labelledby="tavla-rubrik">
+        <h3 id="tavla-rubrik">Stalltavlan</h3>
+        <div className="tavla">
+        {tidslinje.length === 0 && <p className="tavla-tom">Inga anteckningar än. Skriv den första ovan.</p>}
         <ol className="tidslinje">
           {tidslinje.map((p) => (
             <li key={p.id}>
@@ -78,8 +79,11 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
                   <div className="tid-plan">
                     <strong>Foderplan sparad</strong>
                     <span className="liten">
-                      {p.plan.grovfoderKgPerDag} kg grovfoder ({p.plan.analys})
-                      {p.plan.produkter.map((x) => ` · ${x.gramPerDag} g ${x.namn}`).join('')} · {kr(p.plan.kostnadPerManad)}/mån
+                      {[
+                        `${p.plan.grovfoderKgPerDag} kg grovfoder (${p.plan.analys})`,
+                        ...p.plan.produkter.map((x) => `${x.gramPerDag} g ${x.namn}`),
+                        `${kr(p.plan.kostnadPerManad)} per månad`,
+                      ].join(', ')}
                     </span>
                   </div>
                 )}
@@ -87,6 +91,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
             </li>
           ))}
         </ol>
+        </div>
       </section>
     </div>
   )

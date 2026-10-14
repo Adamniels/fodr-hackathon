@@ -21,6 +21,7 @@ import { HorseStep } from './components/HorseStep'
 import { AnalysisStep } from './components/AnalysisStep'
 import { PlanStep } from './components/PlanStep'
 import { JournalStep } from './components/JournalStep'
+import { StalletOversikt } from './components/StalletOversikt'
 import { HULL_TEXT } from './format'
 
 const produkter = produkterJson as Produkt[]
@@ -34,9 +35,10 @@ const FLIKAR: { id: Flik; namn: string }[] = [
 const idag = () => new Date().toISOString().slice(0, 10)
 
 /** Läser #/häst-id/flik så att en omladdning hamnar på samma ställe. */
-function lasHash(): { hastId?: string; flik?: Flik } {
+function lasHash(): { hastId?: string; flik?: Flik; stallet: boolean } {
   const [, hastId, flik] = window.location.hash.split('/')
-  return { hastId, flik: FLIKAR.some((f) => f.id === flik) ? (flik as Flik) : undefined }
+  if (hastId === 'stallet') return { stallet: true }
+  return { hastId, flik: FLIKAR.some((f) => f.id === flik) ? (flik as Flik) : undefined, stallet: false }
 }
 
 export default function App() {
@@ -62,6 +64,7 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
   const [start] = useState(lasHash)
   const [valdId, setValdId] = useState(start.hastId ?? hastar[0]?.id)
   const [flik, setFlik] = useState<Flik>(start.flik ?? 'profil')
+  const [visaStallet, setVisaStallet] = useState(start.stallet)
 
   useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
@@ -72,8 +75,9 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
   const analys = sparad?.analys ?? null
 
   useEffect(() => {
-    if (hast) history.replaceState(null, '', `#/${hast.id}/${flik}`)
-  }, [hast, flik])
+    if (visaStallet) history.replaceState(null, '', '#/stallet')
+    else if (hast) history.replaceState(null, '', `#/${hast.id}/${flik}`)
+  }, [hast, flik, visaStallet])
 
   const plan = useMemo(() => {
     if (!hast || !analys) return null
@@ -93,6 +97,7 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
     setHastar((alla) => [...alla, h])
     setValdId(h.id)
     setFlik('profil')
+    setVisaStallet(false)
   }
 
   const lasFlik = (id: Flik): string | null => {
@@ -105,24 +110,58 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
     <div className="skal">
       <aside className="stall" aria-label="Stallet">
         <div className="logga">Fodr</div>
-        <h2 className="stall-rubrik">Stallet</h2>
+        <div className="stall-rad">
+          <h2 className="stall-rubrik">Stallet</h2>
+          <button
+            className={`stall-oversikt ${visaStallet ? 'vald' : ''}`}
+            aria-current={visaStallet ? 'page' : undefined}
+            onClick={() => setVisaStallet(true)}
+          >
+            Hela stallet
+          </button>
+        </div>
         <ul className="boxar">
-          {hastar.map((h) => (
-            <li key={h.id}>
-              <button
-                className={`box ${h.id === hast?.id ? 'vald' : ''}`}
-                aria-current={h.id === hast?.id ? 'page' : undefined}
-                onClick={() => setValdId(h.id)}
-              >
-                <span className="box-namn">{h.namn || 'Ny häst'}</span>
-                <span className="box-fakta">{hittaRas(h.ras)?.namn.split(' /')[0] ?? `${h.viktKg} kg`}</span>
-              </button>
-            </li>
-          ))}
+          {hastar.map((h, i) => {
+            const harAnalys = Boolean(analyser[h.id])
+            const vald = !visaStallet && h.id === hast?.id
+            return (
+              <li key={h.id}>
+                <button
+                  className={`box ${vald ? 'vald' : ''}`}
+                  aria-current={vald ? 'page' : undefined}
+                  aria-label={`Box ${i + 1}, ${h.namn || 'ny häst'}, ${harAnalys ? 'plan klar' : 'ingen analys'}`}
+                  onClick={() => {
+                    setValdId(h.id)
+                    setVisaStallet(false)
+                  }}
+                >
+                  {/* Karmen står still med mörkt boxinre; bara dörrbladet svänger på gångjärnen. */}
+                  <span className="box-dorr" aria-hidden="true">
+                    <span className="box-blad">
+                      <svg className="box-regel" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 58 H100 M0 88 H100 M10 88 L90 58" />
+                      </svg>
+                      <span className="box-skylt">{h.namn || 'Ny häst'}</span>
+                    </span>
+                  </span>
+                  <span className="box-fot">
+                    <span className="box-nr">Box {i + 1}</span>
+                    <span className={`box-status ${harAnalys ? 'klar' : ''}`}>{harAnalys ? 'Plan klar' : 'Ingen analys'}</span>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+          <li>
+            <button className="box ledig" onClick={laggTillHast}>
+              <span className="box-dorr" aria-hidden="true" />
+              <span className="box-fot">
+                <span className="box-nr">Ledig box</span>
+                <span className="box-status">Lägg till häst</span>
+              </span>
+            </button>
+          </li>
         </ul>
-        <button className="ny-hast" onClick={laggTillHast}>
-          Lägg till häst
-        </button>
         <div className="konto">
           <span className="konto-namn">{anvandare.namn}</span>
           <button className="konto-ut" onClick={onLoggaUt}>
@@ -132,7 +171,18 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
       </aside>
 
       <main className="sida">
-        {!hast ? (
+        {visaStallet ? (
+          <StalletOversikt
+            hastar={hastar}
+            analyser={analyser}
+            produkter={produkter}
+            onOppnaHast={(id, f) => {
+              setValdId(id)
+              setFlik(f)
+              setVisaStallet(false)
+            }}
+          />
+        ) : !hast ? (
           <section className="valkommen">
             <h1>Välkommen till Fodr</h1>
             <p className="ingress">
@@ -145,6 +195,7 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
         ) : (
           <>
             <header className="hasthuvud">
+              <p className="hast-box">Box {hastar.indexOf(hast) + 1}</p>
               <h1>{hast.namn || 'Ny häst'}</h1>
               <dl className="hastfakta">
                 <div>

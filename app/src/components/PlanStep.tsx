@@ -55,22 +55,24 @@ export function PlanStep({
   return (
     <div className="plan-layout">
       <div className="plan-kort">
-        <Boxkort
-          namn={hast.namn}
-          datum={datumText(new Date().toISOString().slice(0, 10))}
-          kort={kort}
-          kostnadPerManad={kostnad}
-          kostnadIdag={plan.nulageKostnadPerManad}
-        >
-          <div className="boxkort-knappar">
-            <button className="knapp" onClick={onSparaIJournal}>
-              Spara i journalen
-            </button>
-            <button className="knapp sekundar" onClick={() => window.print()}>
-              Skriv ut boxkortet
-            </button>
-          </div>
-        </Boxkort>
+        <div className="dorr-upphangning">
+          <Boxkort
+            namn={hast.namn}
+            datum={datumText(new Date().toISOString().slice(0, 10))}
+            kort={kort}
+            kostnadPerManad={kostnad}
+            kostnadIdag={plan.nulageKostnadPerManad}
+          >
+            <div className="boxkort-knappar">
+              <button className="knapp" onClick={onSparaIJournal}>
+                Spara i journalen
+              </button>
+              <button className="knapp sekundar" onClick={() => window.print()}>
+                Skriv ut boxkortet
+              </button>
+            </div>
+          </Boxkort>
+        </div>
 
         <section className="inkop" aria-labelledby="inkop-rubrik">
           <h2 id="inkop-rubrik">Att köpa</h2>

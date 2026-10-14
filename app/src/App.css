@@ -3,8 +3,13 @@
 
 /* ---------- Skal: stallet till vänster, hästens sida till höger ---------- */
 
-.skal { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.skal { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100vh; }
 
+/* Stalldörrens färger, delade mellan stallet i menyn och dörren som boxkortet hänger på. */
+.stall, .dorr-upphangning {
+  --box-dorr: #353c43; --box-fog: rgba(0, 0, 0, 0.22); --box-karm: #454d55; --box-karm-hover: #6b747d;
+  --box-regel: #4a525b; --box-mork: #15181b; --box-galler: #59626b;
+}
 .stall {
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
   background: var(--primar); color: var(--pa-primar);
@@ -12,22 +17,54 @@
 }
 .logga { font-family: var(--font-rubrik); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; padding: 0 8px; }
 .stall-rubrik { font-size: 13px; font-weight: 500; color: var(--pa-primar-2); margin: 32px 8px 8px; letter-spacing: 0; }
-.boxar { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+/* Stallgången: hästarna står i boxar med dörr, Z-regel och namnskylt. Två boxar per rad. */
+.boxar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
 .box {
-  width: 100%; text-align: left; background: none; border: none; color: inherit; cursor: pointer;
-  display: flex; flex-direction: column; padding: 10px 12px; border-radius: 6px;
+  width: 100%; background: none; border: none; color: inherit; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
 }
-.box:hover { background: var(--pa-primar-svag); }
-/* Vald häst: namnskylten inverteras, som en skylt på boxdörren. */
-.box.vald, .box.vald:hover { background: var(--pa-primar); color: var(--primar); }
-.box.vald .box-fakta { color: var(--text-2); }
-.box-namn { font-weight: 600; font-size: 16px; }
-.box-fakta { font-size: 13px; color: var(--pa-primar-2); }
-.ny-hast {
-  margin-top: 12px; text-align: left; background: none; color: var(--pa-primar-2); cursor: pointer;
-  border: 1px dashed var(--pa-primar-linje); border-radius: 6px; padding: 10px 12px;
+.box-dorr {
+  position: relative; display: block; aspect-ratio: 1 / 1.05; width: 100%;
+  border: 3px solid var(--box-karm); border-radius: 3px; background: var(--box-mork);
+  perspective: 260px;
 }
-.ny-hast:hover { color: var(--pa-primar); border-color: var(--pa-primar-2); }
+.box-blad {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  /* Galler upptill mot mörkt boxinre, lodräta plankor nertill. */
+  background:
+    linear-gradient(var(--box-karm), var(--box-karm)) 0 42% / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, var(--box-galler) 0 3px, transparent 3px 11px) 0 0 / 100% 42% no-repeat,
+    linear-gradient(var(--box-mork), var(--box-mork)) 0 0 / 100% 42% no-repeat,
+    repeating-linear-gradient(90deg, var(--box-fog) 0 1px, transparent 1px 13px),
+    var(--box-dorr);
+  transform-origin: left center; transition: transform 0.35s ease;
+}
+.box-regel { position: absolute; inset: 0; width: 100%; height: 100%; }
+.box-regel path { fill: none; stroke: var(--box-regel); stroke-width: 4; vector-effect: non-scaling-stroke; }
+.box-skylt {
+  position: relative; top: 18%; max-width: 86%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--pa-primar); color: var(--primar); font-weight: 700; font-size: 14px;
+  padding: 4px 9px; border-radius: 2px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+.box-fot { display: flex; flex-direction: column; padding: 0 2px; }
+.box-nr { font-size: 12px; font-weight: 600; color: var(--pa-primar-2); }
+.box-status { font-size: 12px; color: var(--pa-primar-2); opacity: 0.8; }
+.box-status.klar { color: var(--pa-primar-ok); opacity: 1; }
+.box:hover .box-dorr { border-color: var(--box-karm-hover); }
+
+/* Vald box: dörren står på glänt och skylten blir halmgul. */
+.box.vald .box-dorr { border-color: var(--box-karm-hover); }
+.box.vald .box-blad { transform: rotateY(28deg); box-shadow: 2px 0 0 var(--box-karm); }
+.box.vald .box-skylt { background: var(--accent); }
+.box.vald .box-nr { color: var(--pa-primar); }
+
+/* Ledig box: öppen dörröppning med streckad karm. */
+.box.ledig .box-dorr { display: grid; place-items: center; background: transparent; border-style: dashed; border-color: var(--pa-primar-linje); }
+.box.ledig .box-dorr::after { content: '+'; font-size: 28px; font-weight: 400; color: var(--pa-primar-2); }
+.box.ledig:hover .box-dorr { border-color: var(--pa-primar-2); }
+
+@media (prefers-reduced-motion: reduce) { .box.vald .box-blad { transform: none; } }
+
 .konto { margin-top: auto; padding: 16px 8px 0; border-top: 1px solid var(--pa-primar-linje); display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
 .konto-ut { background: none; border: none; color: var(--pa-primar-2); cursor: pointer; padding: 4px 0; text-decoration: underline; }
 
@@ -37,6 +74,7 @@
 /* ---------- Hästens huvud och flikar ---------- */
 
 .hasthuvud { margin-bottom: 32px; }
+.hast-box { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--text-2); }
 .hasthuvud h1 { font-size: 44px; line-height: 1.05; letter-spacing: -0.025em; }
 .hastfakta { display: flex; flex-wrap: wrap; gap: 8px 40px; margin: 14px 0 28px; }
 .hastfakta div { display: flex; flex-direction: column; }
@@ -187,7 +225,8 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
   background: var(--accent); color: var(--primar); margin: 0 -22px 16px; padding: 12px 22px;
 }
 .boxkort-namn { font-family: var(--font-rubrik); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-.boxkort-datum { font-size: 13px; }
+.boxkort-datum { font-size: 13px; display: flex; flex-direction: column; align-items: flex-end; }
+.boxkort-box { font-weight: 700; }
 .boxkort-tabell { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .boxkort-tabell thead th { font-size: 13px; font-weight: 500; color: var(--text-2); text-align: right; padding: 0 0 8px; }
 .boxkort-tabell thead th:first-child { text-align: left; }
@@ -203,6 +242,23 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 .boxkort-fot strong { font-size: 22px; }
 .boxkort-idag { color: var(--text-2); font-size: 14px; text-decoration: line-through; }
 .boxkort-knappar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+
+/* Boxkortet hänger på en spik på stalldörren: galler upptill, plankor nertill. */
+.dorr-upphangning {
+  position: relative; padding: 28px 22px 34px; border: 4px solid var(--box-karm); border-radius: 4px;
+  background:
+    linear-gradient(var(--box-karm), var(--box-karm)) 0 120px / 100% 4px no-repeat,
+    repeating-linear-gradient(90deg, var(--box-galler) 0 5px, transparent 5px 22px) 0 0 / 100% 120px no-repeat,
+    linear-gradient(var(--box-mork), var(--box-mork)) 0 0 / 100% 120px no-repeat,
+    repeating-linear-gradient(90deg, var(--box-fog) 0 1px, transparent 1px 26px),
+    var(--box-dorr);
+}
+.dorr-upphangning::before {
+  content: ''; position: absolute; z-index: 1; left: 50%; top: 41px; width: 8px; height: 8px; margin-left: -4px;
+  border-radius: 50%; background: #c9cdd1; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+}
+.dorr-upphangning .boxkort { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
+.dorr-upphangning .boxkort::before { background: var(--box-mork); }
 
 .inkop h2, .del-plan h2 { font-size: 18px; margin-bottom: 8px; }
 .inkop ul { list-style: none; margin: 0; padding: 0; }
@@ -266,6 +322,40 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 .monster { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
 .monster li span.liten { display: block; }
 
+/* Stalltavlan: whiteboard med aluminiumram och pennlist. */
+.tavla {
+  position: relative; background: linear-gradient(160deg, #ffffff 0%, #f7f8f9 55%, #fdfdfe 100%);
+  border: 10px solid #c8cdd2; border-radius: 4px; box-shadow: inset 0 0 0 1px #aab1b8, 0 1px 0 #aab1b8;
+  padding: 8px 24px 12px; margin-bottom: 18px;
+}
+.tavla::after {
+  content: ''; position: absolute; left: 20%; right: 20%; bottom: -24px; height: 9px;
+  background: #b9bfc5; border-radius: 0 0 3px 3px; box-shadow: 0 2px 0 #9aa1a8;
+}
+.tavla .tidslinje li { border-top-color: #e3e6e9; }
+.tavla .tidslinje li:first-child { border-top: none; }
+.tavla .tid-innehall p { font-size: 17px; line-height: 1.5; color: #1f2326; }
+.tavla .tid-plan { background: #eef1f3; }
+.tavla-tom { color: var(--text-2); margin: 12px 0; }
+
+/* ---------- Hela stallet ---------- */
+
+.stall-rad { display: flex; justify-content: space-between; align-items: baseline; margin: 32px 8px 10px; }
+.stall-rad .stall-rubrik { margin: 0; }
+.stall-oversikt { background: none; border: none; color: var(--pa-primar-2); cursor: pointer; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+.stall-oversikt:hover, .stall-oversikt.vald { color: var(--pa-primar); }
+
+.oversikt-huvud { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.oversikt-huvud h1 { font-size: 44px; letter-spacing: -0.025em; }
+.oversikt-huvud .ingress { margin: 8px 0 0; }
+.oversikt-kort { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.oversikt-knapp { display: block; width: 100%; background: none; border: none; padding: 0; text-align: left; cursor: pointer; color: inherit; }
+.oversikt-knapp:hover .boxkort { transform: translateY(-2px); }
+.oversikt-knapp .boxkort { transition: transform 0.15s ease; }
+.tomt-kort { border: 2px dashed var(--linje); border-radius: 4px; padding: 24px 22px; display: flex; flex-direction: column; gap: 4px; min-height: 220px; }
+.tomt-namn { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.tomt-kort p { color: var(--text-2); margin: 12px 0; }
+
 /* ---------- Inloggning ---------- */
 
 .login { min-height: 100vh; display: grid; grid-template-columns: 1.15fr 1fr; }
@@ -292,11 +382,12 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 @media (max-width: 860px) {
   .skal { grid-template-columns: minmax(0, 1fr); }
   .stall { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; }
+  .stall-rad { margin: 0; order: 3; width: 100%; }
   .stall-rubrik { display: none; }
-  .boxar { flex-direction: row; overflow-x: auto; flex: 1; }
-  .box { padding: 6px 10px; }
-  .box-fakta { display: none; }
-  .ny-hast { margin: 0; padding: 6px 10px; }
+  .boxar { display: flex; overflow-x: auto; flex: 1; gap: 8px; padding-bottom: 4px; }
+  .boxar li { flex: 0 0 92px; }
+  .box-skylt { font-size: 12px; padding: 3px 6px; }
+  .box-status { display: none; }
   .konto { margin: 0; padding: 0; border: none; width: 100%; }
   .sida { padding: 24px 16px; }
   .hasthuvud h1 { font-size: 34px; }
@@ -312,9 +403,13 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 /* ---------- Utskrift: bara boxkortet ---------- */
 
 @media print {
-  .stall, .hasthuvud, .plan-varfor, .inkop, .boxkort-knappar, .fot { display: none !important; }
+  .stall, .hasthuvud, .plan-varfor, .inkop, .boxkort-knappar, .fot, .oversikt-huvud, .tomt-kort { display: none !important; }
+  .oversikt-kort { grid-template-columns: 1fr 1fr; }
   .skal, .plan-layout { display: block; }
   .sida { padding: 0; }
   .plan-kort { position: static; max-width: 520px; }
+  .dorr-upphangning { background: none; border: none; padding: 0; }
+  .dorr-upphangning::before { display: none; }
+  .dorr-upphangning .boxkort { box-shadow: none; }
   .boxkort { break-inside: avoid; }
 }
