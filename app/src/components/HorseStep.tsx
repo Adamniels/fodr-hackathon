@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { tolkaProfil } from '../api'
 import { RASER, hittaRas } from '../domain/raser'
-import { viktFranBrostomfang } from '../domain/slu'
+import { beraknaBehov, viktFranBrostomfang } from '../domain/slu'
+import { Hullskala } from './Hullskala'
 import { INGREDIENSER, type Halsa, type Hastprofil, type Hasttyp, type Kon, type Miljo, type Prestanda, type Produkt } from '../domain/types'
-import { HULL_TEXT } from '../format'
 
 const PRESTANDA: [Prestanda, string][] = [
   ['fritid', 'Fritid, ridning och körning'],
@@ -49,6 +49,7 @@ export function HorseStep({
 
   return (
     <div className="profil-layout">
+      <aside className="profil-sida">
       <nav className="innehall-index" aria-label="Profilens avsnitt">
         {AVSNITT.map((a) => (
           <a key={a.id} href={`#avsnitt-${a.id}`} onClick={(e) => {
@@ -59,6 +60,8 @@ export function HorseStep({
           </a>
         ))}
       </nav>
+      <BehovNu hast={hast} />
+      </aside>
 
       <div className="profil">
         <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
@@ -124,8 +127,8 @@ export function HorseStep({
               </button>
             </p>
           )}
-          <Falt label={`Hull ${hast.hull}, ${HULL_TEXT[hast.hull].toLowerCase()}`} hjalp="SLU:s skala 1–9. 4–5 passar de flesta hästar.">
-            <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
+          <Falt label="Hull, sett bakifrån" hjalp="SLU:s skala 1–9." grupp>
+            <Hullskala varde={hast.hull} onAndra={(hull) => set({ hull })} />
           </Falt>
         </Del>
 
@@ -472,5 +475,52 @@ function Siffra({ value, onChange, steg = 1 }: { value: number; onChange: (v: nu
       value={Number.isFinite(value) ? value : ''}
       onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
     />
+  )
+}
+
+/** Behovet räknas om medan man fyller i, så att det syns vad vikt, arbete och kyla betyder. */
+function BehovNu({ hast }: { hast: Hastprofil }) {
+  let r: ReturnType<typeof beraknaBehov> | null = null
+  let fel: string | null = null
+  try {
+    r = beraknaBehov(hast)
+  } catch (e) {
+    fel = e instanceof Error ? e.message : String(e)
+  }
+  return (
+    <section className="behov-nu" aria-live="polite" aria-labelledby="behov-nu-rubrik">
+      <h2 id="behov-nu-rubrik">Behov just nu</h2>
+      {r ? (
+        <dl>
+          <div>
+            <dt>Energi</dt>
+            <dd>{Math.round(r.behov.energi!.min!)}&nbsp;MJ</dd>
+          </div>
+          <div>
+            <dt>Protein</dt>
+            <dd>{Math.round(r.behov.smbRp!.min!)}&nbsp;g</dd>
+          </div>
+          {r.arbetsMJ > 0.5 && (
+            <div>
+              <dt>Varav arbete</dt>
+              <dd>{Math.round(r.arbetsMJ)}&nbsp;MJ</dd>
+            </div>
+          )}
+          {r.kylaMJ > 0 && (
+            <div>
+              <dt>Varav kyla</dt>
+              <dd>{r.kylaMJ.toFixed(1).replace('.', ',')}&nbsp;MJ</dd>
+            </div>
+          )}
+          <div>
+            <dt>Räknat på</dt>
+            <dd>{Math.round(r.berakningsviktKg)}&nbsp;kg</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="liten">{fel}</p>
+      )}
+      <p className="liten">Per dag enligt SLU. Ändras medan du fyller i.</p>
+    </section>
   )
 }

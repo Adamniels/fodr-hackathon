@@ -153,7 +153,25 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 /* ---------- Profil ---------- */
 
 .profil-layout { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 48px; align-items: start; }
-.innehall-index { position: sticky; top: 24px; display: flex; flex-direction: column; }
+.profil-sida { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 28px; }
+.innehall-index { display: flex; flex-direction: column; }
+.behov-nu { border-top: 1px solid var(--linje); padding-top: 16px; }
+.behov-nu h2 { font-size: 14px; margin-bottom: 10px; }
+.behov-nu dl { margin: 0 0 8px; display: flex; flex-direction: column; gap: 8px; }
+.behov-nu dl div { display: flex; justify-content: space-between; gap: 8px; }
+.behov-nu dt { color: var(--text-2); font-size: 14px; }
+.behov-nu dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.hullskala { display: flex; flex-direction: column; gap: 10px; }
+.hull-val { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
+.hull-knapp { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; background: var(--falt); border: 1px solid var(--linje); border-radius: 6px; cursor: pointer; color: var(--text-2); font-weight: 600; font-size: 13px; }
+.hull-knapp svg { width: 100%; height: auto; max-width: 64px; }
+.hull-knapp path { fill: var(--linje); stroke: var(--text-2); stroke-width: 1.5; }
+.hull-knapp:hover { border-color: var(--text-2); }
+.hull-knapp.vald { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); color: var(--text); }
+.hull-knapp.vald path { fill: var(--text); stroke: var(--text); }
+.hull-text { margin: 0; font-size: 14px; color: var(--text-2); }
+.hull-text strong { color: var(--text); }
 .innehall-index a { color: var(--text-2); text-decoration: none; padding: 6px 0; font-size: 14px; }
 .innehall-index a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .profil { max-width: 880px; }
@@ -170,7 +188,30 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 
 /* ---------- Analys ---------- */
 
-.analys-sida { max-width: 880px; }
+.analys-sida { max-width: 1180px; }
+.analys-sida > .ingress, .analys-sida > .uppladdning, .analys-sida > .exempel { max-width: 880px; }
+
+/* Rapporten till vänster, utlästa värden till höger, så att varje siffra kan kontrolleras mot källan. */
+.analys-granskning { display: block; }
+.analys-granskning.med-kalla { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.kalla-rapport { position: sticky; top: 24px; margin: 0; }
+.kalla-rapport iframe, .kalla-rapport img { width: 100%; height: 72vh; border: 1px solid var(--linje); border-radius: 4px; background: #fff; object-fit: contain; }
+.kalla-rapport figcaption { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+.analys-rubrik { font-size: 18px; margin-bottom: 4px; }
+.analys-del { border-top: 1px solid var(--linje); padding-top: 24px; margin-top: 28px; }
+
+.sverige { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.sverige-rad { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
+.sverige-rad .sverige-spar { grid-column: 1 / -1; }
+.sverige-spar { position: relative; height: 14px; }
+.sverige-spar::before { content: ''; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--linje-svag); }
+.sverige-band { position: absolute; top: 2px; height: 10px; background: var(--linje); border-radius: 2px; }
+.sverige-medel { position: absolute; top: 0; height: 14px; width: 2px; margin-left: -1px; background: var(--text-2); }
+.sverige-punkt { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }
+.sverige-rad.lag .sverige-punkt, .sverige-rad.hog .sverige-punkt { background: var(--varn); }
+.sverige-varde { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.sverige-lage { color: var(--text-2); font-size: 13px; font-weight: 400; margin-left: 6px; }
+.sverige-rad.lag .sverige-lage, .sverige-rad.hog .sverige-lage { color: var(--varn-text); font-weight: 600; }
 .uppladdning {
   display: grid; place-items: center; text-align: center; cursor: pointer;
   border: 1.5px dashed var(--text-2); border-radius: 8px; padding: 40px 24px; background: var(--yta);
@@ -373,8 +414,14 @@ input.smal { width: 96px; padding: 5px 8px; font-variant-numeric: tabular-nums; 
 /* ---------- Mindre skärmar ---------- */
 
 @media (max-width: 1100px) {
+  .analys-granskning.med-kalla { grid-template-columns: minmax(0, 1fr); }
+  .kalla-rapport { position: static; }
+  .kalla-rapport iframe, .kalla-rapport img { height: 60vh; }
   .profil-layout { grid-template-columns: minmax(0, 1fr); }
   .innehall-index { display: none; }
+  .profil-sida { position: static; }
+  .behov-nu dl { flex-direction: row; flex-wrap: wrap; gap: 8px 24px; }
+  .behov-nu dl div { flex-direction: column; }
   .del { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .plan-layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .plan-kort { position: static; max-width: 460px; }

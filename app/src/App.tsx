@@ -18,7 +18,7 @@ import {
 import { aktuellAnvandare, loggaUt, type Anvandare } from './auth'
 import { Login } from './components/Login'
 import { HorseStep } from './components/HorseStep'
-import { AnalysisStep } from './components/AnalysisStep'
+import { AnalysisStep, type Forhandsvisning } from './components/AnalysisStep'
 import { PlanStep } from './components/PlanStep'
 import { JournalStep } from './components/JournalStep'
 import { StalletOversikt } from './components/StalletOversikt'
@@ -65,6 +65,8 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
   const [valdId, setValdId] = useState(start.hastId ?? hastar[0]?.id)
   const [flik, setFlik] = useState<Flik>(start.flik ?? 'profil')
   const [visaStallet, setVisaStallet] = useState(start.stallet)
+  // Rapporten som förhandsvisas bredvid värdena. Hålls bara i minnet; filen sparas inte.
+  const [forhandsvisningar, setForhandsvisningar] = useState<Record<string, Forhandsvisning | null>>({})
 
   useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
@@ -252,6 +254,8 @@ function Arbetsyta({ anvandare, onLoggaUt }: { anvandare: Anvandare; onLoggaUt: 
                 omrakningar={sparad?.omrakningar ?? []}
                 onAnalys={(a, o) => setAnalyser((alla) => ({ ...alla, [hast.id]: { analys: a, omrakningar: o } }))}
                 onVidare={() => setFlik('plan')}
+                forhandsvisning={forhandsvisningar[hast.id] ?? null}
+                onForhandsvisning={(f) => setForhandsvisningar((alla) => ({ ...alla, [hast.id]: f }))}
               />
             )}
             {flik === 'plan' && analys && plan && (
