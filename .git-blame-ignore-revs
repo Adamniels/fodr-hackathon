@@ -1,0 +1,5 @@
+# Mechanical commits hidden from git blame. Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format codebase with Prettier
+c430a1b3adf7478d2839949e5a4af738b3b1d49b
