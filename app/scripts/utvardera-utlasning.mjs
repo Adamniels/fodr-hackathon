@@ -23,7 +23,7 @@ async function kor(f) {
   const data = readFileSync(join(kat, f.fil)).toString('base64')
   const mediaType = f.fil.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'
   const t0 = Date.now()
-  const res = await fetch('http://localhost:${port}/api/analys', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaType, base64: data }) })
+  const res = await fetch(`http://localhost:${port}/api/analys`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaType, base64: data }) })
   const svar = await res.json()
   const sek = ((Date.now() - t0) / 1000).toFixed(1)
   if (!f.facit) return { id: f.id, sek, ok: svar.arAnalys === false, detalj: `arAnalys=${svar.arAnalys}` }
