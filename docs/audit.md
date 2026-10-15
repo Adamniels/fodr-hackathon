@@ -155,7 +155,7 @@ Data model issues:
 
 | ID | Finding | Evidence |
 |---|---|---|
-| C1 | **No input validation in the domain.** A 0 kg horse produces a plan with 0 MJ energy need. A `NaN` dry matter produces a plan recommending 16 kg roughage per day. No error, no warning. | Probe: `skapaPlan` with `viktKg: 0` and `tsProcent: NaN`. |
+| C1 | **No input validation in the domain.** A 0 kg horse produces a plan with 0 MJ energy need. A `NaN` dry matter still produces a plan, with every roughage based nutrient silently computed as `NaN` (the 16 kg per day shown is simply the horse's unchanged input). No error, no warning. *(Wording corrected 2026-10-15; an earlier version implied the 16 kg was a recommendation.)* | Probe: `skapaPlan` with `viktKg: 0` and `tsProcent: NaN`. |
 | C2 | UI paths that produce such values: `Siffra` turns an empty field into 0 (`HorseStep.tsx:519`); analysis edits go through `Number()` unchecked, so text becomes `NaN` (`AnalysisStep.tsx:48`) and empty dry matter becomes 0 (`AnalysisStep.tsx:96`); negative numbers are accepted everywhere. | Code reading, consequences shown by C1. |
 | C3 | **Infeasible optimisation is shown as "no supplements needed".** If the roughage alone exceeds a SLU maximum, every candidate including the empty one is rejected (`optimize.ts:129`), `urval` is `null`, and `PlanStep.tsx:197` says "Inga tillskott behövs utöver grovfodret". A µg versus mg mix up in AI extraction of selenium is a realistic trigger. | Probe: Se 60 mg/kg ts gives `urval: null`, `overMax: ["se"]`. |
 | C4 | Switching horse reuses the previous horse's analysis (`App.tsx:96,108`). | Code reading. |
