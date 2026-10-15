@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { tolkaProfil } from '../api'
 import { RASER, hittaRas } from '../domain/raser'
+import { BYTESTAKT, standardKanslighet } from '../domain/injustering'
 import { viktFranBrostomfang } from '../domain/slu'
-import { INGREDIENSER, type Halsa, type Hastprofil, type Hasttyp, type Kon, type Miljo, type Prestanda, type Produkt } from '../domain/types'
+import { INGREDIENSER, type Bytekanslighet, type Halsa, type Hastprofil, type Hasttyp, type Kon, type Miljo, type Prestanda, type Produkt } from '../domain/types'
 import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
 
@@ -198,9 +199,11 @@ function Profilformular({
       <Foderlista hast={hast} produkter={produkter} onAndra={onAndra} />
 
       <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
+      <BytekanslighetSektion hast={hast} onAndra={(bytekanslighet) => set({ bytekanslighet })} />
       <Falt label="Övrigt">
         <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
       </Falt>
+
 
       <div className="atgardsrad">
         <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
@@ -293,6 +296,42 @@ function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) =>
               {i}
             </button>
           ))}
+        </div>
+      </Falt>
+    </>
+  )
+}
+
+const KANSLIGHETSORDNING: Bytekanslighet[] = ['tal', 'normal', 'kanslig']
+
+function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (k: Bytekanslighet) => void }) {
+  const forval = standardKanslighet(hast.halsa)
+  const vald = hast.bytekanslighet ?? forval
+  const hjalp = hast.bytekanslighet
+    ? 'Styr hur många dagar planen tar på sig att byta till det nya fodret.'
+    : `Förvalt utifrån hälsan ovan${forval === 'kanslig' ? ' (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte)' : ''}. Ändra om du vet bättre.`
+  return (
+    <>
+      <Falt label={`Känslighet för foderbyten: hur reagerar ${hast.namn || 'hästen'} när fodret ändras?`} hjalp={hjalp} grupp>
+        <div className="segment" role="radiogroup" aria-label="Känslighet för foderbyten">
+          {KANSLIGHETSORDNING.map((k) => {
+            const t = BYTESTAKT[k]
+            return (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={vald === k}
+                className={vald === k ? 'aktiv' : ''}
+                onClick={() => onAndra(k)}
+              >
+                {t.namn}
+                <small>
+                  {t.beskrivning} Bytet tar {t.dagar} dagar.
+                </small>
+              </button>
+            )
+          })}
         </div>
       </Falt>
     </>

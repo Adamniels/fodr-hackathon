@@ -3,6 +3,8 @@ import type { NutrientValues } from './nutrients'
 export type Hasttyp = 'lattfodd' | 'normalfodd' | 'svarfodd'
 export type Kon = 'sto' | 'valack' | 'hingst'
 export type Grovfodertyp = 'hosilage' | 'ho'
+/** Hur hästen brukar reagera på foderbyten. Styr hur långsamt planen trappar in det nya fodret. */
+export type Bytekanslighet = 'tal' | 'normal' | 'kanslig'
 
 /** Fast arbetsnivå enligt SLU tabell 9, används när ridpassen inte är beskrivna i detalj. */
 export type Arbetsniva = 'ingen' | 'latt' | 'medel' | 'hart' | 'mycket_hart'
@@ -75,6 +77,8 @@ export interface Hastprofil {
   prestanda?: Prestanda
   miljo?: Miljo
   halsa: Halsa
+  /** Känslighet för foderbyten. Saknas den förväljs den utifrån hälsan (domain/injustering.ts). */
+  bytekanslighet?: Bytekanslighet
   grovfoder: {
     typ: Grovfodertyp
     kgPerDag: number
