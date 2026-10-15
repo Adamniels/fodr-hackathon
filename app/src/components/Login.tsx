@@ -58,7 +58,9 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
       <button className="lank login-byt" onClick={() => setLage(lage === 'logga_in' ? 'skapa' : 'logga_in')}>
         {lage === 'logga_in' ? 'Ny här? Skapa konto' : 'Har du redan ett konto? Logga in'}
       </button>
-      <p className="liten login-not">Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.</p>
+      <p className="liten login-not">
+        Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.
+      </p>
     </div>
   )
 }

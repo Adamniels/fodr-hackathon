@@ -44,8 +44,8 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
           Rätt foder till din häst, direkt från <span className="markering">analysen</span>
         </h1>
         <p className="start-ingress">
-          Ladda upp analysen från labbet, berätta om hästen och få en foderplan enligt SLU. Med vad du ska ge, hur mycket
-          och vad det kostar per månad.
+          Ladda upp analysen från labbet, berätta om hästen och få en foderplan enligt SLU. Med vad du ska ge, hur
+          mycket och vad det kostar per månad.
         </p>
         <div className="start-knappar">
           <button className="knapp stor" onClick={onDemo}>
@@ -102,7 +102,9 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
           <article className="stegkort-kort">
             <span className="stegkort-nr">1</span>
             <h3>Berätta om hästen</h3>
-            <p>Vikt, hull, hur mycket den rids och om den haft fång. Du kan också skriva med egna ord, så fyller vi i.</p>
+            <p>
+              Vikt, hull, hur mycket den rids och om den haft fång. Du kan också skriva med egna ord, så fyller vi i.
+            </p>
             <div className="stegkort-bild" style={{ backgroundImage: 'url(/bilder/palomino.webp)' }} />
           </article>
           <article className="stegkort-kort">
@@ -110,11 +112,26 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
             <h3>Ladda upp analysen</h3>
             <p>PDF eller mobilfoto, från vilket labb som helst. Du ser alla värden vi läste ut och kan rätta dem.</p>
             <div className="stegkort-utsnitt" aria-hidden>
-              <div className="utsnitt-rad"><span>Torrsubstans</span><b>39,7 %</b></div>
-              <div className="utsnitt-rad"><span>Energi</span><b>10,2 MJ</b></div>
-              <div className="utsnitt-rad"><span>Smältbart protein</span><b>104 g</b></div>
-              <div className="utsnitt-rad"><span>Socker</span><b>61 g</b></div>
-              <div className="utsnitt-rad saknas"><span>Selen</span><b>saknas</b></div>
+              <div className="utsnitt-rad">
+                <span>Torrsubstans</span>
+                <b>39,7 %</b>
+              </div>
+              <div className="utsnitt-rad">
+                <span>Energi</span>
+                <b>10,2 MJ</b>
+              </div>
+              <div className="utsnitt-rad">
+                <span>Smältbart protein</span>
+                <b>104 g</b>
+              </div>
+              <div className="utsnitt-rad">
+                <span>Socker</span>
+                <b>61 g</b>
+              </div>
+              <div className="utsnitt-rad saknas">
+                <span>Selen</span>
+                <b>saknas</b>
+              </div>
             </div>
           </article>
           <article className="stegkort-kort">
@@ -159,7 +176,12 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
             <li>Fodr ersätter inte veterinären. Har hästen fång, EMS eller kolik säger vi till.</li>
           </ul>
         </div>
-        <div className="tvadelad-bild" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} role="img" aria-label="Två hästar nos mot nos" />
+        <div
+          className="tvadelad-bild"
+          style={{ backgroundImage: 'url(/bilder/nosar.webp)' }}
+          role="img"
+          aria-label="Två hästar nos mot nos"
+        />
       </section>
 
       <section className="start-sektion smal" id="fragor">
@@ -168,15 +190,23 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
         <div className="fragelista">
           <details>
             <summary>Vilka labb fungerar?</summary>
-            <p>Alla vanliga labbrapporter för grovfoder, både som PDF och som foto. Du kan alltid rätta värdena innan planen räknas.</p>
+            <p>
+              Alla vanliga labbrapporter för grovfoder, både som PDF och som foto. Du kan alltid rätta värdena innan
+              planen räknas.
+            </p>
           </details>
           <details>
             <summary>Min analys saknar mineraler. Går det ändå?</summary>
-            <p>Ja. Då använder vi typvärden för svenskt vallfoder och märker dem som uppskattade, så att du ser vad som är osäkert.</p>
+            <p>
+              Ja. Då använder vi typvärden för svenskt vallfoder och märker dem som uppskattade, så att du ser vad som
+              är osäkert.
+            </p>
           </details>
           <details>
             <summary>Ersätter Fodr veterinären eller en foderrådgivare?</summary>
-            <p>Nej. Fodr hjälper dig förstå analysen och ger ett underlag. Vid sjukdom ska du alltid prata med veterinär.</p>
+            <p>
+              Nej. Fodr hjälper dig förstå analysen och ger ett underlag. Vid sjukdom ska du alltid prata med veterinär.
+            </p>
           </details>
           <details>
             <summary>Säljer ni foder?</summary>
@@ -214,7 +244,11 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
 function Produktbild({ produkter }: { produkter: Produkt[] }) {
   const plan = useMemo(() => {
     try {
-      return skapaPlan({ ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } }, analysKomplett, produkter)
+      return skapaPlan(
+        { ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } },
+        analysKomplett,
+        produkter,
+      )
     } catch {
       return null
     }

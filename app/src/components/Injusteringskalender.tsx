@@ -62,7 +62,11 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
   const stegDatum = (i: number) => plusDagar(startDatum, steg[i].startDag - 1)
 
   function laddaNerKalender() {
-    const esc = (t: string) => t.replace(/\\/g, '\\\\').replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, '\\n')
+    const esc = (t: string) =>
+      t
+        .replace(/\\/g, '\\\\')
+        .replace(/[,;]/g, (c) => `\\${c}`)
+        .replace(/\n/g, '\\n')
     const ical = (d: Date) => isoDag(d).replace(/-/g, '')
     const handelser = steg.map((x, i) => {
       const rad = rader.map((r) => `${r.namn}: ${mangd(r, r.perSteg[i])} per dag (${andring(r, i).text})`).join('\n')
@@ -83,7 +87,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         'END:VEVENT',
       ].join('\r\n')
     })
-    const fil = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Fodr//Foderbyte//SV', ...handelser, 'END:VCALENDAR'].join('\r\n')
+    const fil = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Fodr//Foderbyte//SV', ...handelser, 'END:VCALENDAR'].join(
+      '\r\n',
+    )
     const url = URL.createObjectURL(new Blob([fil], { type: 'text/calendar;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
@@ -96,13 +102,11 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     <div className="injustering">
       <div className="injustering-topp">
         <div>
-          <h4>
-            Byt över på {dagar} dagar
-          </h4>
+          <h4>Byt över på {dagar} dagar</h4>
           <p className="liten">
             {takt.namn}
-            {forvald ? ' (förvalt utifrån hälsan)' : ''}: måtten ändras var {takt.dagarPerSteg === 2 ? 'annan' : 'tredje'} dag
-            i {steg.length} steg. Ändra känsligheten under Hästen.
+            {forvald ? ' (förvalt utifrån hälsan)' : ''}: måtten ändras var{' '}
+            {takt.dagarPerSteg === 2 ? 'annan' : 'tredje'} dag i {steg.length} steg. Ändra känsligheten under Hästen.
           </p>
         </div>
         <label className="falt injustering-start">
@@ -119,7 +123,13 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         ))}
         {celler.map((c) => {
           const i = c.steg ? steg.indexOf(c.steg) : -1
-          const klass = ['kalender-dag', !c.iPerioden && 'utanfor', c.steg && 'andra', c.klart && 'klart', i === valtSteg && 'vald']
+          const klass = [
+            'kalender-dag',
+            !c.iPerioden && 'utanfor',
+            c.steg && 'andra',
+            c.klart && 'klart',
+            i === valtSteg && 'vald',
+          ]
             .filter(Boolean)
             .join(' ')
           const innehall = (

@@ -1,53 +1,60 @@
-# Krubba, hackathon-PoC
+# Fodr (Krubba)
 
-Ladda upp grovfoderanalysen, beskriv hästen, få en foderplan med produkter, gram per dag och kronor per månad. Målbild och scope finns i `malbild.md`.
+Upload a roughage analysis, describe the horse, and get a feeding plan following SLU Rapport 289: products, grams per day and cost per month. Started as a hackathon proof of concept; now being built towards a closed beta.
 
-## Köra
+- What we build and what done means: [`docs/spec.md`](docs/spec.md)
+- State of the codebase and known findings: [`docs/audit.md`](docs/audit.md)
+- Domain vocabulary (Swedish in code): [`docs/glossary.md`](docs/glossary.md)
+- Conventions for humans and agents: [`.claude/CLAUDE.md`](.claude/CLAUDE.md)
+- Work items: the GitHub Project "fodr"
+- Original hackathon goal (Swedish): [`malbild.md`](malbild.md)
+
+## Setup
+
+Requires Node 24 or newer (see `.nvmrc`).
 
 ```bash
 cd app
-cp .env.example .env        # lägg in ANTHROPIC_API_KEY
-npm install
+cp .env.example .env        # add ANTHROPIC_API_KEY to use the AI features
+npm ci
+npx playwright install chromium
 npm run dev                 # http://localhost:5173
-npm test                    # beräkningsmotorn mot handräknade SLU-fall
-node scripts/importera-produkter.mjs   # bygger src/data/products.json från butiksdatan
-node scripts/utvardera-utlasning.mjs   # AI-utläsning mot facit (kräver npm run dev och API-nyckel)
 ```
 
-Utan API-nyckel fungerar allt utom AI-delarna (läsa uppladdad rapport, fylla profil från fritext, förklaring). Använd då "Exempel: komplett analys" i steg 2.
+Without an API key everything except the AI parts works (reading an uploaded report, filling the profile from free text, the explanations). Use "Exempel: komplett analys" on the analysis step instead.
 
-## Struktur
+## Commands
 
-| Del | Var | Gör |
+Run in `app/`. CI runs format, lint, typecheck, unit and e2e on every PR.
+
+| Command | What |
+|---|---|
+| `npm test` | Unit tests for the calculation engine, including hand calculated SLU cases |
+| `npm run test:e2e` | Playwright tests of every user flow, AI mocked, no key needed |
+| `npm run lint` | ESLint (type aware) |
+| `npm run typecheck` | TypeScript |
+| `npm run format` | Prettier |
+| `node scripts/importera-produkter.mjs` | Rebuilds `src/data/products.json` from the store data |
+| `node scripts/utvardera-utlasning.mjs` | Checks AI extraction against the answer key (needs `npm run dev` and an API key, about 11 API calls) |
+
+To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+
+## Structure
+
+| Part | Where | Does |
 |---|---|---|
-| SLU-modell | `app/src/domain/slu.ts` | Behov enligt SLU Rapport 289, varje värde med tabellhänvisning |
-| Grovfoder | `app/src/domain/forage.ts`, `intake.ts` | Tillförsel, schablon när analysen saknar ett ämne |
-| Urval | `app/src/domain/optimize.ts` | Billigaste kombination inom min- och maxgränser |
-| Plan | `app/src/domain/plan.ts` | SLU:s justeringsordning, varningar, kväve |
-| AI | `app/server/ai.ts` | Läser rapport, tolkar fritext, förklarar. Räknar aldrig |
-| Produkter | `app/src/data/products.json` | Genererad från Granngården och Hööks (228 st), redigeras inte för hand |
-| Produkturval | `app/scripts/produktval.json` | De 15 produkter urvalet får välja, med dos omräknad för hand och källa |
-| Grovfoderkvalitet | `app/src/domain/kvalitet.ts` | SLU tabell 32, ts-intervall, jordinblandning |
-| Känsligheter | `app/src/domain/kanslighet.ts` | Väljer bort produkter och ger råd utifrån hälsan |
-| Journal | `app/src/domain/journal.ts` | Trend, uppföljning och sparade planer per häst; AI letar mönster |
-| Testdata | `testdata/Testdata-from-other-dev/` | Syntetiska rapporter byggda på Växas statistik, med facit |
+| SLU model | `app/src/domain/slu.ts` | Requirements per SLU Rapport 289, every value with its table reference |
+| Roughage | `app/src/domain/forage.ts`, `intake.ts` | Supply from the roughage, default values when the analysis lacks a nutrient |
+| Selection | `app/src/domain/optimize.ts` | Cheapest product combination within min and max limits |
+| Plan | `app/src/domain/plan.ts` | SLU adjustment order, warnings, nitrogen |
+| Roughage quality | `app/src/domain/kvalitet.ts` | SLU table 32, dry matter range, soil contamination |
+| Sensitivities | `app/src/domain/kanslighet.ts` | Excludes products and gives advice based on health |
+| Feed transition | `app/src/domain/injustering.ts` | Step schedule for changing feed, by sensitivity |
+| Journal | `app/src/domain/journal.ts` | Trend, follow up and saved plans per horse |
+| AI | `app/server/ai.ts` | Reads reports, interprets free text, explains. Never calculates |
+| Products | `app/src/data/products.json` | Generated from store data (228 items), not edited by hand |
+| Selectable products | `app/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |
+| E2E tests | `app/e2e/` | Playwright specs, AI mocks and fixtures |
+| Test data | `testdata/Testdata-from-other-dev/` | Synthetic lab reports based on national statistics, with an answer key |
 
-AI:n förstår, frågar och förklarar. Modellen räknar. Siffror i förklaringen kommer bara från beräkningen.
-
-## Demomanus (cirka 2 minuter)
-
-0. **Inloggning.** Visa startsidan och klicka "Testa med demokontot".
-1. **Hästen.** Visa Sixten (12 år, halvblod, 550 kg, hull 7, rids 4 dagar, fång för två år sedan, 1 kg pellets). Visa AI-rutan: skriv "en liter pellets morgon och kväll" och visa att fälten fylls i. Agenten frågar vad en liter väger i stället för att gissa (testat 2026-10-14).
-2. **Analysen.** Ladda upp `testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf` (rikssnittet för hösilage). Visa att alla värden syns och går att rätta.
-3. **Planen.** Grovfodret är proteinrikt, energirikt och blött (SLU tabell 32 och sid 30). I dag 15 % för mycket energi och för lite natrium och selen. Ta bort pelletsen (olämpliga vid fång, visas under "Anpassat efter Sixtens hälsa"), 66 g Krafft Miner Original och 14 g salt, 88 kr/mån mot 374 kr i dag. Fångvarning och veterinärhänvisning. Kryssa gärna i "Luftvägsbesvär" live och visa att pulverprodukter väljs bort. 16 kg kväve per år i onödan.
-4. **Förtroende.** Scrolla till tabellen: behov, tillförsel, maxgräns och källa på varje rad.
-5. **Journalen.** Klicka "Spara planen i journalen". Visa trenden (570 till 550 kg, hull 8 till 7, under 1 % per vecka) och klicka "Analysera journalen". AI:n bör koppla den lösa magen till hösilagebytet och flagga veterinär för de ömma framhovarna, med tanke på fånghistoriken. Testat 2026-10-14: fungerar.
-
-Backup om nätet krånglar: "Exempel: komplett analys" ger samma plan utan AI-anrop.
-
-## Att göra före demo
-
-- [ ] API-nyckel i `app/.env`, testa uppladdning av båda PDF:erna och fotot
-- [ ] Granska doserna i `app/scripts/produktval.json` mot förpackningarna och kör importen igen
-- [ ] Fyll i selen och E-vitamin för Trikem E+Selen och kalcium och fosfor för Granngårdens mineralfoder, så kan de ingå i urvalet
-- [ ] Spela in backupvideo av demoflödet
+The AI understands, asks and explains. The model calculates. Numbers in explanations come only from the calculation.

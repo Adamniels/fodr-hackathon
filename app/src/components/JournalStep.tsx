@@ -76,7 +76,8 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
                     <strong>Foderplan sparad</strong>
                     <span className="liten">
                       {p.plan.grovfoderKgPerDag} kg grovfoder ({p.plan.analys})
-                      {p.plan.produkter.map((x) => ` · ${x.gramPerDag} g ${x.namn}`).join('')} · {kr(p.plan.kostnadPerManad)}/mån
+                      {p.plan.produkter.map((x) => ` · ${x.gramPerDag} g ${x.namn}`).join('')} ·{' '}
+                      {kr(p.plan.kostnadPerManad)}/mån
                     </span>
                   </div>
                 )}
@@ -89,7 +90,17 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
   )
 }
 
-function Trendruta({ rubrik, varde, under, markerad }: { rubrik: string; varde: string; under: string; markerad?: boolean }) {
+function Trendruta({
+  rubrik,
+  varde,
+  under,
+  markerad,
+}: {
+  rubrik: string
+  varde: string
+  under: string
+  markerad?: boolean
+}) {
   return (
     <div className={`trendruta ${markerad ? 'markerad' : ''}`}>
       <span className="liten">{rubrik}</span>
@@ -139,7 +150,12 @@ function NyAnteckning({
         </label>
         <label className="falt">
           <span className="falt-label">Vikt (kg)</span>
-          <input type="number" value={vikt} placeholder={String(hast.viktKg)} onChange={(e) => setVikt(e.target.value)} />
+          <input
+            type="number"
+            value={vikt}
+            placeholder={String(hast.viktKg)}
+            onChange={(e) => setVikt(e.target.value)}
+          />
         </label>
         <label className="falt">
           <span className="falt-label">Hull</span>
@@ -224,7 +240,9 @@ function AiAnalys({
         <span className="ai-bricka">AI</span> Vad säger journalen?
       </h3>
       {!svar && !laddar && (
-        <p className="liten">AI:n letar mönster över tid och säger till om något bör ses av veterinär. Den ändrar aldrig planen.</p>
+        <p className="liten">
+          AI:n letar mönster över tid och säger till om något bör ses av veterinär. Den ändrar aldrig planen.
+        </p>
       )}
       {fel && <div className="ruta fel">{fel}</div>}
       {svar && (
@@ -259,7 +277,7 @@ function AiAnalys({
         </>
       )}
       <div className="atgardsrad">
-        <button className="knapp sekundar" disabled={laddar || poster.length === 0} onClick={kor}>
+        <button className="knapp sekundar" disabled={laddar || poster.length === 0} onClick={() => void kor()}>
           {laddar ? 'Läser journalen…' : svar ? 'Analysera igen' : 'Analysera journalen'}
         </button>
       </div>

@@ -77,7 +77,7 @@ export function laddaForklaring(hastId: string, avtryck: string): string | null 
   if (!sparad) {
     try {
       const raw = localStorage.getItem(forklaringNyckel(hastId))
-      if (raw) sparad = JSON.parse(raw)
+      if (raw) sparad = JSON.parse(raw) as { avtryck: string; text: string }
     } catch {
       // Lagring otillgänglig eller trasig.
     }

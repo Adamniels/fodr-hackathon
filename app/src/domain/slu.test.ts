@@ -34,9 +34,17 @@ describe('prestanda (SLU tabell 9–11)', () => {
     expect(r.noteringar.some((n) => n.includes('tabell 16'))).toBe(true)
   })
   it('ridpassen vinner om de ger mer än grenens miniminivå', () => {
-    const pass = beraknaBehov({ ...bas, prestanda: 'fritid', ridning: { passPerVecka: 6, minuterPerPass: 90, travGaloppMinPerPass: 40 } })
+    const pass = beraknaBehov({
+      ...bas,
+      prestanda: 'fritid',
+      ridning: { passPerVecka: 6, minuterPerPass: 90, travGaloppMinPerPass: 40 },
+    })
     expect(pass.arbetsMJ).toBeGreaterThan(0)
-    const lokal = beraknaBehov({ ...bas, prestanda: 'tavling_lokal', ridning: { passPerVecka: 1, minuterPerPass: 30, travGaloppMinPerPass: 5 } })
+    const lokal = beraknaBehov({
+      ...bas,
+      prestanda: 'tavling_lokal',
+      ridning: { passPerVecka: 1, minuterPerPass: 30, travGaloppMinPerPass: 5 },
+    })
     expect(lokal.arbetsProcent).toBeCloseTo(40, 0)
   })
 })

@@ -3,7 +3,17 @@ import { tolkaProfil } from '../api'
 import { RASER, hittaRas } from '../domain/raser'
 import { BYTESTAKT, standardKanslighet } from '../domain/injustering'
 import { viktFranBrostomfang } from '../domain/slu'
-import { INGREDIENSER, type Bytekanslighet, type Halsa, type Hastprofil, type Hasttyp, type Kon, type Miljo, type Prestanda, type Produkt } from '../domain/types'
+import {
+  INGREDIENSER,
+  type Bytekanslighet,
+  type Halsa,
+  type Hastprofil,
+  type Hasttyp,
+  type Kon,
+  type Miljo,
+  type Prestanda,
+  type Produkt,
+} from '../domain/types'
 import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
 
@@ -68,8 +78,8 @@ function Profilformular({
     <section className="kort profil">
       <h2>Om {hast.namn || 'hästen'}</h2>
       <p className="ingress">
-        Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och
-        rätta det som inte stämmer.
+        Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och rätta
+        det som inte stämmer.
       </p>
 
       <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
@@ -109,7 +119,11 @@ function Profilformular({
         </select>
       </Falt>
 
-      <Falt label="Typ" hjalp="Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras." grupp>
+      <Falt
+        label="Typ"
+        hjalp="Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras."
+        grupp
+      >
         <div className="segment">
           {TYPER.map(([id, namn, hjalp]) => (
             <button key={id} className={hast.typ === id ? 'aktiv' : ''} onClick={() => set({ typ: id })} title={hjalp}>
@@ -145,7 +159,10 @@ function Profilformular({
       </Falt>
 
       <h3 className="rubrik">Arbete</h3>
-      <Falt label="Gren och nivå" hjalp="Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer.">
+      <Falt
+        label="Gren och nivå"
+        hjalp="Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer."
+      >
         <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
           {PRESTANDA.map(([id, text]) => (
             <option key={id} value={id}>
@@ -203,7 +220,6 @@ function Profilformular({
       <Falt label="Övrigt">
         <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
       </Falt>
-
 
       <div className="atgardsrad">
         <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
@@ -312,7 +328,11 @@ function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (
     : `Förvalt utifrån hälsan ovan${forval === 'kanslig' ? ' (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte)' : ''}. Ändra om du vet bättre.`
   return (
     <>
-      <Falt label={`Känslighet för foderbyten: hur reagerar ${hast.namn || 'hästen'} när fodret ändras?`} hjalp={hjalp} grupp>
+      <Falt
+        label={`Känslighet för foderbyten: hur reagerar ${hast.namn || 'hästen'} när fodret ändras?`}
+        hjalp={hjalp}
+        grupp
+      >
         <div className="segment" role="radiogroup" aria-label="Känslighet för foderbyten">
           {KANSLIGHETSORDNING.map((k) => {
             const t = BYTESTAKT[k]
@@ -342,7 +362,15 @@ function ridning(h: Hastprofil) {
   return h.ridning ?? { passPerVecka: 0, minuterPerPass: 0, travGaloppMinPerPass: 0 }
 }
 
-function Foderlista({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Produkt[]; onAndra: (h: Hastprofil) => void }) {
+function Foderlista({
+  hast,
+  produkter,
+  onAndra,
+}: {
+  hast: Hastprofil
+  produkter: Produkt[]
+  onAndra: (h: Hastprofil) => void
+}) {
   const foder = hast.nuvarandeFoder
   const satt = (i: number, patch: Partial<(typeof foder)[number]>) =>
     onAndra({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
@@ -381,9 +409,7 @@ function Foderlista({ hast, produkter, onAndra }: { hast: Hastprofil; produkter:
       ))}
       <button
         className="lank"
-        onClick={() =>
-          onAndra({ ...hast, nuvarandeFoder: [...foder, { produktId: null, namn: '', gramPerDag: 100 }] })
-        }
+        onClick={() => onAndra({ ...hast, nuvarandeFoder: [...foder, { produktId: null, namn: '', gramPerDag: 100 }] })}
       >
         + Lägg till foder
       </button>
@@ -391,7 +417,15 @@ function Foderlista({ hast, produkter, onAndra }: { hast: Hastprofil; produkter:
   )
 }
 
-function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Produkt[]; onAndra: (h: Hastprofil) => void }) {
+function AiHjalp({
+  hast,
+  produkter,
+  onAndra,
+}: {
+  hast: Hastprofil
+  produkter: Produkt[]
+  onAndra: (h: Hastprofil) => void
+}) {
   const [foderText, setFoderText] = useState('')
   const [halsaText, setHalsaText] = useState('')
   const [fragor, setFragor] = useState<string[]>([])
@@ -488,9 +522,7 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
       <button
         className="knapp sekundar"
         disabled={laddar || (!foderText && !halsaText)}
-        onClick={() =>
-          kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))
-        }
+        onClick={() => void kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))}
       >
         {laddar ? 'Tolkar…' : fragor.length ? 'Svara' : 'Fyll i med AI'}
       </button>
@@ -498,7 +530,17 @@ function AiHjalp({ hast, produkter, onAndra }: { hast: Hastprofil; produkter: Pr
   )
 }
 
-function Falt({ label, hjalp, grupp, children }: { label: string; hjalp?: string; grupp?: boolean; children: React.ReactNode }) {
+function Falt({
+  label,
+  hjalp,
+  grupp,
+  children,
+}: {
+  label: string
+  hjalp?: string
+  grupp?: boolean
+  children: React.ReactNode
+}) {
   // En knappgrupp får inte ligga i <label>, då aktiverar ett klick på etiketten första knappen.
   const Tag = grupp ? 'div' : 'label'
   return (

@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { demoJournal } from '../data/exempel'
 import { beraknaTrend, type Journalpost } from './journal'
 
-const post = (datum: string, viktKg?: number, hull?: number): Journalpost => ({ id: datum, datum, viktKg, hull, text: '' })
+const post = (datum: string, viktKg?: number, hull?: number): Journalpost => ({
+  id: datum,
+  datum,
+  viktKg,
+  hull,
+  text: '',
+})
 
 describe('beraknaTrend', () => {
   it('Sixtens demojournal: 570 till 550 kg på 6 veckor, under 1 % per vecka', () => {

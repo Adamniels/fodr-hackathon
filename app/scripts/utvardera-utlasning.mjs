@@ -4,13 +4,16 @@
 // i rapporter per kg vara (t.ex. koppar i B06) är väntade.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-const kat = process.argv[2] ?? new URL('../../testdata/Testdata-from-other-dev/krubba-testdata-v2', import.meta.url).pathname
+const kat =
+  process.argv[2] ?? new URL('../../testdata/Testdata-from-other-dev/krubba-testdata-v2', import.meta.url).pathname
 const port = process.argv[3] ?? '5173'
 const facit = JSON.parse(readFileSync(join(kat, 'data/facit.json'), 'utf8')).analyser
 const filer = [
   ...facit.map((a) => ({ id: a.id, fil: a.fil, facit: a })),
   ...['A01-medel-skord1', 'B04-hoga-socker-ho', 'B06-tredje-skord-hog-aska'].map((id) => ({
-    id: id + ' (mobilfoto)', fil: `bilder/${id}-mobilfoto.jpg`, facit: facit.find((a) => a.id === id),
+    id: id + ' (mobilfoto)',
+    fil: `bilder/${id}-mobilfoto.jpg`,
+    facit: facit.find((a) => a.id === id),
   })),
   { id: 'R00 (ska avvisas)', fil: 'pdf/R00-referens-sverigestatistik-2026.pdf', facit: null },
 ]
@@ -23,7 +26,11 @@ async function kor(f) {
   const data = readFileSync(join(kat, f.fil)).toString('base64')
   const mediaType = f.fil.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'
   const t0 = Date.now()
-  const res = await fetch(`http://localhost:${port}/api/analys`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mediaType, base64: data }) })
+  const res = await fetch(`http://localhost:${port}/api/analys`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mediaType, base64: data }),
+  })
   const svar = await res.json()
   const sek = ((Date.now() - t0) / 1000).toFixed(1)
   if (!f.facit) return { id: f.id, sek, ok: svar.arAnalys === false, detalj: `arAnalys=${svar.arAnalys}` }
@@ -41,14 +48,26 @@ async function kor(f) {
   }
   // Ämnen som inte står i rapporten ska vara null.
   for (const m of [...Object.values(MAKRO), ...Object.values(SPAR)]) {
-    if (forv[m] === undefined && svar.perKgTs?.[m] != null) fel.push(`${m}: hittade på ${svar.perKgTs[m]}, ska vara null`)
+    if (forv[m] === undefined && svar.perKgTs?.[m] != null)
+      fel.push(`${m}: hittade på ${svar.perKgTs[m]}, ska vara null`)
   }
-  return { id: f.id, sek, ok: fel.length === 0, ratt, totalt: Object.keys(forv).length, fel, typ: svar.typ, anm: svar.anmarkningar }
+  return {
+    id: f.id,
+    sek,
+    ok: fel.length === 0,
+    ratt,
+    totalt: Object.keys(forv).length,
+    fel,
+    typ: svar.typ,
+    anm: svar.anmarkningar,
+  }
 }
 
 const resultat = []
 for (let i = 0; i < filer.length; i += 4) resultat.push(...(await Promise.all(filer.slice(i, i + 4).map(kor))))
 for (const r of resultat) {
-  console.log(`${r.ok ? 'OK ' : 'FEL'} ${r.id} (${r.sek} s)${r.totalt ? ` ${r.ratt}/${r.totalt} värden, typ ${r.typ}` : ' ' + r.detalj}`)
+  console.log(
+    `${r.ok ? 'OK ' : 'FEL'} ${r.id} (${r.sek} s)${r.totalt ? ` ${r.ratt}/${r.totalt} värden, typ ${r.typ}` : ' ' + r.detalj}`,
+  )
   for (const f of r.fel ?? []) console.log('     ' + f)
 }

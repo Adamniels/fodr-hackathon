@@ -90,10 +90,9 @@ export function bedomGrovfoder(analys: Grovfoderanalys, profil: Hastprofil): Kva
   const askaHog = analys.askaGPerKgTs !== undefined && analys.askaGPerKgTs > ASKA_JORD_G
   const jarnHogt = v.fe !== undefined && v.fe > JARN_JORD_MG
   if (askaHog || jarnHogt) {
-    const delar = [
-      askaHog && `aska ${fmt(analys.askaGPerKgTs!)} g`,
-      jarnHogt && `järn ${fmt(v.fe!)} mg`,
-    ].filter(Boolean)
+    const delar = [askaHog && `aska ${fmt(analys.askaGPerKgTs!)} g`, jarnHogt && `järn ${fmt(v.fe!)} mg`].filter(
+      Boolean,
+    )
     flaggor.push({
       niva: 'varning',
       rubrik: 'Möjlig jordinblandning',

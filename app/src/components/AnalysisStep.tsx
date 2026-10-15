@@ -16,7 +16,21 @@ interface Props {
 }
 
 const VISADE: NutrientKey[] = [
-  'energi', 'smbRp', 'socker', 'starkelse', 'ca', 'p', 'mg', 'na', 'fe', 'mn', 'cu', 'zn', 'co', 'jod', 'se',
+  'energi',
+  'smbRp',
+  'socker',
+  'starkelse',
+  'ca',
+  'p',
+  'mg',
+  'na',
+  'fe',
+  'mn',
+  'cu',
+  'zn',
+  'co',
+  'jod',
+  'se',
 ]
 
 export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: Props) {
@@ -46,19 +60,27 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
     const perKgTs = { ...analys.perKgTs }
     if (v === '') delete perKgTs[k]
     else perKgTs[k] = Number(v.replace(',', '.'))
-    onAnalys({ ...analys, perKgTs }, omrakningar.filter((o) => o.amne !== k))
+    onAnalys(
+      { ...analys, perKgTs },
+      omrakningar.filter((o) => o.amne !== k),
+    )
   }
 
   return (
     <section className="kort">
       <h2>Grovfoderanalysen för {hast.namn}</h2>
-      <p className="ingress">PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.</p>
+      <p className="ingress">
+        PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.
+      </p>
 
       <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
         <input
           type="file"
           accept="application/pdf,image/png,image/jpeg,image/webp"
-          onChange={(e) => e.target.files?.[0] && laddaUpp(e.target.files[0])}
+          onChange={(e) => {
+            const fil = e.target.files?.[0]
+            if (fil) void laddaUpp(fil)
+          }}
           disabled={laddar}
         />
         {laddar ? (
@@ -142,7 +164,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                     <td className="enhet">{analysEnhet(k)}</td>
                     <td className="kalla">
                       {v !== undefined
-                        ? omr?.text ?? 'Analysen'
+                        ? (omr?.text ?? 'Analysen')
                         : schablon
                           ? `Saknas, uppskattas (${schablon.kalla})`
                           : 'Saknas'}

@@ -9,7 +9,23 @@ import type { Produkt } from './types'
 
 /** Ämnen som urvalet ska täcka. Energi och protein styrs via grovfoder och kraftfoder. */
 export const URVALSAMNEN: NutrientKey[] = [
-  'ca', 'p', 'mg', 'na', 'fe', 'mn', 'cu', 'zn', 'co', 'jod', 'se', 'vitA', 'vitD', 'vitE', 'b1', 'b2', 'biotin',
+  'ca',
+  'p',
+  'mg',
+  'na',
+  'fe',
+  'mn',
+  'cu',
+  'zn',
+  'co',
+  'jod',
+  'se',
+  'vitA',
+  'vitD',
+  'vitE',
+  'b1',
+  'b2',
+  'biotin',
 ]
 const MAXAMNEN: NutrientKey[] = [...URVALSAMNEN, 'starkelse']
 
@@ -48,9 +64,7 @@ const STYR_ALLTID: NutrientKey[] = ['ca', 'p', 'mg', 'na', 'se', 'vitE']
 export function styrandeAmnen(bas: Intag, behov: Behov): NutrientKey[] {
   return URVALSAMNEN.filter(
     (k) =>
-      behov[k]?.min !== undefined &&
-      bas[k].kalla !== 'okand' &&
-      (bas[k].kalla === 'analys' || STYR_ALLTID.includes(k)),
+      behov[k]?.min !== undefined && bas[k].kalla !== 'okand' && (bas[k].kalla === 'analys' || STYR_ALLTID.includes(k)),
   )
 }
 
