@@ -39,14 +39,9 @@ test('new account starts empty after demo use', async ({ page }) => {
 })
 
 test('unmocked api request fails the test', async ({ page }) => {
-  // Guard for the mock harness: an /api call without a mock must never pass silently.
+  // Guard for the mock harness. The body asserts nothing on purpose: the only thing that can fail this
+  // test is the teardown check in helpers.ts, so it stays green only while that guard works.
   test.fail()
   await page.goto('/')
-  const ok = await page.evaluate(() =>
-    fetch('/api/okand', { method: 'POST' }).then(
-      (r) => r.ok,
-      () => false,
-    ),
-  )
-  expect(ok).toBe(true)
+  await page.evaluate(() => fetch('/api/okand', { method: 'POST' }).catch(() => undefined))
 })
