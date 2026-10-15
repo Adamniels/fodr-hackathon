@@ -396,3 +396,32 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; margin: 0; }
 .login-skiljare::before, .login-skiljare::after { content: ''; flex: 1; height: 1px; background: var(--linje); }
 .login-byt { align-self: center; min-height: 40px; font-size: 16px; }
 .login-not { text-align: center; font-size: 13px; }
+
+/* Injusteringsplan: kalender för foderbytet */
+.injustering { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--linje-2); display: flex; flex-direction: column; gap: 14px; }
+.injustering h4 { margin: 0; font-family: var(--serif); font-weight: 600; font-size: 20px; }
+.injustering .liten { margin: 4px 0 0; }
+.injustering-topp { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; }
+.injustering-start { margin: 0; }
+.injustering-start input { min-height: 44px; border: 1px solid var(--falt-kant); border-radius: 8px; padding: 0 10px; background: var(--falt-bg); }
+.kalender { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.kalender-vd { text-align: center; font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; padding-bottom: 2px; }
+.kalender-dag { min-height: 52px; border-radius: 8px; border: 1px solid var(--linje); background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px; font: inherit; color: var(--text); }
+.kalender-dag.utanfor { background: transparent; border-color: transparent; color: var(--text-3); }
+.kalender-dag.andra { background: var(--skog); border-color: var(--skog); color: #fff; cursor: pointer; }
+.kalender-dag.andra:hover { background: var(--skog-2); }
+.kalender-dag.andra.vald { box-shadow: 0 0 0 3px var(--markering), 0 0 0 4px var(--brun); }
+.kalender-dag.klart { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.kalender-nr { font-weight: 700; font-size: 16px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kalender-tagg { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
+.injustering-steg { background: var(--yta-2); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.injustering-steg-rubrik { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.injustering-rad { display: grid; grid-template-columns: minmax(0, 1fr) auto 84px; gap: 12px; align-items: baseline; font-size: 16px; }
+.injustering-rad strong { text-align: right; font-variant-numeric: tabular-nums; }
+.injustering-andring { text-align: right; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.injustering-andring.upp { color: var(--brun); }
+.injustering-andring.ner { color: var(--ok); }
+.injustering-andring.samma { color: var(--text-3); font-weight: 400; }
+.injustering .ruta { margin: 0; }
+.injustering > .knapp { align-self: flex-start; }
+@media (max-width: 600px) { .kalender-tagg { font-size: 10px; } .kalender-dag { min-height: 48px; } .injustering-rad { grid-template-columns: minmax(0, 1fr) auto 70px; } }

@@ -5,6 +5,7 @@ import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './kvalitet'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './kanslighet'
 import { hittaBilligareLiknande, type Byte } from './byten'
+import { skapaInjustering, type Injustering } from './injustering'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -52,6 +53,8 @@ export interface Plan {
   bortvalda: { namn: string; skal: string[] }[]
   /** Dagens foder som byts mot en liknande eller bättre passande produkt, med kostnad före och efter. */
   byten: Byte[]
+  /** Hur dagens foder trappas över till planen, i takt med hästens känslighet för foderbyten. */
+  injustering: Injustering
 }
 
 const ENERGI_OVER = 1.1
@@ -318,6 +321,15 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       .filter((u) => u.produkt.iUrval)
       .map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
     byten,
+    injustering: skapaInjustering({
+      halsa: h,
+      kanslighet: profil.bytekanslighet,
+      grovfoderNamn: analys.typ === 'hosilage' ? 'Hösilage' : 'Hö',
+      grovfoderFranKg: profil.grovfoder.kgPerDag,
+      grovfoderTillKg: grovKg,
+      fran: nuvarande,
+      till: [...behallna, ...nyaPoster],
+    }),
   }
 }
 

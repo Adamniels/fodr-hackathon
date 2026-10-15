@@ -5,6 +5,7 @@ import type { Balansrad, Plan, Status } from '../domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '../domain/types'
 import { enhet, etikett, kr, tal } from '../format'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
+import { Injusteringskalender } from './Injusteringskalender'
 
 const STATUS: Record<Status, [string, string]> = {
   brist: ['Brist', 'brist'],
@@ -105,6 +106,7 @@ export function PlanStep({
               ))}
             </div>
           )}
+          <Injusteringskalender injustering={plan.injustering} hastNamn={hast.namn} />
         </section>
 
         <section className="kort forklaring">
@@ -385,6 +387,7 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     kansligheter: plan.kansligheter.map((k) => k.text),
     bortvaldaProdukter: plan.bortvalda.map((b) => `${b.namn} (${b.skal.join(', ')})`),
     varningar: plan.varningar,
+    foderbyte: { dagar: plan.injustering.dagar, steg: plan.injustering.steg.length },
     saknasIAnalysen: plan.saknadeAnalysvarden.map(etikett),
   }
 }
