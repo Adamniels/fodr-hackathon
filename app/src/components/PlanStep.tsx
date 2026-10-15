@@ -62,7 +62,10 @@ export function PlanStep({
   const totalNy = nyKostnad + behallnaKostnad
   const besparing = plan.nulageKostnadPerManad - totalNy
   // "Kalcium (Ca)" blir "kalcium", men "Vitamin E" behåller sin bokstav.
-  const kortNamn = (r: Balansrad) => etikett(r.amne).replace(/\s*\(.*\)$/, '').replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
+  const kortNamn = (r: Balansrad) =>
+    etikett(r.amne)
+      .replace(/\s*\(.*\)$/, '')
+      .replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
   const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map(kortNamn)
   const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
   const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
@@ -129,8 +132,8 @@ export function PlanStep({
           )}
           {plan.kvaveOverskottKgPerAr > 1 && (
             <div className="miljo">
-              <strong>{tal(plan.kvaveOverskottKgPerAr, 0)} kg kväve per år</strong> hamnar i gödseln från protein
-              hästen inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.
+              <strong>{tal(plan.kvaveOverskottKgPerAr, 0)} kg kväve per år</strong> hamnar i gödseln från protein hästen
+              inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.
             </div>
           )}
         </section>
@@ -158,7 +161,9 @@ export function PlanStep({
                 <tr key={p.produkt.id}>
                   <td>
                     <strong>{visningsnamn(p.produkt)}</strong>
-                    {ersatter(p.produkt.id) && <span className="liten ersatter">Ersätter {ersatter(p.produkt.id)}</span>}
+                    {ersatter(p.produkt.id) && (
+                      <span className="liten ersatter">Ersätter {ersatter(p.produkt.id)}</span>
+                    )}
                     {p.produkt.dosKalla && (
                       <span className="liten" title={p.produkt.antaganden.join(' ')}>
                         Tillverkarens dos: {p.produkt.dosKalla}
@@ -198,9 +203,8 @@ export function PlanStep({
         )}
         {plan.alternativ && (
           <p className="alternativ">
-            Alternativ:{' '}
-            {plan.alternativ.poster.map((p) => `${visningsnamn(p.produkt)} ${p.gramPerDag} g`).join(' + ')}, cirka{' '}
-            {kr(plan.alternativ.kostnadPerManad + behallnaKostnad)}/mån.
+            Alternativ: {plan.alternativ.poster.map((p) => `${visningsnamn(p.produkt)} ${p.gramPerDag} g`).join(' + ')},
+            cirka {kr(plan.alternativ.kostnadPerManad + behallnaKostnad)}/mån.
           </p>
         )}
       </section>
@@ -281,8 +285,8 @@ export function PlanStep({
           <p className="liten">
             Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under
             behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler, och
-            hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete. Analysera
-            grovfodret om du vill veta säkert.
+            hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete.
+            Analysera grovfodret om du vill veta säkert.
           </p>
         )}
         {plan.noteringar.length > 0 && (

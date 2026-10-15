@@ -81,7 +81,19 @@ export const analysHo: Grovfoderanalys = {
   provdatum: '2026-07-20',
   tsProcent: 84.1,
   askaGPerKgTs: 53,
-  perKgTs: { energi: 8.4, smbRp: 44, socker: 122, ca: 3.52, p: 1.83, mg: 1.31, na: 0.31, fe: 107, mn: 73, zn: 22, cu: 5 },
+  perKgTs: {
+    energi: 8.4,
+    smbRp: 44,
+    socker: 122,
+    ca: 3.52,
+    p: 1.83,
+    mg: 1.31,
+    na: 0.31,
+    fe: 107,
+    mn: 73,
+    zn: 22,
+    cu: 5,
+  },
 }
 
 /** Demojournaler per häst-id. Sixtens sista anteckning ska få AI:n att flagga veterinär (ömma hovar och fånghistorik). */

@@ -21,7 +21,12 @@ describe('bedomGrovfoder', () => {
     expect(f).not.toContain('Högt socker')
   })
   it('B06: hög aska och järn tyder på jordinblandning', () => {
-    const b06 = { ...analysKomplett, tsProcent: 45.7, askaGPerKgTs: 94, perKgTs: { ...analysKomplett.perKgTs, fe: 279 } }
+    const b06 = {
+      ...analysKomplett,
+      tsProcent: 45.7,
+      askaGPerKgTs: 94,
+      perKgTs: { ...analysKomplett.perKgTs, fe: 279 },
+    }
     expect(rubriker(bedomGrovfoder(b06, demoHast))).toContain('Möjlig jordinblandning')
   })
   it('hårt arbete: energi under 9 MJ är för lite', () => {

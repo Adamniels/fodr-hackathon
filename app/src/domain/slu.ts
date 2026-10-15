@@ -135,18 +135,14 @@ export function beraknaBehov(p: Hastprofil): Behovsresultat {
   const vikt = viktVidNormalHull(p)
   const per100 = vikt / 100
   if (Math.abs(vikt - p.viktKg) > 1) {
-    noteringar.push(
-      `Behoven räknas på ${Math.round(vikt)} kg, ungefärlig vikt vid normalt hull (SLU tabell 3).`,
-    )
+    noteringar.push(`Behoven räknas på ${Math.round(vikt)} kg, ungefärlig vikt vid normalt hull (SLU tabell 3).`)
   }
 
   // Underhåll, tabell 3: 0,5 × V^0,75 för lättfödda, +5 % normalfödda, +10 % svårfödda.
   const underhallMJ = 0.5 * vikt ** 0.75 * TYPFAKTOR[p.typ]
   const hingstMJ = p.kon === 'hingst' ? 0.1 * underhallMJ : 0
 
-  const franPass = p.ridning
-    ? arbetsMJFranRidning(p)
-    : (ARBETE_PROCENT[p.arbetsniva ?? 'ingen'] / 100) * underhallMJ
+  const franPass = p.ridning ? arbetsMJFranRidning(p) : (ARBETE_PROCENT[p.arbetsniva ?? 'ingen'] / 100) * underhallMJ
   const prestandaMJ = p.prestanda ? prestandaMinimumMJ(p.prestanda, underhallMJ, p.viktKg) : 0
   const arbetsMJ = Math.max(franPass, prestandaMJ)
   if (prestandaMJ > franPass) {

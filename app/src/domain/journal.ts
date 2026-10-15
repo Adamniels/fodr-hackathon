@@ -84,7 +84,11 @@ export function nyPost(datum: string, falt: Omit<Journalpost, 'id' | 'datum'>): 
 
 /** Sammanfattning av en plan att spara i journalen, så att man ser vilken plan som gällde när. */
 export function ogonblickAvPlan(
-  plan: { grovfoderKgPerDag: number; behallnaFoder: Foderpost[]; urval: { poster: Foderpost[]; kostnadPerManad: number } | null },
+  plan: {
+    grovfoderKgPerDag: number
+    behallnaFoder: Foderpost[]
+    urval: { poster: Foderpost[]; kostnadPerManad: number } | null
+  },
   analys: Grovfoderanalys,
 ): PlanOgonblick {
   const poster = [...plan.behallnaFoder, ...(plan.urval?.poster ?? [])]

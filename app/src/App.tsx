@@ -54,7 +54,13 @@ export default function App() {
         />
         {visaLogin && (
           <div className="dialog-bakgrund" onClick={() => setVisaLogin(false)}>
-            <div className="dialog" role="dialog" aria-modal="true" aria-label="Logga in" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Logga in"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button className="dialog-stang" aria-label="Stäng" onClick={() => setVisaLogin(false)}>
                 ×
               </button>
@@ -228,7 +234,11 @@ function Arbetsyta({
               </div>
               <div>
                 <dt>Analys</dt>
-                <dd>{analys ? `${analys.labb ?? 'Uppladdad'}${analys.provdatum ? `, prov ${analys.provdatum}` : ''}` : 'Inte uppladdad än'}</dd>
+                <dd>
+                  {analys
+                    ? `${analys.labb ?? 'Uppladdad'}${analys.provdatum ? `, prov ${analys.provdatum}` : ''}`
+                    : 'Inte uppladdad än'}
+                </dd>
               </div>
             </dl>
           )}

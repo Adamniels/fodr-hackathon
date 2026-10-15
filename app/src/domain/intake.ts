@@ -28,9 +28,7 @@ export function grovfoderIntag(analys: Grovfoderanalys, kgFoderPerDag: number): 
       continue
     }
     const s = schablonFor(analys.typ, k)
-    intag[k] = s
-      ? { varde: s.varde * kgTs, kalla: 'schablon', schablonKalla: s.kalla }
-      : { varde: 0, kalla: 'okand' }
+    intag[k] = s ? { varde: s.varde * kgTs, kalla: 'schablon', schablonKalla: s.kalla } : { varde: 0, kalla: 'okand' }
   }
   return intag
 }

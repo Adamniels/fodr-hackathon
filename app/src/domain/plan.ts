@@ -122,8 +122,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
   const ERSATTS = ['mineralfoder', 'tillskott', 'salt']
   let behallna = nuvarande.filter((p) => !ERSATTS.includes(p.produkt.kategori))
   let grovKg = profil.grovfoder.kgPerDag
-  const energiFor = (kg: number, foder: Foderpost[]) =>
-    laggTill(grovfoderIntag(analys, kg), foder).energi.varde
+  const energiFor = (kg: number, foder: Foderpost[]) => laggTill(grovfoderIntag(analys, kg), foder).energi.varde
 
   // SLU: vid överhull minskas i första hand kraftfodret.
   if (energiFor(grovKg, behallna) > energiBehov * ENERGI_OVER) {
@@ -220,7 +219,9 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
   }
 
   if (h.magsar || h.pssm) {
-    varningar.push('Magsår och korsförlamning kräver veterinärens bedömning. Planen anpassar fodret men ersätter inte behandling.')
+    varningar.push(
+      'Magsår och korsförlamning kräver veterinärens bedömning. Planen anpassar fodret men ersätter inte behandling.',
+    )
   }
 
   const { tillatna, uteslutna } = filtreraProdukter(produkter, h)
@@ -317,9 +318,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       { intag: slutIntag.smbRp.varde, behov: behov.smbRp!.min! },
       behovsres.berakningsviktKg,
     ),
-    bortvalda: uteslutna
-      .filter((u) => u.produkt.iUrval)
-      .map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
+    bortvalda: uteslutna.filter((u) => u.produkt.iUrval).map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
     byten,
     injustering: skapaInjustering({
       halsa: h,
