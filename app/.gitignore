@@ -25,3 +25,7 @@ dist-ssr
 
 # Hemligheter
 .env
+
+# Playwright
+playwright-report/
+test-results/
