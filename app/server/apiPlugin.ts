@@ -3,7 +3,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import Anthropic from '@anthropic-ai/sdk'
-import type { Plugin } from 'vite'
+import type { Connect, Plugin } from 'vite'
 import { analyseraJournal, forklaraPlan, lasAnalys, tolkaProfil } from './ai'
 
 const MAX_BODY_BYTES = 20 * 1024 * 1024
@@ -33,28 +33,31 @@ const ROUTES: Record<string, (body: unknown) => Promise<unknown>> = {
   '/api/journal': (b) => analyseraJournal(b),
 }
 
+async function hantera(req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction): Promise<void> {
+  const route = req.url ? ROUTES[req.url] : undefined
+  if (!route || req.method !== 'POST') return next()
+  try {
+    skicka(res, 200, await route(await lasJson(req)))
+  } catch (e) {
+    if (e instanceof Anthropic.AuthenticationError) {
+      return skicka(res, 500, { fel: 'API-nyckeln saknas eller är ogiltig. Lägg den i app/.env.' })
+    }
+    if (e instanceof Anthropic.RateLimitError) {
+      return skicka(res, 429, { fel: 'För många anrop just nu. Vänta en stund och försök igen.' })
+    }
+    if (e instanceof Anthropic.APIError) {
+      return skicka(res, 502, { fel: `AI-tjänsten svarade med fel ${e.status}.` })
+    }
+    skicka(res, 500, { fel: e instanceof Error ? e.message : 'Okänt fel' })
+  }
+}
+
 export function apiPlugin(): Plugin {
   return {
     name: 'krubba-api',
     configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        const route = req.url ? ROUTES[req.url] : undefined
-        if (!route || req.method !== 'POST') return next()
-        try {
-          skicka(res, 200, await route(await lasJson(req)))
-        } catch (e) {
-          if (e instanceof Anthropic.AuthenticationError) {
-            return skicka(res, 500, { fel: 'API-nyckeln saknas eller är ogiltig. Lägg den i app/.env.' })
-          }
-          if (e instanceof Anthropic.RateLimitError) {
-            return skicka(res, 429, { fel: 'För många anrop just nu. Vänta en stund och försök igen.' })
-          }
-          if (e instanceof Anthropic.APIError) {
-            return skicka(res, 502, { fel: `AI-tjänsten svarade med fel ${e.status}.` })
-          }
-          skicka(res, 500, { fel: e instanceof Error ? e.message : 'Okänt fel' })
-        }
-      })
+      // Connect ignores returned promises; hantera catches its own errors.
+      server.middlewares.use((req, res, next) => void hantera(req, res, next))
     },
   }
 }

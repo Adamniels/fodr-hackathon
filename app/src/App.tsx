@@ -290,7 +290,7 @@ function Arbetsyta({
                 <PlanStep
                   hast={hast}
                   analys={analys}
-                  plan={plan.ok!}
+                  plan={plan.ok}
                   onSparaIJournal={() => {
                     laggTillPost(hast.id, nyPost(idag(), { text: '', plan: planOgonblick! }))
                     gaTill('journal')

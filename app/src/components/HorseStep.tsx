@@ -522,7 +522,7 @@ function AiHjalp({
       <button
         className="knapp sekundar"
         disabled={laddar || (!foderText && !halsaText)}
-        onClick={() => kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))}
+        onClick={() => void kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))}
       >
         {laddar ? 'Tolkar…' : fragor.length ? 'Svara' : 'Fyll i med AI'}
       </button>

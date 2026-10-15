@@ -77,7 +77,10 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
         <input
           type="file"
           accept="application/pdf,image/png,image/jpeg,image/webp"
-          onChange={(e) => e.target.files?.[0] && laddaUpp(e.target.files[0])}
+          onChange={(e) => {
+            const fil = e.target.files?.[0]
+            if (fil) void laddaUpp(fil)
+          }}
           disabled={laddar}
         />
         {laddar ? (

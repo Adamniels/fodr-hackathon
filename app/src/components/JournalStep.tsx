@@ -277,7 +277,7 @@ function AiAnalys({
         </>
       )}
       <div className="atgardsrad">
-        <button className="knapp sekundar" disabled={laddar || poster.length === 0} onClick={kor}>
+        <button className="knapp sekundar" disabled={laddar || poster.length === 0} onClick={() => void kor()}>
           {laddar ? 'Läser journalen…' : svar ? 'Analysera igen' : 'Analysera journalen'}
         </button>
       </div>

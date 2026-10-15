@@ -5,13 +5,18 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'playwright-report', 'test-results'] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    // Catches '${x}' in a plain string, the bug behind audit finding C7.
+    rules: { 'no-template-curly-in-string': 'error' },
+  },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2022,
       globals: globals.browser,
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -21,5 +26,10 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
+  },
+  {
+    extends: [js.configs.recommended, tseslint.configs.disableTypeChecked],
+    files: ['**/*.{js,mjs}'],
+    languageOptions: { ecmaVersion: 2022, globals: globals.node },
   },
 )
