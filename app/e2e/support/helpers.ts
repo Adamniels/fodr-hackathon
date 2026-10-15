@@ -72,8 +72,19 @@ export async function loadExamplePlan(page: Page): Promise<void> {
 /** The sidebar listing the user's horses. */
 export const horseList = (page: Page): Locator => page.getByRole('complementary', { name: 'Hästar' })
 
-/** Asserts a krona amount, allowing any whitespace (sv-SE uses a no-break space) as thousands separator. */
+/**
+ * Matches a whole number followed by a unit, e.g. 1 288 kr. Any whitespace (sv-SE uses a no-break space) may
+ * separate thousands. The lookbehind stops 88 from matching inside 188 or 1 288, or after a decimal comma.
+ */
+function amountPattern(value: number, unit: string): RegExp {
+  const digits = String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s')
+  return new RegExp(`(?<![\\d,]\\s?)${digits}\\s*${unit}(?![\\p{L}])`, 'u')
+}
+
 export async function expectMoney(locator: Locator, kronor: number): Promise<void> {
-  const digits = String(Math.round(kronor)).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s')
-  await expect(locator).toContainText(new RegExp(`${digits}\\s*kr`))
+  await expect(locator).toContainText(amountPattern(kronor, 'kr'))
+}
+
+export async function expectGrams(locator: Locator, grams: number): Promise<void> {
+  await expect(locator).toContainText(amountPattern(grams, 'g'))
 }

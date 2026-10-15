@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { analysA01, forklaring } from './fixtures/ai'
-import { enterDemo, expect, expectMoney, goToStep, loadExamplePlan, test } from './support/helpers'
+import { enterDemo, expect, expectGrams, expectMoney, goToStep, loadExamplePlan, test } from './support/helpers'
 
 const A01_PDF = '../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf'
 
@@ -34,8 +34,8 @@ test('example analysis produces the known plan', async ({ page }) => {
   // Verified 2026-10-15 by running skapaPlan(demoHast, analysKomplett); matches the README demo script.
   // If these change, the engine changed: investigate before updating.
   const shoppingRow = (product: string) => page.getByRole('row').filter({ hasText: product })
-  await expect(shoppingRow('Krafft Miner Original Pellets 20kg')).toContainText('66 g')
-  await expect(shoppingRow('Salt 1,5 kg')).toContainText('14 g')
+  await expectGrams(shoppingRow('Krafft Miner Original Pellets 20kg'), 66)
+  await expectGrams(shoppingRow('Salt 1,5 kg'), 14)
   await expectMoney(shoppingRow('Totalt utöver grovfodret'), 88)
   await expectMoney(page.getByLabel('Kostnad per månad'), 286)
   await expect(page.getByRole('listitem').filter({ hasText: 'Ta bort Krafft Leisure Pellets 20kg' })).toBeVisible()
