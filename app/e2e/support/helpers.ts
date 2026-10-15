@@ -4,13 +4,14 @@
 import { test as base, expect, type Locator, type Page } from '@playwright/test'
 import { mockAi, type AiMock } from './mock-ai'
 
-/** Fixed "now" for every test: dates in the journal and calendar are deterministic. */
+/** Start of "now" for every test: dates in the journal and calendar are deterministic. */
 export const FIXED_NOW = new Date('2026-10-15T10:00:00+02:00')
 
 export const test = base.extend<{ ai: AiMock }>({
   ai: [
     async ({ page }, use) => {
-      await page.clock.setFixedTime(FIXED_NOW)
+      // install, not setFixedTime: time starts at FIXED_NOW but keeps moving, so Date.now() based IDs stay unique.
+      await page.clock.install({ time: FIXED_NOW })
       const ai = await mockAi(page)
       await use(ai)
       expect(ai.unexpected(), 'unmocked /api requests').toEqual([])

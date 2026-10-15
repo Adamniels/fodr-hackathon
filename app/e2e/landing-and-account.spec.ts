@@ -45,3 +45,14 @@ test('unmocked api request fails the test', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => fetch('/api/okand', { method: 'POST' }).catch(() => undefined))
 })
+
+test('accounts do not share horses', async ({ page }) => {
+  await createAccount(page, 'Användare A', 'a@example.se')
+  await page.getByRole('button', { name: 'Lägg till din första häst' }).click()
+  await page.getByLabel('Namn').fill('Alfa')
+  await expect(horseList(page).getByRole('button', { name: 'Alfa' })).toBeVisible()
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+
+  await createAccount(page, 'Användare B', 'b@example.se')
+  await expect(horseList(page).getByRole('button', { name: 'Alfa' })).toHaveCount(0)
+})
