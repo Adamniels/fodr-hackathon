@@ -20,7 +20,8 @@ chmod +x "$tmp/gh"
 export PATH="$tmp:$PATH" FAKE_ISSUES="$tmp/issues.json" FAKE_BOARD="$tmp/board.json"
 
 # Fixture builders. issue <number> <OPEN|CLOSED> <milestone or ""> <label> <title> [<depends-on lines>]
-# board <number>:<status> ...  (one page; "none" leaves the issue off the board)
+# board <number>:<status> ...  (one page; "none" adds the item without a status)
+# BOARD_REPO sets the repository of the items board adds (default: this repository).
 reset() { echo '[]' > "$FAKE_ISSUES"; printf '%s' '{"data":{"user":{"projectV2":{"items":{"pageInfo":{"hasNextPage":false,"endCursor":null},"nodes":[]}}}}}' > "$FAKE_BOARD"; }
 issue() {
   local body="### Goal
@@ -42,8 +43,8 @@ $6
 board() {
   local pair
   for pair in "$@"; do
-    jq --argjson n "${pair%%:*}" --arg s "${pair#*:}" \
-      '.data.user.projectV2.items.nodes += [{content: {number: $n}, fieldValueByName: (if $s == "none" then null else {name: $s} end)}]' \
+    jq --argjson n "${pair%%:*}" --arg s "${pair#*:}" --arg r "${BOARD_REPO:-Adamniels/fodr-hackathon}" \
+      '.data.user.projectV2.items.nodes += [{content: {number: $n, repository: {nameWithOwner: $r}}, fieldValueByName: (if $s == "none" then null else {name: $s} end)}]' \
       "$FAKE_BOARD" > "$tmp/b" && mv "$tmp/b" "$FAKE_BOARD"
   done
 }
@@ -126,6 +127,36 @@ board 6:Todo 45:Todo 19:Done
 run
 [ "$code" = 0 ] && section Proposal | grep -q '^  #6 ' && section Alternatives | grep -q '^  #45 ' && ! section Skipped | grep -q '#'
 check "\"None\" and \"Note:\" lines under Depends on do not block" $?
+
+reset
+issue 5 OPEN "$M1" type:chore "[M1-00] chore: bare reference" "#52"
+issue 6 OPEN "$M1" type:chore "[M1-01] chore: note with a reference" "- Note: also waits for #52"
+issue 8 OPEN "$M1" type:refactor "[M1-03] refactor: workspaces"
+issue 52 OPEN "" type:fix "fix: still open"
+board 5:Todo 6:Todo 8:Todo 52:Todo
+run
+[ "$code" = 0 ] && section Proposal | grep -q '^  #8 ' && section Skipped | grep '#5 ' | grep -q 'waits for #52 (open)' \
+  && section Skipped | grep '#6 ' | grep -q 'waits for #52 (open)'
+check "a #N line without a bullet, and a Note line with #N, still block" $?
+
+reset
+issue 6 OPEN "$M1" type:chore "[M1-01] chore: harden the e2e harness" "- Adamniels/other-repo#52"
+issue 52 CLOSED "$M1" type:fix "fix: local 52, closed"
+board 6:Todo 52:Done
+run
+[ "$code" = 0 ] && section Proposal | grep -qx '  none' && section Skipped | grep '#6 ' | grep -q 'other-repo#52'
+check "a reference to another repository is not read as a local issue" $?
+
+reset
+issue 6 OPEN "$M1" type:chore "[M1-01] chore: harden the e2e harness"
+issue 8 OPEN "$M1" type:refactor "[M1-03] refactor: workspaces"
+issue 10 OPEN "$M1" type:refactor "[M1-05] refactor: i18n"
+board 8:Todo 10:Blocked
+BOARD_REPO=Adamniels/other-repo board 6:"In Progress"
+run
+[ "$code" = 0 ] && section Proposal | grep -q '^  #6 ' && section Alternatives | grep -q '^  #8 ' && ! grep -q '#10 ' <<<"$out" \
+  && section "In flight" | grep -qx '  none'
+check "board items from another repository are ignored, and a status other than Todo is not a candidate" $?
 
 reset
 issue 6 OPEN "$M1" type:chore "[M1-01] chore: harden the e2e harness"

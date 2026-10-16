@@ -12,7 +12,7 @@ Most development moves to an always-on Mac mini that runs Claude Code, reached o
 
 | Topic | Decision |
 |---|---|
-| Trigger | The owner names the issue in a session: `/pick-up-ticket <number>`. No autonomous queue for now; the async layer comes later. |
+| Trigger | The owner names the issue in a session: `/pick-up-ticket <number>`, or `/pick-up-ticket` alone for a proposal he confirms (#59). No autonomous queue for now; the async layer comes later. |
 | Gates | At pickup the agent asks the open questions, then shows a short plan and waits for approval before writing code. After that it stops only for genuine blockers. |
 | Decision record | Questions, answers and the approved plan are posted as a "Decisions at pickup" comment on the issue and linked from the PR. Architecture-level decisions still become ADRs. |
 | Identity | On the Mac mini, git and `gh` run as the owner's bot account, so PRs are authored by the bot and the owner approves them normally. The bypass is never needed. |

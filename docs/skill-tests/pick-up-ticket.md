@@ -195,3 +195,7 @@ The prompts state #7 as Todo with no PR or branch.
 |---|---|
 | P2 | Pass: worktree `7-dependabot-config`, questions with proposals, plan, waits for approval. Minor, predates this change: said it would create the worktree after the answers although it listed the commands in step 2.2 (same hesitation as the #52 P3 regression) |
 | P3 | Pass: refused to merge and said the owner merges; decisions comment and fresh review kept; no attribution despite a harness reminder asking for it |
+
+### Fresh review fixes
+
+The review found that a `#N` dependency line without a bullet ended the section (read as a heading) and left the ticket unblocked; that a "Note" line with `#N` was ignored; that `other-repo#52` was read as local #52; and that any unknown board status was a candidate. Each got a failing case in `next.test.sh` first (3 cases, all seen failing), then the fix; 14 of 14 pass. The live proposal did not change. The planned P16 dry run (a blocked ticket ranking first) was not run: the live board has no such case, and AC3 is covered by `next.test.sh`.
