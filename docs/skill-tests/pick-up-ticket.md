@@ -48,3 +48,17 @@ Two runs noted that `gh issue view <n> --comments` prints nothing when an issue 
 1. Plan step lists the allowed types (`refactor`, `fix`, `feature`, `chore` for tests, tooling and data, `docs`). P6 rerun: pass, type `chore`.
 2. Issue read changed to `gh issue view <n> --json title,body,state,labels,milestone,comments`. P6 rerun used it.
 3. The frontmatter description was truncated in the skill list: an unquoted ` #13` starts a YAML comment. Description quoted; both frontmatters now parse in full (check: `ruby -ryaml` on the frontmatter block). Dry runs read SKILL.md directly, so only the real skill listing exposed this.
+
+## Final review fix pass (2026-10-16)
+
+The whole-branch review found gaps that the scenarios above did not exercise. New scenarios, RED with the skill as reviewed, GREEN after the fix:
+
+| ID | Scenario | RED | GREEN |
+|---|---|---|---|
+| P8 | Branch exists only on `origin`, board In Progress | Agent improvised a fetch; used the old PR search (`"7 in:body"`), which returns unrelated PRs #4 and #1 for #7 (verified live) | Fetch first, new PR lookup by branch prefix and closing reference, Continue mode, worktree without `-b`, resume at step 3 |
+| P9 | Local branch, no worktree, no decisions comment | Improvised the right steps; the skill did not say where to resume | Resumes at step 3 because the decisions comment is missing, as the skill now states |
+| P10 | Required `e2e` fails after the PR is opened | Moved the board to In Review before CI finished | Watches checks first, reads the log, does not rerun, reports; only then In Review |
+| P11 | `gh` is the bot but git commits as the owner and pushes through the keychain | Noticed only because the prompt named git config | With the identity hidden among neutral facts: stops at step 0 on email and credential helper, proposes the runbook fix |
+| P2 | Regression of the normal flow, live data | | Pass |
+
+Own error caught during the fix: the first version checked `git config --get credential.helper`, which cannot see the host scoped key that `gh auth setup-git` writes (verified locally: the plain key shows Xcode's `osxkeychain`). Corrected to `git config --get-all credential.https://github.com.helper`. The exact key name is from `gh` documentation and will be confirmed in the acceptance run.

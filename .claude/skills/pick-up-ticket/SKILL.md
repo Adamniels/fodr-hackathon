@@ -12,16 +12,26 @@ You take one issue from the Fodr board to a reviewed PR. Decisions the ticket le
 ## 0. Before anything
 
 - Read `.claude/CLAUDE.md` (repo rules) and the issue: `gh issue view <n> --json title,body,state,labels,milestone,comments`.
-- Identity: `gh api user --jq .login`. If it prints the owner (`Adamniels`), stop: say the owner cannot approve a PR opened under his account and that the agent would hold his bypass; propose switching `gh` and git to the bot (`docs/agent-workflow.md`). Continue only if he says so, and still never merge.
-- State: `bash scripts/agent/board.sh get <n>`; `gh pr list --state all --search "<n> in:body"`; `git worktree list`; `git branch --list '<n>-*'`.
+- Identity, all three must be the bot (`mac-mini-agent`):
+  - `gh api user --jq .login`
+  - `git config user.email` ends with `+mac-mini-agent@users.noreply.github.com`
+  - `git config --get-all credential.https://github.com.helper` includes `gh auth git-credential` (pushes go through the bot's `gh` login, not a keychain)
+
+  If any shows the owner or something else, stop: the owner cannot approve a PR authored or pushed as him, and the agent would hold his bypass. Propose the fix from `docs/agent-workflow.md` (runbook steps 4 and 5). Continue only if he says so, and still never merge.
+- State, after `git fetch origin`:
+  - `bash scripts/agent/board.sh get <n>`
+  - PRs for the issue: `gh pr list --state all --limit 200 --json number,state,headRefName,closingIssuesReferences --jq '.[] | select((.headRefName | startswith("<n>-")) or any(.closingIssuesReferences[]?; .number == <n>))'`
+  - `git worktree list`; `git branch --list '<n>-*'`; `git branch -r --list 'origin/<n>-*'`
 
 ## 1. Choose the mode
 
 | What exists | Mode |
 |---|---|
 | An open PR for the issue | **Review**: go to step R |
-| A branch or worktree `<n>-<slug>`, no PR | **Continue**: work in that worktree; never recreate, reset or force it |
-| Issue closed, or board Done / In Review without a PR | **Stop and ask** what the owner wants |
+| A merged or closed PR for the issue | **Stop and ask** |
+| A branch `<n>-<slug>`, locally or on `origin`, no PR | **Continue**: use its worktree; if there is none, `git worktree add .worktrees/<branch> <branch>` (no `-b`). Never recreate, reset or force the branch. Resume at step 3 if the issue has no "Decisions at pickup" comment, otherwise at step 6 |
+| Issue closed, or board Done / In Review without a PR | **Stop and ask** |
+| Board In Progress but no branch anywhere | **Stop and ask**: someone else may be working on it |
 | Nothing | **New**: continue with step 2 |
 
 ## 2. New ticket
@@ -33,13 +43,17 @@ You take one issue from the Fodr board to a reviewed PR. Decisions the ticket le
 5. **Decisions comment** on the issue (template in `templates.md`), right after approval.
 6. **Implement** test first: watch each new test fail, then pass. Run format, lint, typecheck, unit, integration and e2e, and read the output. (superpowers:test-driven-development and superpowers:verification-before-completion, if installed.)
 7. **Fresh review.** Dispatch one fresh reviewer agent over `git diff origin/main...HEAD` with the issue, the plan and the spec. Fix important findings, test first. (superpowers:requesting-code-review, if installed.)
-8. **Finish.** Push; `gh pr create` with the PR template from `templates.md`; `board.sh status <n> "In Review"`; summary comment on the issue; **stop**.
+8. **Finish.** Push; `gh pr create` with the PR template from `templates.md`; then `gh pr checks <pr> --watch`.
+   - A check fails because of this PR: fix it test first, push, watch again.
+   - A check fails for an unrelated reason (flaky, infrastructure): do not rerun or work around it; report it to the owner with the log excerpt.
+
+   Only then `board.sh status <n> "In Review"` and the summary comment with the real check result; **stop**.
 
 Use `Closes #<n>` unless an acceptance criterion can only be checked after merge; then use `Refs #<n>` and say in the PR which criterion remains.
 
 ## R. Review mode
 
-Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{repo}/pulls/<pr>/comments`). Address each in the PR's worktree, test first where it changes behaviour, run the checks, push, reply on each thread with what changed. The board stays **In Review**. Stop.
+Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{repo}/pulls/<pr>/comments`). Address each in the PR's worktree, test first where it changes behaviour, run the checks, push (never force), watch `gh pr checks <pr> --watch`, reply on each thread with what changed. The board stays **In Review**. Stop.
 
 ## Stop and ask, mid-ticket
 

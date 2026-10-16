@@ -21,17 +21,26 @@ A ticket fixes **what** and **why**. **How** is decided at pickup, so tickets st
 
 The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens are authored by the bot and a human can approve them.
 
-1. **GitHub (owner, once).** Keep `mac-mini-agent` as a collaborator with **Write** permission. Never give it Admin: the ruleset lets admins bypass review, and the bot would inherit that.
+1. **GitHub (owner, once).**
+   - Keep `mac-mini-agent` as a repository collaborator with **Write** permission. Never give it Admin: the ruleset lets admins bypass review, and the bot would inherit that.
+   - Give it access to the project board: open the "Fodr" project, **Settings → Manage access**, add `mac-mini-agent` with **Write**. Repository access does not include the board, which is a private user project.
 2. **Tools.** Install Node 24 (see `.nvmrc`), Docker (Desktop or OrbStack), `gh`, tmux and Claude Code.
 3. **Clone.** `git clone https://github.com/Adamniels/fodr-hackathon.git ~/Projects/fodr-hackathon`
-4. **Log in as the bot.** `gh auth login` with the bot account; scopes `repo`, `workflow`, `project`, `read:org` (`gh auth refresh -s project` if the project scope is missing).
+4. **Log in as the bot.** `gh auth login` with the bot account; scopes `repo`, `workflow`, `project`, `read:org` (`gh auth refresh -s project` if the project scope is missing). Then `gh auth setup-git`, so git pushes use the bot's login instead of a keychain entry that may belong to the owner.
 5. **Git identity, this clone only.** In the clone:
    ```
    git config user.name "mac-mini-agent"
-   git config user.email "<the bot's noreply address>"
+   git config user.email "<id>+mac-mini-agent@users.noreply.github.com"
    ```
+   The id comes from `gh api users/mac-mini-agent --jq .id`.
 6. **Install.** `cd app && npm ci && npx playwright install chromium`, then `cp .env.example .env` and add the Anthropic key if AI features are needed.
-7. **Check.** `gh api user --jq .login` prints `mac-mini-agent`, and `bash scripts/agent/board.sh get 7` prints a status. If the first prints the owner's name, `pick-up-ticket` will stop and say so.
+7. **Check**, in the clone:
+   - `gh api user --jq .login` prints `mac-mini-agent`
+   - `git config user.email` ends with `+mac-mini-agent@users.noreply.github.com`
+   - `git config --get-all credential.https://github.com.helper` includes `gh auth git-credential` (written by `gh auth setup-git`; the plain `credential.helper` may still show `osxkeychain`, which is fine)
+   - `bash scripts/agent/board.sh get 7` prints a status
+
+   If any of the first three is wrong, `pick-up-ticket` stops and says so.
 
 ## Working sessions
 
@@ -46,6 +55,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
 |---|---|
 | The agent warns that `gh` is the owner's account | Redo runbook steps 4 and 5 in this clone |
 | `board.sh` fails with a scope error | `gh auth refresh -s project` |
+| `board.sh` fails with "Could not resolve to a ProjectV2" | The bot has no access to the board: runbook step 1, Manage access |
 | `board.sh` says a status does not exist | The board's Status options were renamed; the script reads names at runtime, so use the new name |
 | A worktree is left over from an abandoned ticket | `git worktree list`, then `git worktree remove --force .worktrees/<folder>` only after checking nothing in it is needed |
 | The PR cannot be approved by the owner | It was opened under the owner's account; check runbook step 4 |
