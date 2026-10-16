@@ -1,5 +1,6 @@
-# Dependabot version updates. Security updates are governed by the repository's
-# Dependabot alerts setting and ignore the cooldown below (ADR 0009).
+# Dependabot version updates. Security updates are a separate repository setting
+# (Dependabot security updates, which needs alerts on) and are not subject to the
+# cooldown below, so security fixes arrive promptly (ADR 0009).
 #
 # The 14 day cooldown implements the rule in docs/architecture.md: only adopt a
 # release once it is at least two weeks old.
