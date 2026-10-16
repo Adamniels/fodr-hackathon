@@ -16,6 +16,7 @@ import {
 } from '../domain/types'
 import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
+import { DecimalInput } from './DecimalInput'
 
 interface Props {
   vald: Hastprofil | undefined
@@ -208,7 +209,6 @@ function Profilformular({
         <Falt label="Kg per dag (som det utfodras)">
           <Siffra
             value={hast.grovfoder.kgPerDag}
-            steg={0.5}
             onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
           />
         </Falt>
@@ -552,13 +552,6 @@ function Falt({
   )
 }
 
-function Siffra({ value, onChange, steg = 1 }: { value: number; onChange: (v: number) => void; steg?: number }) {
-  return (
-    <input
-      type="number"
-      step={steg}
-      value={Number.isFinite(value) ? value : ''}
-      onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-    />
-  )
+function Siffra({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return <DecimalInput value={value} onChange={onChange} />
 }

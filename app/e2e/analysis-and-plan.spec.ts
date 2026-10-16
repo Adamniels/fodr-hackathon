@@ -1,6 +1,16 @@
 import { readFile } from 'node:fs/promises'
 import { analysA01, forklaring } from './fixtures/ai'
-import { enterDemo, expect, expectGrams, expectMoney, goToStep, loadExamplePlan, test } from './support/helpers'
+import {
+  enterDemo,
+  expect,
+  expectGrams,
+  expectMoney,
+  goToStep,
+  loadExamplePlan,
+  test,
+  typeKeyByKey,
+} from './support/helpers'
+import type { Locator, Page } from '@playwright/test'
 
 const A01_PDF = '../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf'
 
@@ -63,6 +73,53 @@ test('explanation failure keeps the plan usable', async ({ page, ai }) => {
   await loadExamplePlan(page)
   await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
   await expect(page.getByRole('row').filter({ hasText: 'Salt 1,5 kg' })).toBeVisible()
+})
+
+test.describe('dry matter entry (#50)', () => {
+  test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
+
+  // The example analysis has 39,7 % dry matter, which gives 16 kg haylage per day.
+  const expectExampleDose = async (page: Page) => {
+    await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+    await expect(page.getByText('Ge 16 kg hösilage per dag.')).toBeVisible()
+  }
+
+  async function openExampleAnalysis(page: Page): Promise<Locator> {
+    await enterDemo(page)
+    await goToStep(page, 'Analysen')
+    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    return page.getByLabel('Torrsubstans')
+  }
+
+  async function paste(page: Page, field: Locator, text: string): Promise<void> {
+    await field.click()
+    await field.press('ControlOrMeta+a')
+    await field.press('Backspace')
+    await page.evaluate((t) => navigator.clipboard.writeText(t), text)
+    await field.press('ControlOrMeta+v')
+  }
+
+  for (const typed of ['39.7', '39,7']) {
+    test(`typing ${typed} key by key keeps the value and the plan`, async ({ page }) => {
+      const field = await openExampleAnalysis(page)
+      await typeKeyByKey(field, typed)
+      await expect(field).toHaveValue(typed)
+      await expectExampleDose(page)
+    })
+
+    test(`pasting ${typed} keeps the value and the plan`, async ({ page }) => {
+      const field = await openExampleAnalysis(page)
+      await paste(page, field, typed)
+      await expect(field).toHaveValue(typed)
+      await expectExampleDose(page)
+    })
+  }
+
+  test('clearing the field shows it empty, not 0', async ({ page }) => {
+    const field = await openExampleAnalysis(page)
+    await typeKeyByKey(field, '')
+    await expect(field).toHaveValue('')
+  })
 })
 
 test('calendar download is a valid ics', async ({ page }) => {

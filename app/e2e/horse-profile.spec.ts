@@ -1,5 +1,5 @@
 import { FOLJDFRAGA, profilMedFoljdfraga } from './fixtures/ai'
-import { createAccount, enterDemo, expect, horseList, test } from './support/helpers'
+import { createAccount, enterDemo, expect, horseList, test, typeKeyByKey } from './support/helpers'
 
 test('add a horse and it survives reload', async ({ page }) => {
   await createAccount(page, 'Hästägare', 'agare@example.se')
@@ -60,6 +60,15 @@ test('AI error is shown and the form stays usable', async ({ page, ai }) => {
   await expect(page.getByText('Testfel')).toBeVisible()
   await page.getByLabel('Namn').fill('Sixten Andra')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
+})
+
+test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
+  await enterDemo(page)
+  const field = page.getByLabel('Kg per dag (som det utfodras)')
+  await typeKeyByKey(field, '12.5')
+  await expect(field).toHaveValue('12.5')
+  await typeKeyByKey(field, '12,5')
+  await expect(field).toHaveValue('12,5')
 })
 
 test.skip('clearing weight is rejected (C2, fixed in M1)', () => {})

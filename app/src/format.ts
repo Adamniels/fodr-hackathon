@@ -6,6 +6,18 @@ export function tal(n: number | undefined, decimaler?: number): string {
   return n.toLocaleString('sv-SE', { maximumFractionDigits: d, minimumFractionDigits: 0 })
 }
 
+/** A decimal number as typed: digits with an optional comma or point, which may still be unfinished ("39,"). */
+const DECIMAL = /^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/
+
+/**
+ * Reads a number typed with a decimal comma or point. Returns undefined for empty or non-numeric text, never 0,
+ * because a missing value is unknown.
+ */
+export function parseDecimal(text: string): number | undefined {
+  const t = text.trim()
+  return DECIMAL.test(t) ? Number(t.replace(',', '.')) : undefined
+}
+
 export const kr = (n: number) => `${Math.round(n).toLocaleString('sv-SE')} kr`
 
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
