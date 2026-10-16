@@ -36,7 +36,7 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 
 ## Rules for AI agents
 
-- **Never merge a PR and never use a branch protection bypass**, unless the owner explicitly asks for that specific PR. The owner can bypass review through PRs, and an agent working with the owner's credentials inherits that bypass, so this rule is what keeps the review gate real.
+- **Never merge a PR and never use a branch protection bypass**, even when asked. A human merges after approving. The owner can bypass review through PRs, and an agent working with the owner's credentials inherits that bypass, so this rule is what keeps the review gate real.
 - **No agent attribution.** Never add `Co-Authored-By` trailers naming an AI agent to commits, and never add "Generated with" lines or similar agent credits to commit messages, PR titles or PR descriptions.
 
 ## Domain invariants

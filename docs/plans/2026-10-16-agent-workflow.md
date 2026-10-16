@@ -151,7 +151,7 @@ Scenarios run as fresh subagents in this repository. Every prompt ends with: "Th
 Requires the PR for Tasks 1 to 5 to be merged, so the Mac mini clone has the skills on `main`.
 
 - [ ] **Step 1 (owner):** Follow the runbook on the Mac mini. Check: `gh api user --jq .login` prints the bot.
-- [ ] **Step 2:** On the Mac mini, `/write-ticket` one deferred M0 minor (the .ics date check). Expected: an issue with the full ticket shape and no implementation decisions, on the board as Todo. The issue forms are visible at `/issues/new/choose`.
+- [ ] **Step 2:** On the Mac mini, `/write-ticket` the .ics date check (a deferred M0 minor). It is already in #6's scope, so expected: the skill proposes a comment on #6 instead of a new issue. The issue forms are visible at `/issues/new/choose`. (Revised 2026-10-16: the new-bug path was exercised from the laptop with the dry matter decimal bug.)
 - [ ] **Step 3:** `/pick-up-ticket 7`. Expected: questions and plan, approval, a decisions comment on #7, worktree used, PR by the bot with `Closes #7`, board In Review, and the owner can approve.
 - [ ] **Step 4 (owner):** Leave one review comment. Then `/pick-up-ticket 7` again. Expected: the comment is addressed and pushed.
 - [ ] **Step 5:** Any deviation becomes a ticket via `/write-ticket` or a fix to the skill with a new scenario in `docs/skill-tests/`.
