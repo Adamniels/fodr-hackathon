@@ -6,7 +6,7 @@ Read before changing anything substantial:
 
 - `docs/spec.md`: what we build and what done means (core flows CF1 to CF9, milestones M0 to M5)
 - `docs/audit.md`: the state of the codebase and known findings (C1 to C8)
-- `docs/adr/`: architecture decisions (from M1 onwards)
+- `docs/architecture.md`: the target architecture, with links to every decision in `docs/adr/`
 - `docs/glossary.md`: the Swedish domain vocabulary used in code
 
 Work is tracked as issues in the GitHub Project "fodr". One issue is one PR.
