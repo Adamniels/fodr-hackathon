@@ -33,6 +33,11 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 - **Never commit secrets.** The Anthropic key lives only in `app/.env`, which is git ignored. Copy `app/.env.example`.
 - Ask before adding dependencies, changing the architecture, or deleting files.
 
+## Rules for AI agents
+
+- **Never merge a PR and never use a branch protection bypass**, unless the owner explicitly asks for that specific PR. The owner can bypass review through PRs, and an agent working with the owner's credentials inherits that bypass, so this rule is what keeps the review gate real.
+- **No agent attribution.** Never add `Co-Authored-By` trailers naming an AI agent to commits, and never add "Generated with" lines or similar agent credits to commit messages, PR titles or PR descriptions.
+
 ## Domain invariants
 
 - **The AI never calculates.** It reads reports, asks follow-up questions and explains. Requirements, doses and costs come only from `src/domain`.
