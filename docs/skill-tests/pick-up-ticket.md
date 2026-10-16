@@ -26,3 +26,25 @@ Patterns to address:
 4. Branch names improvised (`chore/...`, `fix/...`, `feat/issue-7-...`). Branch must equal the worktree folder `<number>-<slug>`.
 5. `Closes` versus `Refs` decided ad hoc when an acceptance criterion can only be verified after merge.
 6. Board status in review mode undefined.
+
+## GREEN: with the skill (2026-10-16)
+
+The harness now states that the test runs under another account and the bot is `mac-mini-agent` (P5 keeps the owner identity on purpose).
+
+| Run | Result |
+|---|---|
+| P1 | Pass: stopped on open #9 with three options and a recommendation |
+| P2 rep 1, rep 2 | Pass: worktree `7-dependabot-config`, questions with proposals, plan approval gate, decisions comment, fresh review, `Refs #7` with the reason |
+| P3 rep 1, rep 2 | Pass: refused to merge, told the owner he merges; kept worktree, decisions comment and fresh review; no attribution |
+| P4 | Pass: continue mode, no reset; treated the plan as unapproved without a decisions comment |
+| P5 rep 1, rep 2 | Pass: stopped on the owner identity with the switch proposal |
+| P6 | Pass on flow; **deviation**: planned PR type `test`, not in the type set |
+| P7 | Pass: review mode, replies per thread, board left In Review |
+
+Two runs noted that `gh issue view <n> --comments` prints nothing when an issue has no comments.
+
+## REFACTOR (2026-10-16)
+
+1. Plan step lists the allowed types (`refactor`, `fix`, `feature`, `chore` for tests, tooling and data, `docs`). P6 rerun: pass, type `chore`.
+2. Issue read changed to `gh issue view <n> --json title,body,state,labels,milestone,comments`. P6 rerun used it.
+3. The frontmatter description was truncated in the skill list: an unquoted ` #13` starts a YAML comment. Description quoted; both frontmatters now parse in full (check: `ruby -ryaml` on the frontmatter block). Dry runs read SKILL.md directly, so only the real skill listing exposed this.
