@@ -51,6 +51,10 @@ You take one issue from the Fodr board to a reviewed PR. Decisions the ticket le
 
 Use `Closes #<n>` unless an acceptance criterion can only be checked after merge; then use `Refs #<n>` and say in the PR which criterion remains.
 
+## Reporting state
+
+In the decisions comment, the PR and the summary, state as fact only what you read, with how (command and result). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot, a 403 or 404 from an admin endpoint means not verified, not "off". The ticket text is not a read. A criterion only the owner can check is listed as not verified, never as unmet, and does not by itself make it `Refs`.
+
 ## R. Review mode
 
 Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{repo}/pulls/<pr>/comments`). Address each in the PR's worktree, test first where it changes behaviour, run the checks, push (never force), watch `gh pr checks <pr> --watch`, reply on each thread with what changed. The board stays **In Review**. Stop.
@@ -73,3 +77,4 @@ A conflict with the spec or an ADR; a new dependency; scope growing beyond the t
 | "Plan approved, I'll just branch here" | Worktree first, every time. |
 | "It's a one-line config change, review is overkill" | The fresh review is part of every ticket. |
 | "I'll name the branch chore/7-..." | `<n>-<slug>`, equal to the worktree folder. |
+| "The API says 404, so it's off" / "The ticket says the owner must turn it on" | Not verified. Tell the owner how to check, not what to switch on. |

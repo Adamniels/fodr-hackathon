@@ -44,6 +44,11 @@ Decisions: <link to the "Decisions at pickup" comment>
 - [x] Refactoring and behaviour changes are not mixed in this PR
 - [x] Docs updated if behaviour or conventions changed
 
+## Verification
+
+- Read: <state>: <result> (`<command>`). One line per state the PR or a criterion relies on.
+- Not verified: <state>: <why>. The owner checks with <command or Settings path>. (Or: "Nothing".)
+
 ## Review
 
 Fresh reviewer findings: <none, or each finding and how it was fixed>.
@@ -52,5 +57,5 @@ Fresh reviewer findings: <none, or each finding and how it was fixed>.
 ## Summary comment (issue, after the PR is open)
 
 ```markdown
-PR <link> is ready for review. <one sentence on what it does>. Checks: <all green, or what failed and why>. Waiting for approval and merge by a human.
+PR <link> is ready for review. <one sentence on what it does>. Checks: <all green, or what failed and why>. Not verified: <each state and how the owner checks it, or "nothing">. Waiting for approval and merge by a human.
 ```
