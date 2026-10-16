@@ -170,12 +170,14 @@ All AI endpoints require auth, validate requests with shared schemas, and are li
 
 | Milestone | Content | Kind of change | Done when |
 |---|---|---|---|
-| **M0 Safety net** | Repo hygiene (deletions in section 4, root `.gitignore`, `.env.example`), `npm test`, Prettier, type aware ESLint, Playwright e2e for today's flows, CI on PRs, project `CLAUDE.md`, glossary, fixed eval script (C7) | Tooling only | CI green on `main`; every existing flow has an e2e test |
-| **M1 Domain hardening** | Validation at the domain boundary, explicit infeasible result, message codes instead of sentences, fixes for C1 to C8 | Refactor PRs and fix PRs kept separate | Regression tests for C1 to C8 pass; no Swedish prose produced by `src/domain` |
-| **M2 Backend foundation** | Server, Postgres, auth (CF1), persistence for horses, analyses and journal (CF2, CF4, CF7), frontend off localStorage, demo removed, routing | Rebuild | CF1, CF2, CF4, CF7 e2e green against the real backend |
-| **M3 AI hardening** | Shared contracts, request validation, quotas, report storage, eval gate in CI (CF3, CF6) | Refactor and feature | CF3, CF6 green; eval gate blocks a deliberately broken prompt |
+| **M0 Safety net** (done 2026-10-15) | Repo hygiene (deletions in section 4, root `.gitignore`, `.env.example`), `npm test`, Prettier, type aware ESLint, Playwright e2e for today's flows, CI on PRs, project `CLAUDE.md`, glossary, fixed eval script (C7) | Tooling only | CI green on `main`; every existing flow has an e2e test |
+| **M1 Domain hardening** | Workspaces monorepo, `packages/domain`, i18n layer, validation at the domain boundary, explicit infeasible result, message codes instead of sentences, fixes for C1, C2, C3, C5 and C6 | Refactor PRs and fix PRs kept separate | Regression tests for C1, C2, C3, C5 and C6 pass; no Swedish prose produced by `packages/domain` |
+| **M2 Backend foundation** | Server, Postgres, auth (CF1), persistence for horses, analyses with stored reports, plans and journal (CF2, CF4, CF7), fix for C4, frontend off localStorage, routing, demo removed, seed script | Rebuild | CF1, CF2, CF4, CF7 e2e green against the real backend; no localStorage or demo account left |
+| **M3 AI hardening** | Shared AI contracts, auth and request validation on AI routes, usage logging and quotas, server side explanations, fix for C8, eval gate in CI (CF3, CF6) | Refactor and feature | CF3, CF6 green; eval gate blocks a deliberately broken prompt |
 | **M4 Product data** | Product table, curation of the selectable set, admin view (CF9), plan reproducibility (CF5) | Rebuild of the process | CF5, CF9 green; optimiser reads only from the table |
-| **M5 Beta readiness** | Observability, AA pass, CF8, privacy notice and terms, deployment pipeline, seed script, beta invites | Feature | All core flows green in a deployed environment; first beta users invited |
+| **M5 Beta readiness** | Invite only sign up, observability, AA pass, CF8, privacy notice and terms, hosting decision, deployment pipeline, beta invites | Feature | All core flows green in a deployed environment; first beta users invited |
+
+The slices for M1 to M5 are issues on the GitHub Project "Fodr"; `docs/roadmap.md` gives the overview.
 
 After the beta: English translation, sharing, stable views, social login, payments. Each would get its own spec.
 
@@ -208,3 +210,4 @@ After the beta: English translation, sharing, stable views, social login, paymen
 | 2026-10-15 | AI quotas plus eval gate | Quotas only, global cap |
 | 2026-10-15 | Spec, ADRs and conventions in the repo; slices in the GitHub Project | Everything in a roadmap file |
 | 2026-10-15 | Delete `app/scratchverify/`, tracked `.DS_Store`, move pitch PDF out of the repo | Keep them |
+| 2026-10-16 | Milestones aligned with the roadmap: C4, report storage and the seed script move to M2 (needed for M2's CF4 criterion and demo removal), C8 to M3, invite only sign up added to M5 | Keep the original milestone table |
