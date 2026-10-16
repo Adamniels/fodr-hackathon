@@ -8,7 +8,7 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 |---|---|---|
 | A bug or idea appears | Anyone | `/write-ticket <description>` in a Claude Code session, or the Bug or Feature form on GitHub |
 | Ticket on the board | `write-ticket` | Issue with the ticket shape, `type:*` label, suggested milestone, board status **Todo** |
-| Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
+| Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini, or `/pick-up-ticket` alone to get a proposal (below) and confirm it; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
 | Decisions | Agent and owner | Agent asks the ticket's open questions and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue |
 | Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch |
 | Pull request | Agent (as the bot) | PR with `Closes #<n>` and a link to the decisions comment; board **In Review**; summary comment on the issue |
@@ -16,6 +16,18 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 | Merge | A human | Owner or teammate approves and merges; the issue closes; board **Done** |
 
 A ticket fixes **what** and **why**. **How** is decided at pickup, so tickets stay valid however long they wait. Agents never merge, never use the branch protection bypass and never add agent attribution (`.claude/CLAUDE.md`).
+
+## Choosing the next ticket
+
+`/pick-up-ticket` without a number runs `bash scripts/agent/next.sh`, which anyone can run to see the same answer. The order comes only from the issues and the board, so there is no list to keep up to date:
+
+1. **In flight first.** Tickets In Progress or In Review are mentioned before anything new, and never proposed as new work.
+2. **Candidates** are open issues with board status Todo (or not on the board) whose dependencies are all closed. Under "Depends on", a `#N` line waits for those issues, a line starting with "None" or "Note" is ignored, and any other text (for example "all of M5.") counts as an open dependency, so a person decides.
+3. **Order:** milestone M1 to M5 (by the number in the milestone title); within a milestone, a `type:fix` without slice ID first, then the slices in slice order (`[M1-01]`, `[M1-02]`, ...), then other tickets without slice ID by issue number. Backlog tickets (no milestone) come last.
+4. **Proposal and alternatives:** the first candidate with a milestone is proposed. The alternatives are the next one and the top backlog ticket (or the one after that, if the backlog is empty). Only when no milestone ticket is free is a backlog ticket proposed.
+5. **Skipped:** tickets that rank before the proposal but wait for a dependency are shown with what blocks them.
+
+Nothing starts until the owner confirms; he can also name any other number.
 
 ## Mac mini runbook
 
@@ -44,7 +56,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
 
 ## Working sessions
 
-- **Start:** `ssh` to the Mac mini, then `tmux new -s fodr-<number>`, `cd ~/Projects/fodr-hackathon`, `git pull`, `claude`, and `/pick-up-ticket <number>`.
+- **Start:** `ssh` to the Mac mini, then `tmux new -s fodr-<number>`, `cd ~/Projects/fodr-hackathon`, `git pull`, `claude`, and `/pick-up-ticket <number>` (or `/pick-up-ticket` alone for a proposal).
 - **Leave and come back:** detach with `Ctrl-b d`; reattach with `tmux attach -t fodr-<number>`. From the phone, use Claude Code Remote Control to answer the agent's questions.
 - **Two tickets at once:** one tmux session per ticket; each has its own worktree, Docker services are shared.
 - **After merge:** `git worktree remove .worktrees/<number>-<slug>`, `git branch -d <number>-<slug>`, `git worktree prune`.
