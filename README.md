@@ -6,7 +6,7 @@ Upload a roughage analysis, describe the horse, and get a feeding plan following
 - State of the codebase and known findings: [`docs/audit.md`](docs/audit.md)
 - Domain vocabulary (Swedish in code): [`docs/glossary.md`](docs/glossary.md)
 - Conventions for humans and agents: [`.claude/CLAUDE.md`](.claude/CLAUDE.md)
-- Work items: the GitHub Project "fodr"
+- Work items: the GitHub Project "fodr"; how agents write and work tickets: [`docs/agent-workflow.md`](docs/agent-workflow.md)
 - Original hackathon goal (Swedish): [`malbild.md`](malbild.md)
 
 ## Setup

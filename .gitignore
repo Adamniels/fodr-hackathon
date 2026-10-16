@@ -11,3 +11,6 @@
 
 # Tooling scratch
 .superpowers/
+
+# Agent worktrees, one per ticket (docs/agent-workflow.md)
+.worktrees/

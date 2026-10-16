@@ -8,8 +8,9 @@ Read before changing anything substantial:
 - `docs/audit.md`: the state of the codebase and known findings (C1 to C8)
 - `docs/architecture.md`: the target architecture, with links to every decision in `docs/adr/`
 - `docs/glossary.md`: the Swedish domain vocabulary used in code
+- `docs/agent-workflow.md`: how tickets are written and worked by agents, and the Mac mini runbook
 
-Work is tracked as issues in the GitHub Project "fodr". One issue is one PR.
+Work is tracked as issues in the GitHub Project "fodr". One issue is one PR. Write a ticket with `/write-ticket <description>`; work on one with `/pick-up-ticket <number>`.
 
 ## Commands
 
@@ -17,7 +18,7 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 
 | Command | What |
 |---|---|
-| `npm run dev` | Vite dev server with the `/api` routes (needs `app/.env`) |
+| `npm run dev` | Vite dev server with the `/api` routes (the AI routes need `app/.env`) |
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`) |
 | `npm run test:e2e` | Playwright e2e tests, AI mocked, no API key needed |
 | `npm run lint` | ESLint, type aware |
@@ -35,7 +36,7 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 
 ## Rules for AI agents
 
-- **Never merge a PR and never use a branch protection bypass**, unless the owner explicitly asks for that specific PR. The owner can bypass review through PRs, and an agent working with the owner's credentials inherits that bypass, so this rule is what keeps the review gate real.
+- **Never merge a PR and never use a branch protection bypass**, even when asked. A human merges after approving. The owner can bypass review through PRs, and an agent working with the owner's credentials inherits that bypass, so this rule is what keeps the review gate real.
 - **No agent attribution.** Never add `Co-Authored-By` trailers naming an AI agent to commits, and never add "Generated with" lines or similar agent credits to commit messages, PR titles or PR descriptions.
 
 ## Domain invariants
