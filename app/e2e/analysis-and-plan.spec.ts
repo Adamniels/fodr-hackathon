@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { analysA01, forklaring } from './fixtures/ai'
 import {
+  FIXED_NOW,
   enterDemo,
   expect,
   expectGrams,
@@ -12,7 +14,9 @@ import {
 } from './support/helpers'
 import type { Locator, Page } from '@playwright/test'
 
-const A01_PDF = '../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf'
+const A01_PDF = fileURLToPath(
+  new URL('../../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf', import.meta.url),
+)
 
 const nutrientRow = (page: import('@playwright/test').Page, name: string) =>
   page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) })
@@ -59,12 +63,14 @@ test('plan explanation comes from the AI mock', async ({ page, ai }) => {
   await expect(paragraphs.filter({ hasText: second })).toBeVisible()
   // Dev mode runs effects twice (React StrictMode), so the first visit may send two requests.
   // The contract tested here is the cache: revisiting the same plan sends no new request.
+  await ai.settled()
   const callsAfterFirstVisit = ai.calls('forklaring').length
   expect(callsAfterFirstVisit).toBeGreaterThan(0)
 
   await goToStep(page, 'Journal')
   await goToStep(page, 'Foderplan')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
+  await ai.settled()
   expect(ai.calls('forklaring')).toHaveLength(callsAfterFirstVisit)
 })
 
@@ -129,6 +135,9 @@ test('calendar download is a valid ics', async ({ page }) => {
   const ics = await readFile(await (await download).path(), 'utf8')
   expect(ics.startsWith('BEGIN:VCALENDAR')).toBe(true)
   expect(ics).toContain('SUMMARY:Fodr: Sixten')
+  // The calendar starts tomorrow in local time, so the first step falls on the day after FIXED_NOW in Stockholm.
+  const tomorrow = new Date(FIXED_NOW.getTime() + 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' })
+  expect(ics).toContain(`DTSTART;VALUE=DATE:${tomorrow.replace(/-/g, '')}`)
   expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
 })
 

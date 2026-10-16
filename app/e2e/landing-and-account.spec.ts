@@ -46,6 +46,14 @@ test('unmocked api request fails the test', async ({ page }) => {
   await page.evaluate(() => fetch('/api/okand', { method: 'POST' }).catch(() => undefined))
 })
 
+test('api v1 requests reach the server', async ({ page }) => {
+  // Guard for the mock harness: /api/v1 belongs to the real backend (ADR 0007), so the mock lets it through.
+  // An aborted request rejects the fetch, so getting any status back proves it was not intercepted.
+  await page.goto('/')
+  const status = await page.evaluate(() => fetch('/api/v1/okand').then((r) => r.status))
+  expect(status).toBeGreaterThan(0)
+})
+
 test('accounts do not share horses', async ({ page }) => {
   await createAccount(page, 'Användare A', 'a@example.se')
   await page.getByRole('button', { name: 'Lägg till din första häst' }).click()
