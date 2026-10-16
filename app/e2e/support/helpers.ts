@@ -70,6 +70,14 @@ export async function loadExamplePlan(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
 }
 
+/** Clears a field with the keyboard, then types one key at a time, as a user does (unlike fill). */
+export async function typeKeyByKey(field: Locator, text: string): Promise<void> {
+  await field.click()
+  await field.press('ControlOrMeta+a')
+  await field.press('Backspace')
+  await field.pressSequentially(text)
+}
+
 /** The sidebar listing the user's horses. */
 export const horseList = (page: Page): Locator => page.getByRole('complementary', { name: 'Hästar' })
 

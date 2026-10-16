@@ -6,6 +6,7 @@ import { schablonFor } from '../domain/forage'
 import type { NutrientKey } from '../domain/nutrients'
 import type { Grovfoderanalys, Hastprofil } from '../domain/types'
 import { analysEnhet, etikett } from '../format'
+import { DecimalInput } from './DecimalInput'
 
 interface Props {
   hast: Hastprofil
@@ -111,11 +112,10 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
             {analys.provdatum && <span>Prov {analys.provdatum}</span>}
             <label>
               Torrsubstans{' '}
-              <input
+              <DecimalInput
                 className="smal"
-                type="number"
                 value={analys.tsProcent}
-                onChange={(e) => onAnalys({ ...analys, tsProcent: Number(e.target.value) }, omrakningar)}
+                onChange={(tsProcent) => onAnalys({ ...analys, tsProcent }, omrakningar)}
               />{' '}
               %
             </label>

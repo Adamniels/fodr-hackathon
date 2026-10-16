@@ -16,6 +16,7 @@ import {
 } from '../domain/types'
 import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
+import { DecimalInput } from './DecimalInput'
 
 interface Props {
   vald: Hastprofil | undefined
@@ -208,7 +209,6 @@ function Profilformular({
         <Falt label="Kg per dag (som det utfodras)">
           <Siffra
             value={hast.grovfoder.kgPerDag}
-            steg={0.5}
             onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
           />
         </Falt>
@@ -252,7 +252,7 @@ function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) =>
           <Siffra value={miljo.timmarUtePerDag} onChange={(v) => set({ timmarUtePerDag: v })} />
         </Falt>
         <Falt label="Lägsta temperatur (°C)" hjalp="Kallaste dygnen just nu">
-          <Siffra value={miljo.lagstaTempC} onChange={(v) => set({ lagstaTempC: v })} />
+          <Siffra value={miljo.lagstaTempC} needsMinusKey onChange={(v) => set({ lagstaTempC: v })} />
         </Falt>
       </div>
       <div className="kryss">
@@ -552,13 +552,14 @@ function Falt({
   )
 }
 
-function Siffra({ value, onChange, steg = 1 }: { value: number; onChange: (v: number) => void; steg?: number }) {
-  return (
-    <input
-      type="number"
-      step={steg}
-      value={Number.isFinite(value) ? value : ''}
-      onChange={(e) => onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-    />
-  )
+function Siffra({
+  value,
+  onChange,
+  needsMinusKey,
+}: {
+  value: number
+  onChange: (v: number) => void
+  needsMinusKey?: boolean
+}) {
+  return <DecimalInput value={value} onChange={onChange} needsMinusKey={needsMinusKey} />
 }
