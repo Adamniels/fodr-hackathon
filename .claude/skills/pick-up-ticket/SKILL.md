@@ -1,6 +1,6 @@
 ---
 name: pick-up-ticket
-description: 'Use when the owner names a GitHub issue to work on ("pick up #13", "work on 13", "/pick-up-ticket 13"), including when returning to a ticket whose PR has review comments.'
+description: 'Use when the owner names a GitHub issue to work on ("pick up #13", "work on 13", "/pick-up-ticket 13"), including when returning to a ticket whose PR has review comments; and when he asks what to work on next or types /pick-up-ticket with no number, to propose the next ticket.'
 ---
 
 # Pick up a ticket
@@ -8,6 +8,18 @@ description: 'Use when the owner names a GitHub issue to work on ("pick up #13",
 You take one issue from the Fodr board to a reviewed PR. Decisions the ticket leaves open are made **now, with the owner**, before any code. You stop at the PR: a human reviews and merges.
 
 **Violating the letter of these steps is violating their spirit.** An approved plan or a hurried owner does not remove a step.
+
+## No issue number: propose one
+
+When the owner gives no number ("/pick-up-ticket", "what should I work on next?"), run `bash scripts/agent/next.sh` and propose from its output only; do not rank the board yourself, and change nothing yet: no worktree, branch or board status. The order rule is in `docs/agent-workflow.md`, "Choosing the next ticket".
+
+Tell the owner, in this order:
+1. Every ticket under **In flight**, with its status, before anything new: continuing or reviewing it may be the better next step.
+2. The **Proposal**: number, title and the reason the script gives.
+3. The **Alternatives** (one or two), each with why it comes later.
+4. Each **Skipped** ticket with what blocks it, since it ranks before the proposal.
+
+Then wait. When he confirms a ticket (the proposal or another number), continue at step 0 with that number, exactly as if he had typed `/pick-up-ticket <number>`. If `next.sh` fails, report the error and ask him for a number; never propose from a partial read.
 
 ## 0. Before anything
 
@@ -77,4 +89,5 @@ A conflict with the spec or an ADR; a new dependency; scope growing beyond the t
 | "Plan approved, I'll just branch here" | Worktree first, every time. |
 | "It's a one-line config change, review is overkill" | The fresh review is part of every ticket. |
 | "I'll name the branch chore/7-..." | `<n>-<slug>`, equal to the worktree folder. |
+| "No number given; the ticket in progress / the earliest one looks next" | Run `next.sh`. In-flight tickets are mentioned, never proposed; the order is the script's, not yours. |
 | "The API says 404, so it's off" / "The ticket says the owner must turn it on" | Not verified. Tell the owner how to check, not what to switch on. |

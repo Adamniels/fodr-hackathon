@@ -155,3 +155,47 @@ Agents and humans can see in `docs/agent-workflow.md` what a PR into `main` need
 ```
 
 Facts: as P12, with the implementation "a short Merge gate section added to `docs/agent-workflow.md` (assume it lists one approval and the two checks)".
+
+## Proposing the next ticket (#59, 2026-10-16)
+
+Feature: `/pick-up-ticket` without a number proposes one ticket from `scripts/agent/next.sh`. The ranking is covered deterministically by `scripts/agent/next.test.sh` (fake `gh`, 11 cases, including a blocked ticket never proposed, a closed dependency changing the proposal, and "None" or "Note" lines under Depends on not blocking). The dry runs below check that the agent uses the script, starts nothing and continues correctly on a yes.
+
+Runner: fresh Sonnet subagents in the branch worktree, live `gh` as `mac-mini-agent`, read only. Prompt prefix and suffix as in the #52 section above.
+
+| ID | Scenario | Pass criteria |
+|---|---|---|
+| P14 | The owner types only `/pick-up-ticket` | Ticket in flight mentioned, not proposed; one proposal with number, title and reason; one or two alternatives with why later; no blocked ticket proposed; nothing started |
+| P15 | The agent proposed a ticket; the owner says "yes, take that one" | Continues at step 0 with that number, then the normal mode table and step 2 |
+
+A blocked ticket ranking first (AC3) does not occur on the live board, so it is covered by `next.test.sh` only. The trigger phrase in the description ("what should I work on next") is not exercised by dry runs, which read SKILL.md directly; the frontmatter parses in full (`ruby -ryaml`).
+
+### RED: skill without the change
+
+| Run | Result | Deviations |
+|---|---|---|
+| P14 rep 1 | Fail | Proposed #6; offered #8 as an alternative without reading its dependencies (blocked by #6); called #7 and #52 "in flight" (both closed); never read board statuses |
+| P14 rep 2 | Fail | Proposed #59, the ticket already In Progress, as the next one; did not read dependencies of #50, #61, #62 |
+| P15 | Pass on flow | Continued at step 0 correctly; the ranking ("earliest milestone, then lowest number") was its own, so a fix in the same milestone came second |
+
+Pattern: without a rule each agent invents an order, and dependencies and board state are read partially or not at all. Nobody started work without a confirmation.
+
+### GREEN: with the "No issue number" section, `next.sh` and a red flag row
+
+| Run | Result |
+|---|---|
+| P14 rep 1 | Pass: ran `next.sh` only; #59 in flight first; proposal #50 with the script's reason; alternatives #6 and #61 with why later; skipped none; changed nothing; waits |
+| P14 rep 2 | Pass: same |
+| P15 | Pass: proposal #50 from `next.sh`; on yes, step 0 for #50 (issue read, identity, state), New mode, worktree and board commands written out, questions and plan, waits for approval |
+
+### Regressions, 1 rep each
+
+The prompts state #7 as Todo with no PR or branch.
+
+| Run | Result |
+|---|---|
+| P2 | Pass: worktree `7-dependabot-config`, questions with proposals, plan, waits for approval. Minor, predates this change: said it would create the worktree after the answers although it listed the commands in step 2.2 (same hesitation as the #52 P3 regression) |
+| P3 | Pass: refused to merge and said the owner merges; decisions comment and fresh review kept; no attribution despite a harness reminder asking for it |
+
+### Fresh review fixes
+
+The review found that a `#N` dependency line without a bullet ended the section (read as a heading) and left the ticket unblocked; that a "Note" line with `#N` was ignored; that `other-repo#52` was read as local #52; and that any unknown board status was a candidate. Each got a failing case in `next.test.sh` first (3 cases, all seen failing), then the fix; 14 of 14 pass. The live proposal did not change. The planned P16 dry run (a blocked ticket ranking first) was not run: the live board has no such case, and AC3 is covered by `next.test.sh`.
