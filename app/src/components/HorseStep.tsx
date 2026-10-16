@@ -252,7 +252,7 @@ function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) =>
           <Siffra value={miljo.timmarUtePerDag} onChange={(v) => set({ timmarUtePerDag: v })} />
         </Falt>
         <Falt label="Lägsta temperatur (°C)" hjalp="Kallaste dygnen just nu">
-          <Siffra value={miljo.lagstaTempC} onChange={(v) => set({ lagstaTempC: v })} />
+          <Siffra value={miljo.lagstaTempC} needsMinusKey onChange={(v) => set({ lagstaTempC: v })} />
         </Falt>
       </div>
       <div className="kryss">
@@ -552,6 +552,14 @@ function Falt({
   )
 }
 
-function Siffra({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return <DecimalInput value={value} onChange={onChange} />
+function Siffra({
+  value,
+  onChange,
+  needsMinusKey,
+}: {
+  value: number
+  onChange: (v: number) => void
+  needsMinusKey?: boolean
+}) {
+  return <DecimalInput value={value} onChange={onChange} needsMinusKey={needsMinusKey} />
 }

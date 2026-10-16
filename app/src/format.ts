@@ -15,7 +15,9 @@ const DECIMAL = /^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/
  */
 export function parseDecimal(text: string): number | undefined {
   const t = text.trim()
-  return DECIMAL.test(t) ? Number(t.replace(',', '.')) : undefined
+  if (!DECIMAL.test(t)) return undefined
+  const n = Number(t.replace(',', '.'))
+  return Number.isFinite(n) ? n : undefined
 }
 
 export const kr = (n: number) => `${Math.round(n).toLocaleString('sv-SE')} kr`

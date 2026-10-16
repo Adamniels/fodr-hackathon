@@ -35,4 +35,8 @@ describe('parseDecimal', () => {
     expect(parseDecimal('1e3')).toBeUndefined()
     expect(parseDecimal('Infinity')).toBeUndefined()
   })
+
+  it('returns undefined for digits too long to be a finite number', () => {
+    expect(parseDecimal('9'.repeat(400))).toBeUndefined()
+  })
 })

@@ -1,5 +1,5 @@
 import { FOLJDFRAGA, profilMedFoljdfraga } from './fixtures/ai'
-import { createAccount, enterDemo, expect, horseList, test, typeKeyByKey } from './support/helpers'
+import { createAccount, enterDemo, expect, goToStep, horseList, test, typeKeyByKey } from './support/helpers'
 
 test('add a horse and it survives reload', async ({ page }) => {
   await createAccount(page, 'Hästägare', 'agare@example.se')
@@ -69,6 +69,10 @@ test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
   await expect(field).toHaveValue('12.5')
   await typeKeyByKey(field, '12,5')
   await expect(field).toHaveValue('12,5')
+  // Leaving the step remounts the field, so it now shows the stored value rather than its own draft.
+  await goToStep(page, 'Analysen')
+  await goToStep(page, 'Hästen')
+  await expect(page.getByLabel('Kg per dag (som det utfodras)')).toHaveValue('12.5')
 })
 
 test.skip('clearing weight is rejected (C2, fixed in M1)', () => {})
