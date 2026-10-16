@@ -46,8 +46,9 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 ## Verification
 
-- Read: <state>: <result> (`<command>`). One line per state the PR or a criterion relies on.
-- Not verified: <state>: <why>. The owner checks with <command or Settings path>. (Or: "Nothing".)
+<one line per state the PR or a criterion relies on>
+- Read: <state>: <result> (`<command>`).
+- Not verified: <state>: <why>. The owner checks with <command or Settings path>. (Or: "Not verified: nothing.")
 
 ## Review
 
@@ -57,5 +58,5 @@ Fresh reviewer findings: <none, or each finding and how it was fixed>.
 ## Summary comment (issue, after the PR is open)
 
 ```markdown
-PR <link> is ready for review. <one sentence on what it does>. Checks: <all green, or what failed and why>. Not verified: <each state and how the owner checks it, or "nothing">. Waiting for approval and merge by a human.
+PR <link> is ready for review. <one sentence on what it does>. Checks: <all green, or what failed and why>. Read: <each state the summary relies on and how it was read, or "nothing">. Not verified: <each state and how the owner checks it, or "nothing">. Waiting for approval and merge by a human.
 ```

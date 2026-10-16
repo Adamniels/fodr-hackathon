@@ -53,7 +53,7 @@ Use `Closes #<n>` unless an acceptance criterion can only be checked after merge
 
 ## Reporting state
 
-In the decisions comment, the PR and the summary, state as fact only what you read, with how (command and result). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot, a 403 or 404 from an admin endpoint means not verified, not "off". The ticket text is not a read. A criterion only the owner can check is listed as not verified, never as unmet, and does not by itself make it `Refs`.
+In the decisions comment, the PR and the summary, state as fact only what you read, with how (command and result). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot (Write, not Admin), a 403 or 404 on a settings or admin endpoint means not verified, not "off". The ticket text is not a read. A criterion only the owner can check is listed as not verified, never as unmet, and does not by itself make it `Refs`.
 
 ## R. Review mode
 
