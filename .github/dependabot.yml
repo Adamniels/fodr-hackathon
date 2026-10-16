@@ -1,0 +1,42 @@
+# Dependabot version updates. Security updates are a separate repository setting
+# (Dependabot security updates, which needs alerts on) and are not subject to the
+# cooldown below, so security fixes arrive promptly (ADR 0009).
+#
+# The 14 day cooldown implements the rule in docs/architecture.md: only adopt a
+# release once it is at least two weeks old.
+version: 2
+updates:
+  - package-ecosystem: npm
+    # Moves to "/" when the repo becomes an npm workspace (#8).
+    directory: /app
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Stockholm
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Majors are left out of the group so each gets its own PR and review.
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Stockholm
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]
