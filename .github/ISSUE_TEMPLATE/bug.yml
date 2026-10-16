@@ -1,0 +1,66 @@
+name: Bug
+description: Something behaves wrongly. Describe what happens, not how to fix it.
+title: "fix: "
+labels: ["type:fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A ticket fixes **what** and **why**. **How** is decided when the ticket is picked up, so leave the solution out. Anything undecided goes under Open questions.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What goes wrong, for whom, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Numbered steps from a known starting point (account, horse, analysis).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What happens instead.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Exact error text, screenshots, request IDs, failing input. No guesses about the cause.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable behaviour that proves it is fixed, as a checklist.
+      value: |
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included, and what is explicitly out.
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Fixed constraints
+      description: Only what is already decided, with a link (spec, ADR, owner). Everything else goes under Open questions.
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions
+      description: Decisions to make with the owner when the ticket is picked up.
