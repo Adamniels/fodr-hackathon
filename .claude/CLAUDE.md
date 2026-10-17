@@ -41,7 +41,7 @@ All run at the repository root and fan out to every workspace (today only `apps/
 
 ## Domain invariants
 
-- **The AI never calculates.** It reads reports, asks follow-up questions and explains. Requirements, doses and costs come only from `src/domain`.
+- **The AI never calculates.** It reads reports, asks follow-up questions and explains. Requirements, doses and costs come only from `packages/domain` (`@fodr/domain`).
 - **A missing value is unknown, never zero.** Do not default a missing nutrient, weight or dry matter to 0.
 - **Every requirement value cites its source** (SLU table or page) next to the value.
 - **Assumptions not from SLU** are marked `ANTAGANDE` in code and shown as "ej SLU" in the UI.
@@ -49,7 +49,8 @@ All run at the repository root and fan out to every workspace (today only `apps/
 
 ## Testing
 
-- New behaviour gets a failing test first (unit for `src/domain`, e2e for user flows).
+- New behaviour gets a failing test first (unit for `packages/domain`, e2e for user flows).
+- `packages/domain` is pure (ADR 0004): no I/O, timers, DOM or Node APIs, enforced by its tsconfig and ESLint config. Its unit tests use frozen fixtures in `packages/domain/test/fixtures/`, not the app's data.
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
 - The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` is not intercepted, because it belongs to the real backend.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.

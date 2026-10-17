@@ -42,14 +42,14 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 
 | Part | Where | Does |
 |---|---|---|
-| SLU model | `apps/web/src/domain/slu.ts` | Requirements per SLU Rapport 289, every value with its table reference |
-| Roughage | `apps/web/src/domain/forage.ts`, `intake.ts` | Supply from the roughage, default values when the analysis lacks a nutrient |
-| Selection | `apps/web/src/domain/optimize.ts` | Cheapest product combination within min and max limits |
-| Plan | `apps/web/src/domain/plan.ts` | SLU adjustment order, warnings, nitrogen |
-| Roughage quality | `apps/web/src/domain/kvalitet.ts` | SLU table 32, dry matter range, soil contamination |
-| Sensitivities | `apps/web/src/domain/kanslighet.ts` | Excludes products and gives advice based on health |
-| Feed transition | `apps/web/src/domain/injustering.ts` | Step schedule for changing feed, by sensitivity |
-| Journal | `apps/web/src/domain/journal.ts` | Trend, follow up and saved plans per horse |
+| SLU model | `packages/domain/src/slu.ts` | Requirements per SLU Rapport 289, every value with its table reference |
+| Roughage | `packages/domain/src/forage.ts`, `intake.ts` | Supply from the roughage, default values when the analysis lacks a nutrient |
+| Selection | `packages/domain/src/optimize.ts` | Cheapest product combination within min and max limits |
+| Plan | `packages/domain/src/plan.ts` | SLU adjustment order, warnings, nitrogen |
+| Roughage quality | `packages/domain/src/kvalitet.ts` | SLU table 32, dry matter range, soil contamination |
+| Sensitivities | `packages/domain/src/kanslighet.ts` | Excludes products and gives advice based on health |
+| Feed transition | `packages/domain/src/injustering.ts` | Step schedule for changing feed, by sensitivity |
+| Journal | `packages/domain/src/journal.ts` | Trend, follow up and saved plans per horse |
 | AI | `apps/web/server/ai.ts` | Reads reports, interprets free text, explains. Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |

@@ -3,8 +3,8 @@
 
 import { DEMOKONTO } from './auth'
 import { demoHast, demoJournal, ponny } from './data/exempel'
-import type { Journalpost } from './domain/journal'
-import type { Hastprofil } from './domain/types'
+import type { Journalpost } from '@fodr/domain/journal'
+import type { Hastprofil } from '@fodr/domain/types'
 
 // v2: profilen fick ras, prestanda och miljö.
 const nyckel = (anvandarId: string) => `krubba.hastar.v2.${anvandarId}`

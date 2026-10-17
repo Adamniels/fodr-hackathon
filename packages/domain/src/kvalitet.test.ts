@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analysHo, analysKomplett, demoHast, ponny } from '../data/exempel'
+import { analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/exempel'
 import { bedomGrovfoder } from './kvalitet'
 
 const rubriker = (f: ReturnType<typeof bedomGrovfoder>) => f.map((x) => x.rubrik)

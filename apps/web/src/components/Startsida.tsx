@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { analysKomplett, demoHast } from '../data/exempel'
-import { kostnadPerManad } from '../domain/intake'
-import { skapaPlan } from '../domain/plan'
-import type { Produkt } from '../domain/types'
+import { kostnadPerManad } from '@fodr/domain/intake'
+import { skapaPlan } from '@fodr/domain/plan'
+import type { Produkt } from '@fodr/domain/types'
 import { kr, tal } from '../format'
 import { Ordmarke } from './Varumarke'
 

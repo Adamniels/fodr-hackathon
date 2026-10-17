@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { analysKomplett, demoHast } from '../data/exempel'
-import produkterJson from '../data/products.json'
+import { analysKomplett, demoHast } from '../test/fixtures/exempel'
+import produkterJson from '../test/fixtures/products.json'
 import { hittaBilligareLiknande } from './byten'
 import { kostnadPerManad, visningsnamn } from './intake'
 import { skapaPlan } from './plan'
