@@ -70,7 +70,7 @@ Källa för behoven är SLU Rapport 289, Utfodringsrekommendationer för häst (
 
 ## Produkt- och testdata (2026-10-14)
 
-- Produkter importeras från kollegans butiksdata med `app/scripts/importera-produkter.mjs`. Bara de 15 produkterna i `produktval.json` får väljas av urvalet. Övriga kan väljas som dagens foder.
+- Produkter importeras från kollegans butiksdata med `apps/web/scripts/importera-produkter.mjs`. Bara de 15 produkterna i `produktval.json` får väljas av urvalet. Övriga kan väljas som dagens foder.
 - Utanför urvalet tills data kompletterats: produkter flaggade "kontrollera" (bl.a. Granngårdens mineralfoder utan Ca och P, Trikem E+Selen utan selenvärde), saltstenar (doseras inte i gram) och Hööks produkter utan deklaration.
 - Urvalet måste täcka analyserade ämnen samt Ca, P, Mg, Na och Se. Uppskattade mikromineraler och vitaminer styr inte (SLU: vallfoder av god kvalitet räcker normalt) och visas som "Osäkert".
 - Kompletta mineraltillskott (Trikem Minerals, Brogaarden Vitamins & Minerals) räknas som mineralfoder, så att högst ett väljs.

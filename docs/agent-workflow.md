@@ -45,7 +45,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
    git config user.email "<id>+mac-mini-agent@users.noreply.github.com"
    ```
    The id comes from `gh api users/mac-mini-agent --jq .id`.
-6. **Install.** `cd app && npm ci && npx playwright install chromium`, then `cp .env.example .env` and add the Anthropic key if AI features are needed.
+6. **Install.** At the repository root, `npm ci && npx playwright install chromium`, then `cp apps/web/.env.example apps/web/.env` and add the Anthropic key if AI features are needed.
 7. **Check**, in the clone:
    - `gh api user --jq .login` prints `mac-mini-agent`
    - `git config user.email` ends with `+mac-mini-agent@users.noreply.github.com`
