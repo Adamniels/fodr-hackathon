@@ -33,8 +33,8 @@ Run at the repository root; each fans out to every workspace (today only `apps/w
 | `npm run lint` | ESLint (type aware) |
 | `npm run typecheck` | TypeScript |
 | `npm run format` | Prettier |
-| `node scripts/importera-produkter.mjs` | Rebuilds `src/data/products.json` from the store data |
-| `node scripts/utvardera-utlasning.mjs` | Checks AI extraction against the answer key (needs `npm run dev` and an API key, about 11 API calls) |
+| `node apps/web/scripts/importera-produkter.mjs` | Rebuilds `apps/web/src/data/products.json` from the store data |
+| `node apps/web/scripts/utvardera-utlasning.mjs` | Checks AI extraction against the answer key (needs `npm run dev` and an API key, about 11 API calls) |
 
 To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 
