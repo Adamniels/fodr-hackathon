@@ -51,6 +51,6 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 
 - New behaviour gets a failing test first (unit for `src/domain`, e2e for user flows).
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
-- The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test.
+- The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` is not intercepted, because it belongs to the real backend.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.
 - Changes to AI prompts, schemas or the model must be checked with `node scripts/utvardera-utlasning.mjs` (costs about 11 API calls).

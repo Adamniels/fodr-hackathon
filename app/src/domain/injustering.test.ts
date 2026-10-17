@@ -30,7 +30,7 @@ describe('injusteringsplan', () => {
     const [grov, pell, min] = inj.rader
     expect(grov.perSteg).toEqual([12, 12.5, 13.5, 14, 15])
     expect(pell.perSteg).toEqual([800, 600, 400, 200, 0])
-    expect(min.perSteg.at(-1)).toBe(100)
+    expect(min.perSteg[min.perSteg.length - 1]).toBe(100)
     for (const r of inj.rader) {
       for (let i = 1; i < r.perSteg.length; i++) {
         expect(Math.sign(r.perSteg[i] - r.perSteg[i - 1])).not.toBe(-Math.sign(r.till - r.fran))
@@ -49,7 +49,7 @@ describe('injusteringsplan', () => {
       till: [],
     })
     expect(inj.steg).toHaveLength(4)
-    expect(inj.steg.at(-1)).toEqual({ nr: 4, startDag: 7, slutDag: null })
+    expect(inj.steg[inj.steg.length - 1]).toEqual({ nr: 4, startDag: 7, slutDag: null })
   })
 
   it('har inga rader när ingenting ändras', () => {

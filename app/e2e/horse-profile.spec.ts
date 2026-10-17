@@ -17,9 +17,11 @@ test('add a horse and it survives reload', async ({ page }) => {
 
 test('choosing a breed sets the type', async ({ page }) => {
   await enterDemo(page)
-  await page.getByRole('combobox', { name: /^Ras/ }).selectOption({ label: 'Islandshäst' })
   // The type segment exposes no accessible pressed state yet, so the active class is asserted.
-  await expect(page.getByRole('button', { name: /^Lättfödd/ })).toHaveClass(/aktiv/)
+  const lattfodd = page.getByRole('button', { name: /^Lättfödd/ })
+  await expect(lattfodd).not.toHaveClass(/aktiv/)
+  await page.getByRole('combobox', { name: /^Ras/ }).selectOption({ label: 'Islandshäst' })
+  await expect(lattfodd).toHaveClass(/aktiv/)
 })
 
 test('AI fill sets fields and sensitivities', async ({ page, ai }) => {
