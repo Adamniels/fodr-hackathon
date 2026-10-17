@@ -24,7 +24,7 @@ Without an API key everything except the AI parts works (reading an uploaded rep
 
 ## Commands
 
-Run at the repository root; each fans out to every workspace (today only `apps/web`). CI runs format, lint, typecheck, unit and e2e on every PR.
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`); `dev`, `build` and `test:e2e` run `apps/web`. CI runs format, lint, typecheck, unit and e2e on every PR.
 
 | Command | What |
 |---|---|

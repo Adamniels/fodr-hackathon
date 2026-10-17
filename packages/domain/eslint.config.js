@@ -39,15 +39,15 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          // An allowlist: relative imports within the package, and vitest for tests. Everything else (Node
+          // built-ins, React, other workspaces, any hoisted package) is refused, so a new dependency of the engine
+          // is a deliberate change to this list and to package.json (ADR 0003, ADR 0004).
           patterns: [
-            { regex: '^node:', message: 'No Node APIs in the domain package (ADR 0004).' },
             {
-              regex: '^(fs|path|os|http|https|net|child_process|crypto|url|util|stream|worker_threads)(/|$)',
-              message: 'No Node APIs in the domain package (ADR 0004).',
+              regex: '^(?!\\.{1,2}/|vitest$)',
+              message: 'The domain package imports only its own modules (ADR 0003, ADR 0004).',
             },
-            { regex: '^@fodr/(web|api)(/|$)', message: 'Dependencies point inwards: no apps (ADR 0003).' },
             { regex: '(^|/)apps/', message: 'Dependencies point inwards: no apps (ADR 0003).' },
-            { regex: '^react(-dom)?(/|$)', message: 'No UI code in the domain package (ADR 0004).' },
           ],
         },
       ],

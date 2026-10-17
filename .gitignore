@@ -6,6 +6,8 @@
 
 # Dependencies (npm workspaces install at the root)
 node_modules/
+dist/
+coverage/
 
 # Secrets
 .env

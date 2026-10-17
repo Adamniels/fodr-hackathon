@@ -1,5 +1,6 @@
 // Compile-time and lint guard, never imported or run. Each line below must stay an error: typecheck fails on an
-// unused @ts-expect-error, and lint fails on an unused eslint-disable directive (ADR 0004, #9).
+// unused @ts-expect-error, and lint fails on an unused eslint-disable directive (ADR 0004, #9). Never run
+// `eslint --fix` on this file: it deletes unused disable directives instead of reporting them.
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access,
    @typescript-eslint/no-unsafe-call -- the lines below are deliberately untyped. */
 
