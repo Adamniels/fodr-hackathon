@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import produkterJson from '../data/products.json'
+import produkterJson from '../test/fixtures/products.json'
 import { skapaInjustering, standardKanslighet } from './injustering'
 import type { Produkt } from './types'
 

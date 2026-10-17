@@ -1,4 +1,4 @@
-import { NUTRIENTS, type NutrientKey } from './domain/nutrients'
+import { NUTRIENTS, type NutrientKey } from '@fodr/domain/nutrients'
 
 export function tal(n: number | undefined, decimaler?: number): string {
   if (n === undefined || Number.isNaN(n)) return '–'

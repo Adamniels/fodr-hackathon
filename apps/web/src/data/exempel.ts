@@ -1,7 +1,7 @@
 // Syntetiska testfall. Påhittade hästar och analyser med realistiska värden, inga verkliga personer.
 
-import type { Journalpost } from '../domain/journal'
-import type { Grovfoderanalys, Hastprofil } from '../domain/types'
+import type { Journalpost } from '@fodr/domain/journal'
+import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 
 export const demoHast: Hastprofil = {
   id: 'demo-sixten',

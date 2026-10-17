@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BYTESTAKT, type Injustering, type Injusteringsrad } from '../domain/injustering'
+import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/injustering'
 import { tal } from '../format'
 
 const VECKODAGAR = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']

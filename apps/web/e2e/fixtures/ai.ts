@@ -1,7 +1,7 @@
 // Canned AI responses for e2e tests. Typed against the client contracts so they break when a contract changes.
 
 import type { JournalAnalys, ProfilTolkning } from '../../src/api'
-import type { UtlastAnalys } from '../../src/domain/analysis'
+import type { UtlastAnalys } from '@fodr/domain/analysis'
 
 /** Extraction of A01-medel-skord1.pdf, values from testdata/.../krubba-testdata-v2/data/facit.json. */
 export const analysA01 = {

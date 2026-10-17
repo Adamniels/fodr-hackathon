@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { tolkaProfil } from '../api'
-import { RASER, hittaRas } from '../domain/raser'
-import { BYTESTAKT, standardKanslighet } from '../domain/injustering'
-import { viktFranBrostomfang } from '../domain/slu'
+import { RASER, hittaRas } from '@fodr/domain/raser'
+import { BYTESTAKT, standardKanslighet } from '@fodr/domain/injustering'
+import { viktFranBrostomfang } from '@fodr/domain/slu'
 import {
   INGREDIENSER,
   type Bytekanslighet,
@@ -13,7 +13,7 @@ import {
   type Miljo,
   type Prestanda,
   type Produkt,
-} from '../domain/types'
+} from '@fodr/domain/types'
 import { HULL_TEXT } from '../format'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'

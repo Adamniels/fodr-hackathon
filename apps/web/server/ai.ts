@@ -1,11 +1,11 @@
 // Alla anrop till Claude. Körs bara på servern så att API-nyckeln aldrig når webbläsaren.
-// AI:n läser, frågar och förklarar. Den räknar aldrig behov eller doser; det gör src/domain.
+// AI:n läser, frågar och förklarar. Den räknar aldrig behov eller doser; det gör packages/domain.
 
 import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
-import { RASER } from '../src/domain/raser'
-import { INGREDIENSER } from '../src/domain/types'
+import { RASER } from '@fodr/domain/raser'
+import { INGREDIENSER } from '@fodr/domain/types'
 
 const MODEL = 'claude-sonnet-5-5'
 const RAS_ID = RASER.map((r) => r.id) as [string, ...string[]]

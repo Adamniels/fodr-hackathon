@@ -1,5 +1,5 @@
-import type { UtlastAnalys } from './domain/analysis'
-import type { Ingrediens, NuvarandeFoder, Prestanda } from './domain/types'
+import type { UtlastAnalys } from '@fodr/domain/analysis'
+import type { Ingrediens, NuvarandeFoder, Prestanda } from '@fodr/domain/types'
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {

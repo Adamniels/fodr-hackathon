@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { analyseraJournal, type JournalAnalys } from '../api'
-import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '../domain/journal'
-import { hittaRas } from '../domain/raser'
-import type { Hastprofil } from '../domain/types'
+import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
+import { hittaRas } from '@fodr/domain/raser'
+import type { Hastprofil } from '@fodr/domain/types'
 import { HULL_TEXT, kr, tal } from '../format'
 
 interface Props {
