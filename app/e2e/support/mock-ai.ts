@@ -14,11 +14,13 @@ export interface AiMock {
   respondWith(route: AiRoute, body: unknown, status?: number): void
   /** Paths of /api requests that no mock handled. */
   unexpected(): string[]
-  /** Resolves once no request is being handled and none has arrived for a quiet window, like networkidle. */
+  /** Resolves once no request is being handled and none has arrived for a quiet window after the call. */
   settled(): Promise<void>
 }
 
 const QUIET_MS = 500
+
+const isBackend = (path: string) => path === '/api/v1' || path.startsWith('/api/v1/')
 
 const DEFAULTS: Record<AiRoute, unknown> = {
   analys: fixtures.analysA01,
@@ -39,7 +41,7 @@ export async function mockAi(context: BrowserContext): Promise<AiMock> {
   let lastActivity = Date.now()
 
   await context.route(
-    (url) => url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/v1/'),
+    (url) => url.pathname.startsWith('/api/') && !isBackend(url.pathname),
     async (route) => {
       inFlight++
       lastActivity = Date.now()
@@ -65,9 +67,14 @@ export async function mockAi(context: BrowserContext): Promise<AiMock> {
     calls: (route) => calls.get(route) ?? [],
     respondWith: (route, body, status = 200) => responses.set(route, { body, status }),
     unexpected: () => [...unexpected],
-    settled: () =>
-      expect
-        .poll(() => inFlight === 0 && Date.now() - lastActivity >= QUIET_MS, { message: 'AI requests to settle' })
-        .toBe(true),
+    settled: () => {
+      // The window starts no earlier than the call, so a request arriving just after a quiet period is seen.
+      const since = Date.now()
+      return expect
+        .poll(() => inFlight === 0 && Date.now() - Math.max(lastActivity, since) >= QUIET_MS, {
+          message: 'AI requests to settle',
+        })
+        .toBe(true)
+    },
   }
 }

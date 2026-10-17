@@ -50,8 +50,22 @@ test('api v1 requests reach the server', async ({ page }) => {
   // Guard for the mock harness: /api/v1 belongs to the real backend (ADR 0007), so the mock lets it through.
   // An aborted request rejects the fetch, so getting any status back proves it was not intercepted.
   await page.goto('/')
-  const status = await page.evaluate(() => fetch('/api/v1/okand').then((r) => r.status))
-  expect(status).toBeGreaterThan(0)
+  const statuses = await page.evaluate(() =>
+    Promise.all(['/api/v1', '/api/v1/okand'].map((path) => fetch(path).then((r) => r.status))),
+  )
+  expect(statuses.every((status) => status > 0)).toBe(true)
+})
+
+test('settled waits for a request that starts after it is called', async ({ page, ai }) => {
+  // Guard for the mock harness: settled() must measure its quiet window from when it is called, or a request
+  // that arrives just after a quiet period is missed.
+  await page.goto('/')
+  await page.waitForTimeout(700) // let the harness go quiet first
+  await page.evaluate(() => {
+    setTimeout(() => void fetch('/api/forklaring', { method: 'POST', body: '{}' }), 100)
+  })
+  await ai.settled()
+  expect(ai.calls('forklaring')).toHaveLength(1)
 })
 
 test('accounts do not share horses', async ({ page }) => {

@@ -19,7 +19,7 @@ defaults:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    # About ten times a normal run (under 40 s), so a hang fails fast instead of using the 6 hour default.
+    # Well above a normal run (under 40 s), so a hang fails fast instead of using the 6 hour default.
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -36,7 +36,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    # About ten times a normal run (under 100 s).
+    # Well above a normal run (under 100 s).
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
