@@ -14,11 +14,11 @@ Work is tracked as issues in the GitHub Project "fodr". One issue is one PR. Wri
 
 ## Commands
 
-All run in `app/`. Every one must pass before a PR is opened; CI runs the same set.
+All run at the repository root and fan out to every workspace (today only `apps/web`). Every one must pass before a PR is opened; CI runs the same set.
 
 | Command | What |
 |---|---|
-| `npm run dev` | Vite dev server with the `/api` routes (the AI routes need `app/.env`) |
+| `npm run dev` | Vite dev server with the `/api` routes (the AI routes need `apps/web/.env`) |
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`) |
 | `npm run test:e2e` | Playwright e2e tests, AI mocked, no API key needed |
 | `npm run lint` | ESLint, type aware |
@@ -31,7 +31,7 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 - **Vertical slices.** A PR delivers one issue end to end (data, API, UI, tests), not one layer.
 - **Commits and PR titles** follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`, `ci:`, `style:`).
 - **Language.** Swedish domain identifiers stay (see the glossary). New technical code, comments, commits, PRs and docs are in English. UI text is Swedish and goes through the i18n layer once it exists (M1).
-- **Never commit secrets.** The Anthropic key lives only in `app/.env`, which is git ignored. Copy `app/.env.example`.
+- **Never commit secrets.** The Anthropic key lives only in `apps/web/.env`, which is git ignored. Copy `apps/web/.env.example`.
 - Ask before adding dependencies, changing the architecture, or deleting files.
 
 ## Rules for AI agents
@@ -53,4 +53,4 @@ All run in `app/`. Every one must pass before a PR is opened; CI runs the same s
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
 - The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` is not intercepted, because it belongs to the real backend.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.
-- Changes to AI prompts, schemas or the model must be checked with `node scripts/utvardera-utlasning.mjs` (costs about 11 API calls).
+- Changes to AI prompts, schemas or the model must be checked with `node apps/web/scripts/utvardera-utlasning.mjs` (costs about 11 API calls).

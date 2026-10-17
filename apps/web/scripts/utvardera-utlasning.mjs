@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 const kat =
-  process.argv[2] ?? new URL('../../testdata/Testdata-from-other-dev/krubba-testdata-v2', import.meta.url).pathname
+  process.argv[2] ?? new URL('../../../testdata/Testdata-from-other-dev/krubba-testdata-v2', import.meta.url).pathname
 const port = process.argv[3] ?? '5173'
 const facit = JSON.parse(readFileSync(join(kat, 'data/facit.json'), 'utf8')).analyser
 const filer = [

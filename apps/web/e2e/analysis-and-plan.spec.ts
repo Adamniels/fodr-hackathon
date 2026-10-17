@@ -15,7 +15,7 @@ import {
 import type { Locator, Page } from '@playwright/test'
 
 const A01_PDF = fileURLToPath(
-  new URL('../../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf', import.meta.url),
+  new URL('../../../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf', import.meta.url),
 )
 
 const nutrientRow = (page: import('@playwright/test').Page, name: string) =>

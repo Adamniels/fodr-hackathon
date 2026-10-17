@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const har = dirname(fileURLToPath(import.meta.url))
-const kalla = process.argv[2] ?? join(har, '../../testdata/Testdata-from-other-dev')
+const kalla = process.argv[2] ?? join(har, '../../../testdata/Testdata-from-other-dev')
 const ut = join(har, '../src/data/products.json')
 
 const NA_PER_NACL = 0.393

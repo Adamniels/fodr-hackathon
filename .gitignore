@@ -4,6 +4,9 @@
 .vscode/*
 !.vscode/extensions.json
 
+# Dependencies (npm workspaces install at the root)
+node_modules/
+
 # Secrets
 .env
 .env.*

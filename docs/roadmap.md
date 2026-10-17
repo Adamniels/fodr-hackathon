@@ -12,7 +12,7 @@ Inputs: `docs/spec.md`, `docs/architecture.md` and ADRs 0001 to 0015, `docs/audi
 - **Always green:** `format:check`, `lint`, `typecheck`, unit, integration (from M2) and e2e. The E2E section of each issue names the spec files that must stay green, and what the slice changes in them.
 - A `test.skip` marker for a finding (C2, C3, C4, C6) is turned into a real test by the slice that fixes it.
 
-E2E spec files today: `landing-and-account`, `horse-profile`, `analysis-and-plan`, `journal` (in `app/e2e/`, later `apps/web/e2e/`).
+E2E spec files today: `landing-and-account`, `horse-profile`, `analysis-and-plan`, `journal` (in `apps/web/e2e/`).
 
 ## M1 Domain hardening
 
