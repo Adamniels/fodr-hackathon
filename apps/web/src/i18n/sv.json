@@ -486,5 +486,8 @@
       "perMonth": "Per månad med förslaget",
       "cheaper": "{{amount}} billigare än i dag"
     }
+  },
+  "errors": {
+    "http": "Fel {{status}}"
   }
 }
