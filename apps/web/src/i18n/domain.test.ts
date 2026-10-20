@@ -137,6 +137,11 @@ const FALL: [DomanMeddelande, string][] = [
     { code: 'note.coldSupplement', params: { mj: 4.6181, degreesBelow: 5.5 } },
     'Kylatillägg 4,6 MJ: 5,5 grader under −15 °C, ute utan täcke (SLU sid 15).',
   ],
+  // −20,3 °C gives −15 − (−20,3) = 5.300000000000001, which used to render as is.
+  [
+    { code: 'note.coldSupplement', params: { mj: 6.12, degreesBelow: -15 - -20.3 } },
+    'Kylatillägg 6,1 MJ: 5,3 grader under −15 °C, ute utan täcke (SLU sid 15).',
+  ],
   [
     { code: 'note.coldSupplement', params: { mj: 12, degreesBelow: 10 } },
     'Kylatillägg 12 MJ: 10 grader under −15 °C, ute utan täcke (SLU sid 15).',
