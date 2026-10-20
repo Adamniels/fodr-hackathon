@@ -377,5 +377,114 @@
       "answer": "Svara",
       "fill": "Fyll i med AI"
     }
+  },
+  "landing": {
+    "nav": {
+      "label": "Startsidan",
+      "howItWorks": "Så funkar det",
+      "howWeCalculate": "Hur vi räknar",
+      "faq": "Vanliga frågor"
+    },
+    "logIn": "Logga in",
+    "openApp": "Öppna Fodr",
+    "tryDemo": "Testa med demohästen",
+    "continueAs": "Fortsätt som {{name}}",
+    "hero": {
+      "eyebrow": "För dig som har häst och en grovfoderanalys",
+      "title": "Rätt foder till din häst, direkt från <mark>analysen</mark>",
+      "intro": "Ladda upp analysen från labbet, berätta om hästen och få en foderplan enligt SLU. Med vad du ska ge, hur mycket och vad det kostar per månad.",
+      "seeHow": "Se hur det funkar",
+      "note": "Inget konto behövs för att testa. Fungerar med PDF eller ett foto av rapporten."
+    },
+    "sourceLine": "Beräkningarna följer <strong>SLU:s utfodringsrekommendationer för häst</strong>. Fodr är inte knutet till någon foderbutik.",
+    "photoBand": {
+      "title": "Grovfodret är grunden. Resten ska bara fylla luckorna.",
+      "text": "De flesta hästar klarar sig på bra grovfoder och lite mineraler. Fodr visar vad din häst faktiskt behöver, så att du slipper gissa."
+    },
+    "figures": {
+      "label": "Hästar i Sverige",
+      "title": "Hästsverige i siffror",
+      "horses": "355 500",
+      "horsesText": "hästar i Sverige",
+      "haylage": "55 %",
+      "haylageText": "av privata hästägare utfodrar med hösilage",
+      "analysisCost": "600–1 800 kr",
+      "analysisCostText": "kostar en grovfoderanalys",
+      "sources": "Källor: Jordbruksverket (hästräkning 2016), SLU-examensarbete 2022, Eurofins prislista för grovfoderanalys."
+    },
+    "steps": {
+      "eyebrow": "Så funkar det",
+      "title": "Tre steg, ett par minuter",
+      "horseTitle": "Berätta om hästen",
+      "horseText": "Vikt, hull, hur mycket den rids och om den haft fång. Du kan också skriva med egna ord, så fyller vi i.",
+      "analysisTitle": "Ladda upp analysen",
+      "analysisText": "PDF eller mobilfoto, från vilket labb som helst. Du ser alla värden vi läste ut och kan rätta dem.",
+      "planTitle": "Få foderplanen",
+      "planText": "Vad du ska ge, gram per dag och kronor per månad. Och vad du kan sluta köpa.",
+      "sample": {
+        "dryMatter": "Torrsubstans",
+        "dryMatterValue": "39,7 %",
+        "energy": "Energi",
+        "energyValue": "10,2 MJ",
+        "protein": "Smältbart protein",
+        "proteinValue": "104 g",
+        "sugar": "Socker",
+        "sugarValue": "61 g",
+        "selenium": "Selen",
+        "missing": "saknas"
+      }
+    },
+    "features": {
+      "emsTitle": "Varnar vid fång och EMS",
+      "emsText": "Väljer bort sockerrikt foder och säger till när veterinären bör vara med.",
+      "neutralTitle": "Märkesneutral",
+      "neutralText": "Produkter från flera butiker, billigaste kombinationen först.",
+      "journalTitle": "Journal över tid",
+      "journalText": "Vikt, hull och anteckningar. Planen räknas om när hästen förändras.",
+      "swedishTitle": "Förklarat på svenska",
+      "swedishText": "Inga förkortningar utan förklaring. Du förstår varför."
+    },
+    "trust": {
+      "eyebrow": "Hur vi räknar",
+      "title": "”Hur vet jag att det stämmer?”",
+      "text": "Hästens behov räknas med SLU:s utfodringsrekommendationer för häst, i vanlig kod som går att granska. AI används bara för att läsa rapporten och förklara resultatet. Den räknar aldrig själv.",
+      "source": "Varje rad i planen visar behov, vad hästen får och källan.",
+      "missing": "Saknas ett värde i analysen står det tydligt, och vi gissar aldrig att det är noll.",
+      "vet": "Fodr ersätter inte veterinären. Har hästen fång, EMS eller kolik säger vi till.",
+      "imageLabel": "Två hästar nos mot nos"
+    },
+    "faq": {
+      "eyebrow": "Vanliga frågor",
+      "title": "Bra att veta",
+      "labsQ": "Vilka labb fungerar?",
+      "labsA": "Alla vanliga labbrapporter för grovfoder, både som PDF och som foto. Du kan alltid rätta värdena innan planen räknas.",
+      "mineralsQ": "Min analys saknar mineraler. Går det ändå?",
+      "mineralsA": "Ja. Då använder vi typvärden för svenskt vallfoder och märker dem som uppskattade, så att du ser vad som är osäkert.",
+      "vetQ": "Ersätter Fodr veterinären eller en foderrådgivare?",
+      "vetA": "Nej. Fodr hjälper dig förstå analysen och ger ett underlag. Vid sjukdom ska du alltid prata med veterinär.",
+      "sellQ": "Säljer ni foder?",
+      "sellA": "Nej. Förslagen kommer från flera butiker och sorteras efter pris och hur väl de täcker behovet.",
+      "storageQ": "Var sparas mina uppgifter?",
+      "storageA": "I den här prototypen sparas allt bara i din webbläsare."
+    },
+    "closing": {
+      "title": "Se vad ditt grovfoder räcker till",
+      "text": "Testa med demohästen Sixten, eller lägg in din egen häst."
+    },
+    "footer": {
+      "text": "Prototyp från ett hackathon 2026. Behov enligt SLU Rapport 289. Ersätter inte veterinär eller foderrådgivare.",
+      "photos": "Foton: Unsplash-fotografer via Wikimedia Commons (CC0)."
+    },
+    "preview": {
+      "label": "Exempel på en foderplan i Fodr",
+      "address": "fodr.se",
+      "horses": "Hästar",
+      "horse1Initial": "S",
+      "horse1": "Sixten",
+      "horse2Initial": "P",
+      "horse2": "Pysen",
+      "perMonth": "Per månad med förslaget",
+      "cheaper": "{{amount}} billigare än i dag"
+    }
   }
 }
