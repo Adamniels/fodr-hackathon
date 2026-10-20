@@ -3,12 +3,12 @@ import type { DomanMeddelande } from '@fodr/domain/meddelanden'
 import i18n from '.'
 import { DOMAIN_CODES, domainText } from './domain'
 
-// Each code renders the exact sentence the engine produced before it returned codes (#11). Money uses U+00A0, the
-// no-break space sv-SE puts between thousands.
+// Each code renders its exact sentence. Numbers are formatted for sv-SE (#86): a decimal comma, and U+00A0, the
+// no-break space sv-SE puts between thousands and before "kr".
 const FALL: [DomanMeddelande, string][] = [
   [
     { code: 'action.removeConcentrate', params: { product: 'Krafft Leisure Pellets 20kg', grams: 1000 } },
-    'Ta bort Krafft Leisure Pellets 20kg (1000 g/dag). Grovfodret täcker energibehovet ändå.',
+    'Ta bort Krafft Leisure Pellets 20kg (1\u00a0000 g/dag). Grovfodret täcker energibehovet ändå.',
   ],
   [
     {
@@ -22,7 +22,7 @@ const FALL: [DomanMeddelande, string][] = [
         savingKr: 1287.6,
       },
     },
-    'Byt Krafft Senior Pellets 20kg (800 g) mot 790 g Krafft Low Starch Pellets 20kg: samma energi, liknande protein, inte mer stärkelse, 1\u00a0288 kr billigare i månaden.',
+    'Byt Krafft Senior Pellets 20kg (800 g) mot 790 g Krafft Low Starch Pellets 20kg: samma energi, liknande protein, inte mer stärkelse, 1\u00a0288\u00a0kr billigare i månaden.',
   ],
   [
     { code: 'action.reduceRoughage', params: { fromKg: 30, toKg: 16.04, minimumKg: 12.746 } },
@@ -56,7 +56,7 @@ const FALL: [DomanMeddelande, string][] = [
         reason: { code: 'swapReason.coversNeedCheaper', params: { savingKr: 12.4 } },
       },
     },
-    'Byt Pellets 15 kg Mineral Röd (100 g) mot 66 g Krafft Miner Original Pellets 20kg: täcker behovet, 12 kr billigare i månaden.',
+    'Byt Pellets 15 kg Mineral Röd (100 g) mot 66 g Krafft Miner Original Pellets 20kg: täcker behovet, 12\u00a0kr billigare i månaden.',
   ],
   [
     {
@@ -73,11 +73,24 @@ const FALL: [DomanMeddelande, string][] = [
   ],
   [
     { code: 'action.stopSupplement', params: { product: 'Selo-E 900g', grams: 1500, costKr: 2045.5 } },
-    'Sluta med Selo-E 900g (1500 g/dag, 2\u00a0046 kr i månaden). Behovet täcks utan den.',
+    'Sluta med Selo-E 900g (1\u00a0500 g/dag, 2\u00a0046\u00a0kr i månaden). Behovet täcks utan den.',
   ],
   [
     { code: 'action.giveSupplement', params: { product: 'Krafft Miner Original Pellets 20kg', grams: 66 } },
     'Ge 66 g/dag Krafft Miner Original Pellets 20kg.',
+  ],
+  [
+    { code: 'action.giveSupplement', params: { product: 'Eclipse Biofarmab Linfröolja 1L', grams: 2500 } },
+    'Ge 2\u00a0500 g/dag Eclipse Biofarmab Linfröolja 1L.',
+  ],
+  // Grams typed with a decimal round to whole grams, as in the shopping list.
+  [
+    { code: 'action.continueSupplement', params: { product: 'Salt 1,5 kg', grams: 12.5 } },
+    'Fortsätt med 13 g/dag Salt 1,5 kg.',
+  ],
+  [
+    { code: 'action.changeSupplement', params: { product: 'Salt 1,5 kg', fromGrams: 12.4, toGrams: 1250 } },
+    'Ändra Salt 1,5 kg från 12 till 1\u00a0250 g/dag.',
   ],
   [{ code: 'swapReason.samePackCheaper', params: {} }, 'samma foder i billigare förpackning'],
   [
@@ -110,7 +123,7 @@ const FALL: [DomanMeddelande, string][] = [
   ],
   [
     { code: 'note.normalConditionWeight', params: { kg: 1012.4 } },
-    'Behoven räknas på 1012 kg, ungefärlig vikt vid normalt hull (SLU tabell 3).',
+    'Behoven räknas på 1\u00a0012,4 kg, ungefärlig vikt vid normalt hull (SLU tabell 3).',
   ],
   [
     { code: 'note.workFromDiscipline', params: {} },
@@ -122,7 +135,16 @@ const FALL: [DomanMeddelande, string][] = [
   ],
   [
     { code: 'note.coldSupplement', params: { mj: 4.6181, degreesBelow: 5.5 } },
-    'Kylatillägg 4.6 MJ: 5.5 grader under −15 °C, ute utan täcke (SLU sid 15).',
+    'Kylatillägg 4,6 MJ: 5,5 grader under −15 °C, ute utan täcke (SLU sid 15).',
+  ],
+  // −20,3 °C gives −15 − (−20,3) = 5.300000000000001, which used to render as is.
+  [
+    { code: 'note.coldSupplement', params: { mj: 6.12, degreesBelow: -15 - -20.3 } },
+    'Kylatillägg 6,1 MJ: 5,3 grader under −15 °C, ute utan täcke (SLU sid 15).',
+  ],
+  [
+    { code: 'note.coldSupplement', params: { mj: 12, degreesBelow: 10 } },
+    'Kylatillägg 12 MJ: 10 grader under −15 °C, ute utan täcke (SLU sid 15).',
   ],
   [
     { code: 'note.coldWorking', params: {} },
@@ -134,7 +156,7 @@ const FALL: [DomanMeddelande, string][] = [
   ],
   [
     { code: 'note.weightOutsideBreed', params: { kg: 545.5, breedId: 'islandshast', minKg: 280, maxKg: 400 } },
-    '545.5 kg ligger utanför det vanliga intervallet för islandshäst (280–400 kg, SLU tabell 33). Kontrollera vikten.',
+    '545,5 kg ligger utanför det vanliga intervallet för islandshäst (280–400 kg, SLU tabell 33). Kontrollera vikten.',
   ],
   [
     { code: 'note.senior', params: {} },
@@ -159,7 +181,7 @@ describe('domainText', () => {
     expect(DOMAIN_CODES.filter((code) => !i18n.exists(`domain.${code}`))).toEqual([])
   })
 
-  it.each(FALL)('renders %j as today', (meddelande, text) => {
+  it.each(FALL)('renders %j', (meddelande, text) => {
     expect(domainText(meddelande)).toBe(text)
   })
 })
