@@ -107,5 +107,48 @@
     },
     "toCheck": "Att kontrollera:",
     "toPlan": "Räkna fram foderplan →"
+  },
+  "journal": {
+    "title": "Journal för {{name}}",
+    "intro": "Väg, hullbedöm och skriv vad som fungerar. Planen räknas om när vikt och hull ändras.",
+    "trend": {
+      "weight": "Vikt",
+      "weightValue": "{{first}} → {{last}} kg",
+      "weightRate": "{{sign}}{{percent}} % per vecka på {{weeks}} veckor",
+      "weightTooFew": "Minst två vägningar behövs",
+      "hull": "Hull",
+      "hullNone": "Ingen hullbedömning än",
+      "followUp": "Nästa uppföljning",
+      "weighNow": "Väg nu",
+      "followUpDue": "Dags att väga och hullbedöma",
+      "followUpRule": "4 veckor efter senaste mätning"
+    },
+    "timeline": "Tidslinje",
+    "empty": "Inga anteckningar än.",
+    "hullChip": "Hull {{hull}}",
+    "planSaved": "Foderplan sparad",
+    "planRoughage": "{{kg}} kg grovfoder ({{analysis}})",
+    "planProduct": " · {{grams}} g {{name}}",
+    "newEntry": {
+      "title": "Ny anteckning",
+      "date": "Datum",
+      "weight": "Vikt (kg)",
+      "hull": "Hull",
+      "hullNone": "Ej bedömt",
+      "seen": "Vad har du sett?",
+      "seenPlaceholder": "T.ex. piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg",
+      "updateProfile": "Uppdatera profilen och räkna om foderplanen",
+      "add": "Lägg till"
+    },
+    "ai": {
+      "title": "Vad säger journalen?",
+      "intro": "AI:n letar mönster över tid och säger till om något bör ses av veterinär. Den ändrar aldrig planen.",
+      "contactVet": "Kontakta veterinär.",
+      "possibleLink": "Kan hänga ihop med: {{link}}",
+      "nextSteps": "Nästa steg",
+      "reading": "Läser journalen…",
+      "again": "Analysera igen",
+      "analyse": "Analysera journalen"
+    }
   }
 }
