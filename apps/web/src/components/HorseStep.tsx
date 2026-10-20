@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { tolkaProfil } from '../api'
 import { RASER, hittaRas } from '@fodr/domain/raser'
 import { BYTESTAKT, standardKanslighet } from '@fodr/domain/injustering'
@@ -26,32 +28,29 @@ interface Props {
   onVidare: () => void
 }
 
-const PRESTANDA: [Prestanda, string][] = [
-  ['fritid', 'Fritid, ridning och körning'],
-  ['tavling_lokal', 'Tävling lokalt, 1–2 gånger i månaden'],
-  ['tavling_hog', 'Tävling högre nivå, fälttävlan, svårare hoppning'],
-  ['trav_galopp_traning', 'Trav eller galopp i träning'],
-  ['distans', 'Distansritt, tävling'],
-]
+const PRESTANDA = [
+  'fritid',
+  'tavling_lokal',
+  'tavling_hog',
+  'trav_galopp_traning',
+  'distans',
+] as const satisfies readonly Prestanda[]
 
 const STANDARD_MILJO: Miljo = { hallning: 'box', timmarUtePerDag: 8, klippt: false, tacke: true, lagstaTempC: -5 }
 
-const TYPER: [Hasttyp, string, string][] = [
-  ['lattfodd', 'Lättfödd', 'Ofta ponnyer och kallblodstyper'],
-  ['normalfodd', 'Normalfödd', 'Många varmblod och halvblod'],
-  ['svarfodd', 'Svårfödd', 'Många fullblod'],
-]
+const TYPER = ['lattfodd', 'normalfodd', 'svarfodd'] as const satisfies readonly Hasttyp[]
 
 export function HorseStep({ vald, produkter, onAndra, onNy, onVidare }: Props) {
+  const { t } = useTranslation()
   // Hästlistan ligger i appens sidofält, här visas bara den valda hästens profil.
   return vald ? (
     <Profilformular key={vald.id} hast={vald} produkter={produkter} onAndra={onAndra} onVidare={onVidare} />
   ) : (
     <section className="kort tomt">
-      <h2>Välkommen till Fodr</h2>
-      <p className="ingress">Börja med att lägga till din häst. Det tar ett par minuter.</p>
+      <h2>{t('horse.welcome.title')}</h2>
+      <p className="ingress">{t('horse.welcome.intro')}</p>
       <button className="knapp" onClick={() => onNy(nyHast())}>
-        Lägg till din första häst
+        {t('horse.welcome.add')}
       </button>
     </section>
   )
@@ -68,6 +67,7 @@ function Profilformular({
   onAndra: (h: Hastprofil) => void
   onVidare: () => void
 }) {
+  const { t } = useTranslation()
   const set = (patch: Partial<Hastprofil>) => onAndra({ ...hast, ...patch })
   const [matt, setMatt] = useState({ brost: '', langd: '' })
   const uppskattadVikt =
@@ -77,33 +77,30 @@ function Profilformular({
 
   return (
     <section className="kort profil">
-      <h2>Om {hast.namn || 'hästen'}</h2>
-      <p className="ingress">
-        Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och rätta
-        det som inte stämmer.
-      </p>
+      <h2>{t('horse.title', { name: hast.namn || t('common.theHorse') })}</h2>
+      <p className="ingress">{t('horse.intro')}</p>
 
       <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
 
-      <h3 className="rubrik">Grunddata</h3>
+      <h3 className="rubrik">{t('horse.basics')}</h3>
 
       <div className="grupp">
-        <Falt label="Namn">
+        <Falt label={t('horse.name')}>
           <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
         </Falt>
-        <Falt label="Ålder (år)">
+        <Falt label={t('horse.age')}>
           <Siffra value={hast.alderAr} onChange={(v) => set({ alderAr: v })} />
         </Falt>
-        <Falt label="Kön">
+        <Falt label={t('horse.sex.label')}>
           <select value={hast.kon} onChange={(e) => set({ kon: e.target.value as Kon })}>
-            <option value="sto">Sto</option>
-            <option value="valack">Valack</option>
-            <option value="hingst">Hingst</option>
+            <option value="sto">{t('horse.sex.sto')}</option>
+            <option value="valack">{t('horse.sex.valack')}</option>
+            <option value="hingst">{t('horse.sex.hingst')}</option>
           </select>
         </Falt>
       </div>
 
-      <Falt label="Ras" hjalp={rasHjalp(hast)}>
+      <Falt label={t('horse.breed')} hjalp={rasHjalp(hast, t)}>
         <select
           value={hast.ras ?? ''}
           onChange={(e) => {
@@ -111,7 +108,7 @@ function Profilformular({
             set({ ras: ras?.id, ...(ras ? { typ: ras.typ } : {}) })
           }}
         >
-          <option value="">Annan ras eller korsning</option>
+          <option value="">{t('horse.breedOther')}</option>
           {RASER.map((r) => (
             <option key={r.id} value={r.id}>
               {r.namn}
@@ -120,72 +117,70 @@ function Profilformular({
         </select>
       </Falt>
 
-      <Falt
-        label="Typ"
-        hjalp="Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras."
-        grupp
-      >
+      <Falt label={t('horse.type.label')} hjalp={t('horse.type.hint')} grupp>
         <div className="segment">
-          {TYPER.map(([id, namn, hjalp]) => (
-            <button key={id} className={hast.typ === id ? 'aktiv' : ''} onClick={() => set({ typ: id })} title={hjalp}>
-              {namn}
-              <small>{hjalp}</small>
+          {TYPER.map((id) => (
+            <button
+              key={id}
+              className={hast.typ === id ? 'aktiv' : ''}
+              onClick={() => set({ typ: id })}
+              title={t(`horse.type.${id}.hint`)}
+            >
+              {t(`horse.type.${id}.name`)}
+              <small>{t(`horse.type.${id}.hint`)}</small>
             </button>
           ))}
         </div>
       </Falt>
 
       <div className="grupp">
-        <Falt label="Vikt (kg)">
+        <Falt label={t('horse.weight')}>
           <Siffra value={hast.viktKg} onChange={(v) => set({ viktKg: v })} />
         </Falt>
-        <Falt label="Bröstomfång (cm)" hjalp="Saknar du våg?">
+        <Falt label={t('horse.chest')} hjalp={t('horse.chestHint')}>
           <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
         </Falt>
-        <Falt label="Längd armbåge–sittben (cm)">
+        <Falt label={t('horse.length')}>
           <input inputMode="numeric" value={matt.langd} onChange={(e) => setMatt({ ...matt, langd: e.target.value })} />
         </Falt>
       </div>
       {uppskattadVikt && (
         <div className="tips">
-          Uppskattad vikt {uppskattadVikt} kg (SLU: bröstomfång² × längd / 8900).{' '}
+          {t('horse.weightEstimate', { kg: uppskattadVikt })}{' '}
           <button className="lank" onClick={() => set({ viktKg: uppskattadVikt })}>
-            Använd
+            {t('horse.useEstimate')}
           </button>
         </div>
       )}
 
-      <Falt label={`Hull: ${hast.hull}, ${hullText(hast.hull)}`} hjalp="SLU:s skala 1–9. 4–5 är lagom för de flesta.">
+      <Falt label={t('horse.hullLabel', { hull: hast.hull, text: hullText(hast.hull) })} hjalp={t('horse.hullHint')}>
         <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
       </Falt>
 
-      <h3 className="rubrik">Arbete</h3>
-      <Falt
-        label="Gren och nivå"
-        hjalp="Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer."
-      >
+      <h3 className="rubrik">{t('horse.work')}</h3>
+      <Falt label={t('horse.discipline')} hjalp={t('horse.disciplineHint')}>
         <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
-          {PRESTANDA.map(([id, text]) => (
+          {PRESTANDA.map((id) => (
             <option key={id} value={id}>
-              {text}
+              {t(`horse.performance.${id}`)}
             </option>
           ))}
         </select>
       </Falt>
       <div className="grupp">
-        <Falt label="Pass per vecka">
+        <Falt label={t('horse.sessionsPerWeek')}>
           <Siffra
             value={hast.ridning?.passPerVecka ?? 0}
             onChange={(v) => set({ ridning: { ...ridning(hast), passPerVecka: v } })}
           />
         </Falt>
-        <Falt label="Minuter per pass">
+        <Falt label={t('horse.minutesPerSession')}>
           <Siffra
             value={hast.ridning?.minuterPerPass ?? 0}
             onChange={(v) => set({ ridning: { ...ridning(hast), minuterPerPass: v } })}
           />
         </Falt>
-        <Falt label="Varav trav och galopp (min)">
+        <Falt label={t('horse.trotCanter')}>
           <Siffra
             value={hast.ridning?.travGaloppMinPerPass ?? 0}
             onChange={(v) => set({ ridning: { ...ridning(hast), travGaloppMinPerPass: v } })}
@@ -195,18 +190,18 @@ function Profilformular({
 
       <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} onAndra={(miljo) => set({ miljo })} />
 
-      <h3 className="rubrik">Grovfoder och foder i dag</h3>
+      <h3 className="rubrik">{t('horse.roughageSection')}</h3>
       <div className="grupp">
-        <Falt label="Grovfoder">
+        <Falt label={t('horse.roughage')}>
           <select
             value={hast.grovfoder.typ}
             onChange={(e) => set({ grovfoder: { ...hast.grovfoder, typ: e.target.value as 'hosilage' | 'ho' } })}
           >
-            <option value="hosilage">Hösilage</option>
-            <option value="ho">Hö</option>
+            <option value="hosilage">{t('roughageTitle.hosilage')}</option>
+            <option value="ho">{t('roughageTitle.ho')}</option>
           </select>
         </Falt>
-        <Falt label="Kg per dag (som det utfodras)">
+        <Falt label={t('horse.roughageKg')}>
           <Siffra
             value={hast.grovfoder.kgPerDag}
             onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
@@ -217,88 +212,90 @@ function Profilformular({
 
       <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
       <BytekanslighetSektion hast={hast} onAndra={(bytekanslighet) => set({ bytekanslighet })} />
-      <Falt label="Övrigt">
+      <Falt label={t('horse.other')}>
         <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
       </Falt>
 
       <div className="atgardsrad">
         <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
-          Vidare till analysen →
+          {t('horse.toAnalysis')}
         </button>
       </div>
     </section>
   )
 }
 
-function rasHjalp(h: Hastprofil): string | undefined {
+function rasHjalp(h: Hastprofil, t: TFunction): string | undefined {
   const ras = hittaRas(h.ras)
   if (!ras?.viktKg) return undefined
-  return `Vanlig vikt ${ras.viktKg.min}–${ras.viktKg.max} kg (SLU tabell 33)`
+  return t('horse.breedWeight', { min: ras.viktKg.min, max: ras.viktKg.max })
 }
 
 function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) => void }) {
+  const { t } = useTranslation()
   const set = (patch: Partial<Miljo>) => onAndra({ ...miljo, ...patch })
   return (
     <>
-      <h3 className="rubrik">Miljö</h3>
+      <h3 className="rubrik">{t('horse.environment.title')}</h3>
       <div className="grupp">
-        <Falt label="Hållning">
+        <Falt label={t('horse.environment.housing')}>
           <select value={miljo.hallning} onChange={(e) => set({ hallning: e.target.value as Miljo['hallning'] })}>
-            <option value="box">Box med hagvistelse</option>
-            <option value="losdrift">Lösdrift</option>
+            <option value="box">{t('horse.environment.box')}</option>
+            <option value="losdrift">{t('horse.environment.losdrift')}</option>
           </select>
         </Falt>
-        <Falt label="Timmar ute per dygn">
+        <Falt label={t('horse.environment.hoursOut')}>
           <Siffra value={miljo.timmarUtePerDag} onChange={(v) => set({ timmarUtePerDag: v })} />
         </Falt>
-        <Falt label="Lägsta temperatur (°C)" hjalp="Kallaste dygnen just nu">
+        <Falt label={t('horse.environment.lowestTemp')} hjalp={t('horse.environment.lowestTempHint')}>
           <Siffra value={miljo.lagstaTempC} needsMinusKey onChange={(v) => set({ lagstaTempC: v })} />
         </Falt>
       </div>
       <div className="kryss">
         <label>
           <input type="checkbox" checked={miljo.klippt} onChange={(e) => set({ klippt: e.target.checked })} />
-          Klippt
+          {t('horse.environment.clipped')}
         </label>
         <label>
           <input type="checkbox" checked={miljo.tacke} onChange={(e) => set({ tacke: e.target.checked })} />
-          Går med täcke
+          {t('horse.environment.rug')}
         </label>
       </div>
     </>
   )
 }
 
-const KANSLIGHETER: [keyof Halsa, string][] = [
-  ['fang', 'Har haft fång'],
-  ['ems', 'EMS eller insulinresistens'],
-  ['ppid', 'PPID (Cushings)'],
-  ['magsar', 'Magsår'],
-  ['pssm', 'Korsförlamning (PSSM)'],
-  ['luftvagar', 'Luftvägsbesvär, dammkänslig'],
-  ['tandproblem', 'Tandproblem'],
-  ['proteinkanslig', 'Proteinkänslig'],
-]
+const KANSLIGHETER = [
+  'fang',
+  'ems',
+  'ppid',
+  'magsar',
+  'pssm',
+  'luftvagar',
+  'tandproblem',
+  'proteinkanslig',
+] as const satisfies readonly (keyof Halsa)[]
 
 function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) => void }) {
+  const { t } = useTranslation()
   const undvik = halsa.undvik ?? []
   return (
     <>
-      <h3 className="rubrik">Hälsa och känsligheter</h3>
-      <p className="falt-hjalp">Styr vilka produkter som föreslås och vilka råd planen ger.</p>
+      <h3 className="rubrik">{t('horse.health.title')}</h3>
+      <p className="falt-hjalp">{t('horse.health.hint')}</p>
       <div className="kryss">
-        {KANSLIGHETER.map(([nyckel, text]) => (
+        {KANSLIGHETER.map((nyckel) => (
           <label key={nyckel}>
             <input
               type="checkbox"
               checked={Boolean(halsa[nyckel])}
               onChange={(e) => onAndra({ ...halsa, [nyckel]: e.target.checked })}
             />
-            {text}
+            {t(`horse.health.${nyckel}`)}
           </label>
         ))}
       </div>
-      <Falt label="Undvik ingredienser" grupp>
+      <Falt label={t('horse.health.avoid')} grupp>
         <div className="chips">
           {INGREDIENSER.map((i) => (
             <button
@@ -321,21 +318,20 @@ function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) =>
 const KANSLIGHETSORDNING: Bytekanslighet[] = ['tal', 'normal', 'kanslig']
 
 function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (k: Bytekanslighet) => void }) {
+  const { t } = useTranslation()
   const forval = standardKanslighet(hast.halsa)
   const vald = hast.bytekanslighet ?? forval
   const hjalp = hast.bytekanslighet
-    ? 'Styr hur många dagar planen tar på sig att byta till det nya fodret.'
-    : `Förvalt utifrån hälsan ovan${forval === 'kanslig' ? ' (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte)' : ''}. Ändra om du vet bättre.`
+    ? t('horse.sensitivity.hintChosen')
+    : forval === 'kanslig'
+      ? t('horse.sensitivity.hintDefaultSensitive')
+      : t('horse.sensitivity.hintDefault')
   return (
     <>
-      <Falt
-        label={`Känslighet för foderbyten: hur reagerar ${hast.namn || 'hästen'} när fodret ändras?`}
-        hjalp={hjalp}
-        grupp
-      >
-        <div className="segment" role="radiogroup" aria-label="Känslighet för foderbyten">
+      <Falt label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hjalp={hjalp} grupp>
+        <div className="segment" role="radiogroup" aria-label={t('horse.sensitivity.groupLabel')}>
           {KANSLIGHETSORDNING.map((k) => {
-            const t = BYTESTAKT[k]
+            const takt = BYTESTAKT[k]
             return (
               <button
                 key={k}
@@ -345,9 +341,9 @@ function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (
                 className={vald === k ? 'aktiv' : ''}
                 onClick={() => onAndra(k)}
               >
-                {t.namn}
+                {takt.namn}
                 <small>
-                  {t.beskrivning} Bytet tar {t.dagar} dagar.
+                  {takt.beskrivning} {t('horse.sensitivity.duration', { days: takt.dagar })}
                 </small>
               </button>
             )
@@ -371,6 +367,7 @@ function Foderlista({
   produkter: Produkt[]
   onAndra: (h: Hastprofil) => void
 }) {
+  const { t } = useTranslation()
   const foder = hast.nuvarandeFoder
   const satt = (i: number, patch: Partial<(typeof foder)[number]>) =>
     onAndra({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
@@ -388,22 +385,22 @@ function Foderlista({
         <div className="foderrad" key={i}>
           <input
             list="produktnamn"
-            placeholder="Sök produkt, t.ex. Krafft"
+            placeholder={t('horse.feeds.searchPlaceholder')}
             value={f.namn}
             className={f.produktId ? '' : 'okand-produkt'}
-            title={f.produktId ? undefined : 'Finns inte i produktdatabasen och räknas inte med'}
+            title={f.produktId ? undefined : t('horse.feeds.unknownProduct')}
             onChange={(e) => {
               const p = produkter.find((x) => x.namn === e.target.value)
               satt(i, { produktId: p?.id ?? null, namn: e.target.value })
             }}
           />
           <Siffra value={f.gramPerDag} onChange={(v) => satt(i, { gramPerDag: v })} />
-          <span className="enhet">g/dag</span>
+          <span className="enhet">{t('horse.feeds.gramsPerDay')}</span>
           <button
             className="lank"
             onClick={() => onAndra({ ...hast, nuvarandeFoder: foder.filter((_, j) => j !== i) })}
           >
-            Ta bort
+            {t('horse.feeds.remove')}
           </button>
         </div>
       ))}
@@ -411,7 +408,7 @@ function Foderlista({
         className="lank"
         onClick={() => onAndra({ ...hast, nuvarandeFoder: [...foder, { produktId: null, namn: '', gramPerDag: 100 }] })}
       >
-        + Lägg till foder
+        {t('horse.feeds.add')}
       </button>
     </div>
   )
@@ -426,6 +423,7 @@ function AiHjalp({
   produkter: Produkt[]
   onAndra: (h: Hastprofil) => void
 }) {
+  const { t } = useTranslation()
   const [foderText, setFoderText] = useState('')
   const [halsaText, setHalsaText] = useState('')
   const [fragor, setFragor] = useState<string[]>([])
@@ -491,20 +489,20 @@ function AiHjalp({
   return (
     <div className="ai-ruta">
       <div className="ai-rubrik">
-        <span className="ai-bricka">AI</span> Beskriv med egna ord så fyller vi i fälten
+        <span className="ai-bricka">{t('common.aiBadge')}</span> {t('horse.ai.title')}
       </div>
-      <Falt label="Om hästen och vad den äter i dag">
+      <Falt label={t('horse.ai.about')}>
         <textarea
           rows={3}
-          placeholder="T.ex. islandshäst på lösdrift, oklippt utan täcke, rids några gånger i veckan. Två fulla korgar hösilage om dagen och en liter pellets morgon och kväll"
+          placeholder={t('horse.ai.aboutPlaceholder')}
           value={foderText}
           onChange={(e) => setFoderText(e.target.value)}
         />
       </Falt>
-      <Falt label="Hälsa och historik">
+      <Falt label={t('horse.ai.health')}>
         <textarea
           rows={2}
-          placeholder="T.ex. hade fång för två år sedan, inga besvär nu"
+          placeholder={t('horse.ai.healthPlaceholder')}
           value={halsaText}
           onChange={(e) => setHalsaText(e.target.value)}
         />
@@ -524,7 +522,7 @@ function AiHjalp({
         disabled={laddar || (!foderText && !halsaText)}
         onClick={() => void kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))}
       >
-        {laddar ? 'Tolkar…' : fragor.length ? 'Svara' : 'Fyll i med AI'}
+        {laddar ? t('horse.ai.interpreting') : fragor.length ? t('horse.ai.answer') : t('horse.ai.fill')}
       </button>
     </div>
   )

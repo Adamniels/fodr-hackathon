@@ -265,5 +265,117 @@
       "sourceNotAnalysed": "Grovfoder: ej analyserat",
       "sourceAnalysis": "Grovfoder: analys"
     }
+  },
+  "horse": {
+    "performance": {
+      "fritid": "Fritid, ridning och körning",
+      "tavling_lokal": "Tävling lokalt, 1–2 gånger i månaden",
+      "tavling_hog": "Tävling högre nivå, fälttävlan, svårare hoppning",
+      "trav_galopp_traning": "Trav eller galopp i träning",
+      "distans": "Distansritt, tävling"
+    },
+    "type": {
+      "label": "Typ",
+      "hint": "Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras.",
+      "lattfodd": {
+        "name": "Lättfödd",
+        "hint": "Ofta ponnyer och kallblodstyper"
+      },
+      "normalfodd": {
+        "name": "Normalfödd",
+        "hint": "Många varmblod och halvblod"
+      },
+      "svarfodd": {
+        "name": "Svårfödd",
+        "hint": "Många fullblod"
+      }
+    },
+    "welcome": {
+      "title": "Välkommen till Fodr",
+      "intro": "Börja med att lägga till din häst. Det tar ett par minuter.",
+      "add": "Lägg till din första häst"
+    },
+    "title": "Om {{name}}",
+    "intro": "Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och rätta det som inte stämmer.",
+    "basics": "Grunddata",
+    "name": "Namn",
+    "age": "Ålder (år)",
+    "sex": {
+      "label": "Kön",
+      "sto": "Sto",
+      "valack": "Valack",
+      "hingst": "Hingst"
+    },
+    "breed": "Ras",
+    "breedOther": "Annan ras eller korsning",
+    "breedWeight": "Vanlig vikt {{min}}–{{max}} kg (SLU tabell 33)",
+    "weight": "Vikt (kg)",
+    "chest": "Bröstomfång (cm)",
+    "chestHint": "Saknar du våg?",
+    "length": "Längd armbåge–sittben (cm)",
+    "weightEstimate": "Uppskattad vikt {{kg}} kg (SLU: bröstomfång² × längd / 8900).",
+    "useEstimate": "Använd",
+    "hullLabel": "Hull: {{hull}}, {{text}}",
+    "hullHint": "SLU:s skala 1–9. 4–5 är lagom för de flesta.",
+    "work": "Arbete",
+    "discipline": "Gren och nivå",
+    "disciplineHint": "Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer.",
+    "sessionsPerWeek": "Pass per vecka",
+    "minutesPerSession": "Minuter per pass",
+    "trotCanter": "Varav trav och galopp (min)",
+    "roughageSection": "Grovfoder och foder i dag",
+    "roughage": "Grovfoder",
+    "roughageKg": "Kg per dag (som det utfodras)",
+    "other": "Övrigt",
+    "toAnalysis": "Vidare till analysen →",
+    "environment": {
+      "title": "Miljö",
+      "housing": "Hållning",
+      "box": "Box med hagvistelse",
+      "losdrift": "Lösdrift",
+      "hoursOut": "Timmar ute per dygn",
+      "lowestTemp": "Lägsta temperatur (°C)",
+      "lowestTempHint": "Kallaste dygnen just nu",
+      "clipped": "Klippt",
+      "rug": "Går med täcke"
+    },
+    "health": {
+      "title": "Hälsa och känsligheter",
+      "hint": "Styr vilka produkter som föreslås och vilka råd planen ger.",
+      "fang": "Har haft fång",
+      "ems": "EMS eller insulinresistens",
+      "ppid": "PPID (Cushings)",
+      "magsar": "Magsår",
+      "pssm": "Korsförlamning (PSSM)",
+      "luftvagar": "Luftvägsbesvär, dammkänslig",
+      "tandproblem": "Tandproblem",
+      "proteinkanslig": "Proteinkänslig",
+      "avoid": "Undvik ingredienser"
+    },
+    "sensitivity": {
+      "label": "Känslighet för foderbyten: hur reagerar {{name}} när fodret ändras?",
+      "groupLabel": "Känslighet för foderbyten",
+      "hintChosen": "Styr hur många dagar planen tar på sig att byta till det nya fodret.",
+      "hintDefault": "Förvalt utifrån hälsan ovan. Ändra om du vet bättre.",
+      "hintDefaultSensitive": "Förvalt utifrån hälsan ovan (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte). Ändra om du vet bättre.",
+      "duration": "Bytet tar {{days}} dagar."
+    },
+    "feeds": {
+      "searchPlaceholder": "Sök produkt, t.ex. Krafft",
+      "unknownProduct": "Finns inte i produktdatabasen och räknas inte med",
+      "gramsPerDay": "g/dag",
+      "remove": "Ta bort",
+      "add": "+ Lägg till foder"
+    },
+    "ai": {
+      "title": "Beskriv med egna ord så fyller vi i fälten",
+      "about": "Om hästen och vad den äter i dag",
+      "aboutPlaceholder": "T.ex. islandshäst på lösdrift, oklippt utan täcke, rids några gånger i veckan. Två fulla korgar hösilage om dagen och en liter pellets morgon och kväll",
+      "health": "Hälsa och historik",
+      "healthPlaceholder": "T.ex. hade fång för två år sedan, inga besvär nu",
+      "interpreting": "Tolkar…",
+      "answer": "Svara",
+      "fill": "Fyll i med AI"
+    }
   }
 }
