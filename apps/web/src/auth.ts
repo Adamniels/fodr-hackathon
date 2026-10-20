@@ -1,6 +1,8 @@
 // MOCK: konton sparas i webbläsaren. Inget lösenord kontrolleras eller sparas. Byts mot riktig
 // inloggning (t.ex. Supabase Auth) efter hackathon; resten av appen ser bara Anvandare.
 
+import i18n from './i18n'
+
 export interface Anvandare {
   id: string
   namn: string
@@ -44,7 +46,7 @@ export function loggaIn(epost: string, namn?: string): Anvandare {
   const konton = las<Anvandare[]>(KONTON, [])
   let konto = konton.find((k) => k.epost === normaliserad)
   if (!konto) {
-    if (!namn?.trim()) throw new Error('Det finns inget konto med den e-postadressen. Skapa ett nytt.')
+    if (!namn?.trim()) throw new Error(i18n.t('login.noAccount'))
     konto = { id: `anv-${Date.now()}`, namn: namn.trim(), epost: normaliserad }
     skriv(KONTON, [...konton, konto])
   }

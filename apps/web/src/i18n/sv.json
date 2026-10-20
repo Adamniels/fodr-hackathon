@@ -1,0 +1,493 @@
+{
+  "common": {
+    "brand": "Fodr",
+    "aiBadge": "AI",
+    "close": "Stäng",
+    "theHorse": "hästen"
+  },
+  "hull": {
+    "1": "Extremt utmärglad",
+    "2": "Mycket mager",
+    "3": "Mager",
+    "4": "Slank",
+    "5": "Måttlig",
+    "6": "Måttligt fet",
+    "7": "Fet",
+    "8": "Mycket fet",
+    "9": "Extremt fet"
+  },
+  "roughage": {
+    "hosilage": "hösilage",
+    "ho": "hö"
+  },
+  "roughageTitle": {
+    "hosilage": "Hösilage",
+    "ho": "Hö"
+  },
+  "units": {
+    "kg": "{{value}} kg",
+    "g": "{{value}} g",
+    "perKgDm": "{{unit}}/kg ts",
+    "perMonth": "{{amount}}/mån"
+  },
+  "login": {
+    "dialogLabel": "Logga in",
+    "titleLogIn": "Logga in på Fodr",
+    "titleCreate": "Skapa konto",
+    "intro": "Dina hästar och foderplaner sparas på ditt konto.",
+    "demo": "Fortsätt med demohästen Sixten",
+    "orEmail": "eller med e-post",
+    "name": "Namn",
+    "email": "E-post",
+    "password": "Lösenord",
+    "submitLogIn": "Logga in",
+    "submitCreate": "Skapa konto",
+    "switchToCreate": "Ny här? Skapa konto",
+    "switchToLogIn": "Har du redan ett konto? Logga in",
+    "note": "Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.",
+    "noAccount": "Det finns inget konto med den e-postadressen. Skapa ett nytt."
+  },
+  "steps": {
+    "hast": "Hästen",
+    "analys": "Analysen",
+    "plan": "Foderplan",
+    "journal": "Journal"
+  },
+  "app": {
+    "sidebar": {
+      "label": "Hästar",
+      "closeMenu": "Stäng menyn",
+      "heading": "Mina hästar",
+      "unnamedHorse": "Namnlös häst",
+      "addHorse": "Lägg till häst",
+      "toLanding": "Till startsidan",
+      "logOut": "Logga ut"
+    },
+    "openMenu": "Visa hästar och meny",
+    "newHorse": "Ny häst",
+    "properties": {
+      "age": "Ålder",
+      "ageValue": "{{years}} år",
+      "breed": "Ras",
+      "breedUnknown": "Ej angiven",
+      "weight": "Vikt",
+      "hull": "Hull",
+      "hullValue": "{{hull}} av 9, {{text}}",
+      "roughage": "Grovfoder",
+      "roughageValue": "{{kg}} kg {{type}} per dag",
+      "analysis": "Analys",
+      "analysisUploaded": "Uppladdad",
+      "analysisSampled": "{{lab}}, prov {{date}}",
+      "analysisNone": "Inte uppladdad än"
+    },
+    "stepsNav": "Steg",
+    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare."
+  },
+  "analysis": {
+    "title": "Grovfoderanalysen för {{name}}",
+    "intro": "PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.",
+    "reading": "Läser {{file}}…",
+    "choose": "<strong>Välj analysrapport</strong> eller dra hit den",
+    "noReport": "Inget underlag till hands?",
+    "exampleComplete": "Exempel: komplett analys",
+    "exampleBasic": "Exempel: basanalys",
+    "sampled": "Prov {{date}}",
+    "dryMatter": "Torrsubstans",
+    "ash": "Aska",
+    "columns": {
+      "nutrient": "Ämne",
+      "value": "Värde",
+      "unit": "Enhet",
+      "source": "Källa"
+    },
+    "source": {
+      "report": "Analysen",
+      "estimated": "Saknas, uppskattas ({{source}})",
+      "missing": "Saknas"
+    },
+    "toCheck": "Att kontrollera:",
+    "toPlan": "Räkna fram foderplan →"
+  },
+  "journal": {
+    "title": "Journal för {{name}}",
+    "intro": "Väg, hullbedöm och skriv vad som fungerar. Planen räknas om när vikt och hull ändras.",
+    "trend": {
+      "weight": "Vikt",
+      "weightValue": "{{first}} → {{last}} kg",
+      "weightRate": "{{sign}}{{percent}} % per vecka på {{weeks}} veckor",
+      "weightTooFew": "Minst två vägningar behövs",
+      "hull": "Hull",
+      "hullNone": "Ingen hullbedömning än",
+      "followUp": "Nästa uppföljning",
+      "weighNow": "Väg nu",
+      "followUpDue": "Dags att väga och hullbedöma",
+      "followUpRule": "4 veckor efter senaste mätning"
+    },
+    "timeline": "Tidslinje",
+    "empty": "Inga anteckningar än.",
+    "hullChip": "Hull {{hull}}",
+    "planSaved": "Foderplan sparad",
+    "planRoughage": "{{kg}} kg grovfoder ({{analysis}})",
+    "planProduct": " · {{grams}} g {{name}}",
+    "newEntry": {
+      "title": "Ny anteckning",
+      "date": "Datum",
+      "weight": "Vikt (kg)",
+      "hull": "Hull",
+      "hullNone": "Ej bedömt",
+      "seen": "Vad har du sett?",
+      "seenPlaceholder": "T.ex. piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg",
+      "updateProfile": "Uppdatera profilen och räkna om foderplanen",
+      "add": "Lägg till"
+    },
+    "ai": {
+      "title": "Vad säger journalen?",
+      "intro": "AI:n letar mönster över tid och säger till om något bör ses av veterinär. Den ändrar aldrig planen.",
+      "contactVet": "Kontakta veterinär.",
+      "possibleLink": "Kan hänga ihop med: {{link}}",
+      "nextSteps": "Nästa steg",
+      "reading": "Läser journalen…",
+      "again": "Analysera igen",
+      "analyse": "Analysera journalen"
+    }
+  },
+  "calendar": {
+    "weekdays": {
+      "mon": "mån",
+      "tue": "tis",
+      "wed": "ons",
+      "thu": "tor",
+      "fri": "fre",
+      "sat": "lör",
+      "sun": "sön"
+    },
+    "change": {
+      "same": "samma",
+      "new": "ny",
+      "end": "slut"
+    },
+    "nothingTitle": "Inget att trappa in",
+    "nothingText": "Planen ändrar inga mängder, så du kan börja direkt.",
+    "title": "Byt över på {{days}} dagar",
+    "preselected": " (förvalt utifrån hälsan)",
+    "rhythm": ": måtten ändras var {{every}} dag i {{steps}} steg. Ändra känsligheten under Hästen.",
+    "everyOther": "annan",
+    "everyThird": "tredje",
+    "firstDay": "Första dagen",
+    "label": "Kalender för foderbytet",
+    "stepTag": "Steg {{step}}",
+    "done": "Klart",
+    "stepButton": "{{date}}, steg {{step}}: ändra måtten",
+    "stepOf": "Steg {{step}} av {{total}}",
+    "onwards": " och framåt",
+    "finished": "Nu är {{name}} på den nya foderstaten.",
+    "fullSchedule": "Hela schemat",
+    "perDay": "Per dag",
+    "today": "I dag",
+    "warning": "Blir avföringen lös eller aptiten sämre: stanna kvar på samma steg 2–3 dagar innan du går vidare. Ömma hovar, värme i hovarna eller ovilja att gå: kontakta veterinär direkt.",
+    "download": "Lägg in i min kalender",
+    "ics": {
+      "summaryStep": "Fodr: {{name}}, foderbyte steg {{step}} av {{total}}",
+      "summaryDone": "Fodr: {{name}}, ny foderstat klar",
+      "description": "Ändra måtten från i dag:\n{{rows}}",
+      "row": "{{name}}: {{amount}} per dag ({{change}})",
+      "alarm": "I morgon ändras {{name}}s foder",
+      "fileName": "foderbyte-{{name}}.ics",
+      "fileNameFallback": "hast"
+    }
+  },
+  "plan": {
+    "status": {
+      "brist": "Brist",
+      "ok": "Täckt",
+      "overskott": "Överskott",
+      "over_max": "Över maxgräns",
+      "okand": "Okänt",
+      "osaker": "Osäkert",
+      "ej_krav": ""
+    },
+    "title": "Foderplan för {{name}}",
+    "costLabel": "Kostnad per månad",
+    "cheaperThanToday": "{{amount}} billigare än i dag",
+    "dearerThanToday": "{{amount}} dyrare än i dag",
+    "doThis": "Gör så här",
+    "giveRoughage": "Ge {{kg}} kg {{type}} per dag.",
+    "explanation": {
+      "title": "Vad betyder det här?",
+      "failed": "Förklaringen kunde inte hämtas ({{error}}). Planen gäller ändå.",
+      "writing": "Skriver förklaring…",
+      "rewrite": "Skriv om förklaringen"
+    },
+    "nitrogen": "<strong>{{kg}} kg kväve per år</strong> hamnar i gödseln från protein hästen inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.",
+    "shopping": {
+      "title": "Inköpslista",
+      "saveToJournal": "Spara planen i journalen",
+      "product": "Produkt",
+      "storeAndPrice": "Butik och pris",
+      "perDay": "Per dag",
+      "perMonth": "Per månad",
+      "replaces": "Ersätter {{products}}",
+      "and": " och ",
+      "manufacturerDose": "Tillverkarens dos: {{dose}}",
+      "price": "· {{price}} för {{kg}} kg",
+      "totalBeyondRoughage": "Totalt utöver grovfodret",
+      "total": "Totalt",
+      "none": "Inga tillskott behövs utöver grovfodret.",
+      "alternative": "Alternativ: {{products}}, cirka {{amount}}.",
+      "productGrams": "{{name}} {{grams}} g"
+    },
+    "basis": {
+      "title": "Underlaget för planen",
+      "requirement": "Behov {{mj}} MJ och {{g}} g smältbart protein per dag, räknat på {{kg}} kg",
+      "work": ", varav {{mj}} MJ för arbete",
+      "cold": " och {{mj}} MJ för kyla",
+      "today": "Med dagens foder:",
+      "moreEnergy": "{{percent}} % mer energi än behovet",
+      "tooLittle": "för lite {{nutrients}}",
+      "todayAnd": ", och "
+    },
+    "health": {
+      "title": "Anpassat efter {{name}}s hälsa",
+      "excluded": "{{n}} produkter valdes bort"
+    },
+    "roughageQuality": "Om ditt grovfoder",
+    "balance": {
+      "title": "Behov och tillförsel per dag",
+      "intro": "Behov enligt SLU. Tillförsel från grovfodret och förslaget. Ca/P-kvot {{ratio}} (SLU: minst 1,1, helst 1,2–1,8).",
+      "unknownNote": "Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler, och hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete. Analysera grovfodret om du vill veta säkert.",
+      "nutrient": "Ämne",
+      "requirementColumn": "Behov",
+      "intake": "Får",
+      "max": "Max",
+      "statusColumn": "Status",
+      "source": "Källa",
+      "sourceEstimated": "Grovfoder: uppskattat",
+      "sourceNotAnalysed": "Grovfoder: ej analyserat",
+      "sourceAnalysis": "Grovfoder: analys"
+    }
+  },
+  "horse": {
+    "performance": {
+      "fritid": "Fritid, ridning och körning",
+      "tavling_lokal": "Tävling lokalt, 1–2 gånger i månaden",
+      "tavling_hog": "Tävling högre nivå, fälttävlan, svårare hoppning",
+      "trav_galopp_traning": "Trav eller galopp i träning",
+      "distans": "Distansritt, tävling"
+    },
+    "type": {
+      "label": "Typ",
+      "hint": "Påverkar underhållsbehovet med upp till 10 % (SLU tabell 2). Sätts av rasen men kan ändras.",
+      "lattfodd": {
+        "name": "Lättfödd",
+        "hint": "Ofta ponnyer och kallblodstyper"
+      },
+      "normalfodd": {
+        "name": "Normalfödd",
+        "hint": "Många varmblod och halvblod"
+      },
+      "svarfodd": {
+        "name": "Svårfödd",
+        "hint": "Många fullblod"
+      }
+    },
+    "welcome": {
+      "title": "Välkommen till Fodr",
+      "intro": "Börja med att lägga till din häst. Det tar ett par minuter.",
+      "add": "Lägg till din första häst"
+    },
+    "title": "Om {{name}}",
+    "intro": "Börja med att beskriva hästen med egna ord, så fyller AI:n i fälten nedan. Kontrollera sedan fälten och rätta det som inte stämmer.",
+    "basics": "Grunddata",
+    "name": "Namn",
+    "age": "Ålder (år)",
+    "sex": {
+      "label": "Kön",
+      "sto": "Sto",
+      "valack": "Valack",
+      "hingst": "Hingst"
+    },
+    "breed": "Ras",
+    "breedOther": "Annan ras eller korsning",
+    "breedWeight": "Vanlig vikt {{min}}–{{max}} kg (SLU tabell 33)",
+    "weight": "Vikt (kg)",
+    "chest": "Bröstomfång (cm)",
+    "chestHint": "Saknar du våg?",
+    "length": "Längd armbåge–sittben (cm)",
+    "weightEstimate": "Uppskattad vikt {{kg}} kg (SLU: bröstomfång² × längd / 8900).",
+    "useEstimate": "Använd",
+    "hullLabel": "Hull: {{hull}}, {{text}}",
+    "hullHint": "SLU:s skala 1–9. 4–5 är lagom för de flesta.",
+    "work": "Arbete",
+    "discipline": "Gren och nivå",
+    "disciplineHint": "Sätter en lägsta arbetsnivå enligt SLU tabell 9–11. Ridpassen nedan används om de ger mer.",
+    "sessionsPerWeek": "Pass per vecka",
+    "minutesPerSession": "Minuter per pass",
+    "trotCanter": "Varav trav och galopp (min)",
+    "roughageSection": "Grovfoder och foder i dag",
+    "roughage": "Grovfoder",
+    "roughageKg": "Kg per dag (som det utfodras)",
+    "other": "Övrigt",
+    "toAnalysis": "Vidare till analysen →",
+    "environment": {
+      "title": "Miljö",
+      "housing": "Hållning",
+      "box": "Box med hagvistelse",
+      "losdrift": "Lösdrift",
+      "hoursOut": "Timmar ute per dygn",
+      "lowestTemp": "Lägsta temperatur (°C)",
+      "lowestTempHint": "Kallaste dygnen just nu",
+      "clipped": "Klippt",
+      "rug": "Går med täcke"
+    },
+    "health": {
+      "title": "Hälsa och känsligheter",
+      "hint": "Styr vilka produkter som föreslås och vilka råd planen ger.",
+      "fang": "Har haft fång",
+      "ems": "EMS eller insulinresistens",
+      "ppid": "PPID (Cushings)",
+      "magsar": "Magsår",
+      "pssm": "Korsförlamning (PSSM)",
+      "luftvagar": "Luftvägsbesvär, dammkänslig",
+      "tandproblem": "Tandproblem",
+      "proteinkanslig": "Proteinkänslig",
+      "avoid": "Undvik ingredienser"
+    },
+    "sensitivity": {
+      "label": "Känslighet för foderbyten: hur reagerar {{name}} när fodret ändras?",
+      "groupLabel": "Känslighet för foderbyten",
+      "hintChosen": "Styr hur många dagar planen tar på sig att byta till det nya fodret.",
+      "hintDefault": "Förvalt utifrån hälsan ovan. Ändra om du vet bättre.",
+      "hintDefaultSensitive": "Förvalt utifrån hälsan ovan (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte). Ändra om du vet bättre.",
+      "duration": "Bytet tar {{days}} dagar."
+    },
+    "feeds": {
+      "searchPlaceholder": "Sök produkt, t.ex. Krafft",
+      "unknownProduct": "Finns inte i produktdatabasen och räknas inte med",
+      "gramsPerDay": "g/dag",
+      "remove": "Ta bort",
+      "add": "+ Lägg till foder"
+    },
+    "ai": {
+      "title": "Beskriv med egna ord så fyller vi i fälten",
+      "about": "Om hästen och vad den äter i dag",
+      "aboutPlaceholder": "T.ex. islandshäst på lösdrift, oklippt utan täcke, rids några gånger i veckan. Två fulla korgar hösilage om dagen och en liter pellets morgon och kväll",
+      "health": "Hälsa och historik",
+      "healthPlaceholder": "T.ex. hade fång för två år sedan, inga besvär nu",
+      "interpreting": "Tolkar…",
+      "answer": "Svara",
+      "fill": "Fyll i med AI"
+    }
+  },
+  "landing": {
+    "nav": {
+      "label": "Startsidan",
+      "howItWorks": "Så funkar det",
+      "howWeCalculate": "Hur vi räknar",
+      "faq": "Vanliga frågor"
+    },
+    "logIn": "Logga in",
+    "openApp": "Öppna Fodr",
+    "tryDemo": "Testa med demohästen",
+    "continueAs": "Fortsätt som {{name}}",
+    "hero": {
+      "eyebrow": "För dig som har häst och en grovfoderanalys",
+      "title": "Rätt foder till din häst, direkt från <mark>analysen</mark>",
+      "intro": "Ladda upp analysen från labbet, berätta om hästen och få en foderplan enligt SLU. Med vad du ska ge, hur mycket och vad det kostar per månad.",
+      "seeHow": "Se hur det funkar",
+      "note": "Inget konto behövs för att testa. Fungerar med PDF eller ett foto av rapporten."
+    },
+    "sourceLine": "Beräkningarna följer <strong>SLU:s utfodringsrekommendationer för häst</strong>. Fodr är inte knutet till någon foderbutik.",
+    "photoBand": {
+      "title": "Grovfodret är grunden. Resten ska bara fylla luckorna.",
+      "text": "De flesta hästar klarar sig på bra grovfoder och lite mineraler. Fodr visar vad din häst faktiskt behöver, så att du slipper gissa."
+    },
+    "figures": {
+      "label": "Hästar i Sverige",
+      "title": "Hästsverige i siffror",
+      "horses": "355 500",
+      "horsesText": "hästar i Sverige",
+      "haylage": "55 %",
+      "haylageText": "av privata hästägare utfodrar med hösilage",
+      "analysisCost": "600–1 800 kr",
+      "analysisCostText": "kostar en grovfoderanalys",
+      "sources": "Källor: Jordbruksverket (hästräkning 2016), SLU-examensarbete 2022, Eurofins prislista för grovfoderanalys."
+    },
+    "steps": {
+      "eyebrow": "Så funkar det",
+      "title": "Tre steg, ett par minuter",
+      "horseTitle": "Berätta om hästen",
+      "horseText": "Vikt, hull, hur mycket den rids och om den haft fång. Du kan också skriva med egna ord, så fyller vi i.",
+      "analysisTitle": "Ladda upp analysen",
+      "analysisText": "PDF eller mobilfoto, från vilket labb som helst. Du ser alla värden vi läste ut och kan rätta dem.",
+      "planTitle": "Få foderplanen",
+      "planText": "Vad du ska ge, gram per dag och kronor per månad. Och vad du kan sluta köpa.",
+      "sample": {
+        "dryMatter": "Torrsubstans",
+        "dryMatterValue": "39,7 %",
+        "energy": "Energi",
+        "energyValue": "10,2 MJ",
+        "protein": "Smältbart protein",
+        "proteinValue": "104 g",
+        "sugar": "Socker",
+        "sugarValue": "61 g",
+        "selenium": "Selen",
+        "missing": "saknas"
+      }
+    },
+    "features": {
+      "emsTitle": "Varnar vid fång och EMS",
+      "emsText": "Väljer bort sockerrikt foder och säger till när veterinären bör vara med.",
+      "neutralTitle": "Märkesneutral",
+      "neutralText": "Produkter från flera butiker, billigaste kombinationen först.",
+      "journalTitle": "Journal över tid",
+      "journalText": "Vikt, hull och anteckningar. Planen räknas om när hästen förändras.",
+      "swedishTitle": "Förklarat på svenska",
+      "swedishText": "Inga förkortningar utan förklaring. Du förstår varför."
+    },
+    "trust": {
+      "eyebrow": "Hur vi räknar",
+      "title": "”Hur vet jag att det stämmer?”",
+      "text": "Hästens behov räknas med SLU:s utfodringsrekommendationer för häst, i vanlig kod som går att granska. AI används bara för att läsa rapporten och förklara resultatet. Den räknar aldrig själv.",
+      "source": "Varje rad i planen visar behov, vad hästen får och källan.",
+      "missing": "Saknas ett värde i analysen står det tydligt, och vi gissar aldrig att det är noll.",
+      "vet": "Fodr ersätter inte veterinären. Har hästen fång, EMS eller kolik säger vi till.",
+      "imageLabel": "Två hästar nos mot nos"
+    },
+    "faq": {
+      "eyebrow": "Vanliga frågor",
+      "title": "Bra att veta",
+      "labsQ": "Vilka labb fungerar?",
+      "labsA": "Alla vanliga labbrapporter för grovfoder, både som PDF och som foto. Du kan alltid rätta värdena innan planen räknas.",
+      "mineralsQ": "Min analys saknar mineraler. Går det ändå?",
+      "mineralsA": "Ja. Då använder vi typvärden för svenskt vallfoder och märker dem som uppskattade, så att du ser vad som är osäkert.",
+      "vetQ": "Ersätter Fodr veterinären eller en foderrådgivare?",
+      "vetA": "Nej. Fodr hjälper dig förstå analysen och ger ett underlag. Vid sjukdom ska du alltid prata med veterinär.",
+      "sellQ": "Säljer ni foder?",
+      "sellA": "Nej. Förslagen kommer från flera butiker och sorteras efter pris och hur väl de täcker behovet.",
+      "storageQ": "Var sparas mina uppgifter?",
+      "storageA": "I den här prototypen sparas allt bara i din webbläsare."
+    },
+    "closing": {
+      "title": "Se vad ditt grovfoder räcker till",
+      "text": "Testa med demohästen Sixten, eller lägg in din egen häst."
+    },
+    "footer": {
+      "text": "Prototyp från ett hackathon 2026. Behov enligt SLU Rapport 289. Ersätter inte veterinär eller foderrådgivare.",
+      "photos": "Foton: Unsplash-fotografer via Wikimedia Commons (CC0)."
+    },
+    "preview": {
+      "label": "Exempel på en foderplan i Fodr",
+      "address": "fodr.se",
+      "horses": "Hästar",
+      "horse1Initial": "S",
+      "horse1": "Sixten",
+      "horse2Initial": "P",
+      "horse2": "Pysen",
+      "perMonth": "Per månad med förslaget",
+      "cheaper": "{{amount}} billigare än i dag"
+    }
+  },
+  "errors": {
+    "http": "Fel {{status}}"
+  }
+}

@@ -1,5 +1,6 @@
 import type { UtlastAnalys } from '@fodr/domain/analysis'
 import type { Ingrediens, NuvarandeFoder, Prestanda } from '@fodr/domain/types'
+import i18n from './i18n'
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -8,7 +9,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   })
   const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((data as { fel?: string }).fel ?? `Fel ${res.status}`)
+  if (!res.ok) throw new Error((data as { fel?: string }).fel ?? i18n.t('errors.http', { status: res.status }))
   return data as T
 }
 
