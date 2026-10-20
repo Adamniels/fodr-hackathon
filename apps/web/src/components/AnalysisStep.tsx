@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { filTillBase64, lasAnalys } from '../api'
 import { analysBas, analysKomplett } from '../data/exempel'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
@@ -35,6 +36,7 @@ const VISADE: NutrientKey[] = [
 ]
 
 export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: Props) {
+  const { t } = useTranslation()
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
   const [anmarkningar, setAnmarkningar] = useState<string[]>([])
@@ -69,10 +71,8 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
 
   return (
     <section className="kort">
-      <h2>Grovfoderanalysen för {hast.namn}</h2>
-      <p className="ingress">
-        PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.
-      </p>
+      <h2>{t('analysis.title', { name: hast.namn })}</h2>
+      <p className="ingress">{t('analysis.intro')}</p>
 
       <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
         <input
@@ -85,21 +85,21 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
           disabled={laddar}
         />
         {laddar ? (
-          <span>Läser {filnamn}…</span>
+          <span>{t('analysis.reading', { file: filnamn })}</span>
         ) : (
           <span>
-            <strong>Välj analysrapport</strong> eller dra hit den
+            <Trans i18nKey="analysis.choose" components={{ strong: <strong /> }} />
           </span>
         )}
       </label>
       <div className="exempel">
-        Inget underlag till hands?{' '}
+        {t('analysis.noReport')}{' '}
         <button className="lank" onClick={() => onAnalys(analysKomplett, [])}>
-          Exempel: komplett analys
+          {t('analysis.exampleComplete')}
         </button>{' '}
         ·{' '}
         <button className="lank" onClick={() => onAnalys(analysBas, [])}>
-          Exempel: basanalys
+          {t('analysis.exampleBasic')}
         </button>
       </div>
       {fel && <div className="ruta fel">{fel}</div>}
@@ -107,11 +107,11 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
       {analys && (
         <>
           <div className="analyshuvud">
-            <span>{analys.typ === 'hosilage' ? 'Hösilage' : 'Hö'}</span>
+            <span>{t(analys.typ === 'hosilage' ? 'roughageTitle.hosilage' : 'roughageTitle.ho')}</span>
             {analys.labb && <span>{analys.labb}</span>}
-            {analys.provdatum && <span>Prov {analys.provdatum}</span>}
+            {analys.provdatum && <span>{t('analysis.sampled', { date: analys.provdatum })}</span>}
             <label>
-              Torrsubstans{' '}
+              {t('analysis.dryMatter')}{' '}
               <DecimalInput
                 className="smal"
                 value={analys.tsProcent}
@@ -120,7 +120,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
               %
             </label>
             <label>
-              Aska{' '}
+              {t('analysis.ash')}{' '}
               <input
                 className="smal"
                 type="number"
@@ -133,16 +133,16 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                   )
                 }
               />{' '}
-              g/kg ts
+              {t('units.perKgDm', { unit: 'g' })}
             </label>
           </div>
           <table className="tabell">
             <thead>
               <tr>
-                <th>Ämne</th>
-                <th>Värde</th>
-                <th>Enhet</th>
-                <th>Källa</th>
+                <th>{t('analysis.columns.nutrient')}</th>
+                <th>{t('analysis.columns.value')}</th>
+                <th>{t('analysis.columns.unit')}</th>
+                <th>{t('analysis.columns.source')}</th>
               </tr>
             </thead>
             <tbody>
@@ -164,10 +164,10 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                     <td className="enhet">{analysEnhet(k)}</td>
                     <td className="kalla">
                       {v !== undefined
-                        ? (omr?.text ?? 'Analysen')
+                        ? (omr?.text ?? t('analysis.source.report'))
                         : schablon
-                          ? `Saknas, uppskattas (${schablon.kalla})`
-                          : 'Saknas'}
+                          ? t('analysis.source.estimated', { source: schablon.kalla })
+                          : t('analysis.source.missing')}
                     </td>
                   </tr>
                 )
@@ -176,7 +176,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
           </table>
           {anmarkningar.length > 0 && (
             <div className="ruta varn">
-              <strong>Att kontrollera:</strong>
+              <strong>{t('analysis.toCheck')}</strong>
               <ul>
                 {anmarkningar.map((a) => (
                   <li key={a}>{a}</li>
@@ -186,7 +186,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
           )}
           <div className="atgardsrad">
             <button className="knapp" onClick={onVidare} disabled={analys.perKgTs.energi === undefined}>
-              Räkna fram foderplan →
+              {t('analysis.toPlan')}
             </button>
           </div>
         </>

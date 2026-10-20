@@ -82,5 +82,30 @@
     },
     "stepsNav": "Steg",
     "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare."
+  },
+  "analysis": {
+    "title": "Grovfoderanalysen för {{name}}",
+    "intro": "PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.",
+    "reading": "Läser {{file}}…",
+    "choose": "<strong>Välj analysrapport</strong> eller dra hit den",
+    "noReport": "Inget underlag till hands?",
+    "exampleComplete": "Exempel: komplett analys",
+    "exampleBasic": "Exempel: basanalys",
+    "sampled": "Prov {{date}}",
+    "dryMatter": "Torrsubstans",
+    "ash": "Aska",
+    "columns": {
+      "nutrient": "Ämne",
+      "value": "Värde",
+      "unit": "Enhet",
+      "source": "Källa"
+    },
+    "source": {
+      "report": "Analysen",
+      "estimated": "Saknas, uppskattas ({{source}})",
+      "missing": "Saknas"
+    },
+    "toCheck": "Att kontrollera:",
+    "toPlan": "Räkna fram foderplan →"
   }
 }
