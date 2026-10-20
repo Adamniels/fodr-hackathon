@@ -29,5 +29,22 @@
     "g": "{{value}} g",
     "perKgDm": "{{unit}}/kg ts",
     "perMonth": "{{amount}}/mån"
+  },
+  "login": {
+    "dialogLabel": "Logga in",
+    "titleLogIn": "Logga in på Fodr",
+    "titleCreate": "Skapa konto",
+    "intro": "Dina hästar och foderplaner sparas på ditt konto.",
+    "demo": "Fortsätt med demohästen Sixten",
+    "orEmail": "eller med e-post",
+    "name": "Namn",
+    "email": "E-post",
+    "password": "Lösenord",
+    "submitLogIn": "Logga in",
+    "submitCreate": "Skapa konto",
+    "switchToCreate": "Ny här? Skapa konto",
+    "switchToLogIn": "Har du redan ett konto? Logga in",
+    "note": "Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.",
+    "noAccount": "Det finns inget konto med den e-postadressen. Skapa ett nytt."
   }
 }

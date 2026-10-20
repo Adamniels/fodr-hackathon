@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 /** Hästsko som logotyp. Färgen ärvs från texten. */
 export function Logga({ storlek = 22 }: { storlek?: number }) {
   return (
@@ -20,10 +22,11 @@ export function Logga({ storlek = 22 }: { storlek?: number }) {
 }
 
 export function Ordmarke() {
+  const { t } = useTranslation()
   return (
     <span className="ordmarke">
       <Logga />
-      Fodr
+      {t('common.brand')}
     </span>
   )
 }

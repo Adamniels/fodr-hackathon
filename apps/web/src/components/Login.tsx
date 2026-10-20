@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DEMOKONTO, loggaIn, type Anvandare } from '../auth'
 
 export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
+  const { t } = useTranslation()
   const [lage, setLage] = useState<'logga_in' | 'skapa'>('logga_in')
   const [epost, setEpost] = useState('')
   const [namn, setNamn] = useState('')
@@ -20,29 +22,29 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
 
   return (
     <div className="login">
-      <h2>{lage === 'logga_in' ? 'Logga in på Fodr' : 'Skapa konto'}</h2>
-      <p className="ingress">Dina hästar och foderplaner sparas på ditt konto.</p>
+      <h2>{lage === 'logga_in' ? t('login.titleLogIn') : t('login.titleCreate')}</h2>
+      <p className="ingress">{t('login.intro')}</p>
 
       <button className="knapp bred" onClick={() => onInloggad(loggaIn(DEMOKONTO.epost))}>
-        Fortsätt med demohästen Sixten
+        {t('login.demo')}
       </button>
       <div className="login-skiljare">
-        <span>eller med e-post</span>
+        <span>{t('login.orEmail')}</span>
       </div>
 
       <form onSubmit={skicka}>
         {lage === 'skapa' && (
           <label className="falt">
-            <span className="falt-label">Namn</span>
+            <span className="falt-label">{t('login.name')}</span>
             <input value={namn} onChange={(e) => setNamn(e.target.value)} autoComplete="name" required />
           </label>
         )}
         <label className="falt">
-          <span className="falt-label">E-post</span>
+          <span className="falt-label">{t('login.email')}</span>
           <input type="email" value={epost} onChange={(e) => setEpost(e.target.value)} autoComplete="email" required />
         </label>
         <label className="falt">
-          <span className="falt-label">Lösenord</span>
+          <span className="falt-label">{t('login.password')}</span>
           <input
             type="password"
             value={losenord}
@@ -52,15 +54,13 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
         </label>
         {fel && <div className="ruta fel">{fel}</div>}
         <button className="knapp sekundar bred" type="submit">
-          {lage === 'logga_in' ? 'Logga in' : 'Skapa konto'}
+          {lage === 'logga_in' ? t('login.submitLogIn') : t('login.submitCreate')}
         </button>
       </form>
       <button className="lank login-byt" onClick={() => setLage(lage === 'logga_in' ? 'skapa' : 'logga_in')}>
-        {lage === 'logga_in' ? 'Ny här? Skapa konto' : 'Har du redan ett konto? Logga in'}
+        {lage === 'logga_in' ? t('login.switchToCreate') : t('login.switchToLogIn')}
       </button>
-      <p className="liten login-not">
-        Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.
-      </p>
+      <p className="liten login-not">{t('login.note')}</p>
     </div>
   )
 }
