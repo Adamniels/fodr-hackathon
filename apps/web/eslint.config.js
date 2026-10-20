@@ -6,8 +6,9 @@ import tseslint from 'typescript-eslint'
 
 // UI text lives in src/i18n (ADR 0014). These selectors catch text written inline: JSX text, and literals or
 // template literals placed directly in JSX (as a child or a user-facing attribute), also through ?:, && and ||.
-// Arguments to calls such as t('key') are not text. Known gap: a Swedish constant outside JSX is only caught
-// when it contains å, ä or ö.
+// Arguments to calls such as t('key') are not text. Known gaps: text outside JSX (helpers, constants) is only caught
+// when it contains å, ä or ö, and inside JSX the rule does not follow concatenation, .join(), ternaries nested
+// more than two deep, or attributes missing from UI_ATTRIBUTES.
 const LETTER = '/[A-Za-zÅÄÖåäöÉé]/'
 const UI_ATTRIBUTES = '/^(label|placeholder|title|alt|aria-label|hjalp|rubrik|varde|under)$/'
 const BRANCH = ':matches(ConditionalExpression, LogicalExpression)'
