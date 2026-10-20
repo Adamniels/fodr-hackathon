@@ -195,5 +195,75 @@
       "fileName": "foderbyte-{{name}}.ics",
       "fileNameFallback": "hast"
     }
+  },
+  "plan": {
+    "status": {
+      "brist": "Brist",
+      "ok": "Täckt",
+      "overskott": "Överskott",
+      "over_max": "Över maxgräns",
+      "okand": "Okänt",
+      "osaker": "Osäkert",
+      "ej_krav": ""
+    },
+    "title": "Foderplan för {{name}}",
+    "costLabel": "Kostnad per månad",
+    "cheaperThanToday": "{{amount}} billigare än i dag",
+    "dearerThanToday": "{{amount}} dyrare än i dag",
+    "doThis": "Gör så här",
+    "giveRoughage": "Ge {{kg}} kg {{type}} per dag.",
+    "explanation": {
+      "title": "Vad betyder det här?",
+      "failed": "Förklaringen kunde inte hämtas ({{error}}). Planen gäller ändå.",
+      "writing": "Skriver förklaring…",
+      "rewrite": "Skriv om förklaringen"
+    },
+    "nitrogen": "<strong>{{kg}} kg kväve per år</strong> hamnar i gödseln från protein hästen inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.",
+    "shopping": {
+      "title": "Inköpslista",
+      "saveToJournal": "Spara planen i journalen",
+      "product": "Produkt",
+      "storeAndPrice": "Butik och pris",
+      "perDay": "Per dag",
+      "perMonth": "Per månad",
+      "replaces": "Ersätter {{products}}",
+      "and": " och ",
+      "manufacturerDose": "Tillverkarens dos: {{dose}}",
+      "price": "· {{price}} för {{kg}} kg",
+      "totalBeyondRoughage": "Totalt utöver grovfodret",
+      "total": "Totalt",
+      "none": "Inga tillskott behövs utöver grovfodret.",
+      "alternative": "Alternativ: {{products}}, cirka {{amount}}.",
+      "productGrams": "{{name}} {{grams}} g"
+    },
+    "basis": {
+      "title": "Underlaget för planen",
+      "requirement": "Behov {{mj}} MJ och {{g}} g smältbart protein per dag, räknat på {{kg}} kg",
+      "work": ", varav {{mj}} MJ för arbete",
+      "cold": " och {{mj}} MJ för kyla",
+      "today": "Med dagens foder:",
+      "moreEnergy": "{{percent}} % mer energi än behovet",
+      "tooLittle": "för lite {{nutrients}}",
+      "todayAnd": ", och "
+    },
+    "health": {
+      "title": "Anpassat efter {{name}}s hälsa",
+      "excluded": "{{n}} produkter valdes bort"
+    },
+    "roughageQuality": "Om ditt grovfoder",
+    "balance": {
+      "title": "Behov och tillförsel per dag",
+      "intro": "Behov enligt SLU. Tillförsel från grovfodret och förslaget. Ca/P-kvot {{ratio}} (SLU: minst 1,1, helst 1,2–1,8).",
+      "unknownNote": "Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler, och hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete. Analysera grovfodret om du vill veta säkert.",
+      "nutrient": "Ämne",
+      "requirementColumn": "Behov",
+      "intake": "Får",
+      "max": "Max",
+      "statusColumn": "Status",
+      "source": "Källa",
+      "sourceEstimated": "Grovfoder: uppskattat",
+      "sourceNotAnalysed": "Grovfoder: ej analyserat",
+      "sourceAnalysis": "Grovfoder: analys"
+    }
   }
 }

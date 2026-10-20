@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { forklaraPlan } from '../api'
 import { kostnadPerManad, visningsnamn } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
@@ -7,14 +8,14 @@ import { enhet, etikett, kr, tal } from '../format'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
 import { Injusteringskalender } from './Injusteringskalender'
 
-const STATUS: Record<Status, [string, string]> = {
-  brist: ['Brist', 'brist'],
-  ok: ['Täckt', 'ok'],
-  overskott: ['Överskott', 'varn'],
-  over_max: ['Över maxgräns', 'brist'],
-  okand: ['Okänt', 'okand'],
-  osaker: ['Osäkert', 'okand'],
-  ej_krav: ['', 'okand'],
+const STATUS_KLASS: Record<Status, string> = {
+  brist: 'brist',
+  ok: 'ok',
+  overskott: 'varn',
+  over_max: 'brist',
+  okand: 'okand',
+  osaker: 'okand',
+  ej_krav: 'okand',
 }
 
 export function PlanStep({
@@ -28,6 +29,7 @@ export function PlanStep({
   plan: Plan
   onSparaIJournal: () => void
 }) {
+  const { t } = useTranslation()
   // Förklaringen sparas per häst och underlag. Samma plan visar den sparade texten i stället för
   // att fråga Claude igen; bara en ändrad plan (eller knappen "Skriv om") ger ett nytt anrop.
   const forklaringsUnderlag = useMemo(() => underlag(hast, analys, plan), [hast, analys, plan])
@@ -71,19 +73,21 @@ export function PlanStep({
   const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
   const ersatter = (id: string) => {
     const namn = plan.byten.filter((x) => x.till.produkt.id === id).map((x) => visningsnamn(x.fran.produkt))
-    return namn.length ? namn.join(' och ') : undefined
+    return namn.length ? namn.join(t('plan.shopping.and')) : undefined
   }
   const inkop = [...plan.behallnaFoder, ...(u?.poster ?? [])]
 
   return (
     <div className="plan">
       <header className="plan-topp">
-        <h2>Foderplan för {hast.namn}</h2>
-        <div className="kostnadsrad" aria-label="Kostnad per månad">
-          <span className="kostnadsrad-belopp">{kr(totalNy)}/mån</span>
+        <h2>{t('plan.title', { name: hast.namn })}</h2>
+        <div className="kostnadsrad" aria-label={t('plan.costLabel')}>
+          <span className="kostnadsrad-belopp">{t('units.perMonth', { amount: kr(totalNy) })}</span>
           {plan.nulageKostnadPerManad > 0 && (
             <span className={`kostnadsrad-jmf ${besparing >= 0 ? 'ok' : ''}`}>
-              {besparing >= 0 ? `${kr(besparing)} billigare` : `${kr(-besparing)} dyrare`} än i dag
+              {besparing >= 0
+                ? t('plan.cheaperThanToday', { amount: kr(besparing) })
+                : t('plan.dearerThanToday', { amount: kr(-besparing) })}
             </span>
           )}
         </div>
@@ -91,10 +95,13 @@ export function PlanStep({
 
       <div className="plan-huvud">
         <section className="kort">
-          <h3>Gör så här</h3>
+          <h3>{t('plan.doThis')}</h3>
           <ol className="atgarder">
             <li>
-              Ge {tal(plan.grovfoderKgPerDag, 1)} kg {analys.typ === 'hosilage' ? 'hösilage' : 'hö'} per dag.
+              {t('plan.giveRoughage', {
+                kg: tal(plan.grovfoderKgPerDag, 1),
+                type: t(analys.typ === 'hosilage' ? 'roughage.hosilage' : 'roughage.ho'),
+              })}
             </li>
             {plan.atgarder.map((a) => (
               <li key={a.text} className={a.typ}>
@@ -114,26 +121,29 @@ export function PlanStep({
 
         <section className="kort forklaring">
           <h3>
-            <span className="ai-bricka">AI</span> Vad betyder det här?
+            <span className="ai-bricka">{t('common.aiBadge')}</span> {t('plan.explanation.title')}
           </h3>
           {forklaring ? (
             forklaring.split(/\n+/).map((s, i) => <p key={i}>{s}</p>)
           ) : forklaringFel ? (
-            <p className="liten">Förklaringen kunde inte hämtas ({forklaringFel}). Planen gäller ändå.</p>
+            <p className="liten">{t('plan.explanation.failed', { error: forklaringFel })}</p>
           ) : (
-            <p className="laddar-text">Skriver förklaring…</p>
+            <p className="laddar-text">{t('plan.explanation.writing')}</p>
           )}
           {forklaring && (
             <div className="forklaring-fot">
               <button className="lank liten" onClick={() => setOmgang((n) => n + 1)}>
-                Skriv om förklaringen
+                {t('plan.explanation.rewrite')}
               </button>
             </div>
           )}
           {plan.kvaveOverskottKgPerAr > 1 && (
             <div className="miljo">
-              <strong>{tal(plan.kvaveOverskottKgPerAr, 0)} kg kväve per år</strong> hamnar i gödseln från protein hästen
-              inte behöver. Ett grovfoder med lägre proteinhalt minskar både kostnad och utsläpp.
+              <Trans
+                i18nKey="plan.nitrogen"
+                values={{ kg: tal(plan.kvaveOverskottKgPerAr, 0) }}
+                components={{ strong: <strong /> }}
+              />
             </div>
           )}
         </section>
@@ -141,19 +151,19 @@ export function PlanStep({
 
       <section className="kort">
         <div className="kort-rubrikrad">
-          <h3>Inköpslista</h3>
+          <h3>{t('plan.shopping.title')}</h3>
           <button className="knapp sekundar kompakt" onClick={onSparaIJournal}>
-            Spara planen i journalen
+            {t('plan.shopping.saveToJournal')}
           </button>
         </div>
         {inkop.length > 0 ? (
           <table className="tabell lista">
             <thead>
               <tr>
-                <th>Produkt</th>
-                <th className="dolj-smal">Butik och pris</th>
-                <th className="hoger">Per dag</th>
-                <th className="hoger">Per månad</th>
+                <th>{t('plan.shopping.product')}</th>
+                <th className="dolj-smal">{t('plan.shopping.storeAndPrice')}</th>
+                <th className="hoger">{t('plan.shopping.perDay')}</th>
+                <th className="hoger">{t('plan.shopping.perMonth')}</th>
               </tr>
             </thead>
             <tbody>
@@ -162,11 +172,13 @@ export function PlanStep({
                   <td>
                     <strong>{visningsnamn(p.produkt)}</strong>
                     {ersatter(p.produkt.id) && (
-                      <span className="liten ersatter">Ersätter {ersatter(p.produkt.id)}</span>
+                      <span className="liten ersatter">
+                        {t('plan.shopping.replaces', { products: ersatter(p.produkt.id) })}
+                      </span>
                     )}
                     {p.produkt.dosKalla && (
                       <span className="liten" title={p.produkt.antaganden.join(' ')}>
-                        Tillverkarens dos: {p.produkt.dosKalla}
+                        {t('plan.shopping.manufacturerDose', { dose: p.produkt.dosKalla })}
                       </span>
                     )}
                   </td>
@@ -178,9 +190,9 @@ export function PlanStep({
                     ) : (
                       p.produkt.butik
                     )}{' '}
-                    · {kr(p.produkt.prisKr)} för {tal(p.produkt.forpackningKg)} kg
+                    {t('plan.shopping.price', { price: kr(p.produkt.prisKr), kg: tal(p.produkt.forpackningKg) })}
                   </td>
-                  <td className="hoger">{p.gramPerDag} g</td>
+                  <td className="hoger">{t('units.g', { value: p.gramPerDag })}</td>
                   <td className="hoger">{kr(kostnadPerManad(p.produkt, p.gramPerDag))}</td>
                 </tr>
               ))}
@@ -188,9 +200,9 @@ export function PlanStep({
             <tfoot>
               <tr>
                 <td colSpan={2} className="dolj-smal">
-                  Totalt utöver grovfodret
+                  {t('plan.shopping.totalBeyondRoughage')}
                 </td>
-                <td className="visa-smal">Totalt</td>
+                <td className="visa-smal">{t('plan.shopping.total')}</td>
                 <td />
                 <td className="hoger">
                   <strong>{kr(totalNy)}</strong>
@@ -199,34 +211,41 @@ export function PlanStep({
             </tfoot>
           </table>
         ) : (
-          <p>Inga tillskott behövs utöver grovfodret.</p>
+          <p>{t('plan.shopping.none')}</p>
         )}
         {plan.alternativ && (
           <p className="alternativ">
-            Alternativ: {plan.alternativ.poster.map((p) => `${visningsnamn(p.produkt)} ${p.gramPerDag} g`).join(' + ')},
-            cirka {kr(plan.alternativ.kostnadPerManad + behallnaKostnad)}/mån.
+            {t('plan.shopping.alternative', {
+              products: plan.alternativ.poster
+                .map((p) => t('plan.shopping.productGrams', { name: visningsnamn(p.produkt), grams: p.gramPerDag }))
+                .join(' + '),
+              amount: t('units.perMonth', { amount: kr(plan.alternativ.kostnadPerManad + behallnaKostnad) }),
+            })}
           </p>
         )}
       </section>
 
       <div className="plan-detaljer">
         <section className="kort">
-          <h3>Underlaget för planen</h3>
+          <h3>{t('plan.basis.title')}</h3>
           <p>
-            Behov {tal(plan.behov.behov.energi!.min, 0)} MJ och {tal(plan.behov.behov.smbRp!.min, 0)} g smältbart
-            protein per dag, räknat på {tal(plan.behov.berakningsviktKg, 0)} kg
-            {plan.behov.arbetsMJ > 0 && <>, varav {tal(plan.behov.arbetsMJ, 1)} MJ för arbete</>}
-            {plan.behov.kylaMJ > 0 && <> och {tal(plan.behov.kylaMJ, 1)} MJ för kyla</>}.
+            {t('plan.basis.requirement', {
+              mj: tal(plan.behov.behov.energi!.min, 0),
+              g: tal(plan.behov.behov.smbRp!.min, 0),
+              kg: tal(plan.behov.berakningsviktKg, 0),
+            })}
+            {plan.behov.arbetsMJ > 0 && t('plan.basis.work', { mj: tal(plan.behov.arbetsMJ, 1) })}
+            {plan.behov.kylaMJ > 0 && t('plan.basis.cold', { mj: tal(plan.behov.kylaMJ, 1) })}.
           </p>
           {(nulageBrister.length > 0 || nulageEnergi.status === 'overskott') && (
             <p className="nulage">
-              Med dagens foder:{' '}
+              {t('plan.basis.today')}{' '}
               {[
-                nulageEnergi.status === 'overskott' && `${energiProcent} % mer energi än behovet`,
-                nulageBrister.length > 0 && `för lite ${nulageBrister.join(', ')}`,
+                nulageEnergi.status === 'overskott' && t('plan.basis.moreEnergy', { percent: energiProcent }),
+                nulageBrister.length > 0 && t('plan.basis.tooLittle', { nutrients: nulageBrister.join(', ') }),
               ]
                 .filter(Boolean)
-                .join(', och ')}
+                .join(t('plan.basis.todayAnd'))}
               .
             </p>
           )}
@@ -234,7 +253,7 @@ export function PlanStep({
 
         {(plan.kansligheter.length > 0 || plan.bortvalda.length > 0) && (
           <section className="kort">
-            <h3>Anpassat efter {hast.namn}s hälsa</h3>
+            <h3>{t('plan.health.title', { name: hast.namn })}</h3>
             <div className="kvalitet">
               {plan.kansligheter.map((k) => (
                 <div key={k.text} className={`kvalitet-rad ${k.niva}`}>
@@ -245,7 +264,7 @@ export function PlanStep({
             </div>
             {plan.bortvalda.length > 0 && (
               <details className="bortvalda">
-                <summary>{plan.bortvalda.length} produkter valdes bort</summary>
+                <summary>{t('plan.health.excluded', { n: plan.bortvalda.length })}</summary>
                 <ul>
                   {plan.bortvalda.map((b) => (
                     <li key={b.namn}>
@@ -260,7 +279,7 @@ export function PlanStep({
 
         {plan.grovfoderkvalitet.length > 0 && (
           <section className="kort">
-            <h3>Om ditt grovfoder</h3>
+            <h3>{t('plan.roughageQuality')}</h3>
             <div className="kvalitet">
               {plan.grovfoderkvalitet.map((f) => (
                 <div key={f.rubrik} className={`kvalitet-rad ${f.niva}`}>
@@ -275,19 +294,11 @@ export function PlanStep({
       </div>
 
       <section className="kort">
-        <h3>Behov och tillförsel per dag</h3>
-        <p className="liten">
-          Behov enligt SLU. Tillförsel från grovfodret och förslaget. Ca/P-kvot {tal(plan.caP ?? undefined, 2)} (SLU:
-          minst 1,1, helst 1,2–1,8).
-        </p>
+        <h3>{t('plan.balance.title')}</h3>
+        <p className="liten">{t('plan.balance.intro', { ratio: tal(plan.caP ?? undefined, 2) })}</p>
         <Balanstabell rader={plan.resultat} />
         {plan.resultat.some((r) => r.status === 'okand' || r.status === 'osaker') && (
-          <p className="liten">
-            Okänt betyder att grovfodrets halt inte analyserats. Osäkert betyder att ett uppskattat värde ligger under
-            behovet. Enligt SLU ger vallfoder av god kvalitet normalt tillräckligt av de flesta mikromineraler, och
-            hästar som vistas ute dagligen behöver normalt inga extra vitaminer vid lätt till medelhårt arbete.
-            Analysera grovfodret om du vill veta säkert.
-          </p>
+          <p className="liten">{t('plan.balance.unknownNote')}</p>
         )}
         {plan.noteringar.length > 0 && (
           <ul className="noteringar">
@@ -302,22 +313,22 @@ export function PlanStep({
 }
 
 function Balanstabell({ rader }: { rader: Balansrad[] }) {
+  const { t } = useTranslation()
   const visade = rader.filter((r) => r.status !== 'ej_krav' && r.behovMin !== undefined)
   return (
     <table className="tabell">
       <thead>
         <tr>
-          <th>Ämne</th>
-          <th className="hoger">Behov</th>
-          <th className="hoger">Får</th>
-          <th className="hoger">Max</th>
-          <th>Status</th>
-          <th>Källa</th>
+          <th>{t('plan.balance.nutrient')}</th>
+          <th className="hoger">{t('plan.balance.requirementColumn')}</th>
+          <th className="hoger">{t('plan.balance.intake')}</th>
+          <th className="hoger">{t('plan.balance.max')}</th>
+          <th>{t('plan.balance.statusColumn')}</th>
+          <th>{t('plan.balance.source')}</th>
         </tr>
       </thead>
       <tbody>
         {visade.map((r) => {
-          const [text, klass] = STATUS[r.status]
           return (
             <tr key={r.amne}>
               <td>{etikett(r.amne)}</td>
@@ -327,14 +338,14 @@ function Balanstabell({ rader }: { rader: Balansrad[] }) {
               <td className="hoger">{r.status === 'okand' ? '–' : `${tal(r.intag)} ${enhet(r.amne)}`}</td>
               <td className="hoger liten">{r.behovMax !== undefined ? tal(r.behovMax) : ''}</td>
               <td>
-                <span className={`chip ${klass}`}>{text}</span>
+                <span className={`chip ${STATUS_KLASS[r.status]}`}>{t(`plan.status.${r.status}`)}</span>
               </td>
               <td className="kalla">
                 {r.kalla === 'schablon'
-                  ? 'Grovfoder: uppskattat'
+                  ? t('plan.balance.sourceEstimated')
                   : r.kalla === 'okand'
-                    ? 'Grovfoder: ej analyserat'
-                    : 'Grovfoder: analys'}
+                    ? t('plan.balance.sourceNotAnalysed')
+                    : t('plan.balance.sourceAnalysis')}
               </td>
             </tr>
           )
