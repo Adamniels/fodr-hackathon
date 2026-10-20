@@ -6,7 +6,7 @@ import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
 import { schablonFor } from '@fodr/domain/forage'
 import type { NutrientKey } from '@fodr/domain/nutrients'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { analysEnhet, etikett } from '../format'
+import { analysEnhet, etikett, formatDate } from '../format'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
@@ -109,7 +109,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
           <div className="analyshuvud">
             <span>{t(analys.typ === 'hosilage' ? 'roughageTitle.hosilage' : 'roughageTitle.ho')}</span>
             {analys.labb && <span>{analys.labb}</span>}
-            {analys.provdatum && <span>{t('analysis.sampled', { date: analys.provdatum })}</span>}
+            {analys.provdatum && <span>{t('analysis.sampled', { date: formatDate(analys.provdatum) })}</span>}
             <label>
               {t('analysis.dryMatter')}{' '}
               <DecimalInput

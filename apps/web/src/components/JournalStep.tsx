@@ -4,7 +4,7 @@ import { analyseraJournal, type JournalAnalys } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/raser'
 import type { Hastprofil } from '@fodr/domain/types'
-import { HULL_LEVELS, hullText, kr, tal } from '../format'
+import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
 
 interface Props {
   hast: Hastprofil
@@ -72,7 +72,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
         <ol className="tidslinje">
           {tidslinje.map((p) => (
             <li key={p.id}>
-              <div className="tid-datum">{p.datum}</div>
+              <div className="tid-datum">{formatDate(p.datum)}</div>
               <div className="tid-innehall">
                 {(p.viktKg !== undefined || p.hull !== undefined) && (
                   <div className="tid-matt">
@@ -271,7 +271,7 @@ function AiAnalys({
             <ul className="monster">
               {svar.monster.map((m) => (
                 <li key={m.iakttagelse}>
-                  {m.datum && <span className="liten">{m.datum}</span>}
+                  {m.datum && <span className="liten">{formatDate(m.datum)}</span>}
                   {m.iakttagelse}
                   {m.mojligKoppling && (
                     <span className="liten">{t('journal.ai.possibleLink', { link: m.mojligKoppling })}</span>

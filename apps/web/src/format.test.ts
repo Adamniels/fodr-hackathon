@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { parseDecimal, tal } from './format'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { formatDate, parseDecimal, parseIsoDate, tal } from './format'
+import i18n from './i18n'
 
 describe('parseDecimal', () => {
   it('accepts a decimal point', () => {
@@ -55,5 +56,45 @@ describe('tal', () => {
   it('shows a missing value as a dash, never 0', () => {
     expect(tal(undefined, 1)).toBe('–')
     expect(tal(Number.NaN, 0)).toBe('–')
+  })
+})
+
+describe('parseIsoDate', () => {
+  it('reads YYYY-MM-DD as local midnight of that calendar day', () => {
+    const d = parseIsoDate('2026-06-05')
+    expect([d?.getFullYear(), d?.getMonth(), d?.getDate(), d?.getHours()]).toEqual([2026, 5, 5, 0])
+  })
+
+  it('returns undefined for text that is not a valid calendar date, never a fallback date', () => {
+    for (const text of ['', '2026-02-30', '2026-13-01', '2026-6-5', '28 sept', '2026-06-05T10:00', ' 2026-06-05']) {
+      expect(parseIsoDate(text)).toBeUndefined()
+    }
+  })
+})
+
+describe('formatDate', () => {
+  afterEach(async () => {
+    vi.unstubAllEnvs()
+    await i18n.changeLanguage('sv-SE')
+  })
+
+  it('formats for sv-SE in the short numeric style', () => {
+    expect(formatDate('2026-06-05')).toBe('2026-06-05')
+  })
+
+  it('follows the active locale', async () => {
+    await i18n.changeLanguage('en-GB')
+    expect(formatDate('2026-06-05')).toBe('05/06/2026')
+  })
+
+  it('shows the stored calendar day in a time zone behind UTC', () => {
+    vi.stubEnv('TZ', 'America/New_York')
+    expect(formatDate('2026-06-05')).toBe('2026-06-05')
+    expect(formatDate('2026-01-01')).toBe('2026-01-01')
+  })
+
+  it('returns text that is not a valid date as it is', () => {
+    expect(formatDate('28 sept')).toBe('28 sept')
+    expect(formatDate('2026-02-30')).toBe('2026-02-30')
   })
 })

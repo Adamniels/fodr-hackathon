@@ -31,6 +31,27 @@ export const kr = (n: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(n))
 
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/**
+ * Reads a stored date ("2026-06-05") as local midnight of that calendar day. new Date(text) would read it as UTC
+ * midnight, which is the previous day in time zones behind UTC. Returns undefined for anything that is not a real
+ * calendar date, never a fallback date.
+ */
+export function parseIsoDate(text: string): Date | undefined {
+  const m = ISO_DATE.exec(text)
+  if (!m) return undefined
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const date = new Date(y, mo - 1, d)
+  // The Date constructor rolls invalid days over (Feb 30 becomes Mar 2); a real date reads back unchanged.
+  return date.getFullYear() === y && date.getMonth() === mo - 1 && date.getDate() === d ? date : undefined
+}
+
+/** A stored date for the active locale ("2026-06-05" in sv-SE). Text that is not a valid date is shown as it is. */
+export function formatDate(iso: string): string {
+  return parseIsoDate(iso)?.toLocaleDateString(locale(), { dateStyle: 'short' }) ?? iso
+}
+
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
 export const enhet = (k: NutrientKey) => NUTRIENTS[k].unit
 
