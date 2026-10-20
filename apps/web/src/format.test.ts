@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDecimal } from './format'
+import { parseDecimal, tal } from './format'
 
 describe('parseDecimal', () => {
   it('accepts a decimal point', () => {
@@ -38,5 +38,22 @@ describe('parseDecimal', () => {
 
   it('returns undefined for digits too long to be a finite number', () => {
     expect(parseDecimal('9'.repeat(400))).toBeUndefined()
+  })
+})
+
+describe('tal', () => {
+  it('formats for sv-SE: a decimal comma and a no-break space between thousands', () => {
+    expect(tal(545.5, 1)).toBe('545,5')
+    expect(tal(1000, 0)).toBe('1\u00a0000')
+  })
+
+  it('drops trailing zeros up to the given decimals', () => {
+    expect(tal(545, 1)).toBe('545')
+    expect(tal(12.06, 1)).toBe('12,1')
+  })
+
+  it('shows a missing value as a dash, never 0', () => {
+    expect(tal(undefined, 1)).toBe('–')
+    expect(tal(Number.NaN, 0)).toBe('–')
   })
 })
