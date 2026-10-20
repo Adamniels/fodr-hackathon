@@ -4,8 +4,14 @@ import { analysKomplett, demoHast } from '../data/exempel'
 import { kostnadPerManad } from '@fodr/domain/intake'
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
-import { kr, tal } from '../format'
+import { enhet, kr, tal } from '../format'
 import { Ordmarke } from './Varumarke'
+
+/** The figures band. Their sources are listed in landing.figures.sources. */
+const SIFFROR = { hastar: 355_500, hosilageProcent: 55, analysKostnadKr: { min: 600, max: 1_800 } }
+
+/** The lab report excerpt on step 2: typical values, with selenium shown as missing to illustrate the idea. */
+const UTSNITT = { tsProcent: 39.7, perKgTs: { energi: 10.2, smbRp: 104, socker: 61 } }
 
 interface Props {
   produkter: Produkt[]
@@ -73,15 +79,20 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
         <p className="siffror-rubrik">{t('landing.figures.title')}</p>
         <div className="siffror-rad">
           <div>
-            <strong>{t('landing.figures.horses')}</strong>
+            <strong>{tal(SIFFROR.hastar, 0)}</strong>
             <span>{t('landing.figures.horsesText')}</span>
           </div>
           <div>
-            <strong>{t('landing.figures.haylage')}</strong>
+            <strong>{t('units.percent', { value: tal(SIFFROR.hosilageProcent, 0) })}</strong>
             <span>{t('landing.figures.haylageText')}</span>
           </div>
           <div>
-            <strong>{t('landing.figures.analysisCost')}</strong>
+            <strong>
+              {t('landing.figures.analysisCost', {
+                min: tal(SIFFROR.analysKostnadKr.min, 0),
+                max: tal(SIFFROR.analysKostnadKr.max, 0),
+              })}
+            </strong>
             <span>{t('landing.figures.analysisCostText')}</span>
           </div>
         </div>
@@ -105,19 +116,19 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
             <div className="stegkort-utsnitt" aria-hidden>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.dryMatter')}</span>
-                <b>{t('landing.steps.sample.dryMatterValue')}</b>
+                <b>{t('units.percent', { value: tal(UTSNITT.tsProcent, 1) })}</b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.energy')}</span>
-                <b>{t('landing.steps.sample.energyValue')}</b>
+                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.energi, 1), unit: enhet('energi') })}</b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.protein')}</span>
-                <b>{t('landing.steps.sample.proteinValue')}</b>
+                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.smbRp, 1), unit: enhet('smbRp') })}</b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.sugar')}</span>
-                <b>{t('landing.steps.sample.sugarValue')}</b>
+                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.socker, 1), unit: enhet('socker') })}</b>
               </div>
               <div className="utsnitt-rad saknas">
                 <span>{t('landing.steps.sample.selenium')}</span>

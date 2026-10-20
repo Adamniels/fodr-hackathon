@@ -3,6 +3,7 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import noRawNumberText from './eslint/no-raw-number-text.js'
 
 // UI text lives in src/i18n (ADR 0014). These selectors catch text written inline: JSX text, and literals or
 // template literals placed directly in JSX (as a child or a user-facing attribute), also through ?:, && and ||.
@@ -48,7 +49,9 @@ export default tseslint.config(
   {
     files: ['src/**/*.{ts,tsx}'],
     ignores: ['src/data/**', 'src/**/*.test.ts'],
+    plugins: { fodr: { rules: { 'no-raw-number-text': noRawNumberText } } },
     rules: {
+      'fodr/no-raw-number-text': 'error',
       'no-restricted-syntax': [
         'error',
         { selector: `JSXText[value=${LETTER}]`, message: UI_TEXT_MESSAGE },

@@ -192,7 +192,7 @@ export function PlanStep({
                     )}{' '}
                     {t('plan.shopping.price', { price: kr(p.produkt.prisKr), kg: tal(p.produkt.forpackningKg) })}
                   </td>
-                  <td className="hoger">{t('units.g', { value: p.gramPerDag })}</td>
+                  <td className="hoger">{t('units.g', { value: tal(p.gramPerDag, 0) })}</td>
                   <td className="hoger">{kr(kostnadPerManad(p.produkt, p.gramPerDag))}</td>
                 </tr>
               ))}
@@ -217,7 +217,9 @@ export function PlanStep({
           <p className="alternativ">
             {t('plan.shopping.alternative', {
               products: plan.alternativ.poster
-                .map((p) => t('plan.shopping.productGrams', { name: visningsnamn(p.produkt), grams: p.gramPerDag }))
+                .map((p) =>
+                  t('plan.shopping.productGrams', { name: visningsnamn(p.produkt), grams: tal(p.gramPerDag, 0) }),
+                )
                 .join(' + '),
               amount: t('units.perMonth', { amount: kr(plan.alternativ.kostnadPerManad + behallnaKostnad) }),
             })}
@@ -232,7 +234,7 @@ export function PlanStep({
             {t('plan.basis.requirement', {
               mj: tal(plan.behov.behov.energi!.min, 0),
               g: tal(plan.behov.behov.smbRp!.min, 0),
-              kg: tal(plan.behov.berakningsviktKg, 0),
+              kg: tal(plan.behov.berakningsviktKg, 1),
             })}
             {plan.behov.arbetsMJ > 0 && t('plan.basis.work', { mj: tal(plan.behov.arbetsMJ, 1) })}
             {plan.behov.kylaMJ > 0 && t('plan.basis.cold', { mj: tal(plan.behov.kylaMJ, 1) })}.
@@ -241,7 +243,7 @@ export function PlanStep({
             <p className="nulage">
               {t('plan.basis.today')}{' '}
               {[
-                nulageEnergi.status === 'overskott' && t('plan.basis.moreEnergy', { percent: energiProcent }),
+                nulageEnergi.status === 'overskott' && t('plan.basis.moreEnergy', { percent: tal(energiProcent, 0) }),
                 nulageBrister.length > 0 && t('plan.basis.tooLittle', { nutrients: nulageBrister.join(', ') }),
               ]
                 .filter(Boolean)
@@ -264,7 +266,7 @@ export function PlanStep({
             </div>
             {plan.bortvalda.length > 0 && (
               <details className="bortvalda">
-                <summary>{t('plan.health.excluded', { n: plan.bortvalda.length })}</summary>
+                <summary>{t('plan.health.excluded', { n: tal(plan.bortvalda.length, 0) })}</summary>
                 <ul>
                   {plan.bortvalda.map((b) => (
                     <li key={b.namn}>

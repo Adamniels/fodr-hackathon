@@ -28,21 +28,23 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
           <Trendruta
             rubrik={t('journal.trend.weight')}
             varde={
-              trend.vikt ? t('journal.trend.weightValue', { first: trend.vikt.forsta, last: trend.vikt.senaste }) : '–'
+              trend.vikt
+                ? t('journal.trend.weightValue', { first: tal(trend.vikt.forsta, 1), last: tal(trend.vikt.senaste, 1) })
+                : '–'
             }
             under={
               trend.vikt
                 ? t('journal.trend.weightRate', {
                     sign: trend.vikt.procentPerVecka > 0 ? '+' : '',
                     percent: tal(trend.vikt.procentPerVecka, 2),
-                    weeks: Math.round(trend.vikt.dagar / 7),
+                    weeks: tal(trend.vikt.dagar / 7, 0),
                   })
                 : t('journal.trend.weightTooFew')
             }
           />
           <Trendruta
             rubrik={t('journal.trend.hull')}
-            varde={trend.hull ? `${trend.hull.forsta} → ${trend.hull.senaste}` : '–'}
+            varde={trend.hull ? `${tal(trend.hull.forsta, 0)} → ${tal(trend.hull.senaste, 0)}` : '–'}
             under={trend.hull ? (hullText(trend.hull.senaste) ?? '') : t('journal.trend.hullNone')}
           />
           <Trendruta
@@ -74,9 +76,11 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
               <div className="tid-innehall">
                 {(p.viktKg !== undefined || p.hull !== undefined) && (
                   <div className="tid-matt">
-                    {p.viktKg !== undefined && <span className="chip okand">{t('units.kg', { value: p.viktKg })}</span>}
+                    {p.viktKg !== undefined && (
+                      <span className="chip okand">{t('units.kg', { value: tal(p.viktKg, 1) })}</span>
+                    )}
                     {p.hull !== undefined && (
-                      <span className="chip okand">{t('journal.hullChip', { hull: p.hull })}</span>
+                      <span className="chip okand">{t('journal.hullChip', { hull: tal(p.hull, 0) })}</span>
                     )}
                   </div>
                 )}
@@ -85,9 +89,9 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
                   <div className="tid-plan">
                     <strong>{t('journal.planSaved')}</strong>
                     <span className="liten">
-                      {t('journal.planRoughage', { kg: p.plan.grovfoderKgPerDag, analysis: p.plan.analys })}
+                      {t('journal.planRoughage', { kg: tal(p.plan.grovfoderKgPerDag, 1), analysis: p.plan.analys })}
                       {p.plan.produkter
-                        .map((x) => t('journal.planProduct', { grams: x.gramPerDag, name: x.namn }))
+                        .map((x) => t('journal.planProduct', { grams: tal(x.gramPerDag, 0), name: x.namn }))
                         .join('')}{' '}
                       · {t('units.perMonth', { amount: kr(p.plan.kostnadPerManad) })}
                     </span>
@@ -166,7 +170,7 @@ function NyAnteckning({
           <input
             type="number"
             value={vikt}
-            placeholder={String(hast.viktKg)}
+            placeholder={tal(hast.viktKg, 1)}
             onChange={(e) => setVikt(e.target.value)}
           />
         </label>
@@ -176,7 +180,7 @@ function NyAnteckning({
             <option value="">{t('journal.newEntry.hullNone')}</option>
             {HULL_LEVELS.map((n) => (
               <option key={n} value={n}>
-                {n}, {hullText(n)}
+                {tal(n, 0)}, {hullText(n)}
               </option>
             ))}
           </select>

@@ -82,7 +82,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`,
         `DTSTART;VALUE=DATE:${ical(stegDatum(i))}`,
         `DTEND;VALUE=DATE:${ical(plusDagar(stegDatum(i), 1))}`,
-        `SUMMARY:${esc(sista ? t('calendar.ics.summaryDone', { name: hastNamn }) : t('calendar.ics.summaryStep', { name: hastNamn, step: x.nr, total: steg.length }))}`,
+        `SUMMARY:${esc(sista ? t('calendar.ics.summaryDone', { name: hastNamn }) : t('calendar.ics.summaryStep', { name: hastNamn, step: tal(x.nr, 0), total: tal(steg.length, 0) }))}`,
         `DESCRIPTION:${esc(t('calendar.ics.description', { rows: rad }))}`,
         'BEGIN:VALARM',
         'TRIGGER:-PT6H',
@@ -107,13 +107,13 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     <div className="injustering">
       <div className="injustering-topp">
         <div>
-          <h4>{t('calendar.title', { days: dagar })}</h4>
+          <h4>{t('calendar.title', { days: tal(dagar, 0) })}</h4>
           <p className="liten">
             {takt.namn}
             {forvald ? t('calendar.preselected') : ''}
             {t('calendar.rhythm', {
               every: takt.dagarPerSteg === 2 ? t('calendar.everyOther') : t('calendar.everyThird'),
-              steps: steg.length,
+              steps: tal(steg.length, 0),
             })}
           </p>
         </div>
@@ -142,8 +142,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
             .join(' ')
           const innehall = (
             <>
-              <span className="kalender-nr">{c.datum.getDate()}</span>
-              {c.steg && <span className="kalender-tagg">{t('calendar.stepTag', { step: c.steg.nr })}</span>}
+              <span className="kalender-nr">{c.datum.toLocaleDateString(locale(), { day: 'numeric' })}</span>
+              {c.steg && <span className="kalender-tagg">{t('calendar.stepTag', { step: tal(c.steg.nr, 0) })}</span>}
               {c.klart && <span className="kalender-tagg">{t('calendar.done')}</span>}
             </>
           )
@@ -153,7 +153,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
               type="button"
               className={klass}
               aria-pressed={i === valtSteg}
-              aria-label={t('calendar.stepButton', { date: kortDatum(c.datum), step: c.steg.nr })}
+              aria-label={t('calendar.stepButton', { date: kortDatum(c.datum), step: tal(c.steg.nr, 0) })}
               onClick={() => setValtSteg(i)}
             >
               {innehall}
@@ -168,7 +168,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
 
       <div className="injustering-steg" aria-live="polite">
         <div className="injustering-steg-rubrik">
-          <strong>{t('calendar.stepOf', { step: s.nr, total: steg.length })}</strong>
+          <strong>{t('calendar.stepOf', { step: tal(s.nr, 0), total: tal(steg.length, 0) })}</strong>
           <span className="liten">
             {kortDatum(stegDatum(valtSteg))}
             {s.slutDag ? ` – ${kortDatum(plusDagar(startDatum, s.slutDag - 1))}` : t('calendar.onwards')}
