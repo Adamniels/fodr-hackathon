@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './App.css'
 import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
@@ -21,14 +22,10 @@ const produkter = produkterJson as Produkt[]
 type Steg = 'hast' | 'analys' | 'plan' | 'journal'
 const idag = () => new Date().toISOString().slice(0, 10)
 
-const STEG: [Steg, string][] = [
-  ['hast', 'Hästen'],
-  ['analys', 'Analysen'],
-  ['plan', 'Foderplan'],
-  ['journal', 'Journal'],
-]
+const STEG: Steg[] = ['hast', 'analys', 'plan', 'journal']
 
 export default function App() {
+  const { t } = useTranslation()
   const [anvandare, setAnvandare] = useState<Anvandare | null>(aktuellAnvandare)
   const [visaStart, setVisaStart] = useState(() => !aktuellAnvandare())
   const [visaLogin, setVisaLogin] = useState(false)
@@ -58,10 +55,10 @@ export default function App() {
               className="dialog"
               role="dialog"
               aria-modal="true"
-              aria-label="Logga in"
+              aria-label={t('login.dialogLabel')}
               onClick={(e) => e.stopPropagation()}
             >
-              <button className="dialog-stang" aria-label="Stäng" onClick={() => setVisaLogin(false)}>
+              <button className="dialog-stang" aria-label={t('common.close')} onClick={() => setVisaLogin(false)}>
                 ×
               </button>
               <Login onInloggad={oppna} />
@@ -96,6 +93,7 @@ function Arbetsyta({
   onStartsida: () => void
   onLoggaUt: () => void
 }) {
+  const { t } = useTranslation()
   const [hastar, setHastar] = useState<Hastprofil[]>(() => laddaHastar(anvandare.id))
   const [valdId, setValdId] = useState(hastar[0]?.id)
   const [steg, setSteg] = useState<Steg>('hast')
@@ -137,18 +135,26 @@ function Arbetsyta({
 
   const tillganglig = (s: Steg) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
+  const analysText = (a: Grovfoderanalys) => {
+    const lab = a.labb ?? t('app.properties.analysisUploaded')
+    return a.provdatum ? t('app.properties.analysisSampled', { lab, date: a.provdatum }) : lab
+  }
   const initial = (h?: Hastprofil) => (h?.namn || '?').slice(0, 1).toUpperCase()
 
   return (
     <div className={`arbetsyta ${menyOppen ? 'meny-oppen' : ''}`}>
-      <aside className="sidofalt" aria-label="Hästar">
+      <aside className="sidofalt" aria-label={t('app.sidebar.label')}>
         <div className="sidofalt-topp">
           <Ordmarke />
-          <button className="sidofalt-stang" aria-label="Stäng menyn" onClick={() => setMenyOppen(false)}>
+          <button
+            className="sidofalt-stang"
+            aria-label={t('app.sidebar.closeMenu')}
+            onClick={() => setMenyOppen(false)}
+          >
             ×
           </button>
         </div>
-        <p className="sidofalt-rubrik">Mina hästar</p>
+        <p className="sidofalt-rubrik">{t('app.sidebar.heading')}</p>
         <ul className="hastlista">
           {hastar.map((h) => (
             <li key={h.id}>
@@ -158,14 +164,14 @@ function Arbetsyta({
                 onClick={() => valjHast(h.id)}
               >
                 <span className="hast-ikon">{initial(h)}</span>
-                <span className="hastrad-namn">{h.namn || 'Namnlös häst'}</span>
+                <span className="hastrad-namn">{h.namn || t('app.sidebar.unnamedHorse')}</span>
               </button>
             </li>
           ))}
           <li>
             <button className="hastrad ny" onClick={() => laggTillHast(nyHast())}>
               <span className="hast-ikon">+</span>
-              <span className="hastrad-namn">Lägg till häst</span>
+              <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
           </li>
         </ul>
@@ -179,10 +185,10 @@ function Arbetsyta({
             </span>
           </div>
           <button className="sidofalt-lank" onClick={onStartsida}>
-            Till startsidan
+            {t('app.sidebar.toLanding')}
           </button>
           <button className="sidofalt-lank" onClick={onLoggaUt}>
-            Logga ut
+            {t('app.sidebar.logOut')}
           </button>
         </div>
       </aside>
@@ -190,12 +196,12 @@ function Arbetsyta({
 
       <div className="sidan">
         <header className="mobilrad">
-          <button className="menyknapp" aria-label="Visa hästar och meny" onClick={() => setMenyOppen(true)}>
+          <button className="menyknapp" aria-label={t('app.openMenu')} onClick={() => setMenyOppen(true)}>
             <span />
             <span />
             <span />
           </button>
-          <span className="mobilrad-titel">{hast?.namn || 'Fodr'}</span>
+          <span className="mobilrad-titel">{hast?.namn || t('common.brand')}</span>
         </header>
 
         <div className="omslag" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} role="img" aria-label="" />
@@ -204,47 +210,46 @@ function Arbetsyta({
           <div className="sid-ikon" aria-hidden>
             {initial(hast)}
           </div>
-          <h1 className="sid-titel">{hast?.namn || 'Ny häst'}</h1>
+          <h1 className="sid-titel">{hast?.namn || t('app.newHorse')}</h1>
 
           {hast && (
             <dl className="egenskaper">
               <div>
-                <dt>Ålder</dt>
-                <dd>{hast.alderAr} år</dd>
+                <dt>{t('app.properties.age')}</dt>
+                <dd>{t('app.properties.ageValue', { years: hast.alderAr })}</dd>
               </div>
               <div>
-                <dt>Ras</dt>
-                <dd>{ras?.namn ?? 'Ej angiven'}</dd>
+                <dt>{t('app.properties.breed')}</dt>
+                <dd>{ras?.namn ?? t('app.properties.breedUnknown')}</dd>
               </div>
               <div>
-                <dt>Vikt</dt>
-                <dd>{hast.viktKg} kg</dd>
+                <dt>{t('app.properties.weight')}</dt>
+                <dd>{t('units.kg', { value: hast.viktKg })}</dd>
               </div>
               <div>
-                <dt>Hull</dt>
+                <dt>{t('app.properties.hull')}</dt>
                 <dd>
-                  {hast.hull} av 9, {hullText(hast.hull)?.toLowerCase()}
+                  {t('app.properties.hullValue', { hull: hast.hull, text: hullText(hast.hull)?.toLowerCase() ?? '' })}
                 </dd>
               </div>
               <div>
-                <dt>Grovfoder</dt>
+                <dt>{t('app.properties.roughage')}</dt>
                 <dd>
-                  {hast.grovfoder.kgPerDag} kg {hast.grovfoder.typ === 'ho' ? 'hö' : 'hösilage'} per dag
+                  {t('app.properties.roughageValue', {
+                    kg: hast.grovfoder.kgPerDag,
+                    type: t(hast.grovfoder.typ === 'ho' ? 'roughage.ho' : 'roughage.hosilage'),
+                  })}
                 </dd>
               </div>
               <div>
-                <dt>Analys</dt>
-                <dd>
-                  {analys
-                    ? `${analys.labb ?? 'Uppladdad'}${analys.provdatum ? `, prov ${analys.provdatum}` : ''}`
-                    : 'Inte uppladdad än'}
-                </dd>
+                <dt>{t('app.properties.analysis')}</dt>
+                <dd>{analys ? analysText(analys) : t('app.properties.analysisNone')}</dd>
               </div>
             </dl>
           )}
 
-          <nav className="flikar" aria-label="Steg">
-            {STEG.map(([id, text], i) => (
+          <nav className="flikar" aria-label={t('app.stepsNav')}>
+            {STEG.map((id, i) => (
               <button
                 key={id}
                 className={steg === id ? 'vald' : ''}
@@ -253,7 +258,7 @@ function Arbetsyta({
                 onClick={() => gaTill(id)}
               >
                 <span className="flik-nr">{i + 1}</span>
-                {text}
+                {t(`steps.${id}`)}
               </button>
             ))}
           </nav>
@@ -312,10 +317,7 @@ function Arbetsyta({
               />
             )}
           </main>
-          <p className="fotnot">
-            Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär
-            eller foderrådgivare.
-          </p>
+          <p className="fotnot">{t('app.footnote')}</p>
         </div>
       </div>
     </div>

@@ -46,5 +46,41 @@
     "switchToLogIn": "Har du redan ett konto? Logga in",
     "note": "Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.",
     "noAccount": "Det finns inget konto med den e-postadressen. Skapa ett nytt."
+  },
+  "steps": {
+    "hast": "Hästen",
+    "analys": "Analysen",
+    "plan": "Foderplan",
+    "journal": "Journal"
+  },
+  "app": {
+    "sidebar": {
+      "label": "Hästar",
+      "closeMenu": "Stäng menyn",
+      "heading": "Mina hästar",
+      "unnamedHorse": "Namnlös häst",
+      "addHorse": "Lägg till häst",
+      "toLanding": "Till startsidan",
+      "logOut": "Logga ut"
+    },
+    "openMenu": "Visa hästar och meny",
+    "newHorse": "Ny häst",
+    "properties": {
+      "age": "Ålder",
+      "ageValue": "{{years}} år",
+      "breed": "Ras",
+      "breedUnknown": "Ej angiven",
+      "weight": "Vikt",
+      "hull": "Hull",
+      "hullValue": "{{hull}} av 9, {{text}}",
+      "roughage": "Grovfoder",
+      "roughageValue": "{{kg}} kg {{type}} per dag",
+      "analysis": "Analys",
+      "analysisUploaded": "Uppladdad",
+      "analysisSampled": "{{lab}}, prov {{date}}",
+      "analysisNone": "Inte uppladdad än"
+    },
+    "stepsNav": "Steg",
+    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare."
   }
 }
