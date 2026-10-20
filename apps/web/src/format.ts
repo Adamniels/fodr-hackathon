@@ -23,9 +23,13 @@ export function parseDecimal(text: string): number | undefined {
 
 /** Whole kronor. Rounded first, so halves round as Math.round does (Intl alone rounds them away from zero). */
 export const kr = (n: number) =>
-  new Intl.NumberFormat(locale(), { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(
-    Math.round(n),
-  )
+  new Intl.NumberFormat(locale(), {
+    style: 'currency',
+    currency: 'SEK',
+    // Both bounds: engines before Intl.NumberFormat v3 (Safari < 15.4) throw when max is below SEK's default min of 2.
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.round(n))
 
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
 export const enhet = (k: NutrientKey) => NUTRIENTS[k].unit
