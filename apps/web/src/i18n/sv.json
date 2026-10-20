@@ -28,7 +28,9 @@
     "kg": "{{value}} kg",
     "g": "{{value}} g",
     "perKgDm": "{{unit}}/kg ts",
-    "perMonth": "{{amount}}/mån"
+    "perMonth": "{{amount}}/mån",
+    "percent": "{{value}} %",
+    "quantity": "{{value}} {{unit}}"
   },
   "login": {
     "dialogLabel": "Logga in",
@@ -404,11 +406,9 @@
     "figures": {
       "label": "Hästar i Sverige",
       "title": "Hästsverige i siffror",
-      "horses": "355 500",
       "horsesText": "hästar i Sverige",
-      "haylage": "55 %",
       "haylageText": "av privata hästägare utfodrar med hösilage",
-      "analysisCost": "600–1 800 kr",
+      "analysisCost": "{{min}}–{{max}} kr",
       "analysisCostText": "kostar en grovfoderanalys",
       "sources": "Källor: Jordbruksverket (hästräkning 2016), SLU-examensarbete 2022, Eurofins prislista för grovfoderanalys."
     },
@@ -423,13 +423,9 @@
       "planText": "Vad du ska ge, gram per dag och kronor per månad. Och vad du kan sluta köpa.",
       "sample": {
         "dryMatter": "Torrsubstans",
-        "dryMatterValue": "39,7 %",
         "energy": "Energi",
-        "energyValue": "10,2 MJ",
         "protein": "Smältbart protein",
-        "proteinValue": "104 g",
         "sugar": "Socker",
-        "sugarValue": "61 g",
         "selenium": "Selen",
         "missing": "saknas"
       }

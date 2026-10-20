@@ -9,7 +9,7 @@ import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/raser'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
-import { hullText } from './format'
+import { hullText, tal } from './format'
 import { Login } from './components/Login'
 import { Startsida } from './components/Startsida'
 import { HorseStep } from './components/HorseStep'
@@ -216,7 +216,7 @@ function Arbetsyta({
             <dl className="egenskaper">
               <div>
                 <dt>{t('app.properties.age')}</dt>
-                <dd>{t('app.properties.ageValue', { years: hast.alderAr })}</dd>
+                <dd>{t('app.properties.ageValue', { years: tal(hast.alderAr, 1) })}</dd>
               </div>
               <div>
                 <dt>{t('app.properties.breed')}</dt>
@@ -224,19 +224,22 @@ function Arbetsyta({
               </div>
               <div>
                 <dt>{t('app.properties.weight')}</dt>
-                <dd>{t('units.kg', { value: hast.viktKg })}</dd>
+                <dd>{t('units.kg', { value: tal(hast.viktKg, 1) })}</dd>
               </div>
               <div>
                 <dt>{t('app.properties.hull')}</dt>
                 <dd>
-                  {t('app.properties.hullValue', { hull: hast.hull, text: hullText(hast.hull)?.toLowerCase() ?? '' })}
+                  {t('app.properties.hullValue', {
+                    hull: tal(hast.hull, 0),
+                    text: hullText(hast.hull)?.toLowerCase() ?? '',
+                  })}
                 </dd>
               </div>
               <div>
                 <dt>{t('app.properties.roughage')}</dt>
                 <dd>
                   {t('app.properties.roughageValue', {
-                    kg: hast.grovfoder.kgPerDag,
+                    kg: tal(hast.grovfoder.kgPerDag, 1),
                     type: t(hast.grovfoder.typ === 'ho' ? 'roughage.ho' : 'roughage.hosilage'),
                   })}
                 </dd>
@@ -257,7 +260,7 @@ function Arbetsyta({
                 disabled={!tillganglig(id)}
                 onClick={() => gaTill(id)}
               >
-                <span className="flik-nr">{i + 1}</span>
+                <span className="flik-nr">{tal(i + 1, 0)}</span>
                 {t(`steps.${id}`)}
               </button>
             ))}

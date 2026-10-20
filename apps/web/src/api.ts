@@ -9,7 +9,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   })
   const data: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((data as { fel?: string }).fel ?? i18n.t('errors.http', { status: res.status }))
+  if (!res.ok) throw new Error((data as { fel?: string }).fel ?? i18n.t('errors.http', { status: String(res.status) }))
   return data as T
 }
 

@@ -16,7 +16,7 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
-import { hullText } from '../format'
+import { hullText, tal } from '../format'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
@@ -144,16 +144,19 @@ function Profilformular({
           <input inputMode="numeric" value={matt.langd} onChange={(e) => setMatt({ ...matt, langd: e.target.value })} />
         </Falt>
       </div>
-      {uppskattadVikt && (
+      {uppskattadVikt !== null && uppskattadVikt > 0 && (
         <div className="tips">
-          {t('horse.weightEstimate', { kg: uppskattadVikt })}{' '}
+          {t('horse.weightEstimate', { kg: tal(uppskattadVikt, 1) })}{' '}
           <button className="lank" onClick={() => set({ viktKg: uppskattadVikt })}>
             {t('horse.useEstimate')}
           </button>
         </div>
       )}
 
-      <Falt label={t('horse.hullLabel', { hull: hast.hull, text: hullText(hast.hull) })} hjalp={t('horse.hullHint')}>
+      <Falt
+        label={t('horse.hullLabel', { hull: tal(hast.hull, 0), text: hullText(hast.hull) })}
+        hjalp={t('horse.hullHint')}
+      >
         <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
       </Falt>
 
@@ -228,7 +231,7 @@ function Profilformular({
 function rasHjalp(h: Hastprofil, t: TFunction): string | undefined {
   const ras = hittaRas(h.ras)
   if (!ras?.viktKg) return undefined
-  return t('horse.breedWeight', { min: ras.viktKg.min, max: ras.viktKg.max })
+  return t('horse.breedWeight', { min: tal(ras.viktKg.min, 1), max: tal(ras.viktKg.max, 1) })
 }
 
 function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) => void }) {
@@ -343,7 +346,7 @@ function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (
               >
                 {takt.namn}
                 <small>
-                  {takt.beskrivning} {t('horse.sensitivity.duration', { days: takt.dagar })}
+                  {takt.beskrivning} {t('horse.sensitivity.duration', { days: tal(takt.dagar, 0) })}
                 </small>
               </button>
             )
