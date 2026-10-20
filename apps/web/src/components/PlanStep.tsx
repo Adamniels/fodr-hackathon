@@ -5,6 +5,7 @@ import { kostnadPerManad, visningsnamn } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { enhet, etikett, kr, tal } from '../format'
+import { domainText } from '../i18n/domain'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
 import { Injusteringskalender } from './Injusteringskalender'
 
@@ -103,15 +104,18 @@ export function PlanStep({
                 type: t(analys.typ === 'hosilage' ? 'roughage.hosilage' : 'roughage.ho'),
               })}
             </li>
-            {plan.atgarder.map((a) => (
-              <li key={a.text} className={a.typ}>
-                {a.text}
-              </li>
-            ))}
+            {plan.atgarder.map((a) => {
+              const text = domainText(a)
+              return (
+                <li key={text} className={a.typ}>
+                  {text}
+                </li>
+              )
+            })}
           </ol>
           {plan.varningar.length > 0 && (
             <div className="ruta varn">
-              {plan.varningar.map((v) => (
+              {plan.varningar.map(domainText).map((v) => (
                 <p key={v}>{v}</p>
               ))}
             </div>
@@ -304,7 +308,7 @@ export function PlanStep({
         )}
         {plan.noteringar.length > 0 && (
           <ul className="noteringar">
-            {plan.noteringar.map((n) => (
+            {plan.noteringar.map(domainText).map((n) => (
               <li key={n}>{n}</li>
             ))}
           </ul>
@@ -378,7 +382,7 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     },
     grovfoder: { typ: analys.typ, kgPerDag: +plan.grovfoderKgPerDag.toFixed(1) },
     nulageMedDagensFoder: plan.nulage.filter((r) => r.status === 'brist' || r.status === 'overskott').map(rad),
-    atgarder: plan.atgarder.map((a) => a.text),
+    atgarder: plan.atgarder.map(domainText),
     efterForslaget: plan.resultat.filter((r) => r.status !== 'ej_krav').map(rad),
     kostnadMedForslagetKrPerManad: Math.round(
       (plan.urval?.kostnadPerManad ?? 0) +
@@ -395,7 +399,7 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     byten: plan.byten.map((b) => ({
       fran: `${visningsnamn(b.fran.produkt)} ${b.fran.gramPerDag} g/dag`,
       till: `${visningsnamn(b.till.produkt)} ${b.till.gramPerDag} g/dag`,
-      varfor: b.skal,
+      varfor: domainText(b.skal),
       kostnadForeKrPerManad: Math.round(b.kostnadFore),
       kostnadEfterKrPerManad: Math.round(b.kostnadEfter),
     })),
@@ -403,7 +407,7 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     omGrovfodret: plan.grovfoderkvalitet.map((f) => `${f.rubrik}: ${f.text}`),
     kansligheter: plan.kansligheter.map((k) => k.text),
     bortvaldaProdukter: plan.bortvalda.map((b) => `${b.namn} (${b.skal.join(', ')})`),
-    varningar: plan.varningar,
+    varningar: plan.varningar.map(domainText),
     foderbyte: { dagar: plan.injustering.dagar, steg: plan.injustering.steg.length },
     saknasIAnalysen: plan.saknadeAnalysvarden.map(etikett),
   }
