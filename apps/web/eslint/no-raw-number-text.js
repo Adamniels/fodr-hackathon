@@ -3,9 +3,11 @@
 // Swedish. This rule needs type information, so it only runs on files in a TypeScript project.
 //
 // Reported: a number-typed value passed as an option to t() or i18n.t(), as an entry of <Trans values>, or rendered
-// as JSX text (a child expression or a template literal), also through ?:, && and || up to two levels. `count` is
-// allowed in options because i18next's plural rules need the raw number. Known gaps: options built in a separate
-// variable or spread into the call, and numbers concatenated with + or joined into a string first.
+// as JSX text (a child expression or a template literal), also through ?:, && and ||. `count` is allowed in options
+// because i18next's plural rules need the raw number; i18next also writes {{count}} into the text unformatted, so
+// pass a formatted copy under another name for display. Known gaps: options built in a separate variable or spread
+// into the call; a value typed as a mix such as number | string; numbers concatenated with +, mapped or joined into
+// a string first; and String() used on a quantity rather than an identifier.
 
 import ts from 'typescript'
 
@@ -58,7 +60,8 @@ export default {
   },
   create(context) {
     const services = context.sourceCode.parserServices
-    if (!services?.program) return {}
+    if (!services?.program)
+      throw new Error('fodr/no-raw-number-text needs type information (parserOptions.projectService).')
 
     const NUMERIC = ts.TypeFlags.NumberLike | ts.TypeFlags.BigIntLike
     const NULLISH = ts.TypeFlags.Null | ts.TypeFlags.Undefined | ts.TypeFlags.Void
@@ -73,11 +76,19 @@ export default {
       if (isNumber(services.getTypeAtLocation(node))) context.report({ node, messageId: 'raw' })
     }
 
+    // An option's value, looked through ?:, && and || and into template literals, as JSX text is.
+    const checkValue = (node) => {
+      if (node.type === 'ConditionalExpression') [node.consequent, node.alternate].forEach(checkValue)
+      else if (node.type === 'LogicalExpression') [node.left, node.right].forEach(checkValue)
+      else if (node.type === 'TemplateLiteral') node.expressions.forEach(check)
+      else check(node)
+    }
+
     const checkOptions = (object) => {
       for (const property of object.properties) {
         if (property.type !== 'Property') continue
         const name = property.key.type === 'Identifier' ? property.key.name : property.key.value
-        if (name !== 'count') check(property.value)
+        if (name !== 'count') checkValue(property.value)
       }
     }
 

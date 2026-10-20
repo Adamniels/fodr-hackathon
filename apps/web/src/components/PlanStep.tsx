@@ -234,7 +234,7 @@ export function PlanStep({
             {t('plan.basis.requirement', {
               mj: tal(plan.behov.behov.energi!.min, 0),
               g: tal(plan.behov.behov.smbRp!.min, 0),
-              kg: tal(plan.behov.berakningsviktKg, 0),
+              kg: tal(plan.behov.berakningsviktKg, 1),
             })}
             {plan.behov.arbetsMJ > 0 && t('plan.basis.work', { mj: tal(plan.behov.arbetsMJ, 1) })}
             {plan.behov.kylaMJ > 0 && t('plan.basis.cold', { mj: tal(plan.behov.kylaMJ, 1) })}.

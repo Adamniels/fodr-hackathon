@@ -170,7 +170,7 @@ function NyAnteckning({
           <input
             type="number"
             value={vikt}
-            placeholder={String(hast.viktKg)}
+            placeholder={tal(hast.viktKg, 1)}
             onChange={(e) => setVikt(e.target.value)}
           />
         </label>
