@@ -8,7 +8,7 @@ import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/raser'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
-import { HULL_TEXT } from './format'
+import { hullText } from './format'
 import { Login } from './components/Login'
 import { Startsida } from './components/Startsida'
 import { HorseStep } from './components/HorseStep'
@@ -223,7 +223,7 @@ function Arbetsyta({
               <div>
                 <dt>Hull</dt>
                 <dd>
-                  {hast.hull} av 9, {HULL_TEXT[hast.hull]?.toLowerCase()}
+                  {hast.hull} av 9, {hullText(hast.hull)?.toLowerCase()}
                 </dd>
               </div>
               <div>

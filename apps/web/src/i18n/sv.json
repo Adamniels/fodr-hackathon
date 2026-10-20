@@ -1,0 +1,33 @@
+{
+  "common": {
+    "brand": "Fodr",
+    "aiBadge": "AI",
+    "close": "Stäng",
+    "theHorse": "hästen"
+  },
+  "hull": {
+    "1": "Extremt utmärglad",
+    "2": "Mycket mager",
+    "3": "Mager",
+    "4": "Slank",
+    "5": "Måttlig",
+    "6": "Måttligt fet",
+    "7": "Fet",
+    "8": "Mycket fet",
+    "9": "Extremt fet"
+  },
+  "roughage": {
+    "hosilage": "hösilage",
+    "ho": "hö"
+  },
+  "roughageTitle": {
+    "hosilage": "Hösilage",
+    "ho": "Hö"
+  },
+  "units": {
+    "kg": "{{value}} kg",
+    "g": "{{value}} g",
+    "perKgDm": "{{unit}}/kg ts",
+    "perMonth": "{{amount}}/mån"
+  }
+}

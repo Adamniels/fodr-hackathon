@@ -14,7 +14,7 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
-import { HULL_TEXT } from '../format'
+import { hullText } from '../format'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
@@ -155,7 +155,7 @@ function Profilformular({
         </div>
       )}
 
-      <Falt label={`Hull: ${hast.hull}, ${HULL_TEXT[hast.hull]}`} hjalp="SLU:s skala 1–9. 4–5 är lagom för de flesta.">
+      <Falt label={`Hull: ${hast.hull}, ${hullText(hast.hull)}`} hjalp="SLU:s skala 1–9. 4–5 är lagom för de flesta.">
         <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
       </Falt>
 

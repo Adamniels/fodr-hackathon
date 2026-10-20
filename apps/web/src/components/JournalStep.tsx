@@ -3,7 +3,7 @@ import { analyseraJournal, type JournalAnalys } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/raser'
 import type { Hastprofil } from '@fodr/domain/types'
-import { HULL_TEXT, kr, tal } from '../format'
+import { HULL_LEVELS, hullText, kr, tal } from '../format'
 
 interface Props {
   hast: Hastprofil
@@ -35,7 +35,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
           <Trendruta
             rubrik="Hull"
             varde={trend.hull ? `${trend.hull.forsta} → ${trend.hull.senaste}` : '–'}
-            under={trend.hull ? HULL_TEXT[trend.hull.senaste] : 'Ingen hullbedömning än'}
+            under={trend.hull ? (hullText(trend.hull.senaste) ?? '') : 'Ingen hullbedömning än'}
           />
           <Trendruta
             rubrik="Nästa uppföljning"
@@ -161,9 +161,9 @@ function NyAnteckning({
           <span className="falt-label">Hull</span>
           <select value={hull} onChange={(e) => setHull(e.target.value)}>
             <option value="">Ej bedömt</option>
-            {Object.entries(HULL_TEXT).map(([n, t]) => (
+            {HULL_LEVELS.map((n) => (
               <option key={n} value={n}>
-                {n}, {t}
+                {n}, {hullText(n)}
               </option>
             ))}
           </select>
