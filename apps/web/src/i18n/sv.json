@@ -150,5 +150,50 @@
       "again": "Analysera igen",
       "analyse": "Analysera journalen"
     }
+  },
+  "calendar": {
+    "weekdays": {
+      "mon": "mån",
+      "tue": "tis",
+      "wed": "ons",
+      "thu": "tor",
+      "fri": "fre",
+      "sat": "lör",
+      "sun": "sön"
+    },
+    "change": {
+      "same": "samma",
+      "new": "ny",
+      "end": "slut"
+    },
+    "nothingTitle": "Inget att trappa in",
+    "nothingText": "Planen ändrar inga mängder, så du kan börja direkt.",
+    "title": "Byt över på {{days}} dagar",
+    "preselected": " (förvalt utifrån hälsan)",
+    "rhythm": ": måtten ändras var {{every}} dag i {{steps}} steg. Ändra känsligheten under Hästen.",
+    "everyOther": "annan",
+    "everyThird": "tredje",
+    "firstDay": "Första dagen",
+    "label": "Kalender för foderbytet",
+    "stepTag": "Steg {{step}}",
+    "done": "Klart",
+    "stepButton": "{{date}}, steg {{step}}: ändra måtten",
+    "stepOf": "Steg {{step}} av {{total}}",
+    "onwards": " och framåt",
+    "finished": "Nu är {{name}} på den nya foderstaten.",
+    "fullSchedule": "Hela schemat",
+    "perDay": "Per dag",
+    "today": "I dag",
+    "warning": "Blir avföringen lös eller aptiten sämre: stanna kvar på samma steg 2–3 dagar innan du går vidare. Ömma hovar, värme i hovarna eller ovilja att gå: kontakta veterinär direkt.",
+    "download": "Lägg in i min kalender",
+    "ics": {
+      "summaryStep": "Fodr: {{name}}, foderbyte steg {{step}} av {{total}}",
+      "summaryDone": "Fodr: {{name}}, ny foderstat klar",
+      "description": "Ändra måtten från i dag:\n{{rows}}",
+      "row": "{{name}}: {{amount}} per dag ({{change}})",
+      "alarm": "I morgon ändras {{name}}s foder",
+      "fileName": "foderbyte-{{name}}.ics",
+      "fileNameFallback": "hast"
+    }
   }
 }

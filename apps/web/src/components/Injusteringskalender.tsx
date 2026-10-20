@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/injustering'
 import { tal } from '../format'
+import i18n, { locale } from '../i18n'
 
-const VECKODAGAR = ['mån', 'tis', 'ons', 'tor', 'fre', 'lör', 'sön']
+const VECKODAGAR = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
 const plusDagar = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
 const isoDag = (d: Date) =>
@@ -11,23 +13,24 @@ const franIso = (s: string) => {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
-const kortDatum = (d: Date) => d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' })
+const kortDatum = (d: Date) => d.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })
 
 function mangd(r: Injusteringsrad, v: number): string {
-  return r.enhet === 'kg' ? `${tal(v, 1)} kg` : `${tal(v, 0)} g`
+  return r.enhet === 'kg' ? i18n.t('units.kg', { value: tal(v, 1) }) : i18n.t('units.g', { value: tal(v, 0) })
 }
 
 function andring(r: Injusteringsrad, i: number): { text: string; klass: string } {
   const fore = i === 0 ? r.fran : r.perSteg[i - 1]
   const efter = r.perSteg[i]
   const d = efter - fore
-  if (Math.abs(d) < 1e-9) return { text: 'samma', klass: 'samma' }
-  if (fore === 0) return { text: 'ny', klass: 'upp' }
-  if (efter === 0) return { text: 'slut', klass: 'ner' }
+  if (Math.abs(d) < 1e-9) return { text: i18n.t('calendar.change.same'), klass: 'samma' }
+  if (fore === 0) return { text: i18n.t('calendar.change.new'), klass: 'upp' }
+  if (efter === 0) return { text: i18n.t('calendar.change.end'), klass: 'ner' }
   return { text: `${d > 0 ? '+' : '−'}${mangd(r, Math.abs(d))}`, klass: d > 0 ? 'upp' : 'ner' }
 }
 
 export function Injusteringskalender({ injustering, hastNamn }: { injustering: Injustering; hastNamn: string }) {
+  const { t } = useTranslation()
   const [start, setStart] = useState(() => isoDag(plusDagar(new Date(), 1)))
   const [valtSteg, setValtSteg] = useState(0)
   const { steg, rader, dagar, kanslighet, forvald } = injustering
@@ -52,8 +55,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
   if (rader.length === 0) {
     return (
       <div className="injustering">
-        <h4>Inget att trappa in</h4>
-        <p className="liten">Planen ändrar inga mängder, så du kan börja direkt.</p>
+        <h4>{t('calendar.nothingTitle')}</h4>
+        <p className="liten">{t('calendar.nothingText')}</p>
       </div>
     )
   }
@@ -69,7 +72,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         .replace(/\n/g, '\\n')
     const ical = (d: Date) => isoDag(d).replace(/-/g, '')
     const handelser = steg.map((x, i) => {
-      const rad = rader.map((r) => `${r.namn}: ${mangd(r, r.perSteg[i])} per dag (${andring(r, i).text})`).join('\n')
+      const rad = rader
+        .map((r) => t('calendar.ics.row', { name: r.namn, amount: mangd(r, r.perSteg[i]), change: andring(r, i).text }))
+        .join('\n')
       const sista = i === steg.length - 1
       return [
         'BEGIN:VEVENT',
@@ -77,12 +82,12 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`,
         `DTSTART;VALUE=DATE:${ical(stegDatum(i))}`,
         `DTEND;VALUE=DATE:${ical(plusDagar(stegDatum(i), 1))}`,
-        `SUMMARY:${esc(`Fodr: ${hastNamn}, ${sista ? 'ny foderstat klar' : `foderbyte steg ${x.nr} av ${steg.length}`}`)}`,
-        `DESCRIPTION:${esc(`Ändra måtten från i dag:\n${rad}`)}`,
+        `SUMMARY:${esc(sista ? t('calendar.ics.summaryDone', { name: hastNamn }) : t('calendar.ics.summaryStep', { name: hastNamn, step: x.nr, total: steg.length }))}`,
+        `DESCRIPTION:${esc(t('calendar.ics.description', { rows: rad }))}`,
         'BEGIN:VALARM',
         'TRIGGER:-PT6H',
         'ACTION:DISPLAY',
-        `DESCRIPTION:${esc(`I morgon ändras ${hastNamn}s foder`)}`,
+        `DESCRIPTION:${esc(t('calendar.ics.alarm', { name: hastNamn }))}`,
         'END:VALARM',
         'END:VEVENT',
       ].join('\r\n')
@@ -93,7 +98,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     const url = URL.createObjectURL(new Blob([fil], { type: 'text/calendar;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = `foderbyte-${hastNamn || 'hast'}.ics`
+    a.download = t('calendar.ics.fileName', { name: hastNamn || t('calendar.ics.fileNameFallback') })
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -102,23 +107,26 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     <div className="injustering">
       <div className="injustering-topp">
         <div>
-          <h4>Byt över på {dagar} dagar</h4>
+          <h4>{t('calendar.title', { days: dagar })}</h4>
           <p className="liten">
             {takt.namn}
-            {forvald ? ' (förvalt utifrån hälsan)' : ''}: måtten ändras var{' '}
-            {takt.dagarPerSteg === 2 ? 'annan' : 'tredje'} dag i {steg.length} steg. Ändra känsligheten under Hästen.
+            {forvald ? t('calendar.preselected') : ''}
+            {t('calendar.rhythm', {
+              every: takt.dagarPerSteg === 2 ? t('calendar.everyOther') : t('calendar.everyThird'),
+              steps: steg.length,
+            })}
           </p>
         </div>
         <label className="falt injustering-start">
-          <span className="falt-label">Första dagen</span>
+          <span className="falt-label">{t('calendar.firstDay')}</span>
           <input type="date" value={start} onChange={(e) => e.target.value && setStart(e.target.value)} />
         </label>
       </div>
 
-      <div className="kalender" role="group" aria-label="Kalender för foderbytet">
+      <div className="kalender" role="group" aria-label={t('calendar.label')}>
         {VECKODAGAR.map((v) => (
           <span key={v} className="kalender-vd" aria-hidden="true">
-            {v}
+            {t(`calendar.weekdays.${v}`)}
           </span>
         ))}
         {celler.map((c) => {
@@ -135,8 +143,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
           const innehall = (
             <>
               <span className="kalender-nr">{c.datum.getDate()}</span>
-              {c.steg && <span className="kalender-tagg">Steg {c.steg.nr}</span>}
-              {c.klart && <span className="kalender-tagg">Klart</span>}
+              {c.steg && <span className="kalender-tagg">{t('calendar.stepTag', { step: c.steg.nr })}</span>}
+              {c.klart && <span className="kalender-tagg">{t('calendar.done')}</span>}
             </>
           )
           return c.steg ? (
@@ -145,7 +153,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
               type="button"
               className={klass}
               aria-pressed={i === valtSteg}
-              aria-label={`${kortDatum(c.datum)}, steg ${c.steg.nr}: ändra måtten`}
+              aria-label={t('calendar.stepButton', { date: kortDatum(c.datum), step: c.steg.nr })}
               onClick={() => setValtSteg(i)}
             >
               {innehall}
@@ -160,12 +168,10 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
 
       <div className="injustering-steg" aria-live="polite">
         <div className="injustering-steg-rubrik">
-          <strong>
-            Steg {s.nr} av {steg.length}
-          </strong>
+          <strong>{t('calendar.stepOf', { step: s.nr, total: steg.length })}</strong>
           <span className="liten">
             {kortDatum(stegDatum(valtSteg))}
-            {s.slutDag ? ` – ${kortDatum(plusDagar(startDatum, s.slutDag - 1))}` : ' och framåt'}
+            {s.slutDag ? ` – ${kortDatum(plusDagar(startDatum, s.slutDag - 1))}` : t('calendar.onwards')}
           </span>
         </div>
         {rader.map((r) => {
@@ -178,19 +184,21 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
             </div>
           )
         })}
-        {s.slutDag === null && <p className="liten">Nu är {hastNamn || 'hästen'} på den nya foderstaten.</p>}
+        {s.slutDag === null && (
+          <p className="liten">{t('calendar.finished', { name: hastNamn || t('common.theHorse') })}</p>
+        )}
       </div>
 
       <details className="bortvalda">
-        <summary>Hela schemat</summary>
+        <summary>{t('calendar.fullSchedule')}</summary>
         <table className="tabell">
           <thead>
             <tr>
-              <th>Per dag</th>
-              <th className="hoger">I dag</th>
+              <th>{t('calendar.perDay')}</th>
+              <th className="hoger">{t('calendar.today')}</th>
               {steg.map((x, i) => (
                 <th key={x.nr} className="hoger">
-                  {stegDatum(i).toLocaleDateString('sv-SE', { day: 'numeric', month: 'numeric' })}
+                  {stegDatum(i).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' })}
                 </th>
               ))}
             </tr>
@@ -212,14 +220,11 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
       </details>
 
       <div className="ruta varn">
-        <p>
-          Blir avföringen lös eller aptiten sämre: stanna kvar på samma steg 2–3 dagar innan du går vidare. Ömma hovar,
-          värme i hovarna eller ovilja att gå: kontakta veterinär direkt.
-        </p>
+        <p>{t('calendar.warning')}</p>
       </div>
 
       <button type="button" className="knapp sekundar kompakt" onClick={laddaNerKalender}>
-        Lägg in i min kalender
+        {t('calendar.download')}
       </button>
     </div>
   )
