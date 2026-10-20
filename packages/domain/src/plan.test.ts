@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/exempel'
 import produkterJson from '../test/fixtures/products.json'
 import { beraknaBehov, smbRpFranRaprotein, viktFranBrostomfang } from './slu'
+import { visningsnamn } from './intake'
 import { skapaPlan } from './plan'
 import type { Produkt } from './types'
 
@@ -61,7 +62,11 @@ describe('foderplan', () => {
   const plan = skapaPlan(demoHast, analysKomplett, produkter)
 
   it('tar bort pelletsen eftersom grovfodret täcker energin', () => {
-    expect(plan.atgarder.some((a) => a.typ === 'ta_bort' && a.text.includes('Krafft Leisure Pellets'))).toBe(true)
+    expect(plan.atgarder).toContainEqual({
+      typ: 'ta_bort',
+      code: 'action.removeConcentrate',
+      params: { product: 'Krafft Leisure Pellets 20kg', grams: 1000 },
+    })
     expect(plan.behallnaFoder).toHaveLength(0)
   })
   it('täcker alla bedömbara brister utan att överskrida maxgränser', () => {
@@ -74,11 +79,11 @@ describe('foderplan', () => {
     expect(plan.urval!.poster.every((p) => p.produkt.lampligVidFangEms)).toBe(true)
   })
   it('hänvisar till veterinär vid fånghistorik', () => {
-    expect(plan.varningar.some((v) => v.includes('veterinär'))).toBe(true)
+    expect(plan.varningar).toContainEqual({ code: 'warning.metabolicVet', params: {} })
   })
   it('varnar för socker i hö över 100 g/kg ts vid EMS (A07, 122 g)', () => {
     const p = skapaPlan(ponny, analysHo, produkter)
-    expect(p.varningar.some((v) => v.includes('socker'))).toBe(true)
+    expect(p.varningar).toContainEqual({ code: 'warning.sugarHigh', params: { sugarG: 122, limitG: 100 } })
   })
   it('föreslår aldrig två mineralfoder samtidigt', () => {
     expect(plan.urval!.poster.filter((p) => p.produkt.kategori === 'mineralfoder').length).toBeLessThanOrEqual(1)
@@ -98,5 +103,78 @@ describe('foderplan', () => {
     const p = skapaPlan(ponny, analysHo, produkter)
     expect(p.urval).not.toBeNull()
     expect(p.resultat.filter((r) => r.status === 'over_max')).toEqual([])
+  })
+})
+
+describe('foderplanens meddelanden (ADR 0014)', () => {
+  const plan = skapaPlan(demoHast, analysKomplett, produkter)
+
+  it('nya tillskott som kod med produkt och gram', () => {
+    const ge = plan.atgarder.filter((a) => a.code === 'action.giveSupplement')
+    expect(ge.map((a) => a.params)).toEqual(
+      plan.urval!.poster.map((p) => ({ product: visningsnamn(p.produkt), grams: p.gramPerDag })),
+    )
+    expect(ge.every((a) => a.typ === 'tillskott')).toBe(true)
+  })
+  it('dagens tillskott som fortsätter, ändras eller tas bort', () => {
+    const [forsta] = plan.urval!.poster
+    const samma = skapaPlan(
+      { ...demoHast, nuvarandeFoder: [{ produktId: forsta.produkt.id, namn: '', gramPerDag: forsta.gramPerDag }] },
+      analysKomplett,
+      produkter,
+    )
+    expect(samma.atgarder).toContainEqual({
+      typ: 'tillskott',
+      code: 'action.continueSupplement',
+      params: { product: visningsnamn(forsta.produkt), grams: forsta.gramPerDag },
+    })
+    const annan = skapaPlan(
+      { ...demoHast, nuvarandeFoder: [{ produktId: forsta.produkt.id, namn: '', gramPerDag: forsta.gramPerDag + 7 }] },
+      analysKomplett,
+      produkter,
+    )
+    expect(annan.atgarder).toContainEqual({
+      typ: 'tillskott',
+      code: 'action.changeSupplement',
+      params: { product: visningsnamn(forsta.produkt), fromGrams: forsta.gramPerDag + 7, toGrams: forsta.gramPerDag },
+    })
+  })
+  it('okänt foder och ofullständig deklaration som noteringar', () => {
+    const delvis = produkter.find((p) => p.naringsdata === 'delvis')!
+    const p = skapaPlan(
+      {
+        ...demoHast,
+        nuvarandeFoder: [
+          { produktId: null, namn: 'Hemblandning', gramPerDag: 200 },
+          { produktId: delvis.id, namn: delvis.namn, gramPerDag: 50 },
+        ],
+      },
+      analysKomplett,
+      produkter,
+    )
+    expect(p.noteringar).toContainEqual({ code: 'note.unknownFeed', params: { name: 'Hemblandning' } })
+    expect(p.noteringar).toContainEqual({ code: 'note.incompleteDeclaration', params: { product: delvis.namn } })
+  })
+  it('saknat socker vid fång och veterinär vid magsår som varningar', () => {
+    const utanSocker = { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, socker: undefined } }
+    const p = skapaPlan({ ...demoHast, halsa: { ...demoHast.halsa, magsar: true } }, utanSocker, produkter)
+    expect(p.varningar).toContainEqual({ code: 'warning.sugarMissing', params: {} })
+    expect(p.varningar).toContainEqual({ code: 'warning.ulcerPssmVet', params: {} })
+  })
+  it('grovfodret ändras med från, till och lägsta rekommenderade giva', () => {
+    const mycket = skapaPlan(
+      { ...demoHast, grovfoder: { ...demoHast.grovfoder, kgPerDag: 30 } },
+      analysKomplett,
+      produkter,
+    )
+    const minska = mycket.atgarder.find((a) => a.code === 'action.reduceRoughage')
+    expect(minska?.typ).toBe('andra_grovfoder')
+    expect(minska?.code === 'action.reduceRoughage' && minska.params.fromKg).toBe(30)
+    const lite = skapaPlan(
+      { ...demoHast, grovfoder: { ...demoHast.grovfoder, kgPerDag: 3 } },
+      analysKomplett,
+      produkter,
+    )
+    expect(lite.atgarder.map((a) => a.code)).toContain('action.increaseRoughage')
   })
 })

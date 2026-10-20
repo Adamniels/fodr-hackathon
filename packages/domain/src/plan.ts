@@ -6,6 +6,7 @@ import { bedomGrovfoder, type Kvalitetsflagga } from './kvalitet'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './kanslighet'
 import { hittaBilligareLiknande, type Byte } from './byten'
 import { skapaInjustering, type Injustering } from './injustering'
+import type { AtgardMeddelande, Byteskal, Kallhanvisning, Notering, Varning } from './meddelanden'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -18,16 +19,14 @@ export interface Balansrad {
   intag: number
   kalla: Kalla
   schablonKalla?: string
-  behovKalla?: string
+  behovKalla?: Kallhanvisning
   status: Status
 }
 
 export type AtgardTyp = 'ta_bort' | 'byt' | 'andra_grovfoder' | 'lagg_till_kraftfoder' | 'protein' | 'tillskott'
 
-export interface Atgard {
-  typ: AtgardTyp
-  text: string
-}
+/** An action in the plan: what to change, as a message, and its kind for the UI. */
+export type Atgard = AtgardMeddelande & { typ: AtgardTyp }
 
 export interface Plan {
   behov: Behovsresultat
@@ -42,8 +41,8 @@ export interface Plan {
   caP: number | null
   /** Ungefärligt kväveöverskott, kg N per år, från smältbart protein över behovet. */
   kvaveOverskottKgPerAr: number
-  varningar: string[]
-  noteringar: string[]
+  varningar: Varning[]
+  noteringar: Notering[]
   saknadeAnalysvarden: NutrientKey[]
   /** Bedömning av grovfodret i sig (SLU tabell 32, ts, jordinblandning). */
   grovfoderkvalitet: Kvalitetsflagga[]
@@ -98,8 +97,8 @@ function hittaProdukt(produkter: Produkt[], id: string | null): Produkt | undefi
 export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produkt[]): Plan {
   const behovsres = beraknaBehov(profil)
   const { behov, grovfoderKgTs } = behovsres
-  const varningar: string[] = []
-  const noteringar = [...behovsres.noteringar]
+  const varningar: Varning[] = []
+  const noteringar: Notering[] = [...behovsres.noteringar]
   const atgarder: Atgard[] = []
   const ts = analys.tsProcent / 100
   const energiBehov = behov.energi!.min!
@@ -111,9 +110,9 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     if (produkt) {
       nuvarande.push({ produkt, gramPerDag: f.gramPerDag })
       if (produkt.naringsdata !== 'komplett') {
-        noteringar.push(`${produkt.namn} har ofullständig näringsdeklaration. Ämnen som inte anges räknas som noll.`)
+        noteringar.push({ code: 'note.incompleteDeclaration', params: { product: produkt.namn } })
       }
-    } else noteringar.push(`"${f.namn}" finns inte i produktdatabasen och räknas inte med.`)
+    } else noteringar.push({ code: 'note.unknownFeed', params: { name: f.namn } })
   }
   const nulageIntag = laggTill(grovfoderIntag(analys, profil.grovfoder.kgPerDag), nuvarande)
   const nulageKostnad = nuvarande.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
@@ -130,7 +129,8 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       behallna = behallna.filter((p) => p !== k)
       atgarder.push({
         typ: 'ta_bort',
-        text: `Ta bort ${namn(k.produkt)} (${k.gramPerDag} g/dag). Grovfodret täcker energibehovet ändå.`,
+        code: 'action.removeConcentrate',
+        params: { product: namn(k.produkt), grams: k.gramPerDag },
       })
       if (energiFor(grovKg, behallna) <= energiBehov * ENERGI_OVER) break
     }
@@ -145,7 +145,15 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     byten.push(b)
     atgarder.push({
       typ: 'byt',
-      text: `Byt ${namn(p.produkt)} (${p.gramPerDag} g) mot ${b.till.gramPerDag} g ${namn(b.till.produkt)}: ${b.skal}, ${kr(b.besparingKrPerManad)} billigare i månaden.`,
+      code: 'action.swapCheaper',
+      params: {
+        from: namn(p.produkt),
+        fromGrams: p.gramPerDag,
+        to: namn(b.till.produkt),
+        toGrams: b.till.gramPerDag,
+        reason: b.skal,
+        savingKr: b.besparingKrPerManad,
+      },
     })
     return b.till
   })
@@ -166,7 +174,8 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     if (grovKg - nyKg > 0.3) {
       atgarder.push({
         typ: 'andra_grovfoder',
-        text: `Minska grovfodret från ${fmt(grovKg)} till ${fmt(nyKg)} kg/dag. Lägre än ${fmt(grovfoderKgTs.minimum / ts)} kg/dag rekommenderas inte.`,
+        code: 'action.reduceRoughage',
+        params: { fromKg: grovKg, toKg: nyKg, minimumKg: grovfoderKgTs.minimum / ts },
       })
       grovKg = nyKg
     }
@@ -179,49 +188,40 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     const maxKg = grovfoderKgTs.rekommenderatMax / ts
     const nyKg = Math.min(kgForEnergi, maxKg)
     if (nyKg - grovKg > 0.3) {
-      atgarder.push({ typ: 'andra_grovfoder', text: `Öka grovfodret från ${fmt(grovKg)} till ${fmt(nyKg)} kg/dag.` })
+      atgarder.push({ typ: 'andra_grovfoder', code: 'action.increaseRoughage', params: { fromKg: grovKg, toKg: nyKg } })
       grovKg = nyKg
     }
     if (energiFor(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
-      atgarder.push({
-        typ: 'lagg_till_kraftfoder',
-        text: 'Grovfodret räcker inte för energibehovet. Ett energirikare vallfoder eller ett kraftfoder behövs.',
-      })
+      atgarder.push({ typ: 'lagg_till_kraftfoder', code: 'action.roughageLacksEnergy', params: {} })
     }
   }
 
   const grovKgTs = grovKg * ts
   if (grovKgTs < grovfoderKgTs.minimum) {
-    varningar.push(
-      `Grovfodergivan (${fmt(grovKgTs)} kg ts) är under SLU:s minimum på ${fmt(grovfoderKgTs.minimum)} kg ts per dag.`,
-    )
+    varningar.push({
+      code: 'warning.roughageBelowMinimum',
+      params: { kgDm: grovKgTs, minimumKgDm: grovfoderKgTs.minimum },
+    })
   }
 
   const bas = laggTill(grovfoderIntag(analys, grovKg), behallna)
   if (bas.smbRp.varde < behov.smbRp!.min!) {
-    atgarder.push({
-      typ: 'protein',
-      text: 'Proteinet räcker inte. Ett proteinrikare vallfoder eller ett proteinfoder behövs.',
-    })
+    atgarder.push({ typ: 'protein', code: 'action.proteinShort', params: {} })
   }
 
   const h = profil.halsa
   if (h.fang || h.ems || h.ppid) {
-    varningar.push('Hästen har haft fång, har EMS eller PPID. Stäm av foderstaten med veterinär.')
+    varningar.push({ code: 'warning.metabolicVet', params: {} })
     const socker = analys.perKgTs.socker
     if (socker === undefined) {
-      varningar.push('Analysen saknar socker. Vid fång eller EMS bör sockerhalten i grovfodret vara känd.')
+      varningar.push({ code: 'warning.sugarMissing', params: {} })
     } else if (socker > SOCKER_GRANS_G_PER_KG_TS) {
-      varningar.push(
-        `Grovfodret har ${fmt(socker)} g socker per kg ts, över ungefär ${SOCKER_GRANS_G_PER_KG_TS} g som brukar rekommenderas vid fång. Blötläggning sänker sockerhalten.`,
-      )
+      varningar.push({ code: 'warning.sugarHigh', params: { sugarG: socker, limitG: SOCKER_GRANS_G_PER_KG_TS } })
     }
   }
 
   if (h.magsar || h.pssm) {
-    varningar.push(
-      'Magsår och korsförlamning kräver veterinärens bedömning. Planen anpassar fodret men ersätter inte behandling.',
-    )
+    varningar.push({ code: 'warning.ulcerPssmVet', params: {} })
   }
 
   const { tillatna, uteslutna } = filtreraProdukter(produkter, h)
@@ -240,13 +240,19 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     const kvar = nyaPoster.find((n) => n.produkt.id === gammal.produkt.id)
     if (kvar) {
       hanterade.add(kvar.produkt.id)
-      atgarder.push({
-        typ: 'tillskott',
-        text:
-          kvar.gramPerDag === gammal.gramPerDag
-            ? `Fortsätt med ${kvar.gramPerDag} g/dag ${namn(kvar.produkt)}.`
-            : `Ändra ${namn(kvar.produkt)} från ${gammal.gramPerDag} till ${kvar.gramPerDag} g/dag.`,
-      })
+      atgarder.push(
+        kvar.gramPerDag === gammal.gramPerDag
+          ? {
+              typ: 'tillskott',
+              code: 'action.continueSupplement',
+              params: { product: namn(kvar.produkt), grams: kvar.gramPerDag },
+            }
+          : {
+              typ: 'tillskott',
+              code: 'action.changeSupplement',
+              params: { product: namn(kvar.produkt), fromGrams: gammal.gramPerDag, toGrams: kvar.gramPerDag },
+            },
+      )
       continue
     }
     const ersattare = nyaPoster.find(
@@ -261,10 +267,10 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     if (ersattare) {
       hanterade.add(ersattare.produkt.id)
       const efter = kostnadPerManad(ersattare.produkt, ersattare.gramPerDag)
-      const skal =
+      const skal: Byteskal =
         efter < fore - 1
-          ? `täcker behovet, ${kr(fore - efter)} billigare i månaden`
-          : 'täcker det som saknas bättre med ditt grovfoder'
+          ? { code: 'swapReason.coversNeedCheaper', params: { savingKr: fore - efter } }
+          : { code: 'swapReason.coversBetter', params: {} }
       byten.push({
         fran: gammal,
         till: ersattare,
@@ -275,18 +281,30 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       })
       atgarder.push({
         typ: 'byt',
-        text: `Byt ${namn(gammal.produkt)} (${gammal.gramPerDag} g) mot ${ersattare.gramPerDag} g ${namn(ersattare.produkt)}: ${skal}.`,
+        code: 'action.swapSupplement',
+        params: {
+          from: namn(gammal.produkt),
+          fromGrams: gammal.gramPerDag,
+          to: namn(ersattare.produkt),
+          toGrams: ersattare.gramPerDag,
+          reason: skal,
+        },
       })
     } else {
       atgarder.push({
         typ: 'ta_bort',
-        text: `Sluta med ${namn(gammal.produkt)} (${gammal.gramPerDag} g/dag, ${kr(fore)} i månaden). Behovet täcks utan den.`,
+        code: 'action.stopSupplement',
+        params: { product: namn(gammal.produkt), grams: gammal.gramPerDag, costKr: fore },
       })
     }
   }
   for (const p of nyaPoster) {
     if (hanterade.has(p.produkt.id)) continue
-    atgarder.push({ typ: 'tillskott', text: `Ge ${p.gramPerDag} g/dag ${namn(p.produkt)}.` })
+    atgarder.push({
+      typ: 'tillskott',
+      code: 'action.giveSupplement',
+      params: { product: namn(p.produkt), grams: p.gramPerDag },
+    })
   }
 
   const slutIntag = urval?.intag ?? bas
@@ -323,6 +341,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     injustering: skapaInjustering({
       halsa: h,
       kanslighet: profil.bytekanslighet,
+      // eslint-disable-next-line no-restricted-syntax -- the transition model's names become codes in #12
       grovfoderNamn: analys.typ === 'hosilage' ? 'Hösilage' : 'Hö',
       grovfoderFranKg: profil.grovfoder.kgPerDag,
       grovfoderTillKg: grovKg,
@@ -330,12 +349,4 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       till: [...behallna, ...nyaPoster],
     }),
   }
-}
-
-function kr(n: number): string {
-  return `${Math.round(n).toLocaleString('sv-SE')} kr`
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString('sv-SE', { maximumFractionDigits: 1 })
 }

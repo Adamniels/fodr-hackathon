@@ -4,6 +4,7 @@
 // Givan räknas om så att hästen får lika mycket energi som i dag.
 
 import { skalMotProdukt } from './kanslighet'
+import type { Byteskal } from './meddelanden'
 import { kostnadPerManad, type Foderpost } from './intake'
 import type { Halsa, Produkt } from './types'
 
@@ -13,7 +14,7 @@ export interface Byte {
   kostnadFore: number
   kostnadEfter: number
   besparingKrPerManad: number
-  skal: string
+  skal: Byteskal
 }
 
 const LIKNANDE_KATEGORIER = ['kraftfoder', 'proteinfoder']
@@ -28,6 +29,7 @@ const MIN_BESPARING_ANDEL = 0.1
 // Storsäckar passar inte en enskild hästägare.
 const MAX_FORPACKNING_KG = 30
 // Ingredienser som inte får tillkomma vid ett byte, eftersom ägaren kan ha valt bort dem medvetet.
+// eslint-disable-next-line no-restricted-syntax -- ingredient identifiers (the Ingrediens type), not text
 const SKYDDADE_INGREDIENSER = ['spannmål', 'melass', 'soja', 'lusern']
 
 /** Om produkten kan ersätta dagens foder utan att hästen märker någon skillnad i näring. */
@@ -91,8 +93,8 @@ export function hittaBilligareLiknande(fran: Foderpost, produkter: Produkt[], ha
   return basta
 }
 
-function skalText(fran: Produkt, till: Produkt): string {
+function skalText(fran: Produkt, till: Produkt): Byteskal {
   const bas = (namn: string) => namn.replace(/\s*[\d,]+\s*(kg|l)\b.*$/i, '').trim()
-  if (bas(fran.namn) === bas(till.namn)) return 'samma foder i billigare förpackning'
-  return 'samma energi, liknande protein, inte mer stärkelse'
+  if (bas(fran.namn) === bas(till.namn)) return { code: 'swapReason.samePackCheaper', params: {} }
+  return { code: 'swapReason.sameEnergy', params: {} }
 }

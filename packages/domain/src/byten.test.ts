@@ -18,6 +18,7 @@ describe('billigare liknande foder', () => {
     const energiFore = (fran.produkt.perKg.energi! * fran.gramPerDag) / 1000
     const energiEfter = (b.till.produkt.perKg.energi! * b.till.gramPerDag) / 1000
     expect(Math.abs(energiEfter / energiFore - 1)).toBeLessThan(0.02)
+    expect(b.skal).toEqual({ code: 'swapReason.sameEnergy', params: {} })
   })
 
   it('föreslår inget fångolämpligt foder i stället för ett fånglämpligt', () => {
@@ -47,6 +48,14 @@ describe('billigare liknande foder', () => {
     const hast = { ...demoHast, nuvarandeFoder: [{ produktId: mineral.id, namn: mineral.namn, gramPerDag: 100 }] }
     const plan = skapaPlan(hast, analysKomplett, produkter)
     const valdes = plan.urval?.poster.some((p) => p.produkt.id === mineral.id)
-    if (!valdes) expect(plan.atgarder.some((a) => a.text.includes(visningsnamn(mineral)))).toBe(true)
+    if (!valdes) {
+      expect(
+        plan.atgarder.some(
+          (a) =>
+            (a.code === 'action.swapSupplement' && a.params.from === visningsnamn(mineral)) ||
+            (a.code === 'action.stopSupplement' && a.params.product === visningsnamn(mineral)),
+        ),
+      ).toBe(true)
+    }
   })
 })

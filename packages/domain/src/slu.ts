@@ -2,6 +2,7 @@
 // (Jansson red., 7:e upplagan 2013). Tabellnummer i kommentarerna avser den rapporten.
 // Antaganden som inte kommer från SLU är märkta ANTAGANDE.
 
+import { DomanFel, type Kallhanvisning, type Notering, type SluNiva } from './meddelanden'
 import { NA_PER_NACL, type NutrientKey } from './nutrients'
 import { hittaRas } from './raser'
 import type { Arbetsniva, Hastprofil, Prestanda } from './types'
@@ -9,7 +10,7 @@ import type { Arbetsniva, Hastprofil, Prestanda } from './types'
 export interface Krav {
   min?: number
   max?: number
-  kalla: string
+  kalla: Kallhanvisning
 }
 
 export type Behov = Partial<Record<NutrientKey, Krav>>
@@ -25,7 +26,7 @@ export interface Behovsresultat {
   arbetsProcent: number
   /** Rekommenderad grovfodergiva i kg ts per dag. */
   grovfoderKgTs: { minimum: number; rekommenderatMin: number; rekommenderatMax: number }
-  noteringar: string[]
+  noteringar: Notering[]
 }
 
 const TYPFAKTOR = { lattfodd: 1.0, normalfodd: 1.05, svarfodd: 1.1 } as const // Tabell 3
@@ -95,12 +96,12 @@ const KYLA_PER_GRAD = 0.027
 const UTE_STORRE_DELEN_H = 12
 
 /** Tabell 15, rad efter arbetstillägg. Värden i g per 100 kg och dag; NaCl räknas om till Na. */
-function makroPer100kg(arbetsProcent: number) {
-  if (arbetsProcent <= 0) return { ca: 4.0, p: 2.8, mg: 1.5, nacl: 5.1, rad: 'underhåll' }
-  if (arbetsProcent < 30) return { ca: 6.0, p: 3.6, mg: 1.9, nacl: 7, rad: 'arbete <30 %' }
-  if (arbetsProcent < 50) return { ca: 7.0, p: 4.2, mg: 2.3, nacl: 9, rad: 'arbete 30–50 %' }
-  if (arbetsProcent < 75) return { ca: 8.0, p: 5.8, mg: 3.0, nacl: 9, rad: 'arbete 50–75 %' }
-  return { ca: 8.0, p: 5.8, mg: 3.0, nacl: 13, rad: 'arbete 75–130 %' }
+function makroPer100kg(arbetsProcent: number): { ca: number; p: number; mg: number; nacl: number; rad: SluNiva } {
+  if (arbetsProcent <= 0) return { ca: 4.0, p: 2.8, mg: 1.5, nacl: 5.1, rad: 'underhall' }
+  if (arbetsProcent < 30) return { ca: 6.0, p: 3.6, mg: 1.9, nacl: 7, rad: 'arbeteUnder30' }
+  if (arbetsProcent < 50) return { ca: 7.0, p: 4.2, mg: 2.3, nacl: 9, rad: 'arbete30to50' }
+  if (arbetsProcent < 75) return { ca: 8.0, p: 5.8, mg: 3.0, nacl: 9, rad: 'arbete50to75' }
+  return { ca: 8.0, p: 5.8, mg: 3.0, nacl: 13, rad: 'arbete75to130' }
 }
 
 // Tabell 17, mg per 100 kg och dag. Nedre gränsen i SLU:s intervall används som minimum.
@@ -127,15 +128,18 @@ const VITAMIN = {
   biotin: { normal: 0.1, hart: 0.15, max: undefined },
 } as const
 
+/** The model covers adult horses only. */
+const MIN_ALDER_AR = 3
+
 export function beraknaBehov(p: Hastprofil): Behovsresultat {
-  if (p.alderAr < 3) {
-    throw new Error('Modellen gäller vuxna hästar (3 år och äldre). Unghästar ingår inte i prototypen.')
+  if (p.alderAr < MIN_ALDER_AR) {
+    throw new DomanFel({ code: 'error.adultsOnly', params: { minAgeYears: MIN_ALDER_AR } })
   }
-  const noteringar: string[] = []
+  const noteringar: Notering[] = []
   const vikt = viktVidNormalHull(p)
   const per100 = vikt / 100
   if (Math.abs(vikt - p.viktKg) > 1) {
-    noteringar.push(`Behoven räknas på ${Math.round(vikt)} kg, ungefärlig vikt vid normalt hull (SLU tabell 3).`)
+    noteringar.push({ code: 'note.normalConditionWeight', params: { kg: vikt } })
   }
 
   // Underhåll, tabell 3: 0,5 × V^0,75 för lättfödda, +5 % normalfödda, +10 % svårfödda.
@@ -146,14 +150,12 @@ export function beraknaBehov(p: Hastprofil): Behovsresultat {
   const prestandaMJ = p.prestanda ? prestandaMinimumMJ(p.prestanda, underhallMJ, p.viktKg) : 0
   const arbetsMJ = Math.max(franPass, prestandaMJ)
   if (prestandaMJ > franPass) {
-    noteringar.push('Arbetstillägget följer grenen och nivån, som ger mer än de angivna ridpassen (SLU tabell 9–11).')
+    noteringar.push({ code: 'note.workFromDiscipline', params: {} })
   }
   const arbetsProcent = (arbetsMJ / underhallMJ) * 100
 
   if (p.prestanda === 'trav_galopp_traning' || p.prestanda === 'distans' || p.prestanda === 'tavling_hog') {
-    noteringar.push(
-      'Hästar som svettas mycket förlorar salt: 8–35 g koksalt per 100 kg på arbetsdagar beroende på arbete och väder (SLU tabell 16). Ge extra salt eller elektrolyter de dagarna.',
-    )
+    noteringar.push({ code: 'note.sweatSalt', params: {} })
   }
 
   let kylaMJ = 0
@@ -165,27 +167,26 @@ export function beraknaBehov(p: Hastprofil): Behovsresultat {
     if (exponerad && grader > 0) {
       if (arbetsProcent <= KYLA_MAX_ARBETSPROCENT) {
         kylaMJ = KYLA_PER_GRAD * grader * underhallMJ
-        noteringar.push(
-          `Kylatillägg ${Math.round(kylaMJ * 10) / 10} MJ: ${grader} grader under −15 °C, ute utan täcke (SLU sid 15).`,
-        )
+        noteringar.push({ code: 'note.coldSupplement', params: { mj: kylaMJ, degreesBelow: grader } })
       } else {
-        noteringar.push('Kallt väder: arbetande hästar får inget beräknat kylatillägg. Följ hullet (SLU).')
+        noteringar.push({ code: 'note.coldWorking', params: {} })
       }
     }
     if (m0.hallning === 'losdrift') {
-      noteringar.push('Lösdrift och mycket hagvistelse kan öka energibehovet. SLU anger ingen siffra, följ hullet.')
+      noteringar.push({ code: 'note.looseHousing', params: {} })
     }
   }
 
   const ras = hittaRas(p.ras)
   if (ras?.viktKg && (p.viktKg < ras.viktKg.min * 0.9 || p.viktKg > ras.viktKg.max * 1.1)) {
-    noteringar.push(
-      `${p.viktKg} kg ligger utanför det vanliga intervallet för ${ras.namn.toLowerCase()} (${ras.viktKg.min}–${ras.viktKg.max} kg, SLU tabell 33). Kontrollera vikten.`,
-    )
+    noteringar.push({
+      code: 'note.weightOutsideBreed',
+      params: { kg: p.viktKg, breedId: ras.id, minKg: ras.viktKg.min, maxKg: ras.viktKg.max },
+    })
   }
 
   if (p.alderAr >= 20) {
-    noteringar.push('Äldre häst: energibehovet kan öka runt 20 års ålder. Följ hullet regelbundet (SLU).')
+    noteringar.push({ code: 'note.senior', params: {} })
   }
 
   const energi = underhallMJ + hingstMJ + arbetsMJ + kylaMJ
@@ -197,27 +198,27 @@ export function beraknaBehov(p: Hastprofil): Behovsresultat {
   const hartArbete = arbetsProcent >= 75
 
   const behov: Behov = {
-    energi: { min: energi, kalla: 'SLU tabell 3, 9–11 och kyla' },
-    smbRp: { min: smbRp, kalla: 'SLU: 6 g smb rp/MJ' },
-    ca: { min: m.ca * per100, kalla: `SLU tabell 15, ${m.rad}` },
-    p: { min: m.p * per100, kalla: `SLU tabell 15, ${m.rad}` },
-    mg: { min: m.mg * per100, kalla: `SLU tabell 15, ${m.rad}` },
-    na: { min: m.nacl * NA_PER_NACL * per100, kalla: `SLU tabell 15 (NaCl), ${m.rad}` },
+    energi: { min: energi, kalla: { code: 'source.energy', params: {} } },
+    smbRp: { min: smbRp, kalla: { code: 'source.proteinPerMJ', params: {} } },
+    ca: { min: m.ca * per100, kalla: { code: 'source.macroMinerals', params: { level: m.rad } } },
+    p: { min: m.p * per100, kalla: { code: 'source.macroMinerals', params: { level: m.rad } } },
+    mg: { min: m.mg * per100, kalla: { code: 'source.macroMinerals', params: { level: m.rad } } },
+    na: { min: m.nacl * NA_PER_NACL * per100, kalla: { code: 'source.sodium', params: { level: m.rad } } },
     // Riktlinjer för kraftfodergivan (sid 33): högst 500 g stärkelse per 100 kg och dag.
-    starkelse: { max: 500 * per100, kalla: 'SLU riktlinjer kraftfoder' },
+    starkelse: { max: 500 * per100, kalla: { code: 'source.concentrateGuidelines', params: {} } },
   }
   for (const [k, v] of Object.entries(MIKRO) as [keyof typeof MIKRO, (typeof MIKRO)[keyof typeof MIKRO]][]) {
     behov[k] = {
       min: v[mikroKolumn] * per100,
       max: v.max * per100,
-      kalla: `SLU tabell 17, ${mikroKolumn === 'arbete' ? 'arbete' : 'underhåll'}`,
+      kalla: { code: 'source.microMinerals', params: { level: mikroKolumn } },
     }
   }
   for (const [k, v] of Object.entries(VITAMIN) as [keyof typeof VITAMIN, (typeof VITAMIN)[keyof typeof VITAMIN]][]) {
     behov[k] = {
       min: (hartArbete ? v.hart : v.normal) * per100,
       max: v.max === undefined ? undefined : v.max * per100,
-      kalla: 'SLU tabell 18',
+      kalla: { code: 'source.vitamins', params: {} },
     }
   }
 

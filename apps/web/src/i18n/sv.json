@@ -485,5 +485,65 @@
   },
   "errors": {
     "http": "Fel {{status}}"
+  },
+  "domain": {
+    "action": {
+      "removeConcentrate": "Ta bort {{product}} ({{grams}} g/dag). Grovfodret täcker energibehovet ändå.",
+      "swapCheaper": "Byt {{from}} ({{fromGrams}} g) mot {{toGrams}} g {{to}}: {{reason}}, {{saving}} kr billigare i månaden.",
+      "reduceRoughage": "Minska grovfodret från {{fromKg}} till {{toKg}} kg/dag. Lägre än {{minimumKg}} kg/dag rekommenderas inte.",
+      "increaseRoughage": "Öka grovfodret från {{fromKg}} till {{toKg}} kg/dag.",
+      "roughageLacksEnergy": "Grovfodret räcker inte för energibehovet. Ett energirikare vallfoder eller ett kraftfoder behövs.",
+      "proteinShort": "Proteinet räcker inte. Ett proteinrikare vallfoder eller ett proteinfoder behövs.",
+      "continueSupplement": "Fortsätt med {{grams}} g/dag {{product}}.",
+      "changeSupplement": "Ändra {{product}} från {{fromGrams}} till {{toGrams}} g/dag.",
+      "swapSupplement": "Byt {{from}} ({{fromGrams}} g) mot {{toGrams}} g {{to}}: {{reason}}.",
+      "stopSupplement": "Sluta med {{product}} ({{grams}} g/dag, {{cost}} kr i månaden). Behovet täcks utan den.",
+      "giveSupplement": "Ge {{grams}} g/dag {{product}}."
+    },
+    "swapReason": {
+      "samePackCheaper": "samma foder i billigare förpackning",
+      "sameEnergy": "samma energi, liknande protein, inte mer stärkelse",
+      "coversNeedCheaper": "täcker behovet, {{saving}} kr billigare i månaden",
+      "coversBetter": "täcker det som saknas bättre med ditt grovfoder"
+    },
+    "warning": {
+      "roughageBelowMinimum": "Grovfodergivan ({{kgDm}} kg ts) är under SLU:s minimum på {{minimumKgDm}} kg ts per dag.",
+      "metabolicVet": "Hästen har haft fång, har EMS eller PPID. Stäm av foderstaten med veterinär.",
+      "sugarMissing": "Analysen saknar socker. Vid fång eller EMS bör sockerhalten i grovfodret vara känd.",
+      "sugarHigh": "Grovfodret har {{sugarG}} g socker per kg ts, över ungefär {{limitG}} g som brukar rekommenderas vid fång. Blötläggning sänker sockerhalten.",
+      "ulcerPssmVet": "Magsår och korsförlamning kräver veterinärens bedömning. Planen anpassar fodret men ersätter inte behandling."
+    },
+    "note": {
+      "incompleteDeclaration": "{{product}} har ofullständig näringsdeklaration. Ämnen som inte anges räknas som noll.",
+      "unknownFeed": "\"{{name}}\" finns inte i produktdatabasen och räknas inte med.",
+      "normalConditionWeight": "Behoven räknas på {{kg}} kg, ungefärlig vikt vid normalt hull (SLU tabell 3).",
+      "workFromDiscipline": "Arbetstillägget följer grenen och nivån, som ger mer än de angivna ridpassen (SLU tabell 9–11).",
+      "sweatSalt": "Hästar som svettas mycket förlorar salt: 8–35 g koksalt per 100 kg på arbetsdagar beroende på arbete och väder (SLU tabell 16). Ge extra salt eller elektrolyter de dagarna.",
+      "coldSupplement": "Kylatillägg {{mj}} MJ: {{degreesBelow}} grader under −15 °C, ute utan täcke (SLU sid 15).",
+      "coldWorking": "Kallt väder: arbetande hästar får inget beräknat kylatillägg. Följ hullet (SLU).",
+      "looseHousing": "Lösdrift och mycket hagvistelse kan öka energibehovet. SLU anger ingen siffra, följ hullet.",
+      "weightOutsideBreed": "{{kg}} kg ligger utanför det vanliga intervallet för {{breed}} ({{minKg}}–{{maxKg}} kg, SLU tabell 33). Kontrollera vikten.",
+      "senior": "Äldre häst: energibehovet kan öka runt 20 års ålder. Följ hullet regelbundet (SLU)."
+    },
+    "source": {
+      "energy": "SLU tabell 3, 9–11 och kyla",
+      "proteinPerMJ": "SLU: 6 g smb rp/MJ",
+      "macroMinerals": "SLU tabell 15, {{level}}",
+      "sodium": "SLU tabell 15 (NaCl), {{level}}",
+      "concentrateGuidelines": "SLU riktlinjer kraftfoder",
+      "microMinerals": "SLU tabell 17, {{level}}",
+      "vitamins": "SLU tabell 18"
+    },
+    "sluLevel": {
+      "underhall": "underhåll",
+      "arbete": "arbete",
+      "arbeteUnder30": "arbete <30 %",
+      "arbete30to50": "arbete 30–50 %",
+      "arbete50to75": "arbete 50–75 %",
+      "arbete75to130": "arbete 75–130 %"
+    },
+    "error": {
+      "adultsOnly": "Modellen gäller vuxna hästar ({{minAgeYears}} år och äldre). Unghästar ingår inte i prototypen."
+    }
   }
 }

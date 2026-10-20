@@ -5,6 +5,7 @@ import { kostnadPerManad } from '@fodr/domain/intake'
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
 import { enhet, kr, tal } from '../format'
+import { domainText } from '../i18n/domain'
 import { Ordmarke } from './Varumarke'
 
 /** The figures band. Their sources are listed in landing.figures.sources. */
@@ -287,13 +288,16 @@ function Produktbild({ produkter }: { produkter: Produkt[] }) {
               </div>
               <ol className="pb-atgarder">
                 <li>{t('plan.giveRoughage', { kg: tal(plan.grovfoderKgPerDag, 1), type: t('roughage.hosilage') })}</li>
-                {plan.atgarder.slice(0, 3).map((a) => (
-                  <li key={a.text} className={a.typ}>
-                    {a.text}
-                  </li>
-                ))}
+                {plan.atgarder.slice(0, 3).map((a) => {
+                  const text = domainText(a)
+                  return (
+                    <li key={text} className={a.typ}>
+                      {text}
+                    </li>
+                  )
+                })}
               </ol>
-              {plan.varningar[0] && <div className="pb-callout">{plan.varningar[0]}</div>}
+              {plan.varningar[0] && <div className="pb-callout">{domainText(plan.varningar[0])}</div>}
             </div>
           </div>
         </div>
