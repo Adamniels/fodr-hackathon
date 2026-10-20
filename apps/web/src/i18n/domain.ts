@@ -1,7 +1,7 @@
 import type { ParseKeys } from 'i18next'
 import type { DomanMeddelande } from '@fodr/domain/meddelanden'
 import { hittaRas } from '@fodr/domain/raser'
-import { tal } from '../format'
+import { kr, tal } from '../format'
 import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
@@ -11,14 +11,8 @@ type Kod = DomanMeddelande['code']
 type Params<C extends Kod> = Extract<DomanMeddelande, { code: C }>['params']
 type Formatter<C extends Kod> = (params: Params<C>) => Record<string, string>
 
-/**
- * A number the engine used to interpolate unformatted ("1000 g", "545.5 kg"). Kept as it was so that moving to codes
- * changes no text (#11); a follow-up fix formats these with tal() and then removes this function.
- */
-const oformaterat = (n: number): string => String(n)
-
-/** Whole kronor as the engine wrote them: rounded, digits grouped, " kr" added by the catalogue. */
-const kronor = (n: number): string => tal(Math.round(n), 0)
+/** Grams per day, whole as in the shopping list; a dose typed with a decimal rounds. */
+const gram = (n: number): string => tal(n, 0)
 
 const sluNiva = (level: Params<'source.sodium'>['level']) => i18n.t(`domain.sluLevel.${level}`)
 
@@ -27,58 +21,51 @@ const tom = () => ({})
 const FORMAT: { [C in Kod]: Formatter<C> } = {
   'swapReason.samePackCheaper': tom,
   'swapReason.sameEnergy': tom,
-  'swapReason.coversNeedCheaper': (p) => ({ saving: kronor(p.savingKr) }),
+  'swapReason.coversNeedCheaper': (p) => ({ saving: kr(p.savingKr) }),
   'swapReason.coversBetter': tom,
-  'action.removeConcentrate': (p) => ({ product: p.product, grams: oformaterat(p.grams) }),
+  'action.removeConcentrate': (p) => ({ product: p.product, grams: gram(p.grams) }),
   'action.swapCheaper': (p) => ({
     from: p.from,
-    fromGrams: oformaterat(p.fromGrams),
+    fromGrams: gram(p.fromGrams),
     to: p.to,
-    toGrams: oformaterat(p.toGrams),
+    toGrams: gram(p.toGrams),
     reason: domainText(p.reason),
-    saving: kronor(p.savingKr),
+    saving: kr(p.savingKr),
   }),
   'action.reduceRoughage': (p) => ({ fromKg: tal(p.fromKg, 1), toKg: tal(p.toKg, 1), minimumKg: tal(p.minimumKg, 1) }),
   'action.increaseRoughage': (p) => ({ fromKg: tal(p.fromKg, 1), toKg: tal(p.toKg, 1) }),
   'action.roughageLacksEnergy': tom,
   'action.proteinShort': tom,
-  'action.continueSupplement': (p) => ({ product: p.product, grams: oformaterat(p.grams) }),
-  'action.changeSupplement': (p) => ({
-    product: p.product,
-    fromGrams: oformaterat(p.fromGrams),
-    toGrams: oformaterat(p.toGrams),
-  }),
+  'action.continueSupplement': (p) => ({ product: p.product, grams: gram(p.grams) }),
+  'action.changeSupplement': (p) => ({ product: p.product, fromGrams: gram(p.fromGrams), toGrams: gram(p.toGrams) }),
   'action.swapSupplement': (p) => ({
     from: p.from,
-    fromGrams: oformaterat(p.fromGrams),
+    fromGrams: gram(p.fromGrams),
     to: p.to,
-    toGrams: oformaterat(p.toGrams),
+    toGrams: gram(p.toGrams),
     reason: domainText(p.reason),
   }),
-  'action.stopSupplement': (p) => ({ product: p.product, grams: oformaterat(p.grams), cost: kronor(p.costKr) }),
-  'action.giveSupplement': (p) => ({ product: p.product, grams: oformaterat(p.grams) }),
+  'action.stopSupplement': (p) => ({ product: p.product, grams: gram(p.grams), cost: kr(p.costKr) }),
+  'action.giveSupplement': (p) => ({ product: p.product, grams: gram(p.grams) }),
   'warning.roughageBelowMinimum': (p) => ({ kgDm: tal(p.kgDm, 1), minimumKgDm: tal(p.minimumKgDm, 1) }),
   'warning.metabolicVet': tom,
   'warning.sugarMissing': tom,
-  'warning.sugarHigh': (p) => ({ sugarG: tal(p.sugarG, 1), limitG: oformaterat(p.limitG) }),
+  'warning.sugarHigh': (p) => ({ sugarG: tal(p.sugarG, 1), limitG: tal(p.limitG, 0) }),
   'warning.ulcerPssmVet': tom,
   'note.incompleteDeclaration': (p) => ({ product: p.product }),
   'note.unknownFeed': (p) => ({ name: p.name }),
-  'note.normalConditionWeight': (p) => ({ kg: oformaterat(Math.round(p.kg)) }),
+  'note.normalConditionWeight': (p) => ({ kg: tal(p.kg, 0) }),
   'note.workFromDiscipline': tom,
   'note.sweatSalt': tom,
-  'note.coldSupplement': (p) => ({
-    mj: oformaterat(Math.round(p.mj * 10) / 10),
-    degreesBelow: oformaterat(p.degreesBelow),
-  }),
+  'note.coldSupplement': (p) => ({ mj: tal(p.mj, 1), degreesBelow: tal(p.degreesBelow, 1) }),
   'note.coldWorking': tom,
   'note.looseHousing': tom,
   'note.weightOutsideBreed': (p) => ({
-    kg: oformaterat(p.kg),
+    kg: tal(p.kg, 1),
     // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of raser.ts.
     breed: hittaRas(p.breedId)?.namn.toLowerCase() ?? p.breedId,
-    minKg: oformaterat(p.minKg),
-    maxKg: oformaterat(p.maxKg),
+    minKg: tal(p.minKg, 0),
+    maxKg: tal(p.maxKg, 0),
   }),
   'note.senior': tom,
   'source.energy': tom,
@@ -88,7 +75,7 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'source.concentrateGuidelines': tom,
   'source.microMinerals': (p) => ({ level: sluNiva(p.level) }),
   'source.vitamins': tom,
-  'error.adultsOnly': (p) => ({ minAgeYears: oformaterat(p.minAgeYears) }),
+  'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */

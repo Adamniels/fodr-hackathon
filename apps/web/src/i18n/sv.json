@@ -489,7 +489,7 @@
   "domain": {
     "action": {
       "removeConcentrate": "Ta bort {{product}} ({{grams}} g/dag). Grovfodret täcker energibehovet ändå.",
-      "swapCheaper": "Byt {{from}} ({{fromGrams}} g) mot {{toGrams}} g {{to}}: {{reason}}, {{saving}} kr billigare i månaden.",
+      "swapCheaper": "Byt {{from}} ({{fromGrams}} g) mot {{toGrams}} g {{to}}: {{reason}}, {{saving}} billigare i månaden.",
       "reduceRoughage": "Minska grovfodret från {{fromKg}} till {{toKg}} kg/dag. Lägre än {{minimumKg}} kg/dag rekommenderas inte.",
       "increaseRoughage": "Öka grovfodret från {{fromKg}} till {{toKg}} kg/dag.",
       "roughageLacksEnergy": "Grovfodret räcker inte för energibehovet. Ett energirikare vallfoder eller ett kraftfoder behövs.",
@@ -497,13 +497,13 @@
       "continueSupplement": "Fortsätt med {{grams}} g/dag {{product}}.",
       "changeSupplement": "Ändra {{product}} från {{fromGrams}} till {{toGrams}} g/dag.",
       "swapSupplement": "Byt {{from}} ({{fromGrams}} g) mot {{toGrams}} g {{to}}: {{reason}}.",
-      "stopSupplement": "Sluta med {{product}} ({{grams}} g/dag, {{cost}} kr i månaden). Behovet täcks utan den.",
+      "stopSupplement": "Sluta med {{product}} ({{grams}} g/dag, {{cost}} i månaden). Behovet täcks utan den.",
       "giveSupplement": "Ge {{grams}} g/dag {{product}}."
     },
     "swapReason": {
       "samePackCheaper": "samma foder i billigare förpackning",
       "sameEnergy": "samma energi, liknande protein, inte mer stärkelse",
-      "coversNeedCheaper": "täcker behovet, {{saving}} kr billigare i månaden",
+      "coversNeedCheaper": "täcker behovet, {{saving}} billigare i månaden",
       "coversBetter": "täcker det som saknas bättre med ditt grovfoder"
     },
     "warning": {
