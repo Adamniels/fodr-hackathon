@@ -4,7 +4,7 @@
 // Givan räknas om så att hästen får lika mycket energi som i dag.
 
 import { skalMotProdukt } from './kanslighet'
-import type { Byteskal } from './meddelanden'
+import type { Byteskal, LiknandeSkal } from './meddelanden'
 import { kostnadPerManad, type Foderpost } from './intake'
 import type { Halsa, Produkt } from './types'
 
@@ -69,10 +69,14 @@ function sammaEnergi(fran: Foderpost, till: Produkt): number {
 }
 
 /** Billigaste likvärdiga byte för ett foder, om det finns ett som sparar tillräckligt. */
-export function hittaBilligareLiknande(fran: Foderpost, produkter: Produkt[], halsa: Halsa): Byte | null {
+export function hittaBilligareLiknande(
+  fran: Foderpost,
+  produkter: Produkt[],
+  halsa: Halsa,
+): (Byte & { skal: LiknandeSkal }) | null {
   if (!LIKNANDE_KATEGORIER.includes(fran.produkt.kategori)) return null
   const kostnadFore = kostnadPerManad(fran.produkt, fran.gramPerDag)
-  let basta: Byte | null = null
+  let basta: (Byte & { skal: LiknandeSkal }) | null = null
   for (const kandidat of produkter) {
     if (!likvardig(fran.produkt, kandidat, halsa)) continue
     const till: Foderpost = { produkt: kandidat, gramPerDag: sammaEnergi(fran, kandidat) }
@@ -93,7 +97,7 @@ export function hittaBilligareLiknande(fran: Foderpost, produkter: Produkt[], ha
   return basta
 }
 
-function skalText(fran: Produkt, till: Produkt): Byteskal {
+function skalText(fran: Produkt, till: Produkt): LiknandeSkal {
   const bas = (namn: string) => namn.replace(/\s*[\d,]+\s*(kg|l)\b.*$/i, '').trim()
   if (bas(fran.namn) === bas(till.namn)) return { code: 'swapReason.samePackCheaper', params: {} }
   return { code: 'swapReason.sameEnergy', params: {} }

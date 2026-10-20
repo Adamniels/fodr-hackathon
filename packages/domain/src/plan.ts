@@ -6,7 +6,7 @@ import { bedomGrovfoder, type Kvalitetsflagga } from './kvalitet'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './kanslighet'
 import { hittaBilligareLiknande, type Byte } from './byten'
 import { skapaInjustering, type Injustering } from './injustering'
-import type { AtgardMeddelande, Byteskal, Kallhanvisning, Notering, Varning } from './meddelanden'
+import type { AtgardMeddelande, Kallhanvisning, Notering, UrvalsSkal, Varning } from './meddelanden'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -25,8 +25,27 @@ export interface Balansrad {
 
 export type AtgardTyp = 'ta_bort' | 'byt' | 'andra_grovfoder' | 'lagg_till_kraftfoder' | 'protein' | 'tillskott'
 
-/** An action in the plan: what to change, as a message, and its kind for the UI. */
-export type Atgard = AtgardMeddelande & { typ: AtgardTyp }
+/** The kind of each action, which the UI shows. */
+interface AtgardTypPerKod {
+  'action.removeConcentrate': 'ta_bort'
+  'action.swapCheaper': 'byt'
+  'action.reduceRoughage': 'andra_grovfoder'
+  'action.increaseRoughage': 'andra_grovfoder'
+  'action.roughageLacksEnergy': 'lagg_till_kraftfoder'
+  'action.proteinShort': 'protein'
+  'action.continueSupplement': 'tillskott'
+  'action.changeSupplement': 'tillskott'
+  'action.swapSupplement': 'byt'
+  'action.stopSupplement': 'ta_bort'
+  'action.giveSupplement': 'tillskott'
+}
+
+type AtgardKod = AtgardMeddelande['code']
+
+/** An action in the plan: what to change, as a message, with the kind that belongs to its code. */
+export type Atgard = {
+  [C in AtgardKod]: Extract<AtgardMeddelande, { code: C }> & { typ: AtgardTypPerKod[C] }
+}[AtgardKod]
 
 export interface Plan {
   behov: Behovsresultat
@@ -267,7 +286,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     if (ersattare) {
       hanterade.add(ersattare.produkt.id)
       const efter = kostnadPerManad(ersattare.produkt, ersattare.gramPerDag)
-      const skal: Byteskal =
+      const skal: UrvalsSkal =
         efter < fore - 1
           ? { code: 'swapReason.coversNeedCheaper', params: { savingKr: fore - efter } }
           : { code: 'swapReason.coversBetter', params: {} }

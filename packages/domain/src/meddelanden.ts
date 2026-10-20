@@ -8,18 +8,21 @@ export interface Meddelande<C extends string, P extends object = Record<string, 
   params: P
 }
 
+/** Why today's concentrate is swapped for a similar, cheaper one (byten.ts). */
+export type LiknandeSkal = Meddelande<'swapReason.samePackCheaper'> | Meddelande<'swapReason.sameEnergy'>
+
+/** Why today's mineral feed or salt is swapped for the one the selection chose (plan.ts). */
+export type UrvalsSkal =
+  Meddelande<'swapReason.coversNeedCheaper', { savingKr: number }> | Meddelande<'swapReason.coversBetter'>
+
 /** Why a feed is swapped for another. */
-export type Byteskal =
-  | Meddelande<'swapReason.samePackCheaper'>
-  | Meddelande<'swapReason.sameEnergy'>
-  | Meddelande<'swapReason.coversNeedCheaper', { savingKr: number }>
-  | Meddelande<'swapReason.coversBetter'>
+export type Byteskal = LiknandeSkal | UrvalsSkal
 
 export type AtgardMeddelande =
   | Meddelande<'action.removeConcentrate', { product: string; grams: number }>
   | Meddelande<
       'action.swapCheaper',
-      { from: string; fromGrams: number; to: string; toGrams: number; reason: Byteskal; savingKr: number }
+      { from: string; fromGrams: number; to: string; toGrams: number; reason: LiknandeSkal; savingKr: number }
     >
   | Meddelande<'action.reduceRoughage', { fromKg: number; toKg: number; minimumKg: number }>
   | Meddelande<'action.increaseRoughage', { fromKg: number; toKg: number }>
@@ -29,7 +32,7 @@ export type AtgardMeddelande =
   | Meddelande<'action.changeSupplement', { product: string; fromGrams: number; toGrams: number }>
   | Meddelande<
       'action.swapSupplement',
-      { from: string; fromGrams: number; to: string; toGrams: number; reason: Byteskal }
+      { from: string; fromGrams: number; to: string; toGrams: number; reason: UrvalsSkal }
     >
   | Meddelande<'action.stopSupplement', { product: string; grams: number; costKr: number }>
   | Meddelande<'action.giveSupplement', { product: string; grams: number }>

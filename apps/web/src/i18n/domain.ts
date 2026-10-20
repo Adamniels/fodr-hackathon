@@ -1,3 +1,4 @@
+import type { ParseKeys } from 'i18next'
 import type { DomanMeddelande } from '@fodr/domain/meddelanden'
 import { hittaRas } from '@fodr/domain/raser'
 import { tal } from '../format'
@@ -93,7 +94,15 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */
 export const DOMAIN_CODES = Object.keys(FORMAT) as Kod[]
 
+// A code without a catalogue entry is a compile error here (and fails the unit test at run time).
+type SaknadeNycklar = Exclude<`domain.${Kod}`, ParseKeys>
+const allaNycklarFinns: [SaknadeNycklar] extends [never] ? true : SaknadeNycklar = true
+void allaNycklarFinns
+
 // The catalogue's typed t() checks each key's own placeholders, which a union of codes cannot satisfy.
+// i18next substitutes placeholders one after another in the growing string, so a param value containing "{{x}}"
+// would be filled by a later placeholder x. Params are product names from the product data and catalogue text
+// today; strip "{{" from any user-entered value before it reaches a template with several placeholders.
 const t = i18n.t as (key: string, params: Record<string, string>) => string
 
 /** The text of an engine message in the active language. */
