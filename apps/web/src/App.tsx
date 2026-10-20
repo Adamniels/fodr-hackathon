@@ -10,7 +10,7 @@ import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/raser'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
-import { hullText, tal } from './format'
+import { formatDate, hullText, tal } from './format'
 import { domainText } from './i18n/domain'
 import { Login } from './components/Login'
 import { Startsida } from './components/Startsida'
@@ -139,7 +139,7 @@ function Arbetsyta({
   const ras = hast ? hittaRas(hast.ras) : undefined
   const analysText = (a: Grovfoderanalys) => {
     const lab = a.labb ?? t('app.properties.analysisUploaded')
-    return a.provdatum ? t('app.properties.analysisSampled', { lab, date: a.provdatum }) : lab
+    return a.provdatum ? t('app.properties.analysisSampled', { lab, date: formatDate(a.provdatum) }) : lab
   }
   const initial = (h?: Hastprofil) => (h?.namn || '?').slice(0, 1).toUpperCase()
 

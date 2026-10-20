@@ -44,3 +44,18 @@ test('AI journal analysis shows the vet flag', async ({ page, ai }) => {
   expect(dates).toEqual([...dates].sort())
   expect(dates).toHaveLength(3)
 })
+
+test.describe('in a time zone behind UTC', () => {
+  test.use({ timezoneId: 'America/New_York' })
+
+  test('journal dates show the stored calendar day', async ({ page }) => {
+    await enterDemo(page)
+    await goToStep(page, 'Journal')
+    const entry = page.getByRole('listitem').filter({ hasText: 'Startar bantning' })
+    await expect(entry).toContainText('2026-08-31')
+
+    await page.getByRole('button', { name: 'Analysera journalen' }).click()
+    const pattern = page.getByRole('listitem').filter({ hasText: 'Lös mage efter bytet' })
+    await expect(pattern).toContainText('2026-09-28')
+  })
+})
