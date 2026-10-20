@@ -123,7 +123,7 @@ const FALL: [DomanMeddelande, string][] = [
   ],
   [
     { code: 'note.normalConditionWeight', params: { kg: 1012.4 } },
-    'Behoven räknas på 1\u00a0012 kg, ungefärlig vikt vid normalt hull (SLU tabell 3).',
+    'Behoven räknas på 1\u00a0012,4 kg, ungefärlig vikt vid normalt hull (SLU tabell 3).',
   ],
   [
     { code: 'note.workFromDiscipline', params: {} },

@@ -54,7 +54,8 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'warning.ulcerPssmVet': tom,
   'note.incompleteDeclaration': (p) => ({ product: p.product }),
   'note.unknownFeed': (p) => ({ name: p.name }),
-  'note.normalConditionWeight': (p) => ({ kg: tal(p.kg, 0) }),
+  // One decimal, like the requirement weight in the plan basis line on the same screen.
+  'note.normalConditionWeight': (p) => ({ kg: tal(p.kg, 1) }),
   'note.workFromDiscipline': tom,
   'note.sweatSalt': tom,
   'note.coldSupplement': (p) => ({ mj: tal(p.mj, 1), degreesBelow: tal(p.degreesBelow, 1) }),
