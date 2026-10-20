@@ -89,6 +89,8 @@ describe('formatDate', () => {
 
   it('shows the stored calendar day in a time zone behind UTC', () => {
     vi.stubEnv('TZ', 'America/New_York')
+    // The stub only reaches Intl in a forked worker; under the threads pool it is ignored and this test proves nothing.
+    expect(new Date(Date.UTC(2026, 5, 5)).getDate()).toBe(4)
     expect(formatDate('2026-06-05')).toBe('2026-06-05')
     expect(formatDate('2026-01-01')).toBe('2026-01-01')
   })
