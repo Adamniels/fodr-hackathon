@@ -10,6 +10,9 @@ test('horse properties show decimals with a comma', async ({ page }) => {
 
   await expect(page.getByRole('definition').filter({ hasText: 'per dag' })).toHaveText('8,5 kg hösilage per dag')
   await expect(page.getByRole('definition').filter({ hasText: /^545,5 kg$/ })).toBeVisible()
+
+  await goToStep(page, 'Journal')
+  await expect(page.getByLabel('Vikt (kg)')).toHaveAttribute('placeholder', '545,5')
 })
 
 test('the shopping list and the saved plan format kilograms and grams', async ({ page }) => {
@@ -47,7 +50,7 @@ test('the landing page shows its figures formatted', async ({ page }) => {
   await expect(figures).toContainText(/355\s500/)
   await expect(figures).toContainText(/55\s%/)
   await expect(figures).toContainText(/600–1\s800\skr/)
-  for (const value of [/39,7\s%/, /10,2\sMJ/, /104\sg/, /61\sg/]) {
-    await expect(page.getByText(value)).toBeVisible()
+  for (const value of [/39,7\s%/, /10,2\sMJ/, /104\sg/, /61\sg/, 'saknas']) {
+    await expect(page.getByText(value, { exact: true })).toBeVisible()
   }
 })
