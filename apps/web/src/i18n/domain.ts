@@ -134,7 +134,8 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'sensitivity.teeth': tom,
   'sensitivity.proteinExcess': (p) => ({ percent: tal(p.percent, 0) }),
   'sensitivity.avoidedIngredients': (p) => ({ ingredients: lista(p.ingredients) }),
-  // Up to two decimals, like the weekly rate in the trend chip on the same screen (JournalStep).
+  // Up to two decimals, like the weekly rate in the trend chip on the same screen (journal.trend.weightRate in
+  // JournalStep).
   'trend.weightLossFast': (p) => ({ percentPerWeek: tal(p.percentPerWeek, 2) }),
   'trend.conditionRising': tom,
   'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
