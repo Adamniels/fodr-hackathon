@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { beraknaBehov, smbRpFranRaprotein, viktFranBrostomfang } from './slu'
-import { displayName } from './intake'
+import { displayName, roundDose } from './intake'
 import { planFor } from '../test/plan'
 import type { Produkt } from './types'
 
@@ -326,5 +326,30 @@ describe('doser jämförs som de visas: hela gram (#103)', () => {
     )
     expect(omNoll).toEqual([])
     expect(plan.behallnaFoder.map((p) => p.produkt.id)).not.toContain(kraftfoder.id)
+    // Today's cost and the notes are as without the feeds.
+    const utan = planFor(demoHast, analysKomplett, produkter)
+    expect(plan.nulageKostnadPerManad).toBe(utan.nulageKostnadPerManad)
+    expect(plan.noteringar).toEqual(utan.noteringar)
+  })
+
+  it('en dos som visas som 0 ges inte heller', () => {
+    const valda = new Set(planFor(demoHast, analysKomplett, produkter).urval!.poster.map((p) => p.produkt.id))
+    const mineral = produkter.find((p) => p.kategori === 'mineralfoder' && !valda.has(p.id))!
+    const plan = planFor(
+      {
+        ...demoHast,
+        nuvarandeFoder: [...demoHast.nuvarandeFoder, { produktId: mineral.id, namn: '', gramPerDag: 0.04 }],
+      },
+      analysKomplett,
+      produkter,
+    )
+    const omMineral = plan.atgarder.filter((a) => Object.values(a.params).includes(displayName(mineral)))
+    expect(omMineral).toEqual([])
+  })
+
+  it('doser avrundas som de visas: hela gram, en decimal under 1 g', () => {
+    expect([0.04, 0.05, 0.3, 0.6, 0.96, 1, 12.4, 12.5, 1000.4].map(roundDose)).toEqual([
+      0, 0.1, 0.3, 0.6, 1, 1, 12, 13, 1000,
+    ])
   })
 })

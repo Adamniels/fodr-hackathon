@@ -1,6 +1,6 @@
 import { NUTRIENT_KEYS, type NutrientKey } from './nutrients'
 import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
-import { grovfoderIntag, monthlyCost, laggTill, displayName, type Foderpost, type Intag } from './intake'
+import { grovfoderIntag, monthlyCost, laggTill, displayName, roundDose, type Foderpost, type Intag } from './intake'
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import {
@@ -153,8 +153,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   // Nuläge: grovfoder plus allt hästen får i dag.
   const nuvarande: Foderpost[] = []
   for (const f of profil.nuvarandeFoder) {
-    // A feed at 0 g is not given: it gets no action and no cost line (#103).
-    if (f.gramPerDag === 0) continue
+    // A feed whose dose rounds to 0 g is not given: it gets no action and no cost line (#103).
+    if (roundDose(f.gramPerDag) === 0) continue
     const produkt = hittaProdukt(produkter, f.produktId)
     if (produkt) {
       nuvarande.push({ produkt, gramPerDag: f.gramPerDag })
@@ -298,8 +298,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     if (kvar) {
       hanterade.add(kvar.produkt.id)
       atgarder.push(
-        // Compared in whole grams, as shown: 12,4 g against the plan's 12 g continues (#103).
-        Math.round(kvar.gramPerDag) === Math.round(gammal.gramPerDag)
+        // Compared as shown: 12,4 g against the plan's 12 g continues, 0,6 g against 1 g changes (#103).
+        roundDose(kvar.gramPerDag) === roundDose(gammal.gramPerDag)
           ? {
               typ: 'tillskott',
               code: 'action.continueSupplement',

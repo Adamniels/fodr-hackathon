@@ -192,7 +192,7 @@ export function PlanStep({
                     )}{' '}
                     {t('plan.shopping.price', { price: kr(p.produkt.prisKr), kg: tal(p.produkt.forpackningKg) })}
                   </td>
-                  <td className="hoger">{t('units.g', { value: tal(p.gramPerDag, 0) })}</td>
+                  <td className="hoger">{t('units.g', { value: doseGrams(p.gramPerDag) })}</td>
                   <td className="hoger">{kr(monthlyCost(p.produkt, p.gramPerDag))}</td>
                 </tr>
               ))}
@@ -361,10 +361,10 @@ function Balanstabell({ rader }: { rader: Balansrad[] }) {
   )
 }
 
-/** Kompakt underlag till AI-förklaringen. Bara färdiga siffror, inga rådata. */
 /** Grams per day as on the page, for the explanation request (#103). */
 const gPerDay = (g: number) => i18n.t('units.gPerDay', { value: doseGrams(g) })
 
+/** Kompakt underlag till AI-förklaringen. Bara färdiga siffror, inga rådata. */
 function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
   const rad = (r: Balansrad) => ({
     amne: etikett(r.amne),

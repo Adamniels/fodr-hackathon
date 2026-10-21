@@ -1,3 +1,4 @@
+import { roundDose } from '@fodr/domain/intake'
 import { NUTRIENTS, type NutrientKey } from '@fodr/domain/nutrients'
 import i18n, { locale } from './i18n'
 
@@ -54,8 +55,8 @@ export function formatDate(iso: string): string {
 
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
 export const enhet = (k: NutrientKey) => NUTRIENTS[k].unit
-/** A dose in grams per day: whole grams like the shopping list, one decimal below 1 g so it never shows as 0 (#103). */
-export const doseGrams = (g: number) => tal(g, g > 0 && g < 1 ? 1 : 0)
+/** A dose in grams per day, at the engine's precision (roundDose): whole grams, one decimal below 1 g (#103). */
+export const doseGrams = (g: number) => tal(roundDose(g), 1)
 /** The nutrient's name inside a sentence: "Kalcium (Ca)" becomes "kalcium", but "Vitamin E" keeps its letter. */
 export const shortNutrientLabel = (k: NutrientKey) =>
   etikett(k)

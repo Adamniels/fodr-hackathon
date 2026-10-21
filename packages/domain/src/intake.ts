@@ -55,6 +55,12 @@ export function produktBidrag(produkt: Produkt, gramPerDag: number): NutrientVal
   return ut
 }
 
+/**
+ * A dose at the precision the plan works and shows it in: whole grams, one decimal below 1 g (#103). The engine
+ * compares doses this way, and the web shows them this way, so "Fortsätt" and "Ändra" match what the owner reads.
+ */
+export const roundDose = (g: number): number => (g < 1 ? Math.round(g * 10) / 10 : Math.round(g))
+
 export function monthlyCost(produkt: Produkt, gramPerDag: number): number {
   const krPerKg = produkt.prisKr / produkt.forpackningKg
   return ((gramPerDag * 30) / 1000) * krPerKg
