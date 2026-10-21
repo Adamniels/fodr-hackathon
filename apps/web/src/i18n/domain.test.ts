@@ -109,11 +109,11 @@ const FALL: [DomainMessage, string][] = [
   ],
   [
     { code: 'warning.sugarMissing', params: {} },
-    'Analysen saknar socker. Vid fång eller EMS bör sockerhalten i grovfodret vara känd.',
+    'Analysen saknar socker. När hästen behöver lite socker och stärkelse (fång, EMS, PPID eller korsförlamning) bör sockerhalten i grovfodret vara känd.',
   ],
   [
     { code: 'warning.sugarHigh', params: { sugarG: 122.25, limitG: 100 } },
-    'Grovfodret har 122,3 g socker per kg ts, över ungefär 100 g som brukar rekommenderas vid fång. Blötläggning sänker sockerhalten.',
+    'Grovfodret har 122,3 g socker per kg ts, över ungefär 100 g som brukar rekommenderas för hästar som behöver lite socker. Blötläggning sänker sockerhalten.',
   ],
   [
     { code: 'warning.ulcerPssmVet', params: {} },
@@ -260,7 +260,7 @@ const FALL: [DomainMessage, string][] = [
   ],
   [
     { code: 'quality.sugarHigh', params: { sugarG: 150 } },
-    '150 g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar med fång eller EMS.',
+    '150 g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar som behöver lite socker och stärkelse (fång, EMS, PPID eller korsförlamning).',
   ],
   [
     { code: 'quality.seleniumMissing', params: {} },

@@ -518,8 +518,8 @@
     "warning": {
       "roughageBelowMinimum": "Grovfodergivan ({{kgDm}} kg ts) är under SLU:s minimum på {{minimumKgDm}} kg ts per dag.",
       "metabolicVet": "Hästen har haft fång, har EMS eller PPID. Stäm av foderstaten med veterinär.",
-      "sugarMissing": "Analysen saknar socker. Vid fång eller EMS bör sockerhalten i grovfodret vara känd.",
-      "sugarHigh": "Grovfodret har {{sugarG}} g socker per kg ts, över ungefär {{limitG}} g som brukar rekommenderas vid fång. Blötläggning sänker sockerhalten.",
+      "sugarMissing": "Analysen saknar socker. När hästen behöver lite socker och stärkelse (fång, EMS, PPID eller korsförlamning) bör sockerhalten i grovfodret vara känd.",
+      "sugarHigh": "Grovfodret har {{sugarG}} g socker per kg ts, över ungefär {{limitG}} g som brukar rekommenderas för hästar som behöver lite socker. Blötläggning sänker sockerhalten.",
       "ulcerPssmVet": "Magsår och korsförlamning kräver veterinärens bedömning. Planen anpassar fodret men ersätter inte behandling."
     },
     "note": {
@@ -585,7 +585,7 @@
       "soilAsh": "Högt innehåll (aska {{ashG}} g per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
       "soilIron": "Högt innehåll (järn {{ironMg}} mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
       "soilAshIron": "Högt innehåll (aska {{ashG}} g och järn {{ironMg}} mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
-      "sugarHigh": "{{sugarG}} g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar med fång eller EMS.",
+      "sugarHigh": "{{sugarG}} g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar som behöver lite socker och stärkelse (fång, EMS, PPID eller korsförlamning).",
       "seleniumMissing": "Svenska jordar är selenfattiga och tillskott behövs i de allra flesta fall. Planen räknar med ett lågt typvärde."
     },
     "exclusion": {

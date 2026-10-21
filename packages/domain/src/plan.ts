@@ -3,7 +3,13 @@ import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
 import { grovfoderIntag, monthlyCost, laggTill, displayName, type Foderpost, type Intag } from './intake'
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
-import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './sensitivity'
+import {
+  SOCKER_GRANS_G_PER_KG_TS,
+  filtreraProdukter,
+  granskaKansligheter,
+  kraverLagSockerStarkelse,
+  type Kanslighetsrad,
+} from './sensitivity'
 import { hittaBilligareLiknande, type Byte } from './swaps'
 import { skapaInjustering, type Injustering } from './transition'
 import type {
@@ -94,9 +100,6 @@ export type Plan = Plandelar &
 
 const ENERGI_OVER = 1.1
 const ENERGI_UNDER = 0.95
-// ANTAGANDE: vanlig rekommendation för hästar med fång eller EMS är grovfoder med under ca 10 %
-// socker (100 g/kg ts). SLU Rapport 289 anger ingen sockergräns.
-const SOCKER_GRANS_G_PER_KG_TS = 100
 
 export function balans(intag: Intag, behov: Behov, styrande?: NutrientKey[]): Balansrad[] {
   return NUTRIENT_KEYS.map((k) => {
@@ -256,6 +259,9 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const h = profil.halsa
   if (h.fang || h.ems || h.ppid) {
     varningar.push({ code: 'warning.metabolicVet', params: {} })
+  }
+  // One rule for low sugar decides the warnings, the product exclusion and the quality flag (C5).
+  if (kraverLagSockerStarkelse(h)) {
     const socker = analys.perKgTs.socker
     if (socker === undefined) {
       varningar.push({ code: 'warning.sugarMissing', params: {} })

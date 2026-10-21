@@ -240,3 +240,39 @@ describe('när inget tillskott går att lägga till (C3)', () => {
     expect(plan.urval).not.toBeNull()
   })
 })
+
+describe('en regel för lite socker: fång, EMS, PPID och korsförlamning (C5)', () => {
+  const frisk = { fang: false, ems: false, ovrigt: '' }
+  const villkor = [
+    ['fång', { fang: true }],
+    ['EMS', { ems: true }],
+    ['PPID', { ppid: true }],
+    ['korsförlamning', { pssm: true }],
+  ] as const
+  const sockerrik = { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, socker: 150 } }
+  const utanSocker = { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, socker: undefined } }
+  const koder = (p: ReturnType<typeof planFor>) => p.varningar.map((v) => v.code)
+
+  it.each(villkor)('%s: varnar för högt och saknat socker, utan den allmänna kvalitetsflaggan', (_, halsa) => {
+    const hast = { ...demoHast, halsa: { ...frisk, ...halsa } }
+    const hog = planFor(hast, sockerrik, produkter)
+    expect(hog.varningar).toContainEqual({ code: 'warning.sugarHigh', params: { sugarG: 150, limitG: 100 } })
+    expect(hog.grovfoderkvalitet.map((f) => f.text.code)).not.toContain('quality.sugarHigh')
+    expect(koder(planFor(hast, utanSocker, produkter))).toContain('warning.sugarMissing')
+  })
+
+  it('en frisk häst får kvalitetsflaggan i stället för varningarna', () => {
+    const hast = { ...demoHast, halsa: frisk }
+    const plan = planFor(hast, sockerrik, produkter)
+    expect(koder(plan)).not.toContain('warning.sugarHigh')
+    expect(plan.grovfoderkvalitet.map((f) => f.text.code)).toContain('quality.sugarHigh')
+    expect(koder(planFor(hast, utanSocker, produkter))).not.toContain('warning.sugarMissing')
+  })
+
+  it('veterinärvarningen för ämnesomsättning gäller fång, EMS och PPID, inte korsförlamning ensam', () => {
+    for (const [namn, halsa] of villkor) {
+      const plan = planFor({ ...demoHast, halsa: { ...frisk, ...halsa } }, analysKomplett, produkter)
+      expect([namn, koder(plan).includes('warning.metabolicVet')]).toEqual([namn, namn !== 'korsförlamning'])
+    }
+  })
+})
