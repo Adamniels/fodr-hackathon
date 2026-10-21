@@ -1,5 +1,5 @@
 import { NUTRIENT_KEYS, type NutrientKey, type NutrientValues } from './nutrients'
-import { schablonFor } from './forage'
+import { hittaSchablon } from './forage'
 import type { Grovfoderanalys, Kalla, Produkt } from './types'
 
 export interface IntagsVarde {
@@ -27,7 +27,7 @@ export function grovfoderIntag(analys: Grovfoderanalys, kgFoderPerDag: number): 
       intag[k] = { varde: analysVarde * kgTs, kalla: 'analys' }
       continue
     }
-    const s = schablonFor(analys.typ, k)
+    const s = hittaSchablon(analys.typ, k)
     intag[k] = s ? { varde: s.varde * kgTs, kalla: 'schablon', schablonKalla: s.kalla } : { varde: 0, kalla: 'okand' }
   }
   return intag
@@ -55,12 +55,12 @@ export function produktBidrag(produkt: Produkt, gramPerDag: number): NutrientVal
   return ut
 }
 
-export function kostnadPerManad(produkt: Produkt, gramPerDag: number): number {
+export function monthlyCost(produkt: Produkt, gramPerDag: number): number {
   const krPerKg = produkt.prisKr / produkt.forpackningKg
   return ((gramPerDag * 30) / 1000) * krPerKg
 }
 
 /** Produktnamn utan butikens kategoriprefix, t.ex. "Hästfoder Pavo SportsFit 15kg" blir "Pavo SportsFit 15kg". */
-export function visningsnamn(produkt: Produkt): string {
+export function displayName(produkt: Produkt): string {
   return produkt.namn.replace(/^(Hästfoder|Mineralfoder|Fodertillskott|Foderråvara|Kompletteringsfoder)\s+/, '')
 }

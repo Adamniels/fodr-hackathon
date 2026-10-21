@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { beraknaBehov, smbRpFranRaprotein, viktFranBrostomfang } from './slu'
-import { visningsnamn } from './intake'
+import { displayName } from './intake'
 import { skapaPlan } from './plan'
 import type { Produkt } from './types'
 
@@ -112,7 +112,7 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
   it('nya tillskott som kod med produkt och gram', () => {
     const ge = plan.atgarder.filter((a) => a.code === 'action.giveSupplement')
     expect(ge.map((a) => a.params)).toEqual(
-      plan.urval!.poster.map((p) => ({ product: visningsnamn(p.produkt), grams: p.gramPerDag })),
+      plan.urval!.poster.map((p) => ({ product: displayName(p.produkt), grams: p.gramPerDag })),
     )
     expect(ge.every((a) => a.typ === 'tillskott')).toBe(true)
   })
@@ -126,7 +126,7 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
     expect(samma.atgarder).toContainEqual({
       typ: 'tillskott',
       code: 'action.continueSupplement',
-      params: { product: visningsnamn(forsta.produkt), grams: forsta.gramPerDag },
+      params: { product: displayName(forsta.produkt), grams: forsta.gramPerDag },
     })
     const annan = skapaPlan(
       { ...demoHast, nuvarandeFoder: [{ produktId: forsta.produkt.id, namn: '', gramPerDag: forsta.gramPerDag + 7 }] },
@@ -136,7 +136,7 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
     expect(annan.atgarder).toContainEqual({
       typ: 'tillskott',
       code: 'action.changeSupplement',
-      params: { product: visningsnamn(forsta.produkt), fromGrams: forsta.gramPerDag + 7, toGrams: forsta.gramPerDag },
+      params: { product: displayName(forsta.produkt), fromGrams: forsta.gramPerDag + 7, toGrams: forsta.gramPerDag },
     })
   })
   it('okänt foder och ofullständig deklaration som noteringar', () => {

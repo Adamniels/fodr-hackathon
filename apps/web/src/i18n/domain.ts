@@ -1,5 +1,5 @@
 import type { ParseKeys } from 'i18next'
-import type { DomanMeddelande } from '@fodr/domain/messages'
+import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
 import { kr, tal } from '../format'
 import i18n from '.'
@@ -7,8 +7,8 @@ import i18n from '.'
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
 // formatter here that turns its params into strings; the mapped type makes a missing formatter a compile error.
 
-type Kod = DomanMeddelande['code']
-type Params<C extends Kod> = Extract<DomanMeddelande, { code: C }>['params']
+type Kod = DomainMessage['code']
+type Params<C extends Kod> = Extract<DomainMessage, { code: C }>['params']
 type Formatter<C extends Kod> = (params: Params<C>) => Record<string, string>
 
 /** Grams per day, whole as in the shopping list; a dose typed with a decimal rounds. */
@@ -94,7 +94,7 @@ void allaNycklarFinns
 const t = i18n.t as (key: string, params: Record<string, string>) => string
 
 /** The text of an engine message in the active language. */
-export function domainText(meddelande: DomanMeddelande): string {
-  const format = FORMAT[meddelande.code] as (params: DomanMeddelande['params']) => Record<string, string>
+export function domainText(meddelande: DomainMessage): string {
+  const format = FORMAT[meddelande.code] as (params: DomainMessage['params']) => Record<string, string>
   return t(`domain.${meddelande.code}`, format(meddelande.params))
 }

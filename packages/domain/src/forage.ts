@@ -40,6 +40,6 @@ const PER_TYP: Record<Grovfodertyp, Partial<Record<NutrientKey, Schablon>>> = {
   },
 }
 
-export function schablonFor(typ: Grovfodertyp, key: NutrientKey): Schablon | undefined {
+export function hittaSchablon(typ: Grovfodertyp, key: NutrientKey): Schablon | undefined {
   return PER_TYP[typ][key] ?? GEMENSAM[key]
 }

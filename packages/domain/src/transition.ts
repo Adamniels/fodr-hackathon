@@ -3,7 +3,7 @@
 // Mikroberna i grovtarmen behöver tid att anpassa sig; för snabba byten ökar risken för
 // lös avföring, kolik och, hos fångbenägna hästar, fång.
 
-import { visningsnamn, type Foderpost } from './intake'
+import { displayName, type Foderpost } from './intake'
 import type { Bytekanslighet, Halsa } from './types'
 
 export interface Bytestakt {
@@ -61,8 +61,8 @@ export interface Injustering {
 }
 
 // Grovfoder vägs i halva kilo, kraftfoder och tillskott i tiotal gram (femtal under 100 g).
-const avrundaKg = (kg: number) => Math.round(kg * 2) / 2
-const avrundaGram = (g: number, max: number) => (max < 100 ? Math.round(g / 5) * 5 : Math.round(g / 10) * 10)
+const roundKg = (kg: number) => Math.round(kg * 2) / 2
+const roundGrams = (g: number, max: number) => (max < 100 ? Math.round(g / 5) * 5 : Math.round(g / 10) * 10)
 // Grovfoderändringar under ett halvt kilo är inget att trappa.
 const MIN_GROVFODER_ANDRING_KG = 0.5
 
@@ -90,8 +90,8 @@ export function skapaInjustering(args: {
   const rader: Injusteringsrad[] = []
   const { grovfoderFranKg: gf, grovfoderTillKg: gt } = args
   if (Math.abs(gt - gf) >= MIN_GROVFODER_ANDRING_KG) {
-    const till = avrundaKg(gt)
-    rader.push({ namn: args.grovfoderNamn, enhet: 'kg', fran: gf, till, perSteg: trappa(gf, till, avrundaKg) })
+    const till = roundKg(gt)
+    rader.push({ namn: args.grovfoderNamn, enhet: 'kg', fran: gf, till, perSteg: trappa(gf, till, roundKg) })
   }
 
   // Samma produkt kan finnas i både dagens och nya fodret; slå ihop på produkt-id.
@@ -111,11 +111,11 @@ export function skapaInjustering(args: {
     const b = till.get(id)?.gramPerDag ?? 0
     if (a === b) continue
     rader.push({
-      namn: visningsnamn(produkt),
+      namn: displayName(produkt),
       enhet: 'g',
       fran: a,
       till: b,
-      perSteg: trappa(a, b, (v) => avrundaGram(v, Math.max(a, b))),
+      perSteg: trappa(a, b, (v) => roundGrams(v, Math.max(a, b))),
     })
   }
 

@@ -3,83 +3,83 @@
 // ids), never text written for a reader.
 
 /** A message code with its parameters. */
-export interface Meddelande<C extends string, P extends object = Record<string, never>> {
+export interface Message<C extends string, P extends object = Record<string, never>> {
   code: C
   params: P
 }
 
 /** Why today's concentrate is swapped for a similar, cheaper one (swaps.ts). */
-export type LiknandeSkal = Meddelande<'swapReason.samePackCheaper'> | Meddelande<'swapReason.sameEnergy'>
+export type LiknandeSkal = Message<'swapReason.samePackCheaper'> | Message<'swapReason.sameEnergy'>
 
 /** Why today's mineral feed or salt is swapped for the one the selection chose (plan.ts). */
 export type UrvalsSkal =
-  Meddelande<'swapReason.coversNeedCheaper', { savingKr: number }> | Meddelande<'swapReason.coversBetter'>
+  Message<'swapReason.coversNeedCheaper', { savingKr: number }> | Message<'swapReason.coversBetter'>
 
 /** Why a feed is swapped for another. */
 export type Byteskal = LiknandeSkal | UrvalsSkal
 
-export type AtgardMeddelande =
-  | Meddelande<'action.removeConcentrate', { product: string; grams: number }>
-  | Meddelande<
+export type ActionMessage =
+  | Message<'action.removeConcentrate', { product: string; grams: number }>
+  | Message<
       'action.swapCheaper',
       { from: string; fromGrams: number; to: string; toGrams: number; reason: LiknandeSkal; savingKr: number }
     >
-  | Meddelande<'action.reduceRoughage', { fromKg: number; toKg: number; minimumKg: number }>
-  | Meddelande<'action.increaseRoughage', { fromKg: number; toKg: number }>
-  | Meddelande<'action.roughageLacksEnergy'>
-  | Meddelande<'action.proteinShort'>
-  | Meddelande<'action.continueSupplement', { product: string; grams: number }>
-  | Meddelande<'action.changeSupplement', { product: string; fromGrams: number; toGrams: number }>
-  | Meddelande<
+  | Message<'action.reduceRoughage', { fromKg: number; toKg: number; minimumKg: number }>
+  | Message<'action.increaseRoughage', { fromKg: number; toKg: number }>
+  | Message<'action.roughageLacksEnergy'>
+  | Message<'action.proteinShort'>
+  | Message<'action.continueSupplement', { product: string; grams: number }>
+  | Message<'action.changeSupplement', { product: string; fromGrams: number; toGrams: number }>
+  | Message<
       'action.swapSupplement',
       { from: string; fromGrams: number; to: string; toGrams: number; reason: UrvalsSkal }
     >
-  | Meddelande<'action.stopSupplement', { product: string; grams: number; costKr: number }>
-  | Meddelande<'action.giveSupplement', { product: string; grams: number }>
+  | Message<'action.stopSupplement', { product: string; grams: number; costKr: number }>
+  | Message<'action.giveSupplement', { product: string; grams: number }>
 
 export type Varning =
-  | Meddelande<'warning.roughageBelowMinimum', { kgDm: number; minimumKgDm: number }>
-  | Meddelande<'warning.metabolicVet'>
-  | Meddelande<'warning.sugarMissing'>
-  | Meddelande<'warning.sugarHigh', { sugarG: number; limitG: number }>
-  | Meddelande<'warning.ulcerPssmVet'>
+  | Message<'warning.roughageBelowMinimum', { kgDm: number; minimumKgDm: number }>
+  | Message<'warning.metabolicVet'>
+  | Message<'warning.sugarMissing'>
+  | Message<'warning.sugarHigh', { sugarG: number; limitG: number }>
+  | Message<'warning.ulcerPssmVet'>
 
 export type Notering =
-  | Meddelande<'note.incompleteDeclaration', { product: string }>
-  | Meddelande<'note.unknownFeed', { name: string }>
-  | Meddelande<'note.normalConditionWeight', { kg: number }>
-  | Meddelande<'note.workFromDiscipline'>
-  | Meddelande<'note.sweatSalt'>
-  | Meddelande<'note.coldSupplement', { mj: number; degreesBelow: number }>
-  | Meddelande<'note.coldWorking'>
-  | Meddelande<'note.looseHousing'>
-  | Meddelande<'note.weightOutsideBreed', { kg: number; breedId: string; minKg: number; maxKg: number }>
-  | Meddelande<'note.senior'>
+  | Message<'note.incompleteDeclaration', { product: string }>
+  | Message<'note.unknownFeed', { name: string }>
+  | Message<'note.normalConditionWeight', { kg: number }>
+  | Message<'note.workFromDiscipline'>
+  | Message<'note.sweatSalt'>
+  | Message<'note.coldSupplement', { mj: number; degreesBelow: number }>
+  | Message<'note.coldWorking'>
+  | Message<'note.looseHousing'>
+  | Message<'note.weightOutsideBreed', { kg: number; breedId: string; minKg: number; maxKg: number }>
+  | Message<'note.senior'>
 
 /** The row of SLU table 15, or the column of table 17, that a requirement comes from. */
 export type SluNiva = 'underhall' | 'arbete' | 'arbeteUnder30' | 'arbete30to50' | 'arbete50to75' | 'arbete75to130'
 
 /** Where a requirement comes from: SLU Rapport 289, as data. */
 export type Kallhanvisning =
-  | Meddelande<'source.energy'>
-  | Meddelande<'source.proteinPerMJ'>
-  | Meddelande<'source.macroMinerals', { level: SluNiva }>
-  | Meddelande<'source.sodium', { level: SluNiva }>
-  | Meddelande<'source.concentrateGuidelines'>
-  | Meddelande<'source.microMinerals', { level: SluNiva }>
-  | Meddelande<'source.vitamins'>
+  | Message<'source.energy'>
+  | Message<'source.proteinPerMJ'>
+  | Message<'source.macroMinerals', { level: SluNiva }>
+  | Message<'source.sodium', { level: SluNiva }>
+  | Message<'source.concentrateGuidelines'>
+  | Message<'source.microMinerals', { level: SluNiva }>
+  | Message<'source.vitamins'>
 
-export type FelMeddelande = Meddelande<'error.adultsOnly', { minAgeYears: number }>
+export type ErrorMessage = Message<'error.adultsOnly', { minAgeYears: number }>
 
-export type DomanMeddelande = Byteskal | AtgardMeddelande | Varning | Notering | Kallhanvisning | FelMeddelande
+export type DomainMessage = Byteskal | ActionMessage | Varning | Notering | Kallhanvisning | ErrorMessage
 
 /** An input the engine cannot calculate for. The message says why, for the web app to render. */
-export class DomanFel extends Error {
-  readonly meddelande: FelMeddelande
+export class DomainError extends Error {
+  readonly meddelande: ErrorMessage
 
-  constructor(meddelande: FelMeddelande) {
+  constructor(meddelande: ErrorMessage) {
     super(meddelande.code)
-    this.name = 'DomanFel'
+    this.name = 'DomainError'
     this.meddelande = meddelande
   }
 }

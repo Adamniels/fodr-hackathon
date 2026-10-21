@@ -1,12 +1,12 @@
 import { NUTRIENT_KEYS, type NutrientKey } from './nutrients'
 import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
-import { grovfoderIntag, kostnadPerManad, laggTill, visningsnamn as namn, type Foderpost, type Intag } from './intake'
+import { grovfoderIntag, monthlyCost, laggTill, displayName as namn, type Foderpost, type Intag } from './intake'
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './sensitivity'
 import { hittaBilligareLiknande, type Byte } from './swaps'
 import { skapaInjustering, type Injustering } from './transition'
-import type { AtgardMeddelande, Kallhanvisning, Notering, UrvalsSkal, Varning } from './messages'
+import type { ActionMessage, Kallhanvisning, Notering, UrvalsSkal, Varning } from './messages'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -26,7 +26,7 @@ export interface Balansrad {
 export type AtgardTyp = 'ta_bort' | 'byt' | 'andra_grovfoder' | 'lagg_till_kraftfoder' | 'protein' | 'tillskott'
 
 /** The kind of each action, which the UI shows. */
-interface AtgardTypPerKod {
+interface ActionTypeByCode {
   'action.removeConcentrate': 'ta_bort'
   'action.swapCheaper': 'byt'
   'action.reduceRoughage': 'andra_grovfoder'
@@ -40,12 +40,12 @@ interface AtgardTypPerKod {
   'action.giveSupplement': 'tillskott'
 }
 
-type AtgardKod = AtgardMeddelande['code']
+type ActionCode = ActionMessage['code']
 
 /** An action in the plan: what to change, as a message, with the kind that belongs to its code. */
 export type Atgard = {
-  [C in AtgardKod]: Extract<AtgardMeddelande, { code: C }> & { typ: AtgardTypPerKod[C] }
-}[AtgardKod]
+  [C in ActionCode]: Extract<ActionMessage, { code: C }> & { typ: ActionTypeByCode[C] }
+}[ActionCode]
 
 export interface Plan {
   behov: Behovsresultat
@@ -134,7 +134,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     } else noteringar.push({ code: 'note.unknownFeed', params: { name: f.namn } })
   }
   const nulageIntag = laggTill(grovfoderIntag(analys, profil.grovfoder.kgPerDag), nuvarande)
-  const nulageKostnad = nuvarande.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
+  const nulageKostnad = nuvarande.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
 
   // Mineralfoder, tillskott och salt väljs om av urvalet. Allt annat behålls tills vidare.
   const ERSATTS = ['mineralfoder', 'tillskott', 'salt']
@@ -282,10 +282,10 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
         !hanterade.has(n.produkt.id) &&
         !ersatta.some((e) => e.produkt.id === n.produkt.id),
     )
-    const fore = kostnadPerManad(gammal.produkt, gammal.gramPerDag)
+    const fore = monthlyCost(gammal.produkt, gammal.gramPerDag)
     if (ersattare) {
       hanterade.add(ersattare.produkt.id)
-      const efter = kostnadPerManad(ersattare.produkt, ersattare.gramPerDag)
+      const efter = monthlyCost(ersattare.produkt, ersattare.gramPerDag)
       const skal: UrvalsSkal =
         efter < fore - 1
           ? { code: 'swapReason.coversNeedCheaper', params: { savingKr: fore - efter } }

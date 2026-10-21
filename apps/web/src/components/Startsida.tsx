@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { analysKomplett, demoHast } from '../data/exempel'
-import { kostnadPerManad } from '@fodr/domain/intake'
+import { monthlyCost } from '@fodr/domain/intake'
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
 import { enhet, kr, tal } from '../format'
@@ -246,7 +246,7 @@ function Produktbild({ produkter }: { produkter: Produkt[] }) {
   }, [produkter])
   if (!plan) return null
   const poster = [...plan.behallnaFoder, ...(plan.urval?.poster ?? [])]
-  const total = poster.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
+  const total = poster.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
 
   return (
     <div className="produktbild" aria-label={t('landing.preview.label')}>
