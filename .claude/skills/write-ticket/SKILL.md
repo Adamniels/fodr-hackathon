@@ -27,13 +27,13 @@ For a bug: `### Problem`, `### Reproduction`, `### Expected`, `### Actual`, `###
 - **Acceptance criteria** have exactly this form, one per checkbox:
   `- [ ] When <situation or action>, <what is observably true>.`
   Example: `- [ ] When a user saves a journal entry with weight 545, the horse profile shows 545 kg.` How it is verified (which tests, test first) is decided at pickup and goes nowhere in the ticket. For a ticket about a test, the situation is the defect: `- [ ] When the .ics dates are shifted by a day, the calendar e2e test fails.`
-- **Evidence** has one line per state the ticket relies on: `Read: <state>: <result> (<command and result, or file:line>)` or `Not verified: <state>: <why>. The owner checks with <command or Settings path>.`
+- **Evidence**: besides any reproduction output, each state the ticket relies on gets one line: `Read: <state>: <result> (<command, or file:line>)` or `Not verified: <state>: <why>. The owner checks with <command or Settings path>.`
 - **Fixed constraints** contain only what is already decided, each with its source (spec section, ADR, or "owner, <date>").
 - **Open questions** hold every undecided choice, including the owner's suggested solution when they said "add X" (record it as "Owner suggests X"), unless the owner states that X is required; then it is a fixed constraint with "owner, <date>" as the source.
 
 ## Reporting state
 
-In Evidence, Problem, Actual and Fixed constraints, state as fact only what you read, with how. If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it. As the bot (Write, not Admin), a 403 or 404 on a settings or admin endpoint means not verified, not "off". Another issue, a comment or the owner's description is not a read. A state you did read is a fact with its command, not a "likely": "likely" is for causes. A conclusion drawn from a read (a 200 here means the setting is on) counts as read only when the rule it rests on was read too, in documentation you opened; otherwise write the read as `Read:` and the conclusion as `Not verified:`. A criterion that depends on a state is never called met or unmet in the ticket. Keep this in step with "Reporting state" in `pick-up-ticket`.
+Anywhere the ticket describes a current state (Goal, Problem, Actual, Evidence, Fixed constraints, Open questions), state as fact only what you read, with how (command and result, or file and line). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot (Write, not Admin), a 403 or 404 on a settings or admin endpoint means not verified, not "off". Another issue or a comment is not a read; the owner's statement of a state he checked is recorded as his, with "owner, <date>" as the source. A state you did read is a fact with its command, not a "likely": "likely" is for causes. A conclusion drawn from a read (a 200 here means the setting is on) counts as read only when the rule it rests on was read too, in documentation you opened; otherwise write the read as `Read:` and the conclusion as `Not verified:`. A criterion that depends on a `Not verified` state is never called met or unmet in the ticket. Keep this in step with "Reporting state" in `pick-up-ticket`.
 
 ## Placement
 
@@ -54,5 +54,5 @@ No agent attribution anywhere in the issue.
 | A new issue for something already in another issue's scope | A proposed comment on that issue |
 | Inventing a label such as `type:test` | The table above; test-only work is `type:chore` |
 | "The cause is X" | "Likely X", and the question under Open questions |
-| "The setting is off (the API returns 404)" / "likely on, as #N says" | `Not verified:` with why and how the owner checks |
+| "The setting is off (the API returns 404)" / "likely on, as #N says" | The 404 as `Read:`, the setting as `Not verified:` with why and how the owner checks |
 | A state you read, written as "likely" or "not yet verified" | `Read:` with the command, in Evidence |

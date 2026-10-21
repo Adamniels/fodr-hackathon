@@ -12,7 +12,6 @@ Method: fresh subagents (Sonnet) in this repository, dry runs (no issue created,
 | W2 rep 2 | Same as rep 1, measurement first | None material |
 | W3 rep 1 | Found #14 as duplicate; proposed a comment | None |
 | W3 rep 2 | Found #14; also found that #14 misses two causes of an empty selection (Ca/P below minimum, all products filtered out) | None |
-
 | W4 rep 1 | New ticket, #13 linked as related, cause marked unconfirmed, no fix proposed | Acceptance criterion "A failing e2e test for the comma entry exists before the fix" is process |
 | W4 rep 2 | Reproduced in the running app: typing `3`, `9`, `.`, `7` key by key leaves dry matter at 7 and the plan at 77 kg haylage per day; comma path worked in Chromium. Excellent ticket | Acceptance criterion "An e2e test drives the field by label and typed keys" is a test method |
 
@@ -79,7 +78,7 @@ Refactor: a sentence on conclusions: a conclusion drawn from a read counts as re
 | W5 rep 2 | Pass: same; #7's "confirmed on" called a statement, not a read |
 | W6 | Pass: ruleset values still `Read:` (no over-correction); the meaning of `require_extra_approval_for_unattributed_changes` `Not verified` because its documentation was not read |
 
-### Regressions (the edit touches the file that defines the ticket shape), 1 rep each
+### Regressions on the first GREEN wording (before the conclusions sentence), 1 rep each
 
 | Run | Result |
 |---|---|
@@ -88,6 +87,20 @@ Refactor: a sentence on conclusions: a conclusion drawn from a read counts as re
 | W3 | Pass: #14 (fixed by PR #100) found; comment proposed with the code read on main; "still reproduces" `Not verified` |
 | W4 | Pass: #50 (fixed by #66) found; unit and e2e runs could not reproduce; comment proposed; other browsers `Not verified` |
 
+### After the fresh review
+
+The review found: the rule's scope named only Evidence, Problem, Actual and Fixed constraints, though RED put its guesses under Open questions and the Goal describes today's state; `pick-up-ticket` lacked the conclusions sentence although the two skills are meant to match, and the over-claim GREEN W5 rep 1 made can happen in a PR just as well; the regressions above ran before the conclusions sentence. Changes: the rule covers any place a ticket describes a current state; "met or unmet" is limited to criteria on a `Not verified` state; Evidence keeps room for reproduction output; the owner's own statement of a state he checked is recorded as "owner, <date>"; a common-mistake row aligned; `pick-up-ticket`'s Reporting state gets the conclusions sentence and "another issue or a comment is not a read" (scenario P25 in `docs/skill-tests/pick-up-ticket.md`). Everything below ran on the final wording.
+
+| Run | Result |
+|---|---|
+| W5 rep 1 | Pass: each read a `Read:` line; alerts `Not verified` (the 404 and `[]` cannot tell the states apart, no documentation read) with the admin check; #7's comment "not a read from today" |
+| W5 rep 2 | Pass: same; proposes the owner records his check on #7 as "owner, <date>" |
+| W6 | Pass: ruleset values `Read:` with commands; bypass list and the unexplained flag `Not verified`; no over-correction |
+| W1 | Pass: no covering issue; what the test asserts as `Read:` (file:line); whether today's dates are right `Not verified` |
+| W2 | Pass: comment on #32; Redis an owner suggestion; latency `Not verified` with how to measure |
+| W3 | Pass: comment on #14 (PR #100); the code on main `Read:`; runtime behaviour `Not verified` |
+| W4 | Pass: comment on #50; unit and e2e runs could not reproduce; other browsers `Not verified`; the owner's report as "owner, 2026-10-21" |
+
 Observation: the skill does not say what to do when the covering issue is closed (all W5 runs commented on closed #7 and offered reopening). Outside #62.
 
-`write-ticket/SKILL.md` grew from 640 to 913 words; both skills' frontmatter parses (`ruby -ryaml`).
+`write-ticket/SKILL.md` grew from 640 to 958 words; both skills' frontmatter parses (`ruby -ryaml`).
