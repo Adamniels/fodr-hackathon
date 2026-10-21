@@ -10,14 +10,18 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w apps/web --",
-    "build": "npm run build -w apps/web --",
+    "dev": "npm run dev:api & npm run dev:web --",
+    "dev:web": "npm run dev -w apps/web --",
+    "dev:api": "npm run dev -w apps/api",
+    "build": "npm run build -w apps/web && npm run build -w apps/api",
     "lint": "npm run lint --workspaces --",
     "typecheck": "npm run typecheck --workspaces --",
     "test": "npm run test --workspaces --",
+    "test:integration": "npm run test:integration -w apps/api",
     "test:e2e": "npm run test:e2e -w apps/web --",
     "test:scripts": "status=0; for t in scripts/agent/*.test.sh; do echo \"== $t\"; bash \"$t\" || status=1; done; exit $status",
     "format": "npm run format --workspaces --",
-    "format:check": "npm run format:check --workspaces --"
+    "format:check": "npm run format:check --workspaces --",
+    "db:migrate": "npm run db:migrate -w apps/api"
   }
 }

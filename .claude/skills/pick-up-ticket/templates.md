@@ -43,7 +43,7 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 <tick only what is true; give the reason for each unticked item under Verification>
 - [ ] New or changed behaviour has a test that failed first
-- [ ] `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e` pass locally
+- [ ] `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e` pass locally
 - [ ] Refactoring and behaviour changes are not mixed in this PR
 - [ ] Docs (spec, ADRs, glossary, README) updated if behaviour or conventions changed
 
