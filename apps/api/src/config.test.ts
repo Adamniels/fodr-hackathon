@@ -7,15 +7,33 @@ describe('parseConfig', () => {
   it('reads a valid environment and fills the defaults', () => {
     expect(parseConfig(VALID)).toEqual({
       ok: true,
-      config: { databaseUrl: VALID.DATABASE_URL, port: 3000, logLevel: 'info', webDistDir: undefined },
+      config: {
+        databaseUrl: VALID.DATABASE_URL,
+        port: 3000,
+        logLevel: 'info',
+        webDistDir: undefined,
+        anthropicApiKey: undefined,
+      },
     })
   })
 
   it('reads every variable when set', () => {
-    const result = parseConfig({ ...VALID, PORT: '8080', LOG_LEVEL: 'debug', WEB_DIST_DIR: '/app/web' })
+    const result = parseConfig({
+      ...VALID,
+      PORT: '8080',
+      LOG_LEVEL: 'debug',
+      WEB_DIST_DIR: '/app/web',
+      ANTHROPIC_API_KEY: 'sk-ant-test',
+    })
     expect(result).toEqual({
       ok: true,
-      config: { databaseUrl: VALID.DATABASE_URL, port: 8080, logLevel: 'debug', webDistDir: '/app/web' },
+      config: {
+        databaseUrl: VALID.DATABASE_URL,
+        port: 8080,
+        logLevel: 'debug',
+        webDistDir: '/app/web',
+        anthropicApiKey: 'sk-ant-test',
+      },
     })
   })
 

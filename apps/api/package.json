@@ -20,6 +20,8 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@fodr/domain": "*",
     "@hono/node-server": "2.1.3",
     "drizzle-orm": "0.45.3",
     "hono": "4.13.13",

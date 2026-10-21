@@ -19,6 +19,8 @@ const EnvSchema = z.object({
   // The built web app (apps/web/dist). When set, the API serves it on the same origin; unset in development, where
   // Vite serves the web app and proxies /api/v1 here.
   WEB_DIST_DIR: z.string().optional(),
+  // Optional: without it the AI routes answer with the missing-key error and everything else works.
+  ANTHROPIC_API_KEY: z.string().optional(),
 })
 
 export interface Config {
@@ -26,6 +28,7 @@ export interface Config {
   port: number
   logLevel: (typeof LOG_LEVELS)[number]
   webDistDir: string | undefined
+  anthropicApiKey: string | undefined
 }
 
 export type ConfigResult = { ok: true; config: Config } | { ok: false; message: string }
@@ -38,6 +41,15 @@ export function parseConfig(env: Record<string, string | undefined>): ConfigResu
     const lines = result.error.issues.map((issue) => `  ${issue.path.join('.')} ${issue.message}`)
     return { ok: false, message: ['Invalid configuration:', ...lines].join('\n') }
   }
-  const { DATABASE_URL, PORT, LOG_LEVEL, WEB_DIST_DIR } = result.data
-  return { ok: true, config: { databaseUrl: DATABASE_URL, port: PORT, logLevel: LOG_LEVEL, webDistDir: WEB_DIST_DIR } }
+  const { DATABASE_URL, PORT, LOG_LEVEL, WEB_DIST_DIR, ANTHROPIC_API_KEY } = result.data
+  return {
+    ok: true,
+    config: {
+      databaseUrl: DATABASE_URL,
+      port: PORT,
+      logLevel: LOG_LEVEL,
+      webDistDir: WEB_DIST_DIR,
+      anthropicApiKey: ANTHROPIC_API_KEY,
+    },
+  }
 }

@@ -18,7 +18,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 
 | Command | What |
 |---|---|
-| `npm run dev` | The API on :3000 and the Vite dev server on :5173, which proxies `/api/v1` to the API and serves the AI routes under `/api` itself (they need `apps/web/.env`); `dev:api` and `dev:web` start one |
+| `npm run dev` | The API on :3000 and the Vite dev server on :5173, which proxies `/api` to the API (the AI routes need `ANTHROPIC_API_KEY` in the root `.env`); `dev:api` and `dev:web` start one |
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`), no services needed |
 | `npm run test:integration` | API integration tests against the Compose Postgres (`src/**/*.integration.test.ts`, own `fodr_test` database) |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
@@ -34,7 +34,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 - **Vertical slices.** A PR delivers its ticket end to end (data, API, UI, tests), not one layer.
 - **Commits and PR titles** follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`, `ci:`, `style:`).
 - **Language.** Names follow ADR 0016: an identifier is Swedish when its concept is a term in the glossary (domain types, fields, values and functions that compute a domain result: `Hastprofil`, `beraknaBehov`), and English otherwise, even when it handles domain data (`HorseStep`, `loadHorses`, `InputError`); no identifier mixes the two, file names are English, and a new Swedish name adds its glossary row. Contracts keep their names: anything persisted (values, field names, storage keys), the fields and routes between web and server, every field that reaches the model, and i18n keys. Comments, commits, PRs and docs are in English. UI text is Swedish and lives in the i18n catalogue `apps/web/src/i18n/sv.json` (ADR 0014): components render it with `t()` or `<Trans>`, never inline, and numbers, dates and money are formatted with `Intl` for the active locale (`format.ts`). A number reaches `t()` or JSX already formatted, with `formatNumber()` or `formatMoney()`, or `String()` for identifiers such as a status code; the `fodr/no-raw-number-text` lint rule enforces this. A stored date (`YYYY-MM-DD`) reaches the screen through `formatDate()`, which reads it as a local calendar day; no lint rule catches a raw date string. The domain returns message codes with params, not sentences (`packages/domain/src/messages.ts`); the web renders them with `domainText()` from `apps/web/src/i18n/domain.ts`, text under `domain.*` in the catalogue. ESLint rejects inline text in JSX and any string containing å, ä or ö; a Swedish constant without those letters outside JSX is not caught, so keep text out of helpers and constants too.
-- **Never commit secrets.** The Anthropic key lives only in `apps/web/.env`, which is git ignored. Copy `apps/web/.env.example`.
+- **Never commit secrets.** The Anthropic key lives only in the root `.env`, which is git ignored. Copy `.env.example`.
 - Ask before adding dependencies, changing the architecture, or deleting files.
 
 ## Rules for AI agents

@@ -1,6 +1,6 @@
 # The production image (ADR 0005): one Node process serving the API and the built web app on one origin.
 #   docker build -t fodr .
-#   docker run -p 3000:3000 -e DATABASE_URL=postgres://... fodr
+#   docker run -p 3000:3000 -e DATABASE_URL=postgres://... -e ANTHROPIC_API_KEY=... fodr
 # Migrations are applied explicitly before a release, with the same image (ADR 0008):
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/migrate.mjs
 # The tag is the newest Node 24 release at least two weeks old (docs/architecture.md).

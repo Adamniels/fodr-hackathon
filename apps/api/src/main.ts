@@ -1,5 +1,6 @@
 // Starts the API: `npm run dev` in development, `node dist/main.mjs` in the image (Dockerfile).
 import { serve } from '@hono/node-server'
+import { createAnthropicProvider } from './ai/anthropic'
 import { createApp } from './app'
 import { parseConfig } from './config'
 import { createLogger } from './logger'
@@ -11,7 +12,7 @@ if (!result.ok) {
 }
 const { config } = result
 const logger = createLogger(config.logLevel)
-const app = createApp({ config, logger })
+const app = createApp({ config, logger, ai: createAnthropicProvider({ apiKey: config.anthropicApiKey }) })
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
   logger.info({ port: info.port }, 'listening')

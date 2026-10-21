@@ -1,5 +1,5 @@
 // Hästens journal: mätningar, iakttagelser och sparade planer över tid. Trend och påminnelser räknas
-// här utan AI. AI:n läser journalen och letar mönster (server/ai.ts), men ändrar aldrig planen.
+// här utan AI. AI:n läser journalen och letar mönster (apps/api/src/ai/anthropic.ts), men ändrar aldrig planen.
 
 import { monthlyCost, type Foderpost } from './intake'
 import type { Trendvarning } from './messages'

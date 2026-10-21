@@ -3,7 +3,7 @@ import type { NutrientKey, NutrientValues } from './nutrients'
 import { energiHastFranIdisslare, smbRpFranRaprotein } from './slu'
 import type { Grovfoderanalys, Grovfodertyp } from './types'
 
-/** What the AI reads from the report, before SLU conversions. Mirrors the schema in server/ai.ts. */
+/** What the AI reads from the report, before SLU conversions. Mirrors the schema in apps/api/src/ai/anthropic.ts. */
 export interface UtlastAnalys {
   arAnalys: boolean
   typ: Grovfodertyp
