@@ -26,6 +26,7 @@ const CLOCK_PROPERTIES = [
   { object: 'Math', property: 'random', message: CLOCK_MESSAGE },
 ]
 // Shared with every no-restricted-syntax block below: in a flat config, a later block's options replace these.
+// purity.guard.ts checks the base block only; the åäö block spreads the same list, until #95 merges the two blocks.
 const CLOCK_SYNTAX = [
   { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: CLOCK_MESSAGE },
   { selector: "CallExpression[callee.name='Date']", message: CLOCK_MESSAGE },

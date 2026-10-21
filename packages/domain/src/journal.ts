@@ -78,7 +78,7 @@ export function beraknaTrend(poster: Journalpost[], idag: string): Trend {
 
 /**
  * A new journal entry. The caller gives the ID, so the engine reads neither the clock nor a random source (ADR 0004,
- * #80). Entries on the same date are sorted by ID (sorteradePoster), so the web app's IDs keep the order of adding.
+ * #80). Entries on the same date are sorted by ID (sorteradePoster), so the caller's IDs decide their order.
  */
 export function nyPost(id: string, datum: string, falt: Omit<Journalpost, 'id' | 'datum'>): Journalpost {
   return { id, datum, ...falt }
