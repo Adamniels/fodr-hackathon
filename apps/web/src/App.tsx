@@ -45,7 +45,7 @@ export default function App() {
       <>
         <LandingPage
           produkter={produkter}
-          inloggadSom={anvandare?.namn ?? null}
+          loggedInAs={anvandare?.namn ?? null}
           onDemo={() => oppna(anvandare ?? loggaIn(DEMOKONTO.epost))}
           onLogIn={() => setVisaLogin(true)}
         />
@@ -96,7 +96,7 @@ function Workspace({
   const { t } = useTranslation()
   const [hastar, setHastar] = useState<Hastprofil[]>(() => laddaHastar(anvandare.id))
   const [valdId, setValdId] = useState(hastar[0]?.id)
-  const [steg, setSteg] = useState<Step>('hast')
+  const [step, setStep] = useState<Step>('hast')
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
   const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => laddaJournal(anvandare.id))
@@ -126,7 +126,7 @@ function Workspace({
   )
 
   function gaTill(s: Step) {
-    setSteg(s)
+    setStep(s)
     window.scrollTo({ top: 0 })
   }
   const valjHast = (id: string) => {
@@ -269,8 +269,8 @@ function Workspace({
             {STEPS.map((id, i) => (
               <button
                 key={id}
-                className={steg === id ? 'vald' : ''}
-                aria-current={steg === id ? 'page' : undefined}
+                className={step === id ? 'vald' : ''}
+                aria-current={step === id ? 'page' : undefined}
                 disabled={!tillganglig(id)}
                 onClick={() => gaTill(id)}
               >
@@ -281,16 +281,16 @@ function Workspace({
           </nav>
 
           <main className="stegyta">
-            {steg === 'hast' && (
+            {step === 'hast' && (
               <HorseStep
-                vald={hast}
+                selected={hast}
                 produkter={produkter}
                 onChange={uppdateraHast}
                 onNew={laggTillHast}
                 onNext={() => gaTill('analys')}
               />
             )}
-            {steg === 'analys' && hast && (
+            {step === 'analys' && hast && (
               <AnalysisStep
                 hast={hast}
                 analys={analys}
@@ -302,7 +302,7 @@ function Workspace({
                 onNext={() => gaTill('plan')}
               />
             )}
-            {steg === 'plan' &&
+            {step === 'plan' &&
               hast &&
               analys &&
               plan &&
@@ -328,7 +328,7 @@ function Workspace({
                   }}
                 />
               ))}
-            {steg === 'journal' && hast && (
+            {step === 'journal' && hast && (
               <JournalStep
                 hast={hast}
                 poster={journal[hast.id] ?? []}

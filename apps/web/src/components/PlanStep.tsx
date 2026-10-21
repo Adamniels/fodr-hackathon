@@ -32,10 +32,10 @@ export function PlanStep({
   onSaveToJournal: () => void
 }) {
   const { t } = useTranslation()
-  // Förklaringen sparas per häst och underlag. Samma plan visar den sparade texten i stället för
-  // att fråga Claude igen; bara en ändrad plan (eller knappen "Skriv om") ger ett nytt anrop.
-  const forklaringsUnderlag = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
-  const nyckel = useMemo(() => avtryck(JSON.stringify(forklaringsUnderlag)), [forklaringsUnderlag])
+  // The explanation is cached per horse and payload. The same plan shows the cached text instead of
+  // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
+  const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
+  const nyckel = useMemo(() => avtryck(JSON.stringify(payload)), [payload])
   const [forklaring, setForklaring] = useState<string | null>(() => laddaForklaring(hast.id, nyckel))
   const [forklaringFel, setForklaringFel] = useState<string | null>(null)
   const [omgang, setOmgang] = useState(0)
@@ -49,7 +49,7 @@ export function PlanStep({
     }
     let avbruten = false
     setForklaring(null)
-    forklaraPlan(forklaringsUnderlag)
+    forklaraPlan(payload)
       .then((r) => {
         sparaForklaring(hast.id, nyckel, r.text)
         if (!avbruten) setForklaring(r.text)
@@ -58,7 +58,7 @@ export function PlanStep({
     return () => {
       avbruten = true
     }
-  }, [hast.id, nyckel, forklaringsUnderlag, omgang])
+  }, [hast.id, nyckel, payload, omgang])
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
@@ -375,7 +375,7 @@ function BalanceTable({ rader }: { rader: Balansrad[] }) {
 /** Grams per day as on the page, for the explanation request (#103). */
 const gPerDay = (g: number) => i18n.t('units.gPerDay', { value: doseGrams(g) })
 
-/** Kompakt underlag till AI-förklaringen. Bara färdiga siffror, inga rådata. */
+/** Compact payload for the AI explanation. Only finished figures, no raw data. */
 function explanationPayload(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
   const rad = (r: Balansrad) => ({
     amne: nutrientLabel(r.amne),

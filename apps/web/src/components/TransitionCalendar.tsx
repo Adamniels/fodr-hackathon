@@ -38,7 +38,7 @@ export function TransitionCalendar({ injustering, hastNamn }: { injustering: Inj
   /** The roughage by its type from the catalogue, a product by its name. */
   const rowName = (r: Injusteringsrad) => (r.enhet === 'kg' ? t(`roughageTitle.${r.grovfodertyp}`) : r.namn)
 
-  // Kalendern börjar på måndagen i startveckan och slutar på söndagen i sista veckan.
+  // The calendar starts on the Monday of the start week and ends on the Sunday of the last week.
   const celler = useMemo(() => {
     const forsta = addDays(startDatum, -((startDatum.getDay() + 6) % 7))
     const sista = addDays(startDatum, dagar - 1)
@@ -51,7 +51,7 @@ export function TransitionCalendar({ injustering, hastNamn }: { injustering: Inj
       const s = steg.find((x) => x.startDag === dag)
       return { datum, dag, iPerioden: dag >= 1 && dag <= dagar, steg: s, klart: dag === dagar && !s }
     })
-    // startDatum härleds ur start
+    // startDatum is derived from start
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start, dagar, steg])
 

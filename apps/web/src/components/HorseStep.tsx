@@ -23,7 +23,7 @@ import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
-  vald: Hastprofil | undefined
+  selected: Hastprofil | undefined
   produkter: Produkt[]
   onChange: (h: Hastprofil) => void
   onNew: (h: Hastprofil) => void
@@ -42,11 +42,11 @@ const STANDARD_MILJO: Miljo = { hallning: 'box', timmarUtePerDag: 8, klippt: fal
 
 const TYPER = ['lattfodd', 'normalfodd', 'svarfodd'] as const satisfies readonly Hasttyp[]
 
-export function HorseStep({ vald, produkter, onChange, onNew, onNext }: Props) {
+export function HorseStep({ selected, produkter, onChange, onNew, onNext }: Props) {
   const { t } = useTranslation()
-  // Hästlistan ligger i appens sidofält, här visas bara den valda hästens profil.
-  return vald ? (
-    <ProfileForm key={vald.id} hast={vald} produkter={produkter} onChange={onChange} onNext={onNext} />
+  // The horse list lives in the app's sidebar; this shows only the selected horse's profile.
+  return selected ? (
+    <ProfileForm key={selected.id} hast={selected} produkter={produkter} onChange={onChange} onNext={onNext} />
   ) : (
     <section className="kort tomt">
       <h2>{t('horse.welcome.title')}</h2>
@@ -103,7 +103,7 @@ function ProfileForm({
         </Field>
       </div>
 
-      <Field label={t('horse.breed')} hjalp={breedHint(hast, t)}>
+      <Field label={t('horse.breed')} hint={breedHint(hast, t)}>
         <select
           value={hast.ras ?? ''}
           onChange={(e) => {
@@ -120,7 +120,7 @@ function ProfileForm({
         </select>
       </Field>
 
-      <Field label={t('horse.type.label')} hjalp={t('horse.type.hint')} grupp>
+      <Field label={t('horse.type.label')} hint={t('horse.type.hint')} group>
         <div className="segment">
           {TYPER.map((id) => (
             <button
@@ -140,7 +140,7 @@ function ProfileForm({
         <Field label={t('horse.weight')}>
           <NumberField value={hast.viktKg} error={errorFor('viktKg')} onChange={(v) => set({ viktKg: v })} />
         </Field>
-        <Field label={t('horse.chest')} hjalp={t('horse.chestHint')}>
+        <Field label={t('horse.chest')} hint={t('horse.chestHint')}>
           <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
         </Field>
         <Field label={t('horse.length')}>
@@ -158,7 +158,7 @@ function ProfileForm({
 
       <Field
         label={t('horse.hullLabel', { hull: formatNumber(hast.hull, 0), text: bodyConditionText(hast.hull) })}
-        hjalp={t('horse.hullHint')}
+        hint={t('horse.hullHint')}
       >
         <input
           type="range"
@@ -172,7 +172,7 @@ function ProfileForm({
       </Field>
 
       <h3 className="rubrik">{t('horse.work')}</h3>
-      <Field label={t('horse.discipline')} hjalp={t('horse.disciplineHint')}>
+      <Field label={t('horse.discipline')} hint={t('horse.disciplineHint')}>
         <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
           {PRESTANDA.map((id) => (
             <option key={id} value={id}>
@@ -281,7 +281,7 @@ function EnvironmentSection({
             onChange={(v) => set({ timmarUtePerDag: v })}
           />
         </Field>
-        <Field label={t('horse.environment.lowestTemp')} hjalp={t('horse.environment.lowestTempHint')}>
+        <Field label={t('horse.environment.lowestTemp')} hint={t('horse.environment.lowestTempHint')}>
           <NumberField
             value={miljo.lagstaTempC}
             needsMinusKey
@@ -334,7 +334,7 @@ function HealthSection({ halsa, onChange }: { halsa: Halsa; onChange: (h: Halsa)
           </label>
         ))}
       </div>
-      <Field label={t('horse.health.avoid')} grupp>
+      <Field label={t('horse.health.avoid')} group>
         <div className="chips">
           {INGREDIENSER.map((i) => (
             <button
@@ -359,15 +359,15 @@ const KANSLIGHETSORDNING: Bytekanslighet[] = ['tal', 'normal', 'kanslig']
 function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; onChange: (k: Bytekanslighet) => void }) {
   const { t } = useTranslation()
   const forval = standardKanslighet(hast.halsa)
-  const vald = hast.bytekanslighet ?? forval
-  const hjalp = hast.bytekanslighet
+  const selected = hast.bytekanslighet ?? forval
+  const hint = hast.bytekanslighet
     ? t('horse.sensitivity.hintChosen')
     : forval === 'kanslig'
       ? t('horse.sensitivity.hintDefaultSensitive')
       : t('horse.sensitivity.hintDefault')
   return (
     <>
-      <Field label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hjalp={hjalp} grupp>
+      <Field label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hint={hint} group>
         <div className="segment" role="radiogroup" aria-label={t('horse.sensitivity.groupLabel')}>
           {KANSLIGHETSORDNING.map((k) => {
             const takt = BYTESTAKT[k]
@@ -376,8 +376,8 @@ function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; on
                 key={k}
                 type="button"
                 role="radio"
-                aria-checked={vald === k}
-                className={vald === k ? 'aktiv' : ''}
+                aria-checked={selected === k}
+                className={selected === k ? 'aktiv' : ''}
                 onClick={() => onChange(k)}
               >
                 {t(`transitionPace.${k}.name`)}
@@ -415,7 +415,7 @@ function FeedList({
     onChange({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
   return (
     <div className="foderlista">
-      {/* Sökbar lista: ett namn som matchar en produkt kopplas till den, annars sparas det som eget foder. */}
+      {/* Searchable list: a name matching a product is linked to it, otherwise it is saved as a custom feed. */}
       <datalist id="produktnamn">
         {produkter.map((p) => (
           <option key={p.id} value={p.namn}>
@@ -509,7 +509,7 @@ function AiFill({
           kgPerDag: t.grovfoderKgPerDag ?? hast.grovfoder.kgPerDag,
         },
         nuvarandeFoder: t.nuvarandeFoder.length ? t.nuvarandeFoder : hast.nuvarandeFoder,
-        // AI:n kan bara lägga till känsligheter, aldrig ta bort sådana som ägaren kryssat i.
+        // The AI can only add sensitivities, never remove ones the owner has ticked.
         halsa: {
           ...hast.halsa,
           fang: hast.halsa.fang || t.fang,
@@ -578,22 +578,22 @@ function AiFill({
 
 function Field({
   label,
-  hjalp,
-  grupp,
+  hint,
+  group,
   children,
 }: {
   label: string
-  hjalp?: string
-  grupp?: boolean
+  hint?: string
+  group?: boolean
   children: React.ReactNode
 }) {
-  // En knappgrupp får inte ligga i <label>, då aktiverar ett klick på etiketten första knappen.
-  const Tag = grupp ? 'div' : 'label'
+  // A button group must not sit inside <label>, or a click on the label activates the first button.
+  const Tag = group ? 'div' : 'label'
   return (
     <Tag className="falt">
       <span className="falt-label">{label}</span>
       {children}
-      {hjalp && <span className="falt-hjalp">{hjalp}</span>}
+      {hint && <span className="falt-hjalp">{hint}</span>}
     </Tag>
   )
 }

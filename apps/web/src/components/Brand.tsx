@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
 
-/** Hästsko som logotyp. Färgen ärvs från texten. */
-export function Logo({ storlek = 22 }: { storlek?: number }) {
+/** Horseshoe logo. The colour is inherited from the text. */
+export function Logo({ size = 22 }: { size?: number }) {
   return (
-    <svg width={storlek} height={storlek} viewBox="0 0 32 32" aria-hidden className="logga-ikon">
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="logga-ikon">
       <path
         d="M8 5.5v9.5a8 8 0 0 0 16 0V5.5"
         fill="none"

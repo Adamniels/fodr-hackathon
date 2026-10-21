@@ -46,7 +46,7 @@ The key never reaches the browser: Vite exposes only `VITE_` variables, and `vit
         ├── App.tsx               auth gate, workspace, ALL app state
         ├── api.ts, auth.ts, storage.ts, format.ts
         ├── components/           8 components, one per step + landing, login, calendar
-        ├── data/                 products.json (generated, 228 items), exempel.ts (demo horses, analyses, journal)
+        ├── data/                 products.json (generated, 228 items), examples.ts (demo horses, analyses, journal)
         └── domain/               pure TS calculation engine + 8 test files
 ```
 
@@ -81,10 +81,10 @@ The important properties:
 
 | # | Flow | Path through the code | AI? | Works without key? |
 |---|---|---|---|---|
-| F1 | Landing page, then demo login | `Startsida` → `loggaIn(DEMOKONTO.epost)` (`App.tsx:52`) → workspace seeded with Sixten and Pysen (`storage.ts:20`) | No | Yes |
+| F1 | Landing page, then demo login | `LandingPage` → `loggaIn(DEMOKONTO.epost)` (`App.tsx:52`) → workspace seeded with Sixten and Pysen (`storage.ts:20`) | No | Yes |
 | F2 | Create account or log in by email | `Login.tsx:11` → `auth.ts:38`. Password is collected and ignored. | No | Yes |
-| F3 | Create and edit a horse profile | `HorseStep` → `onAndra` → `App.tsx:122` → `useEffect` saves to localStorage | No | Yes |
-| F4 | Fill profile from free text, with follow-up questions | `AiHjalp` (`HorseStep.tsx:394`) → `POST /api/profil` → `tolkaProfil` → merged into profile (AI can only add sensitivities, never remove) | Yes | No, shows an error |
+| F3 | Create and edit a horse profile | `HorseStep` → `onChange` → `App.tsx:122` → `useEffect` saves to localStorage | No | Yes |
+| F4 | Fill profile from free text, with follow-up questions | `AiFill` (`HorseStep.tsx:394`) → `POST /api/profil` → `tolkaProfil` → merged into profile (AI can only add sensitivities, never remove) | Yes | No, shows an error |
 | F5 | Upload a lab report (PDF or photo), review and correct values | `AnalysisStep.tsx:28` → base64 → `POST /api/analys` → `lasAnalys` → `tillGrovfoderanalys` (SLU conversions) → editable table | Yes | No. Fallback: two "Exempel" buttons load hardcoded analyses. |
 | F6 | Compute feed plan | `App.tsx:105` `skapaPlan` → `PlanStep`: actions, shopping list, cost, alternative, swaps, sensitivities, roughage quality, nutrient balance table, nitrogen surplus | No | Yes |
 | F7 | AI explanation of the plan | `PlanStep.tsx:39` auto calls `POST /api/forklaring`, cached per horse by fingerprint in localStorage | Yes | Degrades with a message |
@@ -94,7 +94,7 @@ The important properties:
 
 Flow level gaps:
 
-- **The analysis is not tied to a horse and is not persisted.** It lives in `Arbetsyta` state (`App.tsx:96`). A reload loses it, and switching horse reuses the previous horse's analysis for the new horse's plan.
+- **The analysis is not tied to a horse and is not persisted.** It lives in `Workspace` state (`App.tsx:96`). A reload loses it, and switching horse reuses the previous horse's analysis for the new horse's plan.
 - **No routing.** Steps are a `useState` (`App.tsx:95`); there are no URLs, no back button behaviour and no deep links.
 - Unmerged work: `origin/stall` (3 commits, 30 files, about +2,500/−700 lines: stable overview, box cards, body condition scale, Swedish statistics comparison, themes) and `origin/ux` (a subset of it). These change most components and `storage.ts`. **Which branch is the baseline is an open question for phase 2.**
 

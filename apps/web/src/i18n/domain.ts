@@ -15,7 +15,7 @@ const sluLevel = (level: Params<'source.sodium'>['level']) => i18n.t(`domain.slu
 
 const noParams = () => ({})
 
-const tabell32Grupp = (group: Params<'quality.proteinHigh'>['group']) => i18n.t(`domain.table32Group.${group}`)
+const table32Group = (group: Params<'quality.proteinHigh'>['group']) => i18n.t(`domain.table32Group.${group}`)
 
 /** A list of messages or values as one phrase, comma separated as the engine joined them before (#12). */
 const commaList = (delar: string[]) => delar.join(', ')
@@ -118,19 +118,19 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
     ratio: formatNumber(p.ratio, 1),
     min: formatNumber(p.min, 1),
     max: formatNumber(p.max, 1),
-    group: tabell32Grupp(p.group),
+    group: table32Group(p.group),
   }),
   'quality.proteinLow': (p) => ({ ratio: formatNumber(p.ratio, 1), min: formatNumber(p.min, 1) }),
   'quality.energyHigh': (p) => ({
     mj: formatNumber(p.mj, 1),
     min: formatNumber(p.min, 1),
     max: formatNumber(p.max, 1),
-    group: tabell32Grupp(p.group),
+    group: table32Group(p.group),
   }),
   'quality.energyLow': (p) => ({
     mj: formatNumber(p.mj, 1),
     min: formatNumber(p.min, 1),
-    group: tabell32Grupp(p.group),
+    group: table32Group(p.group),
   }),
   'quality.haylageWet': (p) => ({ dmPercent: formatNumber(p.dmPercent, 1) }),
   'quality.haylageDry': (p) => ({ dmPercent: formatNumber(p.dmPercent, 1) }),

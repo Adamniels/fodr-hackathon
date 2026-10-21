@@ -16,13 +16,13 @@ const SAMPLE_ANALYSIS = { tsProcent: 39.7, perKgTs: { energi: 10.2, smbRp: 104, 
 
 interface Props {
   produkter: Produkt[]
-  inloggadSom: string | null
+  loggedInAs: string | null
   onDemo: () => void
   onLogIn: () => void
 }
 
-/** Marknadssidan: Notions upplägg (vit yta, tydlig rubrik, produktbild) med Wildlife-känsla (foton, serif, skogsgrönt). */
-export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) {
+/** The marketing page: Notion's layout (white space, clear headline, product preview) with a Wildlife feel (photos, serif, forest green). */
+export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
   const { t } = useTranslation()
   return (
     <div className="start">
@@ -35,13 +35,13 @@ export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) 
             <a href="#fragor">{t('landing.nav.faq')}</a>
           </nav>
           <div className="start-meny-hoger">
-            {!inloggadSom && (
+            {!loggedInAs && (
               <button className="knapp text" onClick={onLogIn}>
                 {t('landing.logIn')}
               </button>
             )}
             <button className="knapp kompakt" onClick={onDemo}>
-              {inloggadSom ? t('landing.openApp') : t('landing.tryDemo')}
+              {loggedInAs ? t('landing.openApp') : t('landing.tryDemo')}
             </button>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) 
         <p className="start-ingress">{t('landing.hero.intro')}</p>
         <div className="start-knappar">
           <button className="knapp stor" onClick={onDemo}>
-            {inloggadSom ? t('landing.continueAs', { name: inloggadSom }) : t('landing.tryDemo')}
+            {loggedInAs ? t('landing.continueAs', { name: loggedInAs }) : t('landing.tryDemo')}
           </button>
           <a className="knapp stor sekundar" href="#sa-funkar">
             {t('landing.hero.seeHow')}
@@ -231,7 +231,7 @@ export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) 
           <h2>{t('landing.closing.title')}</h2>
           <p>{t('landing.closing.text')}</p>
           <button className="knapp stor ljus" onClick={onDemo}>
-            {inloggadSom ? t('landing.openApp') : t('landing.tryDemo')}
+            {loggedInAs ? t('landing.openApp') : t('landing.tryDemo')}
           </button>
         </div>
       </section>
@@ -245,7 +245,7 @@ export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) 
   )
 }
 
-/** Riktig foderplan för demohästen, i en webbläsarram. Siffrorna räknas av samma motor som appen. */
+/** A real feed plan for the demo horse, in a browser frame. The figures come from the same engine as the app. */
 function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {

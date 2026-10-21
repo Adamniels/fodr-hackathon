@@ -77,7 +77,7 @@ export const shortNutrientLabel = (k: NutrientKey) =>
     .replace(/\s*\(.*\)$/, '')
     .replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
 
-/** Enhet per kg ts för analysvärden. */
+/** Unit per kg DM for analysis values. */
 export function analysisUnit(k: NutrientKey): string {
   return i18n.t('units.perKgDm', { unit: NUTRIENTS[k].unit })
 }

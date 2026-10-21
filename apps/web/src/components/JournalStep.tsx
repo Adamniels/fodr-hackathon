@@ -30,8 +30,8 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
         <p className="ingress">{t('journal.intro')}</p>
         <div className="trendrad">
           <TrendTile
-            rubrik={t('journal.trend.weight')}
-            varde={
+            title={t('journal.trend.weight')}
+            value={
               trend.vikt
                 ? t('journal.trend.weightValue', {
                     first: formatNumber(trend.vikt.forsta, 1),
@@ -39,7 +39,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
                   })
                 : '–'
             }
-            under={
+            caption={
               trend.vikt
                 ? t('journal.trend.weightRate', {
                     sign: trend.vikt.procentPerVecka > 0 ? '+' : '',
@@ -50,14 +50,14 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
             }
           />
           <TrendTile
-            rubrik={t('journal.trend.hull')}
-            varde={trend.hull ? `${formatNumber(trend.hull.forsta, 0)} → ${formatNumber(trend.hull.senaste, 0)}` : '–'}
-            under={trend.hull ? (bodyConditionText(trend.hull.senaste) ?? '') : t('journal.trend.hullNone')}
+            title={t('journal.trend.hull')}
+            value={trend.hull ? `${formatNumber(trend.hull.forsta, 0)} → ${formatNumber(trend.hull.senaste, 0)}` : '–'}
+            caption={trend.hull ? (bodyConditionText(trend.hull.senaste) ?? '') : t('journal.trend.hullNone')}
           />
           <TrendTile
-            rubrik={t('journal.trend.followUp')}
-            varde={trend.nastaUppfoljning ?? t('journal.trend.weighNow')}
-            under={trend.uppfoljningForfallen ? t('journal.trend.followUpDue') : t('journal.trend.followUpRule')}
+            title={t('journal.trend.followUp')}
+            value={trend.nastaUppfoljning ?? t('journal.trend.weighNow')}
+            caption={trend.uppfoljningForfallen ? t('journal.trend.followUpDue') : t('journal.trend.followUpRule')}
             markerad={trend.uppfoljningForfallen || !trend.nastaUppfoljning}
           />
         </div>
@@ -120,21 +120,21 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
 }
 
 function TrendTile({
-  rubrik,
-  varde,
-  under,
+  title,
+  value,
+  caption,
   markerad,
 }: {
-  rubrik: string
-  varde: string
-  under: string
+  title: string
+  value: string
+  caption: string
   markerad?: boolean
 }) {
   return (
     <div className={`trendruta ${markerad ? 'markerad' : ''}`}>
-      <span className="liten">{rubrik}</span>
-      <strong>{varde}</strong>
-      <span className="liten">{under}</span>
+      <span className="liten">{title}</span>
+      <strong>{value}</strong>
+      <span className="liten">{caption}</span>
     </div>
   )
 }
