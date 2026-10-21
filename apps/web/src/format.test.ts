@@ -110,8 +110,8 @@ describe('localIsoDate', () => {
   // C6: at 00:30 in Stockholm it is still the previous day in UTC.
   it('gives the local calendar day just after midnight, summer and winter time', () => {
     vi.stubEnv('TZ', 'Europe/Stockholm')
-    // The stub only reaches Date in a forked worker; this checks the test really runs in Stockholm time.
-    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Europe/Stockholm')
+    // The stub only reaches Date in a forked worker; under the threads pool it is ignored and this test proves nothing.
+    expect(new Date(Date.UTC(2026, 9, 14, 22, 30)).getDate()).toBe(15)
     expect(localIsoDate(new Date(Date.UTC(2026, 9, 14, 22, 30)))).toBe('2026-10-15')
     expect(localIsoDate(new Date(Date.UTC(2026, 11, 14, 23, 30)))).toBe('2026-12-15')
   })
@@ -135,7 +135,7 @@ describe('addDays', () => {
 
   it('counts calendar days across the change to winter time', () => {
     vi.stubEnv('TZ', 'Europe/Stockholm')
-    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Europe/Stockholm')
+    expect(new Date(Date.UTC(2026, 9, 14, 22, 30)).getDate()).toBe(15)
     // 25 October 2026 has 25 hours in Stockholm.
     const fore = parseIsoDate('2026-10-24')!
     expect(localIsoDate(addDays(fore, 1))).toBe('2026-10-25')

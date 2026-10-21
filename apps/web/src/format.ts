@@ -48,7 +48,6 @@ export function parseIsoDate(text: string): Date | undefined {
   return date.getFullYear() === y && date.getMonth() === mo - 1 && date.getDate() === d ? date : undefined
 }
 
-/** A stored date for the active locale ("2026-06-05" in sv-SE). Text that is not a valid date is shown as it is. */
 /**
  * A date as its local calendar day ("2026-10-15"), the form dates are stored in. toISOString() gives the UTC day,
  * which in Sweden is still yesterday until 01:00 or 02:00 (audit C6).
@@ -63,6 +62,7 @@ export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 }
 
+/** A stored date for the active locale ("2026-06-05" in sv-SE). Text that is not a valid date is shown as it is. */
 export function formatDate(iso: string): string {
   return parseIsoDate(iso)?.toLocaleDateString(locale(), { dateStyle: 'short' }) ?? iso
 }
