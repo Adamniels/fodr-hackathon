@@ -5,6 +5,7 @@
 import type { NutrientKey } from './nutrients'
 import type { Behov } from './slu'
 import { monthlyCost, laggTill, type Foderpost, type Intag } from './intake'
+import type { Urvalshinder } from './messages'
 import type { Produkt } from './types'
 
 /** Ämnen som urvalet ska täcka. Energi och protein styrs via grovfoder och kraftfoder. */
@@ -42,8 +43,18 @@ export interface Urval {
   caP: number | null
 }
 
+/**
+ * The best selection and an alternative, or why nothing can be added. The empty combination is always tried, so a
+ * plan that needs no supplement gets a selection without products, never the hinder (C3).
+ */
+export type Urvalsutfall =
+  { urval: Urval; alternativ: Urval | null; hinder: null } | { urval: null; alternativ: null; hinder: Urvalshinder }
+
 export interface UrvalsIndata {
+  /** Roughage and kept feeds: what every combination adds to. */
   bas: Intag
+  /** The roughage alone, to tell an analysis value over a maximum from a kept feed pushing it over. */
+  grovfoder: Intag
   behov: Behov
   produkter: Produkt[]
   berakningsviktKg: number
@@ -101,7 +112,7 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
   return { produkt: salt, gramPerDag: Math.min(gram, Math.round(maxGram)) }
 }
 
-export function valjProdukter(input: UrvalsIndata): Urval[] {
+export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   const { bas, behov, berakningsviktKg: vikt } = input
   // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
   const valbara = input.produkter.filter((p) => p.iUrval && p.dosGramPer100kg)
@@ -123,6 +134,8 @@ export function valjProdukter(input: UrvalsIndata): Urval[] {
 
   type Kandidat = Urval & { bristpoang: number }
   const basta: Kandidat[] = []
+  // What the roughage and kept feeds exceed on their own, with salt only as the empty combination adds it.
+  let overskridnaUtanTillskott: NutrientKey[] = []
 
   for (const kombo of kombinationer) {
     const dosRutnat = kombo.map((p) => doser(p, vikt))
@@ -140,6 +153,7 @@ export function valjProdukter(input: UrvalsIndata): Urval[] {
         intag = laggTill(bas, poster)
       }
       const e = utvardera(intag, behov, amnen)
+      if (kombo.length === 0) overskridnaUtanTillskott = e.overMax
       if (e.overMax.length > 0) return
       if (e.caP !== null && e.caP < CA_P_MIN) return
       const kostnad = poster.reduce((sum, p) => sum + monthlyCost(p.produkt, p.gramPerDag), 0)
@@ -159,7 +173,7 @@ export function valjProdukter(input: UrvalsIndata): Urval[] {
   }
 
   basta.sort((a, b) => (battre(a, b) ? -1 : battre(b, a) ? 1 : 0))
-  return basta.slice(0, 2).map((k) => ({
+  const [forsta, andra] = basta.map((k): Urval => ({
     poster: k.poster,
     kostnadPerManad: k.kostnadPerManad,
     intag: k.intag,
@@ -167,6 +181,18 @@ export function valjProdukter(input: UrvalsIndata): Urval[] {
     overMax: k.overMax,
     caP: k.caP,
   }))
+  if (forsta) return { urval: forsta, alternativ: andra ?? null, hinder: null }
+  const nutrients = overskridnaUtanTillskott
+  const franGrovfodret = nutrients.every((k) => input.grovfoder[k].varde > behov[k]!.max! + 1e-9)
+  return {
+    urval: null,
+    alternativ: null,
+    hinder: !nutrients.length
+      ? { code: 'infeasible.caP', params: { minRatio: CA_P_MIN } }
+      : franGrovfodret
+        ? { code: 'infeasible.roughageOverMax', params: { nutrients } }
+        : { code: 'infeasible.overMax', params: { nutrients } },
+  }
 }
 
 /** Full täckning går först, sedan minst brist, sedan lägst kostnad, sedan färst produkter. */

@@ -4,7 +4,7 @@ import { forklaraPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { enhet, etikett, kr, tal } from '../format'
+import { enhet, etikett, kr, tal, shortNutrientLabel } from '../format'
 import { domainText } from '../i18n/domain'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
 import { Injusteringskalender } from './Injusteringskalender'
@@ -64,12 +64,7 @@ export function PlanStep({
   const behallnaKostnad = plan.behallnaFoder.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
   const totalNy = nyKostnad + behallnaKostnad
   const besparing = plan.nulageKostnadPerManad - totalNy
-  // "Kalcium (Ca)" blir "kalcium", men "Vitamin E" behåller sin bokstav.
-  const kortNamn = (r: Balansrad) =>
-    etikett(r.amne)
-      .replace(/\s*\(.*\)$/, '')
-      .replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
-  const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map(kortNamn)
+  const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map((r) => shortNutrientLabel(r.amne))
   const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
   const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
   const ersatter = (id: string) => {
@@ -214,9 +209,10 @@ export function PlanStep({
               </tr>
             </tfoot>
           </table>
-        ) : (
+        ) : plan.urvalshinder ? null : (
           <p>{t('plan.shopping.none')}</p>
         )}
+        {plan.urvalshinder && <div className="ruta varn">{domainText(plan.urvalshinder)}</div>}
         {plan.alternativ && (
           <p className="alternativ">
             {t('plan.shopping.alternative', {
@@ -410,7 +406,8 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     omGrovfodret: plan.grovfoderkvalitet.map((f) => `${domainText(f.rubrik)}: ${domainText(f.text)}`),
     kansligheter: plan.kansligheter.map((k) => domainText(k.text)),
     bortvaldaProdukter: plan.bortvalda.map((b) => `${b.namn} (${b.skal.map(domainText).join(', ')})`),
-    varningar: plan.varningar.map(domainText),
+    // Why no supplement could be added goes with the warnings, so the explanation never says none are needed (C3).
+    varningar: [...plan.varningar, ...(plan.urvalshinder ? [plan.urvalshinder] : [])].map(domainText),
     foderbyte: { dagar: plan.injustering.dagar, steg: plan.injustering.steg.length },
     saknasIAnalysen: plan.saknadeAnalysvarden.map(etikett),
   }

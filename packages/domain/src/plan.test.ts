@@ -174,3 +174,69 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
     expect(lite.atgarder.map((a) => a.code)).toContain('action.increaseRoughage')
   })
 })
+
+const MINERAL = 'gg-1238586' // Brogaarden Vitamins & Minerals
+const SALT = '800801-00-00000' // Salt 1,5 kg
+const MAJS = 'gg-1237305' // 620 g stärkelse per kg, utan energivärde
+
+describe('när inget tillskott går att lägga till (C3)', () => {
+  it('auditens probe: 60 mg selen per kg ts säger att selen redan är över maxgränsen', () => {
+    const plan = planFor(demoHast, { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, se: 60 } }, produkter)
+    expect(plan.urval).toBeNull()
+    expect(plan.alternativ).toBeNull()
+    // The roughage alone is over the maximum, so the analysis value is what to check.
+    expect(plan.urvalshinder).toEqual({ code: 'infeasible.roughageOverMax', params: { nutrients: ['se'] } })
+  })
+
+  it('dagens tillskott står kvar oförändrade: inget "sluta med", ingen lägre kostnad, ingen injustering', () => {
+    const medTillskott = {
+      ...demoHast,
+      nuvarandeFoder: [
+        ...demoHast.nuvarandeFoder,
+        { produktId: MINERAL, namn: '', gramPerDag: 100 },
+        { produktId: SALT, namn: '', gramPerDag: 30 },
+      ],
+    }
+    for (const analys of [
+      { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, se: 60 } },
+      { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, ca: 1, p: 8 } },
+    ]) {
+      const plan = planFor(medTillskott, analys, produkter)
+      expect(plan.urvalshinder).not.toBeNull()
+      expect(plan.atgarder.filter((a) => a.typ === 'tillskott' || a.code === 'action.stopSupplement')).toEqual([])
+      expect(plan.behallnaFoder.map((p) => [p.produkt.id, p.gramPerDag])).toEqual(
+        expect.arrayContaining([
+          [MINERAL, 100],
+          [SALT, 30],
+        ]),
+      )
+      expect(plan.injustering.rader.some((r) => r.enhet === 'g' && (r.fran === 100 || r.fran === 30))).toBe(false)
+    }
+  })
+
+  it('stärkelse över max från kraftfoder som behålls pekar på fodret, inte på analysen', () => {
+    const majs = { ...demoHast, nuvarandeFoder: [{ produktId: MAJS, namn: '', gramPerDag: 6000 }] }
+    const plan = planFor(majs, analysKomplett, produkter)
+    expect(plan.urvalshinder).toEqual({ code: 'infeasible.overMax', params: { nutrients: ['starkelse'] } })
+  })
+
+  it('ingen kombination når Ca:P 1,1: hindret säger det, utan ämne över max', () => {
+    // Without products only the empty combination exists, and this roughage has Ca:P 0,5.
+    const fosforrik = { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, ca: 2, p: 4 } }
+    const plan = planFor(demoHast, fosforrik, [])
+    expect(plan.urval).toBeNull()
+    expect(plan.urvalshinder).toEqual({ code: 'infeasible.caP', params: { minRatio: 1.1 } })
+  })
+
+  it('ett urval utan produkter är inget hinder', () => {
+    const plan = planFor(demoHast, analysKomplett, [])
+    expect(plan.urvalshinder).toBeNull()
+    expect(plan.urval?.poster).toEqual([])
+  })
+
+  it('demofallet har ett urval och inget hinder', () => {
+    const plan = planFor(demoHast, analysKomplett, produkter)
+    expect(plan.urvalshinder).toBeNull()
+    expect(plan.urval).not.toBeNull()
+  })
+})

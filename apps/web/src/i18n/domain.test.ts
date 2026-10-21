@@ -176,6 +176,23 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'source.concentrateGuidelines', params: {} }, 'SLU riktlinjer kraftfoder'],
   [{ code: 'source.microMinerals', params: { level: 'arbete' } }, 'SLU tabell 17, arbete'],
   [{ code: 'source.vitamins', params: {} }, 'SLU tabell 18'],
+  // No supplement can be added (C3, #14). Nutrients by their short name, the last joined by "och".
+  [
+    { code: 'infeasible.roughageOverMax', params: { nutrients: ['se'] } },
+    'Grovfodret ger redan mer selen än SLU:s maxgräns, så inget tillskott kan läggas till och dagens tillskott står kvar oförändrade. Kontrollera analysvärdet: ett förväxlat µg och mg är en vanlig orsak.',
+  ],
+  [
+    { code: 'infeasible.roughageOverMax', params: { nutrients: ['se', 'fe'] } },
+    'Grovfodret ger redan mer selen och järn än SLU:s maxgräns, så inget tillskott kan läggas till och dagens tillskott står kvar oförändrade. Kontrollera analysvärdet: ett förväxlat µg och mg är en vanlig orsak.',
+  ],
+  [
+    { code: 'infeasible.overMax', params: { nutrients: ['starkelse', 'se', 'vitA'] } },
+    'Grovfodret och fodret du behåller ger redan mer stärkelse, selen och vitamin A än SLU:s maxgräns, så inget tillskott kan läggas till och dagens tillskott står kvar oförändrade. Se över fodret du behåller.',
+  ],
+  [
+    { code: 'infeasible.caP', params: { minRatio: 1.1 } },
+    'Inget mineralfoder i urvalet kan höja kalcium–fosforkvoten till 1,1 inom SLU:s maxgränser, så dagens tillskott står kvar oförändrade.',
+  ],
   // Input validation (#13). The age sentence is the one the engine used to throw.
   [
     { code: 'validation.adultsOnly', params: { minAgeYears: 3 } },

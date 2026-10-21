@@ -2,6 +2,7 @@
 // `domain.<code>` and formats the params for the active locale. Params hold raw numbers and data (product names,
 // ids), never text written for a reader.
 
+import type { NutrientKey } from './nutrients'
 import type { Ingrediens } from './types'
 
 /** A message code with its parameters. */
@@ -131,6 +132,16 @@ export type SensitivityMessage =
 export type Trendvarning =
   Message<'trend.weightLossFast', { percentPerWeek: number }> | Message<'trend.conditionRising'>
 
+/**
+ * Why the selection could not add any supplement at all (optimize.ts, C3): the roughage alone already exceeds an SLU
+ * maximum (check the analysis value), the roughage with the kept feeds does (look at those feeds), or no combination
+ * reaches Ca:P 1,1 within the maximums.
+ */
+export type Urvalshinder =
+  | Message<'infeasible.roughageOverMax', { nutrients: NutrientKey[] }>
+  | Message<'infeasible.overMax', { nutrients: NutrientKey[] }>
+  | Message<'infeasible.caP', { minRatio: number }>
+
 /** Why a number in a horse profile or an analysis cannot be used (validation.ts). */
 export type ValidationMessage =
   | Message<'validation.range', { min: number; max: number }>
@@ -151,4 +162,5 @@ export type DomainMessage =
   | Uteslutningsskal
   | SensitivityMessage
   | Trendvarning
+  | Urvalshinder
   | ValidationMessage

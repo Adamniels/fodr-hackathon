@@ -170,4 +170,18 @@ test('calendar download is a valid ics', async ({ page }) => {
 })
 
 test.skip("switching horse uses that horse's analysis (C4, fixed in M1/M2)", () => {})
-test.skip('infeasible plan is not shown as no supplements (C3, fixed in M1)', () => {})
+test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Analysen')
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  // The audit's probe: selenium read in µg as mg, far over SLU's maximum before any supplement.
+  await page.getByRole('textbox', { name: 'Selen (Se)' }).fill('60')
+  await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+  const reason = 'Grovfodret ger redan mer selen än SLU:s maxgräns'
+  await expect(page.getByText(reason)).toBeVisible()
+  await expect(page.getByText('Inga tillskott behövs utöver grovfodret.')).toBeHidden()
+  // The explanation reads the reason among the warnings, so it cannot say that no supplements are needed.
+  await ai.settled()
+  const [underlag] = ai.calls('forklaring') as { varningar: string[] }[]
+  expect(underlag.varningar.some((v) => v.startsWith(reason))).toBe(true)
+})
