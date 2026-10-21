@@ -1,7 +1,7 @@
 import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
-import { kr, tal } from '../format'
+import { kr, shortNutrientLabel, tal } from '../format'
 import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
@@ -22,6 +22,12 @@ const tabell32Grupp = (group: Params<'quality.proteinHigh'>['group']) => i18n.t(
 
 /** A list of messages or values as one phrase, comma separated as the engine joined them before (#12). */
 const lista = (delar: string[]) => delar.join(', ')
+
+/** Items in a sentence, the last joined by the catalogue's "and": "selen, järn och vitamin A" (#14). */
+const ochLista = (delar: string[]) =>
+  delar.length < 2
+    ? lista(delar)
+    : i18n.t('domain.list.and', { items: lista(delar.slice(0, -1)), last: delar[delar.length - 1] })
 
 const FORMAT: { [C in Kod]: Formatter<C> } = {
   'swapReason.samePackCheaper': tom,
@@ -138,6 +144,8 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   // JournalStep).
   'trend.weightLossFast': (p) => ({ percentPerWeek: tal(p.percentPerWeek, 2) }),
   'trend.conditionRising': tom,
+  'infeasible.overMax': (p) => ({ nutrients: ochLista(p.nutrients.map(shortNutrientLabel)) }),
+  'infeasible.caP': (p) => ({ minRatio: tal(p.minRatio, 1) }),
   // Limits are whole numbers; one decimal leaves them whole and keeps a future decimal limit (#13).
   'validation.range': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),
   'validation.wholeRange': (p) => ({ min: tal(p.min, 0), max: tal(p.max, 0) }),

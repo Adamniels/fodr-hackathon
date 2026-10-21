@@ -6,7 +6,15 @@ import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './sensitivity'
 import { hittaBilligareLiknande, type Byte } from './swaps'
 import { skapaInjustering, type Injustering } from './transition'
-import type { ActionMessage, Kallhanvisning, Notering, UrvalsSkal, Uteslutningsskal, Varning } from './messages'
+import type {
+  ActionMessage,
+  Kallhanvisning,
+  Notering,
+  Urvalshinder,
+  UrvalsSkal,
+  Uteslutningsskal,
+  Varning,
+} from './messages'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 import { validateAnalysis, validateProfile, type InputError } from './validation'
 
@@ -48,15 +56,13 @@ export type Atgard = {
   [C in ActionCode]: Extract<ActionMessage, { code: C }> & { typ: ActionTypeByCode[C] }
 }[ActionCode]
 
-export interface Plan {
+interface Plandelar {
   behov: Behovsresultat
   nulage: Balansrad[]
   nulageKostnadPerManad: number
   atgarder: Atgard[]
   grovfoderKgPerDag: number
   behallnaFoder: Foderpost[]
-  urval: Urval | null
-  alternativ: Urval | null
   resultat: Balansrad[]
   caP: number | null
   /** Ungefärligt kväveöverskott, kg N per år, från smältbart protein över behovet. */
@@ -75,6 +81,16 @@ export interface Plan {
   /** Hur dagens foder trappas över till planen, i takt med hästens känslighet för foderbyten. */
   injustering: Injustering
 }
+
+/**
+ * A plan has either a selection of supplements or the reason none can be added (C3, ADR 0013), never neither: a
+ * screen cannot show a missing selection as "no supplements needed" without handling the hinder.
+ */
+export type Plan = Plandelar &
+  (
+    | { urval: Urval; alternativ: Urval | null; urvalHinder: null }
+    | { urval: null; alternativ: null; urvalHinder: Urvalshinder }
+  )
 
 const ENERGI_OVER = 1.1
 const ENERGI_UNDER = 0.95
@@ -253,7 +269,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   }
 
   const { tillatna, uteslutna } = filtreraProdukter(produkter, h)
-  const [urval, alternativ] = valjProdukter({
+  const utfall = valjProdukter({
     bas,
     behov,
     produkter: tillatna,
@@ -261,6 +277,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   })
   // Dagens mineralfoder, tillskott och salt ställs mot urvalet så att det syns vad som byts,
   // vad som tas bort och vad som är nytt, i stället för att gamla produkter bara försvinner.
+  const { urval } = utfall
   const nyaPoster = urval?.poster ?? []
   const ersatta = nuvarande.filter((p) => ERSATTS.includes(p.produkt.kategori))
   const hanterade = new Set<string>()
@@ -349,8 +366,9 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     atgarder,
     grovfoderKgPerDag: grovKg,
     behallnaFoder: behallna,
-    urval: urval ?? null,
-    alternativ: alternativ ?? null,
+    ...(utfall.urval
+      ? { urval: utfall.urval, alternativ: utfall.alternativ, urvalHinder: null }
+      : { urval: null, alternativ: null, urvalHinder: utfall.hinder }),
     resultat,
     caP: slutIntag.p.varde > 0 ? slutIntag.ca.varde / slutIntag.p.varde : null,
     kvaveOverskottKgPerAr: kvave,

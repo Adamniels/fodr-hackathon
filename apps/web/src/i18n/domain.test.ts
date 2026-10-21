@@ -176,6 +176,19 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'source.concentrateGuidelines', params: {} }, 'SLU riktlinjer kraftfoder'],
   [{ code: 'source.microMinerals', params: { level: 'arbete' } }, 'SLU tabell 17, arbete'],
   [{ code: 'source.vitamins', params: {} }, 'SLU tabell 18'],
+  // No supplement can be added (C3, #14). Nutrients by their short name, listed for the locale.
+  [
+    { code: 'infeasible.overMax', params: { nutrients: ['se'] } },
+    'Grovfodret och fodret du behåller ger redan mer selen än SLU:s maxgräns, så inget tillskott kan läggas till. Kontrollera analysvärdet: ett förväxlat µg och mg är en vanlig orsak.',
+  ],
+  [
+    { code: 'infeasible.overMax', params: { nutrients: ['se', 'fe', 'vitA'] } },
+    'Grovfodret och fodret du behåller ger redan mer selen, järn och vitamin A än SLU:s maxgräns, så inget tillskott kan läggas till. Kontrollera analysvärdet: ett förväxlat µg och mg är en vanlig orsak.',
+  ],
+  [
+    { code: 'infeasible.caP', params: { minRatio: 1.1 } },
+    'Inget mineralfoder i urvalet höjer kalcium–fosforkvoten till 1,1 utan att ett annat ämne går över SLU:s maxgräns.',
+  ],
   // Input validation (#13). The age sentence is the one the engine used to throw.
   [
     { code: 'validation.adultsOnly', params: { minAgeYears: 3 } },

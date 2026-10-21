@@ -170,4 +170,13 @@ test('calendar download is a valid ics', async ({ page }) => {
 })
 
 test.skip("switching horse uses that horse's analysis (C4, fixed in M1/M2)", () => {})
-test.skip('infeasible plan is not shown as no supplements (C3, fixed in M1)', () => {})
+test('infeasible plan is not shown as no supplements (C3)', async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Analysen')
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  // The audit's probe: selenium read in µg as mg, far over SLU's maximum before any supplement.
+  await page.getByRole('textbox', { name: 'Selen (Se)' }).fill('60')
+  await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+  await expect(page.getByText('Grovfodret och fodret du behåller ger redan mer selen än SLU:s maxgräns')).toBeVisible()
+  await expect(page.getByText('Inga tillskott behövs utöver grovfodret.')).toBeHidden()
+})

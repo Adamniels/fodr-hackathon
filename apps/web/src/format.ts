@@ -54,6 +54,11 @@ export function formatDate(iso: string): string {
 
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
 export const enhet = (k: NutrientKey) => NUTRIENTS[k].unit
+/** The nutrient's name inside a sentence: "Kalcium (Ca)" becomes "kalcium", but "Vitamin E" keeps its letter. */
+export const shortNutrientLabel = (k: NutrientKey) =>
+  etikett(k)
+    .replace(/\s*\(.*\)$/, '')
+    .replace(/^\p{Lu}(?=\p{Ll})/u, (c) => c.toLowerCase())
 
 /** Enhet per kg ts för analysvärden. */
 export function analysEnhet(k: NutrientKey): string {

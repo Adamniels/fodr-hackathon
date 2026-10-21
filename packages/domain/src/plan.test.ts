@@ -174,3 +174,32 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
     expect(lite.atgarder.map((a) => a.code)).toContain('action.increaseRoughage')
   })
 })
+
+describe('när inget tillskott går att lägga till (C3)', () => {
+  it('auditens probe: 60 mg selen per kg ts säger att selen redan är över maxgränsen', () => {
+    const plan = planFor(demoHast, { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, se: 60 } }, produkter)
+    expect(plan.urval).toBeNull()
+    expect(plan.alternativ).toBeNull()
+    expect(plan.urvalHinder).toEqual({ code: 'infeasible.overMax', params: { nutrients: ['se'] } })
+  })
+
+  it('ingen kombination når Ca:P 1,1: hindret säger det, utan ämne över max', () => {
+    // Without products only the empty combination exists, and this roughage has Ca:P 0,5.
+    const fosforrik = { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, ca: 2, p: 4 } }
+    const plan = planFor(demoHast, fosforrik, [])
+    expect(plan.urval).toBeNull()
+    expect(plan.urvalHinder).toEqual({ code: 'infeasible.caP', params: { minRatio: 1.1 } })
+  })
+
+  it('ett urval utan produkter är inget hinder', () => {
+    const plan = planFor(demoHast, analysKomplett, [])
+    expect(plan.urvalHinder).toBeNull()
+    expect(plan.urval?.poster).toEqual([])
+  })
+
+  it('demofallet har ett urval och inget hinder', () => {
+    const plan = planFor(demoHast, analysKomplett, produkter)
+    expect(plan.urvalHinder).toBeNull()
+    expect(plan.urval).not.toBeNull()
+  })
+})
