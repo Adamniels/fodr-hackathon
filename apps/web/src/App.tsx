@@ -21,7 +21,6 @@ import { Ordmarke } from './components/Varumarke'
 
 const produkter = produkterJson as Produkt[]
 type Steg = 'hast' | 'analys' | 'plan' | 'journal'
-const idag = () => localIsoDate()
 
 const STEG: Steg[] = ['hast', 'analys', 'plan', 'journal']
 
@@ -104,15 +103,15 @@ function Arbetsyta({
   const [menyOppen, setMenyOppen] = useState(false)
 
   useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
-  // "Today" is read on each render. Showing the page again (a laptop opened the next morning) renders it anew, so
-  // the journal's default date and the follow-up check move to the new day (#107).
-  const [, setVisningar] = useState(0)
+  // Read again when the page is shown (a laptop opened the next morning), so the journal's default date and the
+  // follow-up check move to the new day (#107). A page left visible across midnight keeps the old day until then.
+  const [today, setToday] = useState(localIsoDate)
   useEffect(() => {
-    const visad = () => {
-      if (document.visibilityState === 'visible') setVisningar((n) => n + 1)
+    const onShown = () => {
+      if (document.visibilityState === 'visible') setToday(localIsoDate())
     }
-    document.addEventListener('visibilitychange', visad)
-    return () => document.removeEventListener('visibilitychange', visad)
+    document.addEventListener('visibilitychange', onShown)
+    return () => document.removeEventListener('visibilitychange', onShown)
   }, [])
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
   const hast = hastar.find((h) => h.id === valdId) ?? hastar[0]
@@ -318,7 +317,7 @@ function Arbetsyta({
                   analys={analys}
                   plan={plan.plan}
                   onSparaIJournal={() => {
-                    laggTillPost(hast.id, nyPost(idag(), { text: '', plan: planOgonblick! }))
+                    laggTillPost(hast.id, nyPost(localIsoDate(), { text: '', plan: planOgonblick! }))
                     gaTill('journal')
                   }}
                 />
@@ -328,7 +327,7 @@ function Arbetsyta({
                 hast={hast}
                 poster={journal[hast.id] ?? []}
                 aktuellPlan={planOgonblick}
-                idag={idag()}
+                idag={today}
                 onLaggTill={(post, uppdateraProfil) => {
                   laggTillPost(hast.id, post)
                   if (uppdateraProfil) {

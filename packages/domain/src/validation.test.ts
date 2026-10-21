@@ -3,7 +3,7 @@ import { analysKomplett, demoHast } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { skapaPlan } from './plan'
 import type { Grovfoderanalys, Hastprofil, Produkt } from './types'
-import { validateAnalysis, validateJournalpost, validateProfile } from './validation'
+import { validateAnalysis, validateJournalEntry, validateProfile } from './validation'
 
 const produkter = produkterJson as Produkt[]
 
@@ -205,32 +205,32 @@ describe('skapaPlan refuses invalid input (C1)', () => {
   })
 })
 
-describe('validateJournalpost (#107)', () => {
+describe('validateJournalEntry (#107)', () => {
   const post = { datum: '2026-10-15', text: 'Pigg' }
 
   it('a dated note is valid, with or without measurements', () => {
-    expect(validateJournalpost(post)).toEqual([])
-    expect(validateJournalpost({ ...post, viktKg: 550, hull: 5 })).toEqual([])
+    expect(validateJournalEntry(post)).toEqual([])
+    expect(validateJournalEntry({ ...post, viktKg: 550, hull: 5 })).toEqual([])
   })
 
   it('the date must be a real calendar day', () => {
     for (const datum of ['', '2026-02-30', '15/10/2026', '2026-10-5']) {
-      expect(validateJournalpost({ ...post, datum })).toEqual([
+      expect(validateJournalEntry({ ...post, datum })).toEqual([
         { field: 'datum', message: { code: 'validation.date', params: {} } },
       ])
     }
   })
 
   it('a weight follows the profile limits, since it can update the profile', () => {
-    expect(validateJournalpost({ ...post, viktKg: 50 })).toEqual([])
-    expect(validateJournalpost({ ...post, viktKg: 0 })).toEqual([{ field: 'viktKg', message: range(50, 1200) }])
-    expect(validateJournalpost({ ...post, viktKg: Number.NaN })).toEqual([
+    expect(validateJournalEntry({ ...post, viktKg: 50 })).toEqual([])
+    expect(validateJournalEntry({ ...post, viktKg: 0 })).toEqual([{ field: 'viktKg', message: range(50, 1200) }])
+    expect(validateJournalEntry({ ...post, viktKg: Number.NaN })).toEqual([
       { field: 'viktKg', message: range(50, 1200) },
     ])
   })
 
   it('a condition is a whole number from 1 to 9', () => {
-    expect(validateJournalpost({ ...post, hull: 10 })).toEqual([
+    expect(validateJournalEntry({ ...post, hull: 10 })).toEqual([
       { field: 'hull', message: { code: 'validation.wholeRange', params: { min: 1, max: 9 } } },
     ])
   })

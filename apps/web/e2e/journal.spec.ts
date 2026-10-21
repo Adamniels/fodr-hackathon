@@ -36,6 +36,13 @@ test('a journal entry needs a date and a weight within the limits (#107)', async
   await page.getByLabel('Vikt (kg)').fill('0')
   await expect(page.getByText('Ange ett värde mellan 50 och 1 200.')).toBeVisible()
   await expect(add).toBeDisabled()
+
+  // A weight that is not a number says so, instead of being dropped silently.
+  await page.getByLabel('Vikt (kg)').fill('abc')
+  await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeVisible()
+  await page.getByLabel('Vikt (kg)').fill('545,5')
+  await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeHidden()
+  await expect(add).toBeEnabled()
 })
 
 test('the entry date follows today past midnight unless one was picked (#107)', async ({ page }) => {

@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { analyseraJournal, type JournalAnalys } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
-import { validateJournalpost, type JournalField } from '@fodr/domain/validation'
+import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
 import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
 import { domainText } from '../i18n/domain'
+import { DecimalInput } from './DecimalInput'
 
 interface Props {
   hast: Hastprofil
@@ -138,20 +139,22 @@ function NyAnteckning({
   onLaggTill: (post: Journalpost, uppdateraProfil: boolean) => void
 }) {
   const { t } = useTranslation()
-  // Only a date the owner picks is kept; otherwise the entry follows today, also past midnight (#107).
-  const [valtDatum, setValtDatum] = useState<string | null>(null)
-  const datum = valtDatum ?? idag
-  const [vikt, setVikt] = useState('')
+  // Only a date the owner picks is kept, also after saving (for several back-dated entries in a row); otherwise the
+  // entry follows today, also past midnight (#107).
+  const [pickedDate, setPickedDate] = useState<string | null>(null)
+  const datum = pickedDate ?? idag
+  const dateMessageId = useId()
+  const [vikt, setVikt] = useState<number | undefined>()
   const [hull, setHull] = useState('')
   const [text, setText] = useState('')
   const [uppdatera, setUppdatera] = useState(true)
-  const harMatt = vikt !== '' || hull !== ''
+  const harMatt = vikt !== undefined || hull !== ''
   const matt = {
-    ...(vikt !== '' ? { viktKg: Number(vikt) } : {}),
+    ...(vikt !== undefined ? { viktKg: vikt } : {}),
     ...(hull !== '' ? { hull: Number(hull) } : {}),
   }
   // Checked before saving: an entry can update the profile, so it never stores an empty date or a 0 kg weight.
-  const errors = validateJournalpost({ datum, ...matt })
+  const errors = validateJournalEntry({ datum, ...matt })
   const errorFor = (field: JournalField) => {
     const error = errors.find((e) => e.field === field)
     return error && domainText(error.message)
@@ -159,7 +162,7 @@ function NyAnteckning({
 
   function spara() {
     onLaggTill(nyPost(datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
-    setVikt('')
+    setVikt(undefined)
     setHull('')
     setText('')
   }
@@ -174,20 +177,24 @@ function NyAnteckning({
             type="date"
             value={datum}
             aria-invalid={errorFor('datum') ? true : undefined}
-            onChange={(e) => setValtDatum(e.target.value)}
+            aria-describedby={errorFor('datum') ? dateMessageId : undefined}
+            onChange={(e) => setPickedDate(e.target.value)}
           />
-          {errorFor('datum') && <span className="falt-fel">{errorFor('datum')}</span>}
+          {errorFor('datum') && (
+            <span id={dateMessageId} className="falt-fel">
+              {errorFor('datum')}
+            </span>
+          )}
         </label>
         <label className="falt">
           <span className="falt-label">{t('journal.newEntry.weight')}</span>
-          <input
-            type="number"
+          <DecimalInput
             value={vikt}
             placeholder={tal(hast.viktKg, 1)}
-            aria-invalid={errorFor('viktKg') ? true : undefined}
-            onChange={(e) => setVikt(e.target.value)}
+            error={errorFor('viktKg')}
+            onChange={setVikt}
+            onClear={() => setVikt(undefined)}
           />
-          {errorFor('viktKg') && <span className="falt-fel">{errorFor('viktKg')}</span>}
         </label>
         <label className="falt">
           <span className="falt-label">{t('journal.newEntry.hull')}</span>
