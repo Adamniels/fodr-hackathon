@@ -10,12 +10,22 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 | Ticket on the board | `write-ticket` | Issue with the ticket shape, `type:*` label, suggested milestone, board status **Todo** |
 | Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini, or `/pick-up-ticket` alone to get a proposal (below) and confirm it; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
 | Decisions | Agent and owner | Agent asks the ticket's open questions and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue |
-| Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch |
+| Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch; each finding is fixed in the branch, proposed as a ticket, or noted (below) |
 | Pull request | Agent (as the bot) | PR with `Closes #<n>` and a link to the decisions comment; board **In Review**; summary comment on the issue |
 | Review round | Owner, then agent | Owner comments on the PR; `/pick-up-ticket <number>` again addresses each comment and pushes |
 | Merge | A human | Owner or teammate approves and merges; the issue closes; board **Done** |
 
 A ticket fixes **what** and **why**. **How** is decided at pickup, so tickets stay valid however long they wait. Agents never merge, never use the branch protection bypass and never add agent attribution (`.claude/CLAUDE.md`).
+
+## Review findings
+
+The backlog must not grow from review nits (owner, 2026-10-21, #110). Every finding of the fresh review, important or not, becomes exactly one of:
+
+- **Fixed in the branch**, when it is in code the PR already touches or stops the ticket's criteria from holding, is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR) and needs no decision from the owner.
+- **A ticket**, proposed to the owner, when it needs his answer, changes behaviour outside the ticket's area, or would mix refactoring and behaviour in one PR. An important finding that is not fixed in the branch always becomes one.
+- **A note**, for anything else: one line in the PR saying it is not done and why, and no ticket.
+
+The PR's "Review" section lists every finding with its outcome. The rule is step 7 of `.claude/skills/pick-up-ticket/SKILL.md`.
 
 ## Choosing the next ticket
 

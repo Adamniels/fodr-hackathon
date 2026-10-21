@@ -52,7 +52,7 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 ## Review
 
-Fresh reviewer findings: <none, or each finding and how it was fixed>.
+Fresh reviewer findings: <none, or each finding with its outcome (SKILL.md step 7): fixed, ticket #N, or not done and why>.
 ```
 
 ## Summary comment (issue, after the PR is open)
