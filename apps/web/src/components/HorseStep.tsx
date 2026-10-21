@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { tolkaProfil } from '../api'
+import { interpretProfile } from '../api'
 import { RASER, hittaRas } from '@fodr/domain/breeds'
 import { BYTESTAKT, standardKanslighet } from '@fodr/domain/transition'
 import { viktFranBrostomfang } from '@fodr/domain/slu'
@@ -485,7 +485,7 @@ function AiFill({
     setFel(null)
     const allaSvar = [...tidigare, ...extraSvar]
     try {
-      const t = await tolkaProfil({
+      const t = await interpretProfile({
         foderText,
         halsaText,
         tidigareSvar: allaSvar,

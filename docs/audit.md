@@ -81,16 +81,16 @@ The important properties:
 
 | # | Flow | Path through the code | AI? | Works without key? |
 |---|---|---|---|---|
-| F1 | Landing page, then demo login | `LandingPage` → `loggaIn(DEMOKONTO.epost)` (`App.tsx:52`) → workspace seeded with Sixten and Pysen (`storage.ts:20`) | No | Yes |
+| F1 | Landing page, then demo login | `LandingPage` → `logIn(DEMO_ACCOUNT.epost)` (`App.tsx:52`) → workspace seeded with Sixten and Pysen (`storage.ts:20`) | No | Yes |
 | F2 | Create account or log in by email | `Login.tsx:11` → `auth.ts:38`. Password is collected and ignored. | No | Yes |
 | F3 | Create and edit a horse profile | `HorseStep` → `onChange` → `App.tsx:122` → `useEffect` saves to localStorage | No | Yes |
-| F4 | Fill profile from free text, with follow-up questions | `AiFill` (`HorseStep.tsx:394`) → `POST /api/profil` → `tolkaProfil` → merged into profile (AI can only add sensitivities, never remove) | Yes | No, shows an error |
-| F5 | Upload a lab report (PDF or photo), review and correct values | `AnalysisStep.tsx:28` → base64 → `POST /api/analys` → `lasAnalys` → `tillGrovfoderanalys` (SLU conversions) → editable table | Yes | No. Fallback: two "Exempel" buttons load hardcoded analyses. |
+| F4 | Fill profile from free text, with follow-up questions | `AiFill` (`HorseStep.tsx:394`) → `POST /api/profil` → `interpretProfile` → merged into profile (AI can only add sensitivities, never remove) | Yes | No, shows an error |
+| F5 | Upload a lab report (PDF or photo), review and correct values | `AnalysisStep.tsx:28` → base64 → `POST /api/analys` → `readAnalysis` → `tillGrovfoderanalys` (SLU conversions) → editable table | Yes | No. Fallback: two "Exempel" buttons load hardcoded analyses. |
 | F6 | Compute feed plan | `App.tsx:105` `skapaPlan` → `PlanStep`: actions, shopping list, cost, alternative, swaps, sensitivities, roughage quality, nutrient balance table, nitrogen surplus | No | Yes |
 | F7 | AI explanation of the plan | `PlanStep.tsx:39` auto calls `POST /api/forklaring`, cached per horse by fingerprint in localStorage | Yes | Degrades with a message |
 | F8 | Transition calendar and .ics export | `TransitionCalendar.tsx`, client side ICS generation | No | Yes |
 | F9 | Journal: add entry, trend, follow up, save plan snapshot | `JournalStep` → `beraknaTrend`; optional "update profile" rewrites weight and body condition | No | Yes |
-| F10 | AI journal analysis (patterns, vet flag) | `POST /api/journal` → `analyseraJournal` | Yes | No, shows an error |
+| F10 | AI journal analysis (patterns, vet flag) | `POST /api/journal` → `analyzeJournal` | Yes | No, shows an error |
 
 Flow level gaps:
 
@@ -102,7 +102,7 @@ Flow level gaps:
 
 | # | What | Where | What it would take to make it real |
 |---|---|---|---|
-| M1 | **Accounts.** Any email logs in, the password is never checked or stored, users live in localStorage | `auth.ts` (whole file, marked MOCK at `:1`), `Login.tsx:44-51` | A real auth provider (hosted, e.g. Supabase Auth or similar, or own sessions). `Anvandare` is a good seam, but `aktuellAnvandare()` is synchronous and every caller assumes so. |
+| M1 | **Accounts.** Any email logs in, the password is never checked or stored, users live in localStorage | `auth.ts` (whole file, marked MOCK at `:1`), `Login.tsx:44-51` | A real auth provider (hosted, e.g. Supabase Auth or similar, or own sessions). `User` is a good seam, but `currentUser()` is synchronous and every caller assumes so. |
 | M2 | **Persistence.** Horses, journal and AI explanations in localStorage, per browser | `storage.ts` (whole file) | A backend with a database and an API. The seam exists, but its functions are synchronous; going async touches `App.tsx` state initialisation. |
 | M3 | **The backend.** API only runs inside the Vite dev server | `server/apiPlugin.ts:39` | A real server process or serverless functions. `ai.ts` is portable as is. |
 | M4 | Demo seeding: the demo account always gets Sixten, Pysen and a journal | `storage.ts:20`, `storage.ts:59`, `data/examples.ts` | Seed data in the database, or keep as an explicit demo mode. |
@@ -119,7 +119,7 @@ Flow level gaps:
 Types in `src/domain/types.ts`, `journal.ts` and `auth.ts`.
 
 ```
-Anvandare { id, namn, epost }
+User { id, namn, epost }
   └─ Hastprofil[]  { id, namn, alderAr, kon, typ, viktKg, hull, ras?, ridning?, prestanda?,
                      miljo?, halsa{...sensitivities, undvik[]}, bytekanslighet?,
                      grovfoder{typ, kgPerDag}, nuvarandeFoder[{produktId|null, namn, gramPerDag}] }
@@ -147,7 +147,7 @@ Data model issues:
 - Analysis has no identity and no owner. In a real product it is a first class entity: one horse has many analyses over time, and a plan references one.
 - `Plan` is not persisted, only `PlanOgonblick` (names, grams, cost). There is no way to reproduce which product data or rule version produced a historical plan.
 - Two names for the product: "Krubba" in docs, storage keys and plugin name; "Fodr" in the UI, `index.html`, ICS output and one storage key. The demo email is `demo@fodr.se` in code (`auth.ts:13`) but `demo@krubba.se` in `malbild.md`.
-- Client and server contracts are duplicated by hand: `UtlastAnalys` (`analysis.ts:6`) and `ProfilTolkning` (`api.ts:24`) mirror the zod schemas in `ai.ts` with no shared source.
+- Client and server contracts are duplicated by hand: `UtlastAnalys` (`analysis.ts:6`) and `ProfileInterpretation` (`api.ts:24`) mirror the zod schemas in `ai.ts` with no shared source.
 
 ## 5. Error handling, validation and security gaps
 

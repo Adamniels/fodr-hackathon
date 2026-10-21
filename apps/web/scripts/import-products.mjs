@@ -1,24 +1,24 @@
-// Gör om butikernas produktfiler till appens format (src/data/products.json).
-// Körs: node scripts/import-products.mjs [källkatalog]
-// Urvalsprodukter och deras doser styrs av scripts/produktval.json, som granskas för hand.
+// Converts the stores' product files to the app's format (src/data/products.json).
+// Usage: node scripts/import-products.mjs [source-dir]
+// The selectable products and their doses come from scripts/produktval.json, which is reviewed by hand.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const har = dirname(fileURLToPath(import.meta.url))
-const kalla = process.argv[2] ?? join(har, '../../../testdata/Testdata-from-other-dev')
-const ut = join(har, '../src/data/products.json')
+const here = dirname(fileURLToPath(import.meta.url))
+const sourceDir = process.argv[2] ?? join(here, '../../../testdata/Testdata-from-other-dev')
+const outFile = join(here, '../src/data/products.json')
 
 const NA_PER_NACL = 0.393
-// SLU: SE × 0,86 ≈ OE (sid 7).
+// SLU: SE × 0.86 ≈ OE (page 7).
 const OE_PER_SE = 0.86
 
-const granngarden = JSON.parse(readFileSync(join(kalla, 'granngarden-produkter.json'), 'utf8'))
-const hooks = JSON.parse(readFileSync(join(kalla, 'hooks-produkter.json'), 'utf8'))
-const val = JSON.parse(readFileSync(join(har, 'produktval.json'), 'utf8')).produkter
+const granngarden = JSON.parse(readFileSync(join(sourceDir, 'granngarden-produkter.json'), 'utf8'))
+const hooks = JSON.parse(readFileSync(join(sourceDir, 'hooks-produkter.json'), 'utf8'))
+const selection = JSON.parse(readFileSync(join(here, 'produktval.json'), 'utf8')).produkter
 
-const GG_AMNEN = {
+const GG_NUTRIENTS = {
   ca_g: 'ca',
   p_g: 'p',
   mg_g: 'mg',
@@ -41,7 +41,7 @@ const GG_AMNEN = {
   smb_raprotein_g: 'smbRp',
 }
 
-const HK_AMNEN = {
+const HK_NUTRIENTS = {
   kalcium_procent: ['ca', 10],
   fosfor_procent: ['p', 10],
   magnesium_procent: ['mg', 10],
@@ -57,7 +57,7 @@ const HK_AMNEN = {
   vitamin_d3_ie_per_kg: ['vitD', 1],
 }
 
-const KATEGORI = {
+const CATEGORY = {
   mineralfoder: 'mineralfoder',
   mineraltillskott: 'tillskott',
   vitamintillskott: 'tillskott',
@@ -74,10 +74,10 @@ const KATEGORI = {
   proteinfoder: 'proteinfoder',
 }
 
-function ggNaring(p, antaganden) {
+function ggNutrients(p, antaganden) {
   const n = p.naring_per_kg ?? {}
   const per = {}
-  for (const [fran, till] of Object.entries(GG_AMNEN)) if (n[fran] != null) per[till] = n[fran]
+  for (const [from, to] of Object.entries(GG_NUTRIENTS)) if (n[from] != null) per[to] = n[from]
   if (per.na === undefined && n.nacl_g != null) per.na = n.nacl_g * NA_PER_NACL
   if (n.me_mj != null) per.energi = n.me_mj
   else if (n.energi_mj_ospec != null) {
@@ -90,32 +90,32 @@ function ggNaring(p, antaganden) {
   return per
 }
 
-function hkNaring(p) {
+function hkNutrients(p) {
   const n = p.naring_per_kg ?? {}
   const per = {}
-  for (const [fran, [till, faktor]] of Object.entries(HK_AMNEN)) if (n[fran] != null) per[till] = n[fran] * faktor
+  for (const [from, [to, factor]] of Object.entries(HK_NUTRIENTS)) if (n[from] != null) per[to] = n[from] * factor
   return per
 }
 
-const NEJ_SPANNMAL = /spannmålsfri|utan spannmål|oat ?free|grain ?free|havrefri|utan havre/
-const NEJ_MELASS = /utan (tillsatt )?melass|melassfri/
+const NO_GRAIN = /spannmålsfri|utan spannmål|oat ?free|grain ?free|havrefri|utan havre/
+const NO_MOLASSES = /utan (tillsatt )?melass|melassfri/
 function ingredienser(text) {
   const t = text.toLowerCase()
-  const ut = []
-  if (/melass/.test(t) && !NEJ_MELASS.test(t)) ut.push('melass')
-  if (/lusern|lucern|alfalfa/.test(t)) ut.push('lusern')
-  if (/\bsoja|soy/.test(t)) ut.push('soja')
-  if (/havre|\bkorn\b|vete|majs|spannmål|cereal|\boat/.test(t) && !NEJ_SPANNMAL.test(t)) ut.push('spannmål')
-  if (/betfiber|beet|betmassa/.test(t)) ut.push('betfiber')
-  if (/linfrö|linseed/.test(t)) ut.push('linfrö')
-  return ut
+  const found = []
+  if (/melass/.test(t) && !NO_MOLASSES.test(t)) found.push('melass')
+  if (/lusern|lucern|alfalfa/.test(t)) found.push('lusern')
+  if (/\bsoja|soy/.test(t)) found.push('soja')
+  if (/havre|\bkorn\b|vete|majs|spannmål|cereal|\boat/.test(t) && !NO_GRAIN.test(t)) found.push('spannmål')
+  if (/betfiber|beet|betmassa/.test(t)) found.push('betfiber')
+  if (/linfrö|linseed/.test(t)) found.push('linfrö')
+  return found
 }
 
 function form(p) {
   const f = p.produktinfo?.form?.toLowerCase()
   if (f) return f
   const t = p.namn.toLowerCase()
-  for (const [mönster, namn] of [
+  for (const [pattern, name] of [
     [/pellets|nuggets/, 'pellets'],
     [/müsli|muesli/, 'müsli'],
     [/mash/, 'mash'],
@@ -125,20 +125,20 @@ function form(p) {
     [/balja|hink/, 'hink'],
     [/sten/, 'sten'],
   ])
-    if (mönster.test(t)) return namn
+    if (pattern.test(t)) return name
   return undefined
 }
 
 function lamplighetFangEms(kategori, per) {
-  // ANTAGANDE: under ca 100 g socker plus stärkelse per kg räknas som lämpligt vid fång och EMS.
-  // Rena mineral-, vitamin- och saltprodukter räknas som lämpliga om inget annat är deklarerat.
-  const kolhydrat = (per.socker ?? 0) + (per.starkelse ?? 0)
-  const kand = per.socker !== undefined || per.starkelse !== undefined
-  if (kand) return kolhydrat <= 100
+  // ANTAGANDE: under about 100 g sugar plus starch per kg counts as suitable for laminitis and EMS.
+  // Pure mineral, vitamin and salt products count as suitable unless declared otherwise.
+  const carbs = (per.socker ?? 0) + (per.starkelse ?? 0)
+  const known = per.socker !== undefined || per.starkelse !== undefined
+  if (known) return carbs <= 100
   return ['mineralfoder', 'tillskott', 'salt'].includes(kategori)
 }
 
-function bygg({
+function buildProduct({
   id,
   namn,
   marke,
@@ -154,17 +154,17 @@ function bygg({
   antaganden,
   p,
 }) {
-  const v = val[id]
-  let kategori = v?.kategori ?? KATEGORI[typ] ?? 'ovrigt'
+  const v = selection[id]
+  let kategori = v?.kategori ?? CATEGORY[typ] ?? 'ovrigt'
   if (typ === 'salt/slicksten' || typ === 'saltsten' || typ === 'slicksten') kategori = v?.kategori ?? 'ovrigt'
   let perKg = { ...per, ...(v?.perKg ?? {}) }
   if (v?.perKgFranAnnanBas) {
-    const bas = p.naring_annan_bas?.[v.perKgFranAnnanBas.bas]
-    if (!bas) throw new Error(`${id}: saknar annan bas ${v.perKgFranAnnanBas.bas}`)
-    const faktor = 1000 / v.perKgFranAnnanBas.gram
-    const fran = {}
-    for (const [k, x] of Object.entries(bas)) if (GG_AMNEN[k]) fran[GG_AMNEN[k]] = round(x * faktor, 3)
-    perKg = { ...perKg, ...fran }
+    const base = p.naring_annan_bas?.[v.perKgFranAnnanBas.bas]
+    if (!base) throw new Error(`${id}: saknar annan bas ${v.perKgFranAnnanBas.bas}`)
+    const factor = 1000 / v.perKgFranAnnanBas.gram
+    const from = {}
+    for (const [k, x] of Object.entries(base)) if (GG_NUTRIENTS[k]) from[GG_NUTRIENTS[k]] = round(x * factor, 3)
+    perKg = { ...perKg, ...from }
     antaganden.push(`Halter räknade från deklarationen per ${v.perKgFranAnnanBas.bas}.`)
   }
   return {
@@ -194,13 +194,13 @@ const RELEVANT = new Set(['hög', 'medel', 'hog'])
 const produkter = []
 
 for (const p of granngarden.produkter) {
-  if (!RELEVANT.has(p.relevans_for_krubba) && !val[p.id]) continue
+  if (!RELEVANT.has(p.relevans_for_krubba) && !selection[p.id]) continue
   if (!p.mangd_g_eller_ml || !p.pris_kr) continue
   const antaganden = []
   if (/\d+(,\d+)?l\b/i.test(p.forpackning ?? ''))
     antaganden.push('Flytande produkt: 1 ml räknas som 1 g för pris och dos.')
   produkter.push(
-    bygg({
+    buildProduct({
       id: p.id,
       namn: p.namn,
       marke: p.varumarke,
@@ -212,7 +212,7 @@ for (const p of granngarden.produkter) {
       naringsdata: p.naringsdata,
       kontrollera: p.kontrollera,
       butik: 'Granngården',
-      per: ggNaring(p, antaganden),
+      per: ggNutrients(p, antaganden),
       antaganden,
       p,
     }),
@@ -220,10 +220,10 @@ for (const p of granngarden.produkter) {
 }
 
 for (const p of hooks.produkter) {
-  if (!RELEVANT.has(p.relevans_for_krubba) && !val[p.id]) continue
+  if (!RELEVANT.has(p.relevans_for_krubba) && !selection[p.id]) continue
   if (p.typ === 'tillbehor_ej_foder' || !p.mangd_g_eller_ml || !p.pris_kr) continue
   produkter.push(
-    bygg({
+    buildProduct({
       id: p.id,
       namn: p.namn,
       marke: p.varumarke,
@@ -235,21 +235,21 @@ for (const p of hooks.produkter) {
       naringsdata: p.naringsdata,
       kontrollera: null,
       butik: 'Hööks',
-      per: hkNaring(p),
+      per: hkNutrients(p),
       antaganden: [],
       p,
     }),
   )
 }
 
-const saknade = Object.keys(val).filter((id) => !produkter.some((p) => p.id === id))
-if (saknade.length) throw new Error(`Urvalsprodukter saknas i källan: ${saknade.join(', ')}`)
+const missing = Object.keys(selection).filter((id) => !produkter.some((p) => p.id === id))
+if (missing.length) throw new Error(`Urvalsprodukter saknas i källan: ${missing.join(', ')}`)
 
 produkter.sort((a, b) => a.namn.localeCompare(b.namn, 'sv'))
-writeFileSync(ut, JSON.stringify(produkter, null, 1) + '\n')
-const urval = produkter.filter((p) => p.iUrval)
-console.log(`${produkter.length} produkter skrivna till ${ut}, varav ${urval.length} i urvalet.`)
-for (const p of urval) console.log(`  ${p.kategori.padEnd(12)} ${p.namn} (${Object.keys(p.perKg).join(', ')})`)
+writeFileSync(outFile, JSON.stringify(produkter, null, 1) + '\n')
+const selected = produkter.filter((p) => p.iUrval)
+console.log(`${produkter.length} produkter skrivna till ${outFile}, varav ${selected.length} i urvalet.`)
+for (const p of selected) console.log(`  ${p.kategori.padEnd(12)} ${p.namn} (${Object.keys(p.perKg).join(', ')})`)
 
 function round(n, d) {
   const f = 10 ** d

@@ -1,30 +1,30 @@
-// Hästprofiler per användare, sparade lokalt i webbläsaren. Det här är den enda filen som behöver
-// bytas mot API-anrop när riktiga konton och en databas kommer.
+// Horse profiles per user, saved locally in the browser. This is the only file that has to be
+// replaced with API calls when real accounts and a database arrive.
 
-import { DEMOKONTO } from './auth'
+import { DEMO_ACCOUNT } from './auth'
 import { demoHast, demoJournal, ponny } from './data/examples'
 import type { Journalpost } from '@fodr/domain/journal'
 import type { Hastprofil } from '@fodr/domain/types'
 
-// v2: profilen fick ras, prestanda och miljö.
-const nyckel = (anvandarId: string) => `krubba.hastar.v2.${anvandarId}`
+// v2: the profile gained breed, performance and environment.
+const horsesKey = (userId: string) => `krubba.hastar.v2.${userId}`
 
-export function laddaHastar(anvandarId: string): Hastprofil[] {
+export function loadHorses(userId: string): Hastprofil[] {
   try {
-    const raw = localStorage.getItem(nyckel(anvandarId))
+    const raw = localStorage.getItem(horsesKey(userId))
     if (raw) return JSON.parse(raw) as Hastprofil[]
   } catch {
-    // Lagring otillgänglig eller trasig.
+    // Storage unavailable or corrupt.
   }
-  // Demokontot börjar med två hästar, nya konton börjar tomma.
-  return anvandarId === DEMOKONTO.id ? [demoHast, ponny] : []
+  // The demo account starts with two horses, new accounts start empty.
+  return userId === DEMO_ACCOUNT.id ? [demoHast, ponny] : []
 }
 
-export function sparaHastar(anvandarId: string, hastar: Hastprofil[]) {
+export function saveHorses(userId: string, hastar: Hastprofil[]) {
   try {
-    localStorage.setItem(nyckel(anvandarId), JSON.stringify(hastar))
+    localStorage.setItem(horsesKey(userId), JSON.stringify(hastar))
   } catch {
-    // Ignorera, profilerna finns kvar i minnet under sessionen.
+    // Ignore; the profiles stay in memory for the session.
   }
 }
 
@@ -54,56 +54,57 @@ export function nyHast(): Hastprofil {
   }
 }
 
-// Journal per användare: häst-id till poster.
-const journalNyckel = (anvandarId: string) => `krubba.journal.v1.${anvandarId}`
+// Journal per user: horse ID to entries.
+const journalKey = (userId: string) => `krubba.journal.v1.${userId}`
 
-export function laddaJournal(anvandarId: string): Record<string, Journalpost[]> {
+export function loadJournal(userId: string): Record<string, Journalpost[]> {
   try {
-    const raw = localStorage.getItem(journalNyckel(anvandarId))
+    const raw = localStorage.getItem(journalKey(userId))
     if (raw) return JSON.parse(raw) as Record<string, Journalpost[]>
   } catch {
-    // Lagring otillgänglig eller trasig.
+    // Storage unavailable or corrupt.
   }
-  return anvandarId === DEMOKONTO.id ? demoJournal : {}
+  return userId === DEMO_ACCOUNT.id ? demoJournal : {}
 }
 
-export function sparaJournal(anvandarId: string, journal: Record<string, Journalpost[]>) {
+export function saveJournal(userId: string, journal: Record<string, Journalpost[]>) {
   try {
-    localStorage.setItem(journalNyckel(anvandarId), JSON.stringify(journal))
+    localStorage.setItem(journalKey(userId), JSON.stringify(journal))
   } catch {
-    // Ignorera, journalen finns kvar i minnet under sessionen.
+    // Ignore; the journal stays in memory for the session.
   }
 }
 
-// Senaste AI-förklaringen per häst. Nyckeln är ett fingeravtryck av underlaget, så samma plan ger
-// samma text utan nytt API-anrop, medan en ändrad plan får en ny förklaring.
-const forklaringNyckel = (hastId: string) => `fodr.forklaring.v1.${hastId}`
-const forklaringMinne = new Map<string, { avtryck: string; text: string }>()
+// The latest AI explanation per horse. The key is a fingerprint of the payload, so the same plan gives
+// the same text without a new API call, while a changed plan gets a new explanation.
+// The stored field is named avtryck: it is persisted, so it keeps its name (ADR 0016, rule 7).
+const explanationKey = (hastId: string) => `fodr.forklaring.v1.${hastId}`
+const explanationCache = new Map<string, { avtryck: string; text: string }>()
 
-export function laddaForklaring(hastId: string, avtryck: string): string | null {
-  let sparad = forklaringMinne.get(hastId)
-  if (!sparad) {
+export function loadExplanation(hastId: string, fingerprint: string): string | null {
+  let cached = explanationCache.get(hastId)
+  if (!cached) {
     try {
-      const raw = localStorage.getItem(forklaringNyckel(hastId))
-      if (raw) sparad = JSON.parse(raw) as { avtryck: string; text: string }
+      const raw = localStorage.getItem(explanationKey(hastId))
+      if (raw) cached = JSON.parse(raw) as { avtryck: string; text: string }
     } catch {
-      // Lagring otillgänglig eller trasig.
+      // Storage unavailable or corrupt.
     }
   }
-  return sparad?.avtryck === avtryck ? sparad.text : null
+  return cached?.avtryck === fingerprint ? cached.text : null
 }
 
-export function sparaForklaring(hastId: string, avtryck: string, text: string) {
-  forklaringMinne.set(hastId, { avtryck, text })
+export function saveExplanation(hastId: string, fingerprint: string, text: string) {
+  explanationCache.set(hastId, { avtryck: fingerprint, text })
   try {
-    localStorage.setItem(forklaringNyckel(hastId), JSON.stringify({ avtryck, text }))
+    localStorage.setItem(explanationKey(hastId), JSON.stringify({ avtryck: fingerprint, text }))
   } catch {
-    // Ignorera, texten finns kvar i minnet under sessionen.
+    // Ignore; the text stays in memory for the session.
   }
 }
 
-/** Kort, stabilt fingeravtryck av en text (FNV-1a). */
-export function avtryck(text: string): string {
+/** A short, stable fingerprint of a text (FNV-1a). */
+export function fingerprint(text: string): string {
   let h = 0x811c9dc5
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i)

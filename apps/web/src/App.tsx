@@ -5,10 +5,10 @@ import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
 import { skapaPlan } from '@fodr/domain/plan'
-import { laddaHastar, laddaJournal, newJournalEntryId, nyHast, sparaHastar, sparaJournal } from './storage'
+import { loadHorses, loadJournal, newJournalEntryId, nyHast, saveHorses, saveJournal } from './storage'
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
-import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
+import { DEMO_ACCOUNT, currentUser, logIn, logOut, type User } from './auth'
 import { formatDate, bodyConditionText, localIsoDate, formatNumber } from './format'
 import { Login } from './components/Login'
 import { LandingPage } from './components/LandingPage'
@@ -26,27 +26,27 @@ const STEPS: Step[] = ['hast', 'analys', 'plan', 'journal']
 
 export default function App() {
   const { t } = useTranslation()
-  const [anvandare, setAnvandare] = useState<Anvandare | null>(aktuellAnvandare)
-  const [visaStart, setVisaStart] = useState(() => !aktuellAnvandare())
+  const [user, setUser] = useState<User | null>(currentUser)
+  const [visaStart, setVisaStart] = useState(() => !currentUser())
   const [visaLogin, setVisaLogin] = useState(false)
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [visaStart])
 
-  const oppna = (a: Anvandare) => {
-    setAnvandare(a)
+  const oppna = (a: User) => {
+    setUser(a)
     setVisaLogin(false)
     setVisaStart(false)
   }
 
-  if (!anvandare || visaStart) {
+  if (!user || visaStart) {
     return (
       <>
         <LandingPage
           produkter={produkter}
-          loggedInAs={anvandare?.namn ?? null}
-          onDemo={() => oppna(anvandare ?? loggaIn(DEMOKONTO.epost))}
+          loggedInAs={user?.namn ?? null}
+          onDemo={() => oppna(user ?? logIn(DEMO_ACCOUNT.epost))}
           onLogIn={() => setVisaLogin(true)}
         />
         {visaLogin && (
@@ -71,12 +71,12 @@ export default function App() {
 
   return (
     <Workspace
-      key={anvandare.id}
-      anvandare={anvandare}
+      key={user.id}
+      user={user}
       onToLanding={() => setVisaStart(true)}
       onLogOut={() => {
-        loggaUt()
-        setAnvandare(null)
+        logOut()
+        setUser(null)
         setVisaStart(true)
       }}
     />
@@ -84,25 +84,17 @@ export default function App() {
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
-function Workspace({
-  anvandare,
-  onToLanding,
-  onLogOut,
-}: {
-  anvandare: Anvandare
-  onToLanding: () => void
-  onLogOut: () => void
-}) {
+function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: () => void; onLogOut: () => void }) {
   const { t } = useTranslation()
-  const [hastar, setHastar] = useState<Hastprofil[]>(() => laddaHastar(anvandare.id))
+  const [hastar, setHastar] = useState<Hastprofil[]>(() => loadHorses(user.id))
   const [valdId, setValdId] = useState(hastar[0]?.id)
   const [step, setStep] = useState<Step>('hast')
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
-  const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => laddaJournal(anvandare.id))
+  const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => loadJournal(user.id))
   const [menyOppen, setMenyOppen] = useState(false)
 
-  useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
+  useEffect(() => saveHorses(user.id, hastar), [user.id, hastar])
   // Read again when the page is shown (a laptop opened the next morning), so the journal's default date and the
   // follow-up check move to the new day (#107). A page left visible across midnight keeps the old day until then.
   const [today, setToday] = useState(localIsoDate)
@@ -113,7 +105,7 @@ function Workspace({
     document.addEventListener('visibilitychange', onShown)
     return () => document.removeEventListener('visibilitychange', onShown)
   }, [])
-  useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
+  useEffect(() => saveJournal(user.id, journal), [user.id, journal])
   // Undefined for an account with no horses; hastar[0] alone is typed as always present (#17).
   const hast = hastar.find((h) => h.id === valdId) ?? (hastar.length > 0 ? hastar[0] : undefined)
 
@@ -192,10 +184,10 @@ function Workspace({
 
         <div className="sidofalt-fot">
           <div className="konto">
-            <span className="konto-ikon">{anvandare.namn.slice(0, 1).toUpperCase()}</span>
+            <span className="konto-ikon">{user.namn.slice(0, 1).toUpperCase()}</span>
             <span className="konto-text">
-              <b>{anvandare.namn}</b>
-              <span>{anvandare.epost}</span>
+              <b>{user.namn}</b>
+              <span>{user.epost}</span>
             </span>
           </div>
           <button className="sidofalt-lank" onClick={onToLanding}>
