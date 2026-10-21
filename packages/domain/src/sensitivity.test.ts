@@ -18,16 +18,28 @@ describe('skalMotProdukt', () => {
     expect(skalMotProdukt(hitta(LEISURE), frisk)).toEqual([])
   })
   it('magsår: kraftfoder med mycket stärkelse', () => {
-    expect(skalMotProdukt(hitta(LEISURE), { ...frisk, magsar: true }).join()).toContain('magsår')
+    expect(skalMotProdukt(hitta(LEISURE), { ...frisk, magsar: true })).toContainEqual({
+      code: 'exclusion.grainOrStarch',
+      params: {},
+    })
   })
   it('PPID behandlas som EMS', () => {
-    expect(skalMotProdukt(hitta(LEISURE), { ...frisk, ppid: true }).join()).toContain('socker')
+    expect(skalMotProdukt(hitta(LEISURE), { ...frisk, ppid: true })).toContainEqual({
+      code: 'exclusion.sugarStarch',
+      params: {},
+    })
   })
   it('luftvägar: pulver', () => {
-    expect(skalMotProdukt(hitta(FODERKRITA), { ...frisk, luftvagar: true })).toContain('pulverform kan damma')
+    expect(skalMotProdukt(hitta(FODERKRITA), { ...frisk, luftvagar: true })).toContainEqual({
+      code: 'exclusion.powder',
+      params: {},
+    })
   })
   it('allergi: lusern', () => {
-    expect(skalMotProdukt(hitta(LUSERN), { ...frisk, undvik: ['lusern'] })).toContain('innehåller lusern')
+    expect(skalMotProdukt(hitta(LUSERN), { ...frisk, undvik: ['lusern'] })).toContainEqual({
+      code: 'exclusion.containsIngredient',
+      params: { ingredient: 'lusern' },
+    })
   })
 })
 
@@ -44,12 +56,24 @@ describe('filtrering och granskning', () => {
       { intag: 400, behov: 390 },
       500,
     )
-    expect(rader.some((r) => r.niva === 'varning' && r.text.includes('Krafft Leisure'))).toBe(true)
-    expect(rader.some((r) => r.text.includes('750 g stärkelse per mål'))).toBe(true) // 150 g × 5
+    expect(rader).toContainEqual({
+      niva: 'varning',
+      text: {
+        code: 'sensitivity.currentFeed',
+        params: { product: hitta(LEISURE).namn, reasons: [{ code: 'exclusion.grainOrStarch', params: {} }] },
+      },
+      kalla: { code: 'source.fodrRules', params: {} },
+    })
+    // 150 g × 5
+    expect(rader).toContainEqual({
+      niva: 'info',
+      text: { code: 'sensitivity.ulcer', params: { starchPerMealG: 750 } },
+      kalla: { code: 'source.concentrateGuidelinesPage33', params: {} },
+    })
   })
   it('proteinkänslig: varnar för överskott över 30 %', () => {
     const rader = granskaKansligheter({ ...frisk, proteinkanslig: true }, [], { intag: 660, behov: 390 }, 500)
-    expect(rader.some((r) => r.text.includes('69 % mer protein'))).toBe(true)
+    expect(rader.map((r) => r.text)).toContainEqual({ code: 'sensitivity.proteinExcess', params: { percent: 69 } })
   })
 })
 

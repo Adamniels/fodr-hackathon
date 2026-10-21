@@ -36,6 +36,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
   const { steg, rader, dagar, kanslighet, forvald } = injustering
   const startDatum = franIso(start)
   const takt = BYTESTAKT[kanslighet]
+  /** The roughage by its type from the catalogue, a product by its name. */
+  const rowName = (r: Injusteringsrad) => (r.enhet === 'kg' ? t(`roughageTitle.${r.grovfodertyp}`) : r.namn)
 
   // Kalendern börjar på måndagen i startveckan och slutar på söndagen i sista veckan.
   const celler = useMemo(() => {
@@ -73,7 +75,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     const ical = (d: Date) => isoDag(d).replace(/-/g, '')
     const handelser = steg.map((x, i) => {
       const rad = rader
-        .map((r) => t('calendar.ics.row', { name: r.namn, amount: mangd(r, r.perSteg[i]), change: andring(r, i).text }))
+        .map((r) =>
+          t('calendar.ics.row', { name: rowName(r), amount: mangd(r, r.perSteg[i]), change: andring(r, i).text }),
+        )
         .join('\n')
       const sista = i === steg.length - 1
       return [
@@ -109,7 +113,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         <div>
           <h4>{t('calendar.title', { days: tal(dagar, 0) })}</h4>
           <p className="liten">
-            {takt.namn}
+            {t(`transitionPace.${kanslighet}.name`)}
             {forvald ? t('calendar.preselected') : ''}
             {t('calendar.rhythm', {
               every: takt.dagarPerSteg === 2 ? t('calendar.everyOther') : t('calendar.everyThird'),
@@ -177,8 +181,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         {rader.map((r) => {
           const a = andring(r, valtSteg)
           return (
-            <div key={r.namn} className="injustering-rad">
-              <span>{r.namn}</span>
+            <div key={rowName(r)} className="injustering-rad">
+              <span>{rowName(r)}</span>
               <strong>{mangd(r, r.perSteg[valtSteg])}</strong>
               <span className={`injustering-andring ${a.klass}`}>{a.text}</span>
             </div>
@@ -205,8 +209,8 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
           </thead>
           <tbody>
             {rader.map((r) => (
-              <tr key={r.namn}>
-                <td>{r.namn}</td>
+              <tr key={rowName(r)}>
+                <td>{rowName(r)}</td>
                 <td className="hoger">{mangd(r, r.fran)}</td>
                 {r.perSteg.map((v, i) => (
                   <td key={i} className="hoger">

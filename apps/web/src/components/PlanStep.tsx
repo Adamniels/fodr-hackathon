@@ -261,12 +261,15 @@ export function PlanStep({
           <section className="kort">
             <h3>{t('plan.health.title', { name: hast.namn })}</h3>
             <div className="kvalitet">
-              {plan.kansligheter.map((k) => (
-                <div key={k.text} className={`kvalitet-rad ${k.niva}`}>
-                  <span>{k.text}</span>
-                  <span className="liten">{k.kalla}</span>
-                </div>
-              ))}
+              {plan.kansligheter.map((k) => {
+                const text = domainText(k.text)
+                return (
+                  <div key={text} className={`kvalitet-rad ${k.niva}`}>
+                    <span>{text}</span>
+                    <span className="liten">{domainText(k.kalla)}</span>
+                  </div>
+                )
+              })}
             </div>
             {plan.bortvalda.length > 0 && (
               <details className="bortvalda">
@@ -274,7 +277,7 @@ export function PlanStep({
                 <ul>
                   {plan.bortvalda.map((b) => (
                     <li key={b.namn}>
-                      {b.namn}: {b.skal.join(', ')}
+                      {b.namn}: {b.skal.map(domainText).join(', ')}
                     </li>
                   ))}
                 </ul>
@@ -288,10 +291,10 @@ export function PlanStep({
             <h3>{t('plan.roughageQuality')}</h3>
             <div className="kvalitet">
               {plan.grovfoderkvalitet.map((f) => (
-                <div key={f.rubrik} className={`kvalitet-rad ${f.niva}`}>
-                  <strong>{f.rubrik}</strong>
-                  <span>{f.text}</span>
-                  <span className="liten">{f.kalla}</span>
+                <div key={f.rubrik.code} className={`kvalitet-rad ${f.niva}`}>
+                  <strong>{domainText(f.rubrik)}</strong>
+                  <span>{domainText(f.text)}</span>
+                  <span className="liten">{domainText(f.kalla)}</span>
                 </div>
               ))}
             </div>
@@ -404,9 +407,9 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
       kostnadEfterKrPerManad: Math.round(b.kostnadEfter),
     })),
     kvaveOverskottKgPerAr: Math.round(plan.kvaveOverskottKgPerAr),
-    omGrovfodret: plan.grovfoderkvalitet.map((f) => `${f.rubrik}: ${f.text}`),
-    kansligheter: plan.kansligheter.map((k) => k.text),
-    bortvaldaProdukter: plan.bortvalda.map((b) => `${b.namn} (${b.skal.join(', ')})`),
+    omGrovfodret: plan.grovfoderkvalitet.map((f) => `${domainText(f.rubrik)}: ${domainText(f.text)}`),
+    kansligheter: plan.kansligheter.map((k) => domainText(k.text)),
+    bortvaldaProdukter: plan.bortvalda.map((b) => `${b.namn} (${b.skal.map(domainText).join(', ')})`),
     varningar: plan.varningar.map(domainText),
     foderbyte: { dagar: plan.injustering.dagar, steg: plan.injustering.steg.length },
     saknasIAnalysen: plan.saknadeAnalysvarden.map(etikett),

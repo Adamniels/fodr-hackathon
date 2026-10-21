@@ -532,7 +532,16 @@
       "sodium": "SLU tabell 15 (NaCl), {{level}}",
       "concentrateGuidelines": "SLU riktlinjer kraftfoder",
       "microMinerals": "SLU tabell 17, {{level}}",
-      "vitamins": "SLU tabell 18"
+      "vitamins": "SLU tabell 18",
+      "table32": "SLU tabell 32",
+      "page20": "SLU sid 20",
+      "page30": "SLU sid 30",
+      "concentrateGuidelinesPage33": "SLU riktlinjer för kraftfoder, sid 33",
+      "industryPracticePage34": "Branschpraxis, SLU sid 34 (mun- och tandstatus)",
+      "eurofinsSoil": "Eurofins tolkningsstöd (ej SLU)",
+      "industryPractice": "Branschpraxis (ej SLU)",
+      "fodrRules": "Fodrs känslighetsregler",
+      "productDescriptions": "Härlett ur produktbeskrivningar"
     },
     "sluLevel": {
       "underhall": "underhåll",
@@ -544,6 +553,68 @@
     },
     "error": {
       "adultsOnly": "Modellen gäller vuxna hästar ({{minAgeYears}} år och äldre). Unghästar ingår inte i prototypen."
+    },
+    "table32Group": {
+      "hart": "hästar i hårt arbete",
+      "ovriga": "hästar utan hårt arbete"
+    },
+    "qualityTitle": {
+      "proteinHigh": "Mer protein än hästen behöver",
+      "proteinLow": "Proteinfattigt grovfoder",
+      "energyHigh": "Energirikt grovfoder",
+      "energyLow": "Energifattigt grovfoder",
+      "haylageWet": "Blött hösilage",
+      "haylageDry": "Torrt hösilage",
+      "soil": "Möjlig jordinblandning",
+      "sugarHigh": "Högt socker",
+      "seleniumMissing": "Selen ej analyserat"
+    },
+    "quality": {
+      "proteinHigh": "{{ratio}} g smältbart protein per MJ, över {{min}}–{{max}} som SLU rekommenderar för {{group}}. Överskottet blir kväve i gödseln. Passar bättre till unghästar och fölston.",
+      "proteinLow": "{{ratio}} g smältbart protein per MJ, under {{min}} som SLU rekommenderar. Proteinet kan behöva kompletteras.",
+      "energyHigh": "{{mj}} MJ per kg ts, över {{min}}–{{max}} som SLU rekommenderar för {{group}}. Fri tillgång kan ge överhull. Att blanda in halm eller välja en senare skörd sänker energin.",
+      "energyLow": "{{mj}} MJ per kg ts, under {{min}} som SLU rekommenderar för {{group}}.",
+      "haylageWet": "Torrsubstans {{dmPercent}} %, under 45–65 % som SLU rekommenderar för inplastat vallfoder till häst. Större risk för feljäsning och klostridier, och hästen behöver äta mycket vara. Kort hållbarhet efter öppning.",
+      "haylageDry": "Torrsubstans {{dmPercent}} %, över 65 %. SLU anger förhöjd risk för mögel i inplastat vallfoder över 65–70 % ts.",
+      "soilAsh": "Högt innehåll (aska {{ashG}} g per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
+      "soilIron": "Högt innehåll (järn {{ironMg}} mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
+      "soilAshIron": "Högt innehåll (aska {{ashG}} g och järn {{ironMg}} mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.",
+      "sugarHigh": "{{sugarG}} g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar med fång eller EMS.",
+      "seleniumMissing": "Svenska jordar är selenfattiga och tillskott behövs i de allra flesta fall. Planen räknar med ett lågt typvärde."
+    },
+    "exclusion": {
+      "sugarStarch": "för mycket eller okänt socker och stärkelse",
+      "grainOrStarch": "spannmål eller mycket stärkelse, olämpligt vid magsår",
+      "powder": "pulverform kan damma",
+      "containsIngredient": "innehåller {{ingredient}}",
+      "proteinFeed": "proteinfoder"
+    },
+    "sensitivity": {
+      "currentFeed": "{{product}}, som hästen får i dag: {{reasons}}. Överväg att byta.",
+      "ulcer": "Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är {{starchPerMealG}} g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.",
+      "pssm": "Korsförlamning: håll socker och stärkelse låga och använd fett som energikälla om hästen behöver mer energi. Selen och vitamin E är viktiga, och planen täcker dem.",
+      "airways": "Luftvägar: blötlägg eller ånga höet, eller välj hösilage, och undvik dammigt foder och strö. Mögligt och dammigt hö är en vanlig orsak till luftvägsbesvär.",
+      "teeth": "Tandproblem: blötlägg pellets till mash. Om hästen inte kan tugga långstrå, ersätt en del av grovfodret med hackat grovfoder eller grovfoderpellets. Låt tandläkare kontrollera munnen.",
+      "proteinExcess": "Hästen får {{percent}} % mer protein än den behöver. Vid proteinkänslighet: välj ett grovfoder med lägre proteinhalt eller blanda in halm.",
+      "avoidedIngredients": "Produkter med {{ingredients}} är bortvalda. Ingredienserna är tolkade ur butikernas beskrivningar, så kontrollera förpackningen."
+    },
+    "trend": {
+      "weightLossFast": "Vikten minskar {{percentPerWeek}} % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.",
+      "conditionRising": "Hullet ökar trots att hästen redan var i överhull. Se över energin i foderstaten."
+    }
+  },
+  "transitionPace": {
+    "tal": {
+      "name": "Tål byten bra",
+      "description": "Har aldrig reagerat på nytt foder."
+    },
+    "normal": {
+      "name": "Som de flesta",
+      "description": "Kan bli lite lös i magen ibland."
+    },
+    "kanslig": {
+      "name": "Känslig",
+      "description": "Lös avföring, kolik eller fång vid tidigare byten."
     }
   }
 }
