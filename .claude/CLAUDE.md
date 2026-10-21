@@ -14,7 +14,7 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration` and `db:migrate` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API and the integration tests need the Compose services (`docker compose up --wait`) and the root `.env` (copy `.env.example`). Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration` and `db:migrate` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API and the integration tests need the Compose services (`docker compose up --wait`) and the root `.env` (copy `.env.example`). Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
 
 | Command | What |
 |---|---|

@@ -1,6 +1,6 @@
 # The production image (ADR 0005): one Node process serving the API and the built web app on one origin.
 #   docker build -t fodr .
-#   docker run -p 3000:3000 -e DATABASE_URL=postgres://... -e ANTHROPIC_API_KEY=... fodr
+#   docker run -p 3000:3000 --env-file production.env fodr   (every variable in .env.example; see apps/api/src/config.ts)
 # Migrations are applied explicitly before a release, with the same image (ADR 0008):
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/migrate.mjs
 # The tag is the newest Node 24 release at least two weeks old (docs/architecture.md).
@@ -12,6 +12,7 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/domain/package.json packages/domain/
+COPY packages/contracts/package.json packages/contracts/
 RUN npm ci
 COPY . .
 RUN npm run build

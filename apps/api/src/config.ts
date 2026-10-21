@@ -7,8 +7,10 @@ const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'
 const required = (rule: string) => (issue: { input: unknown }) =>
   issue.input === undefined ? 'is required' : `must be ${rule}`
 
+const DATABASE_URL = z.url({ protocol: /^postgres(ql)?$/, error: required('a postgres:// URL') })
+
 const EnvSchema = z.object({
-  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: required('a postgres:// URL') }),
+  DATABASE_URL,
   PORT: z.coerce
     .number({ error: required('a port number') })
     .int({ error: required('a port number') })
@@ -21,6 +23,33 @@ const EnvSchema = z.object({
   WEB_DIST_DIR: z.string().optional(),
   // Optional: without it the AI routes answer with the missing-key error and everything else works.
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Auth (ADR 0009): signs session cookies and tokens; the public address of the app, which the emailed links use
+  // and whose origin is the only trusted one (in development the Vite address, which proxies /api).
+  BETTER_AUTH_SECRET: z.string({ error: required('a secret') }).min(32, { error: 'must be at least 32 characters' }),
+  BETTER_AUTH_URL: z.url({ protocol: /^https?$/, error: required('an http:// or https:// URL') }),
+  // Outgoing mail over SMTP (ADR 0005): Mailpit locally (ADR 0006), the email provider in production.
+  SMTP_HOST: z.string({ error: required('a host name') }),
+  // A string first, so a missing port says "is required"; Number() then turns text into NaN, which fails the check.
+  SMTP_PORT: z
+    .string({ error: required('a port number') })
+    .transform(Number)
+    .pipe(
+      z
+        .number({ error: 'must be a port number' })
+        .int({ error: 'must be a port number' })
+        .min(1, { error: 'must be a port number' })
+        .max(65535, { error: 'must be a port number' }),
+    ),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string({ error: required('a sender, such as Fodr <no-reply@example.se>') }),
+  // The header a trusted proxy in front of the API sets to the client's IP (the host's, chosen in M5), which the auth
+  // rate limits key on. Unset, the API is reached directly and the connection's own address is used instead; a header
+  // the client sends itself is never trusted.
+  CLIENT_IP_HEADER: z
+    .string()
+    .transform((name) => name.toLowerCase())
+    .optional(),
 })
 
 export interface Config {
@@ -29,27 +58,54 @@ export interface Config {
   logLevel: (typeof LOG_LEVELS)[number]
   webDistDir: string | undefined
   anthropicApiKey: string | undefined
+  betterAuthSecret: string
+  betterAuthUrl: string
+  smtpHost: string
+  smtpPort: number
+  smtpUser: string | undefined
+  smtpPassword: string | undefined
+  mailFrom: string
+  clientIpHeader: string | undefined
 }
 
 export type ConfigResult = { ok: true; config: Config } | { ok: false; message: string }
 
+// An empty value (`PORT=` in .env) means unset, not "" or 0.
+const present = (env: Record<string, string | undefined>) =>
+  Object.fromEntries(Object.entries(env).filter(([, value]) => value !== ''))
+
+const invalid = (error: z.ZodError) =>
+  ['Invalid configuration:', ...error.issues.map((issue) => `  ${issue.path.join('.')} ${issue.message}`)].join('\n')
+
 export function parseConfig(env: Record<string, string | undefined>): ConfigResult {
-  // An empty value (`PORT=` in .env) means unset, not "" or 0.
-  const present = Object.fromEntries(Object.entries(env).filter(([, value]) => value !== ''))
-  const result = EnvSchema.safeParse(present)
-  if (!result.success) {
-    const lines = result.error.issues.map((issue) => `  ${issue.path.join('.')} ${issue.message}`)
-    return { ok: false, message: ['Invalid configuration:', ...lines].join('\n') }
-  }
-  const { DATABASE_URL, PORT, LOG_LEVEL, WEB_DIST_DIR, ANTHROPIC_API_KEY } = result.data
+  const result = EnvSchema.safeParse(present(env))
+  if (!result.success) return { ok: false, message: invalid(result.error) }
+  const parsed = result.data
   return {
     ok: true,
     config: {
-      databaseUrl: DATABASE_URL,
-      port: PORT,
-      logLevel: LOG_LEVEL,
-      webDistDir: WEB_DIST_DIR,
-      anthropicApiKey: ANTHROPIC_API_KEY,
+      databaseUrl: parsed.DATABASE_URL,
+      port: parsed.PORT,
+      logLevel: parsed.LOG_LEVEL,
+      webDistDir: parsed.WEB_DIST_DIR,
+      anthropicApiKey: parsed.ANTHROPIC_API_KEY,
+      betterAuthSecret: parsed.BETTER_AUTH_SECRET,
+      betterAuthUrl: parsed.BETTER_AUTH_URL,
+      smtpHost: parsed.SMTP_HOST,
+      smtpPort: parsed.SMTP_PORT,
+      smtpUser: parsed.SMTP_USER,
+      smtpPassword: parsed.SMTP_PASSWORD,
+      mailFrom: parsed.MAIL_FROM,
+      clientIpHeader: parsed.CLIENT_IP_HEADER,
     },
   }
+}
+
+/** The migrator's configuration (migrate.ts): the database alone, so a release migration needs no other secret. */
+export function parseMigrationConfig(
+  env: Record<string, string | undefined>,
+): { ok: true; config: { databaseUrl: string } } | { ok: false; message: string } {
+  const result = z.object({ DATABASE_URL }).safeParse(present(env))
+  if (!result.success) return { ok: false, message: invalid(result.error) }
+  return { ok: true, config: { databaseUrl: result.data.DATABASE_URL } }
 }

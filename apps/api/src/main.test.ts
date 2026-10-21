@@ -26,7 +26,15 @@ describe('the API process', () => {
   })
 
   it('serves health, then stops cleanly on SIGTERM', async () => {
-    const api = start({ DATABASE_URL: 'postgres://fodr:fodr@localhost:5432/fodr', PORT: '0' })
+    const api = start({
+      DATABASE_URL: 'postgres://fodr:fodr@localhost:5432/fodr',
+      PORT: '0',
+      BETTER_AUTH_SECRET: 'a-test-secret-of-at-least-32-characters',
+      BETTER_AUTH_URL: 'http://localhost:3000',
+      SMTP_HOST: 'localhost',
+      SMTP_PORT: '1025',
+      MAIL_FROM: 'Fodr <no-reply@fodr.test>',
+    })
     const port = await new Promise<number>((resolve, reject) => {
       api.child.stdout.on('data', () => {
         const line = api

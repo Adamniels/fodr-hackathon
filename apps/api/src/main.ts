@@ -2,8 +2,11 @@
 import { serve } from '@hono/node-server'
 import { createAnthropicProvider } from './ai/anthropic'
 import { createApp } from './app'
+import { createAuth } from './auth'
 import { parseConfig } from './config'
+import { createDatabase } from './db'
 import { createLogger } from './logger'
+import { createSmtpMailer } from './mail/mailer'
 
 const result = parseConfig(process.env)
 if (!result.ok) {
@@ -12,7 +15,10 @@ if (!result.ok) {
 }
 const { config } = result
 const logger = createLogger(config.logLevel)
-const app = createApp({ config, logger, ai: createAnthropicProvider({ apiKey: config.anthropicApiKey }) })
+// The pool connects on the first query, so the API starts (and serves health) while the database is still coming up.
+const database = createDatabase(config.databaseUrl)
+const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
+const app = createApp({ config, logger, ai: createAnthropicProvider({ apiKey: config.anthropicApiKey }), auth })
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
   logger.info({ port: info.port }, 'listening')
@@ -20,7 +26,9 @@ const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
 
 function shutdown(signal: NodeJS.Signals) {
   logger.info({ signal }, 'shutting down')
-  server.close(() => process.exit(0))
+  server.close(() => {
+    void database.close().finally(() => process.exit(0))
+  })
 }
 process.once('SIGTERM', shutdown)
 process.once('SIGINT', shutdown)
