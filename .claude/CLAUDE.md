@@ -54,4 +54,4 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
 - The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` is not intercepted, because it belongs to the real backend.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.
-- Changes to AI prompts, schemas or the model must be checked with `node apps/web/scripts/utvardera-utlasning.mjs` (costs about 11 API calls).
+- Changes to AI prompts, schemas or the model must be checked with `node apps/web/scripts/evaluate-analysis-reading.mjs` (costs about 11 API calls).

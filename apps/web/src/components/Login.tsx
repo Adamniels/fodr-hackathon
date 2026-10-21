@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DEMOKONTO, loggaIn, type Anvandare } from '../auth'
+import { DEMO_ACCOUNT, logIn, type User } from '../auth'
 
-export function Login({ onLoggedIn }: { onLoggedIn: (a: Anvandare) => void }) {
+export function Login({ onLoggedIn }: { onLoggedIn: (a: User) => void }) {
   const { t } = useTranslation()
   const [lage, setLage] = useState<'logga_in' | 'skapa'>('logga_in')
   const [epost, setEpost] = useState('')
@@ -14,7 +14,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: (a: Anvandare) => void }) {
     e.preventDefault()
     setFel(null)
     try {
-      onLoggedIn(loggaIn(epost, lage === 'skapa' ? namn : undefined))
+      onLoggedIn(logIn(epost, lage === 'skapa' ? namn : undefined))
     } catch (err) {
       setFel(err instanceof Error ? err.message : String(err))
     }
@@ -25,7 +25,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: (a: Anvandare) => void }) {
       <h2>{lage === 'logga_in' ? t('login.titleLogIn') : t('login.titleCreate')}</h2>
       <p className="ingress">{t('login.intro')}</p>
 
-      <button className="knapp bred" onClick={() => onLoggedIn(loggaIn(DEMOKONTO.epost))}>
+      <button className="knapp bred" onClick={() => onLoggedIn(logIn(DEMO_ACCOUNT.epost))}>
         {t('login.demo')}
       </button>
       <div className="login-skiljare">

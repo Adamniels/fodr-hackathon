@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { analyseraJournal, type JournalAnalys } from '../api'
+import { analyzeJournal, type JournalAnalysis } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
@@ -254,7 +254,7 @@ function AiAnalysis({
   aktuellPlan: PlanOgonblick | null
 }) {
   const { t } = useTranslation()
-  const [svar, setSvar] = useState<JournalAnalys | null>(null)
+  const [svar, setSvar] = useState<JournalAnalysis | null>(null)
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
 
@@ -263,7 +263,7 @@ function AiAnalysis({
     setFel(null)
     try {
       setSvar(
-        await analyseraJournal({
+        await analyzeJournal({
           hast: {
             namn: hast.namn,
             alderAr: hast.alderAr,

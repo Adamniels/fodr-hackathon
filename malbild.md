@@ -70,7 +70,7 @@ Källa för behoven är SLU Rapport 289, Utfodringsrekommendationer för häst (
 
 ## Produkt- och testdata (2026-10-14)
 
-- Produkter importeras från kollegans butiksdata med `apps/web/scripts/importera-produkter.mjs`. Bara de 15 produkterna i `produktval.json` får väljas av urvalet. Övriga kan väljas som dagens foder.
+- Produkter importeras från kollegans butiksdata med `apps/web/scripts/import-products.mjs`. Bara de 15 produkterna i `produktval.json` får väljas av urvalet. Övriga kan väljas som dagens foder.
 - Utanför urvalet tills data kompletterats: produkter flaggade "kontrollera" (bl.a. Granngårdens mineralfoder utan Ca och P, Trikem E+Selen utan selenvärde), saltstenar (doseras inte i gram) och Hööks produkter utan deklaration.
 - Urvalet måste täcka analyserade ämnen samt Ca, P, Mg, Na och Se. Uppskattade mikromineraler och vitaminer styr inte (SLU: vallfoder av god kvalitet räcker normalt) och visas som "Osäkert".
 - Kompletta mineraltillskott (Trikem Minerals, Brogaarden Vitamins & Minerals) räknas som mineralfoder, så att högst ett väljs.
@@ -95,4 +95,4 @@ Källa för behoven är SLU Rapport 289, Utfodringsrekommendationer för häst (
 
 - Utläsning: 7 PDF:er och 3 mobilfoton gav alla värden inom 5 % av facit, inklusive omräkning från per kg vara. Enda avvikelsen (koppar i B06, 6,56 mot 7) beror på avrundning i facit. R00 avvisades korrekt som icke-analys. 3–9 s per rapport.
 - Profilfyllning, förklaring och journalanalys fungerar i appen. Journalanalysen flaggar veterinär för Sixtens ömma hovar. Förklaringen begränsad till högst 120 ord i tre stycken.
-- Kör om med `node scripts/utvardera-utlasning.mjs` efter ändringar i prompten eller modellen.
+- Kör om med `node scripts/evaluate-analysis-reading.mjs` efter ändringar i prompten eller modellen.

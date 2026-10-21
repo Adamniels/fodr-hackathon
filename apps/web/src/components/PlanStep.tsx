@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { forklaraPlan } from '../api'
+import { explainPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { doseGrams, nutrientUnit, nutrientLabel, formatMoney, formatNumber, shortNutrientLabel } from '../format'
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
-import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
+import { fingerprint, loadExplanation, saveExplanation } from '../storage'
 import { TransitionCalendar } from './TransitionCalendar'
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -35,30 +35,30 @@ export function PlanStep({
   // The explanation is cached per horse and payload. The same plan shows the cached text instead of
   // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
-  const nyckel = useMemo(() => avtryck(JSON.stringify(payload)), [payload])
-  const [forklaring, setForklaring] = useState<string | null>(() => laddaForklaring(hast.id, nyckel))
-  const [forklaringFel, setForklaringFel] = useState<string | null>(null)
+  const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
+  const [explanation, setExplanation] = useState<string | null>(() => loadExplanation(hast.id, payloadFingerprint))
+  const [explanationError, setExplanationError] = useState<string | null>(null)
   const [omgang, setOmgang] = useState(0)
 
   useEffect(() => {
-    const sparad = omgang === 0 ? laddaForklaring(hast.id, nyckel) : null
-    setForklaringFel(null)
-    if (sparad) {
-      setForklaring(sparad)
+    const cached = omgang === 0 ? loadExplanation(hast.id, payloadFingerprint) : null
+    setExplanationError(null)
+    if (cached) {
+      setExplanation(cached)
       return
     }
     let avbruten = false
-    setForklaring(null)
-    forklaraPlan(payload)
+    setExplanation(null)
+    explainPlan(payload)
       .then((r) => {
-        sparaForklaring(hast.id, nyckel, r.text)
-        if (!avbruten) setForklaring(r.text)
+        saveExplanation(hast.id, payloadFingerprint, r.text)
+        if (!avbruten) setExplanation(r.text)
       })
-      .catch((e: unknown) => !avbruten && setForklaringFel(e instanceof Error ? e.message : String(e)))
+      .catch((e: unknown) => !avbruten && setExplanationError(e instanceof Error ? e.message : String(e)))
     return () => {
       avbruten = true
     }
-  }, [hast.id, nyckel, payload, omgang])
+  }, [hast.id, payloadFingerprint, payload, omgang])
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
@@ -125,14 +125,14 @@ export function PlanStep({
           <h3>
             <span className="ai-bricka">{t('common.aiBadge')}</span> {t('plan.explanation.title')}
           </h3>
-          {forklaring ? (
-            forklaring.split(/\n+/).map((s, i) => <p key={i}>{s}</p>)
-          ) : forklaringFel ? (
-            <p className="liten">{t('plan.explanation.failed', { error: forklaringFel })}</p>
+          {explanation ? (
+            explanation.split(/\n+/).map((s, i) => <p key={i}>{s}</p>)
+          ) : explanationError ? (
+            <p className="liten">{t('plan.explanation.failed', { error: explanationError })}</p>
           ) : (
             <p className="laddar-text">{t('plan.explanation.writing')}</p>
           )}
-          {forklaring && (
+          {explanation && (
             <div className="forklaring-fot">
               <button className="lank liten" onClick={() => setOmgang((n) => n + 1)}>
                 {t('plan.explanation.rewrite')}

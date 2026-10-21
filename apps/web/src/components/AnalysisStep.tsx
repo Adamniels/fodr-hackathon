@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { filTillBase64, lasAnalys } from '../api'
+import { fileToBase64, readAnalysis } from '../api'
 import { analysBas, analysKomplett } from '../data/examples'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
 import { hittaSchablon } from '@fodr/domain/forage'
@@ -49,7 +49,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNe
     setFel(null)
     setFilnamn(fil.name)
     try {
-      const utlast = await lasAnalys(await filTillBase64(fil))
+      const utlast = await readAnalysis(await fileToBase64(fil))
       const { analys: a, omrakningar: o } = tillGrovfoderanalys(utlast)
       setAnmarkningar(utlast.anmarkningar)
       onAnalysisChange(a, o)
