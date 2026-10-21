@@ -1,12 +1,12 @@
 // CF1 at API level (#22): every account flow against the real Postgres and Mailpit, through the HTTP API.
 import type { AddressInfo } from 'node:net'
 import { serve } from '@hono/node-server'
-import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sql } from 'drizzle-orm'
 import { authApp, BASE_URL, client } from '../test/auth-app'
-import { clearMail, linkIn, waitForMail } from '../test/mailpit'
+import { clearMail, linkIn, mailCount, waitForMail } from '../test/mailpit'
 
-const { app, database, close } = authApp()
+const { app, database, logs, close } = authApp()
 afterAll(close)
 beforeEach(clearMail)
 
@@ -91,7 +91,7 @@ describe('password login and logout', () => {
     const session = verify.headers.getSetCookie().find((c) => c.includes('session_token'))
     expect(session).toMatch(/HttpOnly/i)
     expect(session).toMatch(/SameSite=Lax/i)
-    expect(session).not.toMatch(/Secure/i)
+    expect(session).not.toMatch(/;\s*Secure(;|$)/i)
   })
 })
 
@@ -104,8 +104,8 @@ describe('the session cookie over https', () => {
       const login = await browser.post('/api/auth/sign-in/email', { email, password: PASSWORD })
       expect(login.status).toBe(200)
       const session = login.headers.getSetCookie().find((c) => c.includes('session_token'))
-      expect(session).toMatch(/Secure/i)
-      expect(session).toMatch(/HttpOnly/i)
+      expect(session).toMatch(/;\s*Secure(;|$)/i)
+      expect(session).toMatch(/;\s*HttpOnly(;|$)/i)
     } finally {
       await https.close()
     }
@@ -125,18 +125,23 @@ describe('magic link', () => {
     expect((await browser.request('/api/v1/me')).status).toBe(200)
   })
 
-  it('answers an unknown email like a known one, and never creates an account from the link', async () => {
+  it('answers an unknown email like a known one, sends nothing and creates no account', async () => {
     const email = newEmail()
     const browser = newClient()
     const res = await browser.post('/api/auth/sign-in/magic-link', { email, callbackURL: '/horses' })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ status: true })
-    // The link goes out either way (so the reply cannot tell); following it must not create the account.
-    const link = linkIn(await waitForMail(email))
-    await browser.request(link.pathname + link.search)
-    expect((await browser.request('/api/v1/me')).status).toBe(401)
+    // Mail is sent without blocking the reply, so give a link the time to arrive before asserting there is none.
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    expect(await mailCount(email)).toBe(0)
     const users = await database.db.execute(sql`select count(*)::int as n from users where email = ${email}`)
     expect(users.rows[0]).toEqual({ n: 0 })
+  })
+
+  it('refuses a callback URL on another site', async () => {
+    const { email } = await verifiedUser()
+    const res = await newClient().post('/api/auth/sign-in/magic-link', { email, callbackURL: 'https://evil.example/x' })
+    expect(res.status).toBe(403)
   })
 })
 
@@ -215,6 +220,153 @@ describe('rate limits', () => {
       const statuses: number[] = []
       for (let i = 0; i < 6; i++) statuses.push((await browser.post(path, { email: newEmail() })).status)
       expect(statuses, path).toContain(429)
+    }
+  })
+})
+
+describe('a sign up for an email that already has an account (#22 review)', () => {
+  it('mails the owner of a verified account instead of changing anything, and replies as to a new sign up', async () => {
+    const { email } = await verifiedUser()
+    await clearMail()
+    const fresh = await newClient().post('/api/auth/sign-up/email', {
+      name: 'Ny',
+      email: newEmail(),
+      password: PASSWORD,
+      callbackURL: '/horses',
+    })
+    const duplicate = await newClient().post('/api/auth/sign-up/email', {
+      name: 'Inkräktare',
+      email,
+      password: 'inkraktarens-losenord',
+      callbackURL: '/horses',
+    })
+    expect(duplicate.status).toBe(fresh.status)
+    expect(Object.keys((await duplicate.json()) as object).sort()).toEqual(
+      Object.keys((await fresh.json()) as object).sort(),
+    )
+    expect((await waitForMail(email)).subject).toMatch(/redan ett konto/)
+    expect((await newClient().post('/api/auth/sign-in/email', { email, password: PASSWORD })).status).toBe(200)
+    expect(
+      (await newClient().post('/api/auth/sign-in/email', { email, password: 'inkraktarens-losenord' })).status,
+    ).toBe(401)
+  })
+
+  it('lets the mailbox owner take over an account someone else created with their email, locking the other out', async () => {
+    const email = newEmail()
+    const attacker = newClient()
+    await attacker.post('/api/auth/sign-up/email', {
+      name: 'X',
+      email,
+      password: 'angriparens-losenord',
+      callbackURL: '/horses',
+    })
+    // The verification mail for the attacker's sign up goes to the owner's mailbox; let it land before clearing.
+    await waitForMail(email)
+    await clearMail()
+
+    const owner = newClient()
+    await owner.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD, callbackURL: '/horses' })
+    const mail = await waitForMail(email)
+    expect(mail.subject).toMatch(/lösenord/)
+    const token = linkIn(mail).pathname.split('/').at(-1)
+    expect((await owner.post('/api/auth/reset-password', { token, newPassword: 'agarens-losenord-1' })).status).toBe(
+      200,
+    )
+
+    expect(
+      (await newClient().post('/api/auth/sign-in/email', { email, password: 'angriparens-losenord' })).status,
+    ).toBe(401)
+    const login = newClient()
+    expect((await login.post('/api/auth/sign-in/email', { email, password: 'agarens-losenord-1' })).status).toBe(200)
+    expect(await (await login.request('/api/v1/me')).json()).toMatchObject({ user: { email, emailVerified: true } })
+  })
+})
+
+describe('cross-site requests (#22 review)', () => {
+  it('refuses a request with the session cookie from another origin', async () => {
+    const { browser } = await verifiedUser()
+    const res = await app.request(`${BASE_URL}/api/auth/sign-out`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://evil.example',
+        'x-forwarded-for': '10.200.0.1',
+        cookie: [...browser.cookies].map(([n, v]) => `${n}=${v}`).join('; '),
+      },
+      body: '{}',
+    })
+    expect(res.status).toBe(403)
+    expect((await browser.request('/api/v1/me')).status).toBe(200)
+  })
+
+  it('refuses a password reset that would redirect to another site', async () => {
+    const { email } = await verifiedUser()
+    const res = await newClient().post('/api/auth/request-password-reset', {
+      email,
+      redirectTo: 'https://evil.example/r',
+    })
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('the account name (#22 review)', () => {
+  it('refuses a name over 100 characters', async () => {
+    const res = await newClient().post('/api/auth/sign-up/email', {
+      name: 'x'.repeat(101),
+      email: newEmail(),
+      password: PASSWORD,
+      callbackURL: '/horses',
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('never puts the name in a mail, so it cannot carry a message from Fodr', async () => {
+    const email = newEmail()
+    await newClient().post('/api/auth/sign-up/email', {
+      name: 'Fodr support logga in via https://evil.example/fodr',
+      email,
+      password: PASSWORD,
+      callbackURL: '/horses',
+    })
+    expect((await waitForMail(email)).text).not.toMatch(/evil\.example|Fodr support/)
+  })
+})
+
+describe('the session (#22 review)', () => {
+  it('renews an aging session through /api/v1/me, so an active user stays signed in', async () => {
+    const { email, browser } = await verifiedUser()
+    // A session one day from expiry is past Better Auth's update age (a day into the seven) and gets renewed.
+    await database.db.execute(
+      sql`update sessions set expires_at = now() + interval '1 day' where user_id = (select id from users where email = ${email})`,
+    )
+    const res = await browser.request('/api/v1/me')
+    expect(res.status).toBe(200)
+    expect(res.headers.getSetCookie().some((c) => c.includes('session_token'))).toBe(true)
+  })
+})
+
+describe('logs (#22 review)', () => {
+  it('never contain an email address or query parameters when Better Auth fails a query', async () => {
+    // Better Auth logs to the console by default, bypassing pino and its error serializer (ADR 0015).
+    const consoleOutput: unknown[] = []
+    const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
+      vi.spyOn(console, method).mockImplementation((...args: unknown[]) => void consoleOutput.push(...args)),
+    )
+    try {
+      const email = newEmail()
+      const res = await newClient().post('/api/auth/sign-up/email', {
+        name: 'a\u0000b',
+        email,
+        password: PASSWORD,
+        callbackURL: '/horses',
+      })
+      expect(res.status).toBeGreaterThanOrEqual(400)
+      const everything = logs.join('') + consoleOutput.map((x) => String(x)).join('\n')
+      expect(everything).not.toContain(email)
+      expect(everything).not.toMatch(/params:/)
+      expect(consoleOutput).toEqual([])
+    } finally {
+      for (const spy of spies) spy.mockRestore()
     }
   })
 })

@@ -39,9 +39,14 @@ export async function waitForMail(address: string, timeoutMs = 5000): Promise<Re
   }
 }
 
-/** The first link in a mail's text. */
-export function linkIn(mail: ReceivedMail): URL {
-  const match = /https?:\/\/\S+/.exec(mail.text)
-  if (!match) throw new Error(`No link in: ${mail.text}`)
-  return new URL(match[0])
+/** How many messages went to the address. */
+export async function mailCount(address: string): Promise<number> {
+  return (await messagesTo(address)).length
+}
+
+/** The app's link in a mail's text (on BASE_URL), never another link the text may hold. */
+export function linkIn(mail: ReceivedMail, base = 'http://localhost:3000'): URL {
+  const link = mail.text.split(/\s+/).find((word) => word.startsWith(`${base}/`))
+  if (!link) throw new Error(`No link to ${base} in: ${mail.text}`)
+  return new URL(link)
 }

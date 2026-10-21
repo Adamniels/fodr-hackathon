@@ -1,5 +1,6 @@
 // The real app with real auth for integration tests: the test database (inject('databaseUrl')), mail to the Compose
 // Mailpit, and a client that keeps the session cookie like a browser.
+import { Writable } from 'node:stream'
 import { inject } from 'vitest'
 import { createAuth } from '../src/auth'
 import { createApp } from '../src/app'
@@ -34,10 +35,18 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
 export function authApp(overrides: Partial<Config> = {}) {
   const config = testConfig(overrides)
   const database = createDatabase(config.databaseUrl)
-  const logger = createLogger(config.logLevel)
+  // Every log line, raw, so a test can assert what never reaches the logs.
+  const logs: string[] = []
+  const stream = new Writable({
+    write(chunk: Buffer, _encoding, done) {
+      logs.push(chunk.toString())
+      done()
+    },
+  })
+  const logger = createLogger('debug', stream)
   const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
   const app = createApp({ config, logger, ai: fakeAiProvider(), auth })
-  return { app, database, close: () => database.close() }
+  return { app, database, logs, close: () => database.close() }
 }
 
 /** A browser-like client: one IP (rate limits key on it), and the cookies the API set. */

@@ -33,17 +33,31 @@ export default tseslint.config(
   },
   {
     // Handlers never reach the database themselves: data goes through repositories that take the user and scope every
-    // query (ADR 0010). Only the database module, auth (Better Auth's tables), the composition root, the migrator and
-    // src/repositories/ may import it; a later block's rule options replace this one's, so it repeats INWARDS.
+    // query (ADR 0010). Only the database module and schema, auth (Better Auth's tables), the composition root, the
+    // migrator and src/repositories/ may import it, or the driver and ORM beneath it. A dynamic import() or reaching
+    // through auth.$context is left to review. A later block's rule options replace this one's, so it repeats INWARDS.
     files: ['src/**/*.ts'],
-    ignores: ['src/db.ts', 'src/auth.ts', 'src/main.ts', 'src/migrate.ts', 'src/repositories/**', '**/*.test.ts'],
+    ignores: [
+      'src/db.ts',
+      'src/db/**',
+      'src/auth.ts',
+      'src/main.ts',
+      'src/migrate.ts',
+      'src/repositories/**',
+      // Imports Drizzle's and pg's error classes to keep query data out of the logs; no data access.
+      'src/logger.ts',
+      '**/*.test.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             INWARDS,
-            { regex: '(^|/)db$', message: 'Data access goes through a repository in src/repositories/ (ADR 0010).' },
+            {
+              regex: '(^|/)db(\\.ts)?(/.*)?$|^pg$|^drizzle-orm(/|$)',
+              message: 'Data access goes through a repository in src/repositories/ (ADR 0010).',
+            },
           ],
         },
       ],

@@ -9,6 +9,7 @@ import type { AiProvider } from './ai/provider'
 import type { Config } from './config'
 import type { Logger } from './logger'
 import { CLIENT_IP_HEADER, type Auth } from './auth'
+import { resolveClientIp } from './client-ip'
 import { problem } from './problem'
 import { requireUser } from './session'
 
@@ -94,15 +95,13 @@ export function createApp({ config, logger, ai, auth }: AppDeps): Hono<AppEnv> {
   return app
 }
 
-/**
- * The trusted proxy's header when one is configured (with a list, the last entry: the one that proxy added), else the
- * address of the connection itself. Undefined only without a socket (requests made in memory, as in unit tests).
- */
+/** The client IP from the trusted proxy header, else the connection (undefined without a socket, as in memory). */
 function clientIp(c: Context<AppEnv>, trustedHeader: string | undefined): string | undefined {
-  if (trustedHeader) return c.req.header(trustedHeader)?.split(',').at(-1)?.trim() || undefined
+  let socket: string | undefined
   try {
-    return getConnInfo(c).remote.address
+    socket = getConnInfo(c).remote.address
   } catch {
-    return undefined
+    socket = undefined
   }
+  return resolveClientIp(trustedHeader ? c.req.header(trustedHeader) : undefined, socket)
 }
