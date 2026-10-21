@@ -76,25 +76,25 @@ const CATEGORY = {
 
 function ggNutrients(p, antaganden) {
   const n = p.naring_per_kg ?? {}
-  const per = {}
-  for (const [from, to] of Object.entries(GG_NUTRIENTS)) if (n[from] != null) per[to] = n[from]
-  if (per.na === undefined && n.nacl_g != null) per.na = n.nacl_g * NA_PER_NACL
-  if (n.me_mj != null) per.energi = n.me_mj
+  const nutrients = {}
+  for (const [from, to] of Object.entries(GG_NUTRIENTS)) if (n[from] != null) nutrients[to] = n[from]
+  if (nutrients.na === undefined && n.nacl_g != null) nutrients.na = n.nacl_g * NA_PER_NACL
+  if (n.me_mj != null) nutrients.energi = n.me_mj
   else if (n.energi_mj_ospec != null) {
-    per.energi = n.energi_mj_ospec
+    nutrients.energi = n.energi_mj_ospec
     antaganden.push('Energin saknar angiven typ och räknas som omsättbar energi (OE).')
   } else if (n.de_mj != null) {
-    per.energi = round(n.de_mj * OE_PER_SE, 2)
+    nutrients.energi = round(n.de_mj * OE_PER_SE, 2)
     antaganden.push('Energin är angiven som smältbar energi och räknad om till OE med SLU:s faktor 0,86.')
   }
-  return per
+  return nutrients
 }
 
 function hkNutrients(p) {
   const n = p.naring_per_kg ?? {}
-  const per = {}
-  for (const [from, [to, factor]] of Object.entries(HK_NUTRIENTS)) if (n[from] != null) per[to] = n[from] * factor
-  return per
+  const nutrients = {}
+  for (const [from, [to, factor]] of Object.entries(HK_NUTRIENTS)) if (n[from] != null) nutrients[to] = n[from] * factor
+  return nutrients
 }
 
 const NO_GRAIN = /spannmålsfri|utan spannmål|oat ?free|grain ?free|havrefri|utan havre/
@@ -129,11 +129,11 @@ function form(p) {
   return undefined
 }
 
-function lamplighetFangEms(kategori, per) {
+function lamplighetFangEms(kategori, nutrients) {
   // ANTAGANDE: under about 100 g sugar plus starch per kg counts as suitable for laminitis and EMS.
   // Pure mineral, vitamin and salt products count as suitable unless declared otherwise.
-  const carbs = (per.socker ?? 0) + (per.starkelse ?? 0)
-  const known = per.socker !== undefined || per.starkelse !== undefined
+  const carbs = (nutrients.socker ?? 0) + (nutrients.starkelse ?? 0)
+  const known = nutrients.socker !== undefined || nutrients.starkelse !== undefined
   if (known) return carbs <= 100
   return ['mineralfoder', 'tillskott', 'salt'].includes(kategori)
 }
@@ -142,22 +142,23 @@ function buildProduct({
   id,
   namn,
   marke,
-  typ,
-  mangd,
-  pris,
+  storeType,
+  amount,
+  price,
   url,
-  beskrivning,
+  description,
   naringsdata,
   kontrollera,
   butik,
-  per,
+  nutrients,
   antaganden,
   p,
 }) {
   const v = selection[id]
-  let kategori = v?.kategori ?? CATEGORY[typ] ?? 'ovrigt'
-  if (typ === 'salt/slicksten' || typ === 'saltsten' || typ === 'slicksten') kategori = v?.kategori ?? 'ovrigt'
-  let perKg = { ...per, ...(v?.perKg ?? {}) }
+  let kategori = v?.kategori ?? CATEGORY[storeType] ?? 'ovrigt'
+  if (storeType === 'salt/slicksten' || storeType === 'saltsten' || storeType === 'slicksten')
+    kategori = v?.kategori ?? 'ovrigt'
+  let perKg = { ...nutrients, ...(v?.perKg ?? {}) }
   if (v?.perKgFranAnnanBas) {
     const base = p.naring_annan_bas?.[v.perKgFranAnnanBas.bas]
     if (!base) throw new Error(`${id}: saknar annan bas ${v.perKgFranAnnanBas.bas}`)
@@ -173,12 +174,12 @@ function buildProduct({
     marke: marke ?? '',
     kategori,
     perKg,
-    prisKr: pris,
-    forpackningKg: round(mangd / 1000, 3),
+    prisKr: price,
+    forpackningKg: round(amount / 1000, 3),
     ...(v ? { dosGramPer100kg: { min: v.dos[0], max: v.dos[1] }, dosKalla: v.dosKalla } : {}),
     iUrval: Boolean(v),
     lampligVidFangEms: lamplighetFangEms(kategori, perKg),
-    ingredienser: ingredienser(`${namn} ${beskrivning ?? ''}`),
+    ingredienser: ingredienser(`${namn} ${description ?? ''}`),
     form: form(p),
     naringsdata,
     ...(kontrollera?.length ? { kontrollera } : {}),
@@ -204,15 +205,15 @@ for (const p of granngarden.produkter) {
       id: p.id,
       namn: p.namn,
       marke: p.varumarke,
-      typ: p.typ,
-      mangd: p.mangd_g_eller_ml,
-      pris: p.pris_kr,
+      storeType: p.typ,
+      amount: p.mangd_g_eller_ml,
+      price: p.pris_kr,
       url: p.url,
-      beskrivning: p.beskrivning,
+      description: p.beskrivning,
       naringsdata: p.naringsdata,
       kontrollera: p.kontrollera,
       butik: 'Granngården',
-      per: ggNutrients(p, antaganden),
+      nutrients: ggNutrients(p, antaganden),
       antaganden,
       p,
     }),
@@ -227,15 +228,15 @@ for (const p of hooks.produkter) {
       id: p.id,
       namn: p.namn,
       marke: p.varumarke,
-      typ: p.typ,
-      mangd: p.mangd_g_eller_ml,
-      pris: p.pris_kr,
+      storeType: p.typ,
+      amount: p.mangd_g_eller_ml,
+      price: p.pris_kr,
       url: p.url,
-      beskrivning: p.beskrivning,
+      description: p.beskrivning,
       naringsdata: p.naringsdata,
       kontrollera: null,
       butik: 'Hööks',
-      per: hkNutrients(p),
+      nutrients: hkNutrients(p),
       antaganden: [],
       p,
     }),

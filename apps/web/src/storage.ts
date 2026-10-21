@@ -75,13 +75,13 @@ export function saveJournal(userId: string, journal: Record<string, Journalpost[
   }
 }
 
-// The latest AI explanation per horse. The key is a fingerprint of the payload, so the same plan gives
-// the same text without a new API call, while a changed plan gets a new explanation.
+// The latest AI explanation per horse, saved with a fingerprint of the plan payload it explains. The same plan
+// matches the fingerprint and shows the saved text without a new API call; a changed plan gets a new explanation.
 // The stored field is named avtryck: it is persisted, so it keeps its name (ADR 0016, rule 7).
 const explanationKey = (hastId: string) => `fodr.forklaring.v1.${hastId}`
 const explanationCache = new Map<string, { avtryck: string; text: string }>()
 
-export function loadExplanation(hastId: string, fingerprint: string): string | null {
+export function loadExplanation(hastId: string, planFingerprint: string): string | null {
   let cached = explanationCache.get(hastId)
   if (!cached) {
     try {
@@ -91,13 +91,13 @@ export function loadExplanation(hastId: string, fingerprint: string): string | n
       // Storage unavailable or corrupt.
     }
   }
-  return cached?.avtryck === fingerprint ? cached.text : null
+  return cached?.avtryck === planFingerprint ? cached.text : null
 }
 
-export function saveExplanation(hastId: string, fingerprint: string, text: string) {
-  explanationCache.set(hastId, { avtryck: fingerprint, text })
+export function saveExplanation(hastId: string, planFingerprint: string, text: string) {
+  explanationCache.set(hastId, { avtryck: planFingerprint, text })
   try {
-    localStorage.setItem(explanationKey(hastId), JSON.stringify({ avtryck: fingerprint, text }))
+    localStorage.setItem(explanationKey(hastId), JSON.stringify({ avtryck: planFingerprint, text }))
   } catch {
     // Ignore; the text stays in memory for the session.
   }

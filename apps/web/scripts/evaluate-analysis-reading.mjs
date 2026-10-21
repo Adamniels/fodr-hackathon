@@ -1,4 +1,4 @@
-// Compares the AI reading against the colleague's answer key. Needs the dev server running (npm run dev) and an API key.
+// Compares the AI reading against the colleague's answer key. Needs the dev server (npm run dev) and an API key.
 // Usage: node scripts/evaluate-analysis-reading.mjs [testdata-v2-dir] [port]
 // Costs one API call per file (11). The answer key is computed from unrounded values, so small rounding differences
 // in reports per kg as fed (e.g. copper in B06) are expected.

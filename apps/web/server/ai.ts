@@ -185,8 +185,8 @@ export async function explainPlan(payload: unknown): Promise<string> {
 }
 
 /**
- * The parsed reply. With structured output the SDK parses it against the schema, and requireCompleteResponse has already turned a
- * refusal or a cut-off reply into an error, so it is present.
+ * The parsed reply. With structured output the SDK parses it against the schema, and requireCompleteResponse has
+ * already turned a refusal or a cut-off reply into an error, so it is present.
  */
 function parsedOutput<T>(response: { parsed_output: T | null }): T {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- see the comment above

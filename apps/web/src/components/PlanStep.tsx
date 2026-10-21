@@ -37,12 +37,12 @@ export function PlanStep({
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
   const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
   const [explanation, setExplanation] = useState<string | null>(() => loadExplanation(hast.id, payloadFingerprint))
-  const [forklaringFel, setForklaringFel] = useState<string | null>(null)
+  const [explanationError, setExplanationError] = useState<string | null>(null)
   const [omgang, setOmgang] = useState(0)
 
   useEffect(() => {
     const cached = omgang === 0 ? loadExplanation(hast.id, payloadFingerprint) : null
-    setForklaringFel(null)
+    setExplanationError(null)
     if (cached) {
       setExplanation(cached)
       return
@@ -54,7 +54,7 @@ export function PlanStep({
         saveExplanation(hast.id, payloadFingerprint, r.text)
         if (!avbruten) setExplanation(r.text)
       })
-      .catch((e: unknown) => !avbruten && setForklaringFel(e instanceof Error ? e.message : String(e)))
+      .catch((e: unknown) => !avbruten && setExplanationError(e instanceof Error ? e.message : String(e)))
     return () => {
       avbruten = true
     }
@@ -127,8 +127,8 @@ export function PlanStep({
           </h3>
           {explanation ? (
             explanation.split(/\n+/).map((s, i) => <p key={i}>{s}</p>)
-          ) : forklaringFel ? (
-            <p className="liten">{t('plan.explanation.failed', { error: forklaringFel })}</p>
+          ) : explanationError ? (
+            <p className="liten">{t('plan.explanation.failed', { error: explanationError })}</p>
           ) : (
             <p className="laddar-text">{t('plan.explanation.writing')}</p>
           )}
