@@ -104,6 +104,16 @@ function Arbetsyta({
   const [menyOppen, setMenyOppen] = useState(false)
 
   useEffect(() => sparaHastar(anvandare.id, hastar), [anvandare.id, hastar])
+  // "Today" is read on each render. Showing the page again (a laptop opened the next morning) renders it anew, so
+  // the journal's default date and the follow-up check move to the new day (#107).
+  const [, setVisningar] = useState(0)
+  useEffect(() => {
+    const visad = () => {
+      if (document.visibilityState === 'visible') setVisningar((n) => n + 1)
+    }
+    document.addEventListener('visibilitychange', visad)
+    return () => document.removeEventListener('visibilitychange', visad)
+  }, [])
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
   const hast = hastar.find((h) => h.id === valdId) ?? hastar[0]
 

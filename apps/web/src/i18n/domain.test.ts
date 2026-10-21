@@ -213,6 +213,7 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'validation.atLeast', params: { min: 0 } }, 'Värdet kan inte vara lägre än 0.'],
   [{ code: 'validation.positiveUpTo', params: { min: 0, max: 40 } }, 'Ange ett värde över 0 och högst 40.'],
   [{ code: 'validation.trotWithinRide', params: {} }, 'Kan inte vara fler än minuterna per pass.'],
+  [{ code: 'validation.date', params: {} }, 'Ange ett datum.'],
   // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
   [{ code: 'qualityTitle.proteinHigh', params: {} }, 'Mer protein än hästen behöver'],
   [{ code: 'qualityTitle.proteinLow', params: {} }, 'Proteinfattigt grovfoder'],

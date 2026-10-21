@@ -7,8 +7,11 @@ import { domainText } from '../i18n/domain'
 
 const FEED_ROW = /^nuvarandeFoder\.(\d+)\.gramPerDag$/
 
-/** Fields with a fixed label; feed rows and nutrients are named from their row and nutrient. */
-type NamedField = Exclude<InputError['field'], `nuvarandeFoder.${number}.gramPerDag` | `perKgTs.${string}`>
+/**
+ * Fields with a fixed label; feed rows and nutrients are named from their row and nutrient. A journal entry's date is
+ * checked in the journal form and never reaches the plan (#107).
+ */
+type NamedField = Exclude<InputError['field'], `nuvarandeFoder.${number}.gramPerDag` | `perKgTs.${string}` | 'datum'>
 
 // A Record over every named field, so a new field without a label is a compile error.
 const LABELS: Record<NamedField, ParseKeys> = {

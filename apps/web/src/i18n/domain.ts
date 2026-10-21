@@ -155,6 +155,7 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'validation.positiveUpTo': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),
   'validation.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
   'validation.trotWithinRide': tom,
+  'validation.date': tom,
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */
