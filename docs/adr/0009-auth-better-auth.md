@@ -26,3 +26,8 @@ Use **Better Auth**, pinned to an exact version **no older than 1.7.7**, with it
 
 - Better Auth has had many security advisories in 2026, including a critical one involving magic links fixed in 1.7.7 (GHSA-965c-763c-88jm) and a high one fixed in 1.6.22 (GHSA-qq9h-g4jm-xgf3). Most advisories concern plugins we do not use. We pin versions, enable Dependabot security alerts and upgrade promptly; keeping the plugin set minimal is a rule.
 - Better Auth owns its tables; our tables reference `users.id`.
+
+## Notes
+
+- 2026-10-21 (#22): Better Auth 1.7.7, exact (the only release both at least 1.7.7 and two weeks old; no GitHub advisory covers it). The email is verified before password login (`requireEmailVerification`); the link verifies and signs in. The magic link logs existing users in only (`disableSignUp`), and its reply never says whether an account exists. Emails are sent without awaiting SMTP, so response times do not reveal accounts either. Telemetry is off. Tables follow ADR 0008 (plural, UUID IDs, timestamptz rather than the generator's plain timestamp). Rate limits are always on and stored in Postgres (`rate_limits`), keyed on the client IP, which the app resolves itself: from `CLIENT_IP_HEADER` when a trusted proxy sets one (the M5 host, #45), else the connection's address, never from a header the client chooses (Better Auth's default reads `x-forwarded-for`, which a client can rotate to dodge the limit) (owner).
+

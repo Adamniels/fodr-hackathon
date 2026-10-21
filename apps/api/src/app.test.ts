@@ -6,17 +6,12 @@ import { DrizzleQueryError } from 'drizzle-orm'
 import { DatabaseError } from 'pg'
 import { describe, expect, it } from 'vitest'
 import { fakeAiProvider } from '../test/fake-ai-provider'
+import { UNIT_CONFIG, unitAuth } from '../test/unit-deps'
 import { createApp } from './app'
 import type { Config } from './config'
 import { createLogger } from './logger'
 
-const CONFIG: Config = {
-  databaseUrl: 'postgres://fodr:fodr@localhost:5432/fodr',
-  port: 3000,
-  logLevel: 'info',
-  webDistDir: undefined,
-  anthropicApiKey: undefined,
-}
+const CONFIG: Config = UNIT_CONFIG
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // The app with its log lines captured as parsed JSON.
@@ -32,6 +27,7 @@ function setup(config: Partial<Config> = {}) {
     config: { ...CONFIG, ...config },
     logger: createLogger('info', stream),
     ai: fakeAiProvider(),
+    auth: unitAuth(),
   })
   return { app, lines }
 }
@@ -70,6 +66,16 @@ describe('GET /api/v1/health', () => {
     })
     expect(typeof requestLines[0].durationMs).toBe('number')
     expect(JSON.stringify(lines)).not.toMatch(/someone@example\.com/)
+  })
+})
+
+describe('request logs', () => {
+  it('never log a password reset token, which Better Auth puts in the path', async () => {
+    const { app, lines } = setup()
+    await app.request('/api/auth/reset-password/secret-reset-token?callbackURL=/x')
+    const line = lines.find((l) => l.msg === 'request')
+    expect(line).toMatchObject({ path: '/api/auth/reset-password/[redacted]' })
+    expect(JSON.stringify(lines)).not.toMatch(/secret-reset-token/)
   })
 })
 

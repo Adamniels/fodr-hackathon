@@ -3,6 +3,7 @@
 import { Writable } from 'node:stream'
 import { describe, expect, it } from 'vitest'
 import { fakeAiProvider } from '../../test/fake-ai-provider'
+import { UNIT_CONFIG, unitAuth } from '../../test/unit-deps'
 import { createApp } from '../app'
 import { createLogger } from '../logger'
 import { AiProviderError } from './provider'
@@ -18,15 +19,10 @@ function setup() {
     },
   })
   const app = createApp({
-    config: {
-      databaseUrl: 'postgres://fodr:fodr@localhost:5432/fodr',
-      port: 3000,
-      logLevel: 'info',
-      webDistDir: undefined,
-      anthropicApiKey: undefined,
-    },
+    config: { ...UNIT_CONFIG, logLevel: 'info' },
     logger: createLogger('info', stream),
     ai,
+    auth: unitAuth(),
   })
   const post = (path: string, body: unknown) =>
     app.request(path, {

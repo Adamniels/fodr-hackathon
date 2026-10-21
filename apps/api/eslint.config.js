@@ -9,6 +9,8 @@ const SWEDISH_TEXT = {
   message: 'The API returns codes, not Swedish text (ADR 0013, ADR 0014).',
 }
 
+const INWARDS = { regex: '(^|/)apps/', message: 'Dependencies point inwards: no other app (ADR 0003).' }
+
 export default tseslint.config(
   { ignores: ['dist'] },
   {
@@ -26,17 +28,32 @@ export default tseslint.config(
       // The same settings as the web app and the domain (#17).
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      'no-restricted-imports': ['error', { patterns: [INWARDS] }],
+    },
+  },
+  {
+    // Handlers never reach the database themselves: data goes through repositories that take the user and scope every
+    // query (ADR 0010). Only the database module, auth (Better Auth's tables), the composition root, the migrator and
+    // src/repositories/ may import it; a later block's rule options replace this one's, so it repeats INWARDS.
+    files: ['src/**/*.ts'],
+    ignores: ['src/db.ts', 'src/auth.ts', 'src/main.ts', 'src/migrate.ts', 'src/repositories/**', '**/*.test.ts'],
+    rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: [{ regex: '(^|/)apps/', message: 'Dependencies point inwards: no other app (ADR 0003).' }] },
+        {
+          patterns: [
+            INWARDS,
+            { regex: '(^|/)db$', message: 'Data access goes through a repository in src/repositories/ (ADR 0010).' },
+          ],
+        },
       ],
     },
   },
   {
     // Modules only; tests may hold Swedish data. The prompts and schema descriptions in ai/anthropic.ts are Swedish
-    // model input, not text for a reader.
+    // model input, not text for a reader; the emails in mail/templates.ts leave by email, not as API responses (#22).
     files: ['src/**/*.ts'],
-    ignores: ['**/*.test.ts', 'src/ai/anthropic.ts'],
+    ignores: ['**/*.test.ts', 'src/ai/anthropic.ts', 'src/mail/templates.ts'],
     rules: { 'no-restricted-syntax': ['error', SWEDISH_TEXT] },
   },
   {

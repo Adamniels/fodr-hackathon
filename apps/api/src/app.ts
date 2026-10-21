@@ -1,22 +1,30 @@
 // The HTTP app, built from its dependencies so tests can call it in memory (app.request). main.ts serves it.
+import { getConnInfo } from '@hono/node-server/conninfo'
 import { serveStatic } from '@hono/node-server/serve-static'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
+import { MeResponseSchema } from '@fodr/contracts/me'
 import { aiRoutes } from './ai/routes'
 import type { AiProvider } from './ai/provider'
 import type { Config } from './config'
 import type { Logger } from './logger'
+import { CLIENT_IP_HEADER, type Auth } from './auth'
 import { problem } from './problem'
+import { requireUser } from './session'
 
 export interface AppDeps {
   config: Config
   logger: Logger
   ai: AiProvider
+  auth: Auth
 }
 
 export type AppEnv = { Variables: RequestIdVariables }
 
-export function createApp({ config, logger, ai }: AppDeps): Hono<AppEnv> {
+// A password reset token is part of Better Auth's path (/api/auth/reset-password/<token>); it never reaches the logs.
+const loggedPath = (path: string) => path.replace(/^(\/api\/auth\/reset-password\/)[^/]+/, '$1[redacted]')
+
+export function createApp({ config, logger, ai, auth }: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
 
   // X-Request-Id on every response; a valid incoming ID (from a proxy) is kept, anything else is replaced.
@@ -29,7 +37,7 @@ export function createApp({ config, logger, ai }: AppDeps): Hono<AppEnv> {
       {
         requestId: c.get('requestId'),
         method: c.req.method,
-        path: c.req.path,
+        path: loggedPath(c.req.path),
         status: c.res.status,
         durationMs: Math.round(performance.now() - started),
       },
@@ -38,6 +46,16 @@ export function createApp({ config, logger, ai }: AppDeps): Hono<AppEnv> {
   })
 
   app.get('/api/v1/health', (c) => c.json({ status: 'ok' }))
+  // Better Auth's own routes: sign up, verify, sign in, sign out, password reset, magic link (ADR 0009). The client IP
+  // its rate limits key on is resolved here and passed in CLIENT_IP_HEADER, replacing any value the client sent.
+  app.on(['GET', 'POST'], '/api/auth/*', (c) => {
+    const headers = new Headers(c.req.raw.headers)
+    headers.delete(CLIENT_IP_HEADER)
+    const ip = clientIp(c, config.clientIpHeader)
+    if (ip) headers.set(CLIENT_IP_HEADER, ip)
+    return auth.handler(new Request(c.req.raw, { headers }))
+  })
+  app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
   // The AI routes keep their paths outside /api/v1 until #30 versions them.
   app.route('/api', aiRoutes(ai, logger))
 
@@ -74,4 +92,17 @@ export function createApp({ config, logger, ai }: AppDeps): Hono<AppEnv> {
     return problem(c, 500, 'http.internal_error')
   })
   return app
+}
+
+/**
+ * The trusted proxy's header when one is configured (with a list, the last entry: the one that proxy added), else the
+ * address of the connection itself. Undefined only without a socket (requests made in memory, as in unit tests).
+ */
+function clientIp(c: Context<AppEnv>, trustedHeader: string | undefined): string | undefined {
+  if (trustedHeader) return c.req.header(trustedHeader)?.split(',').at(-1)?.trim() || undefined
+  try {
+    return getConnInfo(c).remote.address
+  } catch {
+    return undefined
+  }
 }

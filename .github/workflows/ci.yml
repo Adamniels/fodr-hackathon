@@ -79,7 +79,9 @@ jobs:
       # The production image serves the API and the web app on one origin (ADR 0005).
       - run: >-
           docker run -d --name fodr --network fodr_default -p 127.0.0.1:3000:3000
-          -e DATABASE_URL=postgres://fodr:fodr@postgres:5432/fodr fodr
+          -e DATABASE_URL=postgres://fodr:fodr@postgres:5432/fodr
+          -e BETTER_AUTH_SECRET=ci-only-secret-of-at-least-32-characters -e BETTER_AUTH_URL=http://127.0.0.1:3000
+          -e SMTP_HOST=mailpit -e SMTP_PORT=1025 -e "MAIL_FROM=Fodr <no-reply@fodr.test>" fodr
       - name: Smoke test the image
         run: |
           for i in $(seq 30); do curl -sf http://127.0.0.1:3000/api/v1/health >/dev/null && break; sleep 1; done
