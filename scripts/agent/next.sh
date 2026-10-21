@@ -42,7 +42,7 @@ jq -r -n --arg repo "$OWNER/$REPO_NAME" --slurpfile issues "$tmp/issues.json" --
       | if $k == null then [] else
           ($l[$k + 1:]) as $r
           | ([range(0; $r | length) | select($r[.] | test("^#{1,6}\\s"))] | first // ($r | length)) as $e
-          | [$r[:$e][] | select(test("\\S")) | sub("^\\s*[-*]\\s*"; "") | select((localrefs != []) or (test("^(none|note)\\b|^_no response_$"; "i") | not))]
+          | [$r[:$e][] | select(test("\\S")) | sub("^\\s*[-*]\\s*"; "") | select((localrefs != []) or (test("^(none|note)\\b|^_no response_\\s*$"; "i") | not))]
         end;
     def blockers:
       [deps[] | if localrefs != [] then

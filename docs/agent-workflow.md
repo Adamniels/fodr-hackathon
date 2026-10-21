@@ -53,7 +53,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
    - Keep `mac-mini-agent` as a repository collaborator with **Write** permission. Never give it Admin: the ruleset lets admins bypass review, and the bot would inherit that.
    - Give it access to the project board: open the "Fodr" project, **Settings → Manage access**, add `mac-mini-agent` with **Write**. Repository access does not include the board, which is a private user project.
 2. **Tools.** Install Node 24 (see `.nvmrc`), Docker (Desktop or OrbStack), `gh`, `jq`, tmux and Claude Code. `scripts/agent/next.sh` calls the `jq` binary; macOS ships it (`/usr/bin/jq`), other systems must install it.
-3. **Clone.** `git clone https://github.com/Adamniels/fodr-hackathon.git ~/Projects/fodr-hackathon`
+3. **Clone.** `git clone https://github.com/Adamniels/fodr-hackathon.git ~/dev/fodr-hackathon`
 4. **Log in as the bot.** `gh auth login` with the bot account; scopes `repo`, `workflow`, `project`, `read:org` (`gh auth refresh -s project` if the project scope is missing). Then `gh auth setup-git`, so git pushes use the bot's login instead of a keychain entry that may belong to the owner.
 5. **Git identity, this clone only.** In the clone:
    ```
@@ -72,7 +72,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
 
 ## Working sessions
 
-- **Start:** `ssh` to the Mac mini, then `tmux new -s fodr-<number>`, `cd ~/Projects/fodr-hackathon`, `git pull`, `claude`, and `/pick-up-ticket <number>` (or `/pick-up-ticket` alone for a proposal).
+- **Start:** `ssh` to the Mac mini, then `tmux new -s fodr-<number>`, `cd ~/dev/fodr-hackathon`, `git pull`, `claude`, and `/pick-up-ticket <number>` (or `/pick-up-ticket` alone for a proposal).
 - **Leave and come back:** detach with `Ctrl-b d`; reattach with `tmux attach -t fodr-<number>`. From the phone, use Claude Code Remote Control to answer the agent's questions.
 - **Two tickets at once:** one tmux session per ticket; each has its own worktree, Docker services are shared.
 - **After merge:** `git worktree remove .worktrees/<number>-<slug>`, `git branch -D <number>-<slug>`, `git fetch --prune`, `git worktree prune`. `-D`, because a squash-merged branch never counts as merged in git, so `-d` refuses it; look at the PR first to be sure it was merged.

@@ -8,7 +8,7 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 # FAKE_ON_BOARD: 1 an item with status Todo, 0 no item, nostatus an item without status, archived only an
-# archived item. FAKE_ADD_FAILS=1 makes the add fail; FAKE_RELOOKUP is then what the second lookup finds.
+# archived item. FAKE_ADD_FAILS=1 makes the add fail; FAKE_RELOOKUP is then what the second lookup finds, and FAKE_RELOOKUP_FAILS=1 makes that lookup fail too.
 cat > "$tmp/gh" <<'FAKE'
 #!/usr/bin/env bash
 echo "$*" >> "$FAKE_GH_LOG"
@@ -26,7 +26,9 @@ case "$*" in
   *addProjectV2ItemById*)
     if [ "${FAKE_ADD_FAILS:-0}" = 1 ]; then echo "GraphQL: Resource not accessible by integration (addProjectV2ItemById)" >&2; exit 1; fi
     echo "PVTI_new" ;;
-  *"issue(number"*) if [ -n "${FAKE_RELOOKUP:-}" ]; then echo "$FAKE_RELOOKUP"; fi ;; # gh exits 0 when --jq selects nothing
+  *"issue(number"*)
+    if [ "${FAKE_RELOOKUP_FAILS:-0}" = 1 ]; then echo "HTTP 502: Bad Gateway" >&2; exit 1; fi
+    if [ -n "${FAKE_RELOOKUP:-}" ]; then echo "$FAKE_RELOOKUP"; fi ;; # gh exits 0 when --jq selects nothing
   *updateProjectV2ItemFieldValue*) echo "PVTI_item" ;;
   *) echo "unexpected gh call: $*" >&2; exit 9 ;;
 esac
@@ -68,12 +70,16 @@ FAKE_ON_BOARD=0 FAKE_ADD_FAILS=1 run status 7 Todo
 [ "$code" = 1 ] && grep -q 'Resource not accessible by integration' <<<"$out" && ! grep -q updateProjectV2ItemFieldValue "$FAKE_GH_LOG"
 check "a failed add prints GitHub's error and exits 1" $?
 
+FAKE_ON_BOARD=0 FAKE_ADD_FAILS=1 FAKE_RELOOKUP_FAILS=1 run status 7 Todo
+[ "$code" = 1 ] && grep -q 'Resource not accessible by integration' <<<"$out" && ! grep -q updateProjectV2ItemFieldValue "$FAKE_GH_LOG"
+check "a failed add still shows GitHub's error when the second lookup fails too" $?
+
 FAKE_ON_BOARD=0 FAKE_ADD_FAILS=1 FAKE_RELOOKUP=PVTI_race run status 7 Todo
 [ "$code" = 0 ] && grep 'updateProjectV2ItemFieldValue' "$FAKE_GH_LOG" | grep -q 'PVTI_race'
 check "a failed add whose item exists after all (auto-add race) is updated" $?
 
 FAKE_ON_BOARD=archived run status 7 Todo
-[ "$code" = 1 ] && grep -q 'archived' <<<"$out" && ! grep -q updateProjectV2ItemFieldValue "$FAKE_GH_LOG" && ! grep -q addProjectV2ItemById "$FAKE_GH_LOG"
+[ "$code" = 1 ] && grep -q 'archived' <<<"$out" && grep -q 'includeArchived:true' "$FAKE_GH_LOG" && grep -q isArchived "$FAKE_GH_LOG" && ! grep -q updateProjectV2ItemFieldValue "$FAKE_GH_LOG" && ! grep -q addProjectV2ItemById "$FAKE_GH_LOG"
 check "status never touches an archived item" $?
 
 FAKE_ON_BOARD=0 run get 7

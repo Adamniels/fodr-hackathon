@@ -83,7 +83,8 @@ if [ -z "$item_id" ]; then
     --jq '.data.addProjectV2ItemById.item.id' 2>"$add_error")"; then
     item_id="$(gh api graphql \
       -f query="query{repository(owner:\"$OWNER\",name:\"$REPO_NAME\"){issue(number:$issue){id projectItems(first:20){nodes{id isArchived project{id}}}}}}" \
-      --jq ".data.repository.issue.projectItems.nodes[] | select(.project.id == \"$project_id\" and (.isArchived | not)) | .id")"
+      --jq ".data.repository.issue.projectItems.nodes[] | select(.project.id == \"$project_id\" and (.isArchived | not)) | .id")" \
+      || item_id="" # a failing lookup must not hide why the add failed
     if [ -z "$item_id" ]; then
       echo "#$issue: could not add the issue to the board:" >&2
       cat "$add_error" >&2
