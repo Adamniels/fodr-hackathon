@@ -9,7 +9,7 @@ import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
-import { formatDate, hullText, tal } from './format'
+import { formatDate, hullText, localIsoDate, tal } from './format'
 import { Login } from './components/Login'
 import { Startsida } from './components/Startsida'
 import { HorseStep } from './components/HorseStep'
@@ -21,7 +21,7 @@ import { Ordmarke } from './components/Varumarke'
 
 const produkter = produkterJson as Produkt[]
 type Steg = 'hast' | 'analys' | 'plan' | 'journal'
-const idag = () => new Date().toISOString().slice(0, 10)
+const idag = () => localIsoDate()
 
 const STEG: Steg[] = ['hast', 'analys', 'plan', 'journal']
 

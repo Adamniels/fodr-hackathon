@@ -49,6 +49,20 @@ export function parseIsoDate(text: string): Date | undefined {
 }
 
 /** A stored date for the active locale ("2026-06-05" in sv-SE). Text that is not a valid date is shown as it is. */
+/**
+ * A date as its local calendar day ("2026-10-15"), the form dates are stored in. toISOString() gives the UTC day,
+ * which in Sweden is still yesterday until 01:00 or 02:00 (audit C6).
+ */
+export function localIsoDate(date: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Local midnight `days` calendar days later; counts days, not 24-hour periods, so it holds across DST changes. */
+export function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
+}
+
 export function formatDate(iso: string): string {
   return parseIsoDate(iso)?.toLocaleDateString(locale(), { dateStyle: 'short' }) ?? iso
 }

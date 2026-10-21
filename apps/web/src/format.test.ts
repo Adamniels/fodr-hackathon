@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { formatDate, parseDecimal, parseIsoDate, tal } from './format'
+import { addDays, formatDate, localIsoDate, parseDecimal, parseIsoDate, tal } from './format'
 import i18n from './i18n'
 
 describe('parseDecimal', () => {
@@ -98,5 +98,49 @@ describe('formatDate', () => {
   it('returns text that is not a valid date as it is', () => {
     expect(formatDate('28 sept')).toBe('28 sept')
     expect(formatDate('2026-02-30')).toBe('2026-02-30')
+  })
+})
+
+describe('localIsoDate', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.useRealTimers()
+  })
+
+  // C6: at 00:30 in Stockholm it is still the previous day in UTC.
+  it('gives the local calendar day just after midnight, summer and winter time', () => {
+    vi.stubEnv('TZ', 'Europe/Stockholm')
+    // The stub only reaches Date in a forked worker; this checks the test really runs in Stockholm time.
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Europe/Stockholm')
+    expect(localIsoDate(new Date(Date.UTC(2026, 9, 14, 22, 30)))).toBe('2026-10-15')
+    expect(localIsoDate(new Date(Date.UTC(2026, 11, 14, 23, 30)))).toBe('2026-12-15')
+  })
+
+  it('defaults to now', () => {
+    vi.stubEnv('TZ', 'Europe/Stockholm')
+    vi.useFakeTimers({ now: Date.UTC(2026, 9, 14, 22, 30) })
+    expect(localIsoDate()).toBe('2026-10-15')
+  })
+
+  it('reads back through parseIsoDate as the same day', () => {
+    // Checked first: localIsoDate(undefined) would give today and pass for the wrong reason.
+    const dag = parseIsoDate('2026-02-28')
+    expect(dag).toBeInstanceOf(Date)
+    expect(localIsoDate(dag)).toBe('2026-02-28')
+  })
+})
+
+describe('addDays', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('counts calendar days across the change to winter time', () => {
+    vi.stubEnv('TZ', 'Europe/Stockholm')
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('Europe/Stockholm')
+    // 25 October 2026 has 25 hours in Stockholm.
+    const fore = parseIsoDate('2026-10-24')!
+    expect(localIsoDate(addDays(fore, 1))).toBe('2026-10-25')
+    expect(localIsoDate(addDays(fore, 2))).toBe('2026-10-26')
+    expect(addDays(fore, 2).getHours()).toBe(0)
+    expect(localIsoDate(addDays(fore, -24))).toBe('2026-09-30')
   })
 })
