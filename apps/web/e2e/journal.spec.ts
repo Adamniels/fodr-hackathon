@@ -13,6 +13,14 @@ test('journal entry defaults to the fixed date', async ({ page }) => {
   await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
 })
 
+test('just after midnight the journal entry defaults to the local date (C6)', async ({ page }) => {
+  // 00:30 in Stockholm is 22:30 UTC the day before.
+  await page.clock.setSystemTime(new Date('2026-10-15T00:30:00+02:00'))
+  await enterDemo(page)
+  await goToStep(page, 'Journal')
+  await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
+})
+
 test('entry with weight updates the profile', async ({ page }) => {
   await enterDemo(page)
   await goToStep(page, 'Journal')
