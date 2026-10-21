@@ -40,7 +40,7 @@ The key never reaches the browser: Vite exposes only `VITE_` variables, and `vit
 │   └── krubba-testdata-v2/       synthetic lab reports (PDF, PNG, JPG) + facit.json answer key
 └── app/
     ├── server/                   ai.ts (4 Claude calls), apiPlugin.ts (routes, dev only)
-    ├── scripts/                  importera-produkter.mjs, produktval.json, utvardera-utlasning.mjs
+    ├── scripts/                  import-products.mjs, produktval.json, evaluate-analysis-reading.mjs
     ├── public/bilder/            marketing photos (CC0 per footer)
     └── src/
         ├── App.tsx               auth gate, workspace, ALL app state
@@ -66,7 +66,7 @@ flowchart LR
     Plugin --> AI[ai.ts]
   end
   AI -->|API key| Claude[(Anthropic API)]
-  Scripts[scripts/importera-produkter.mjs] -->|generates| Products
+  Scripts[scripts/import-products.mjs] -->|generates| Products
   Testdata[(testdata/*.json)] --> Scripts
 ```
 
@@ -107,9 +107,9 @@ Flow level gaps:
 | M3 | **The backend.** API only runs inside the Vite dev server | `server/apiPlugin.ts:39` | A real server process or serverless functions. `ai.ts` is portable as is. |
 | M4 | Demo seeding: the demo account always gets Sixten, Pysen and a journal | `storage.ts:20`, `storage.ts:59`, `data/examples.ts` | Seed data in the database, or keep as an explicit demo mode. |
 | M5 | Example analyses that bypass AI extraction | `AnalysisStep.tsx:72-81`, `data/examples.ts:45-87` | Keep as an explicit demo or onboarding feature, or remove. |
-| M6 | **Product catalogue** is a one day scrape (all 228 items `insamlad: 2026-10-14`). Only 41 have complete nutrition data, 47 none. Prices are a snapshot. | `src/data/products.json` (generated), `scripts/importera-produkter.mjs` | Decide a source of truth (manual curation, supplier feeds, or scraping on a schedule), store it server side with versioning and a "last verified" date. |
+| M6 | **Product catalogue** is a one day scrape (all 228 items `insamlad: 2026-10-14`). Only 41 have complete nutrition data, 47 none. Prices are a snapshot. | `src/data/products.json` (generated), `scripts/import-products.mjs` | Decide a source of truth (manual curation, supplier feeds, or scraping on a schedule), store it server side with versioning and a "last verified" date. |
 | M7 | Selectable products and their doses are hand converted for a 550 kg horse | `scripts/produktval.json` (15 products; several doses are "assumed same as sibling product") | Verified dose data per product, reviewed by someone with domain knowledge. |
-| M8 | Ingredients are inferred from shop descriptions with keyword matching | `importera-produkter.mjs`; weakness admitted in `malbild.md` | Hand entered ingredient lists for the selectable products at minimum. The allergy filter is unsafe until then. |
+| M8 | Ingredients are inferred from shop descriptions with keyword matching | `import-products.mjs`; weakness admitted in `malbild.md` | Hand entered ingredient lists for the selectable products at minimum. The allergy filter is unsafe until then. |
 | M9 | Landing page statistics and a hardcoded "screenshot" of analysis values | `LandingPage.tsx:81-95` (stats, with sources), `LandingPage.tsx:113-117` (static values) | Fine for marketing; mark as content, not data. The plan preview on the same page is computed live from demo data, which is good. |
 | M10 | Model ID and token limits hardcoded | `ai.ts:10`, `ai.ts:75,151,175,224` | Configuration. |
 | M11 | Domain assumptions outside SLU (body condition weight factor, sugar limit, trace mineral defaults, etc.) | Marked `ANTAGANDE` throughout `src/domain` | Not mocks. They are documented assumptions and should stay visible; consider collecting them in one registry so they can be reviewed. |
@@ -161,7 +161,7 @@ Data model issues:
 | C4 | Switching horse reuses the previous horse's analysis (`App.tsx:96,108`). | Code reading. |
 | C5 | PSSM is treated as needing low sugar in `sensitivity.ts:25`, but the sugar warning in `plan.ts:210` checks only laminitis, EMS and PPID. | Code reading. |
 | C6 | "Today" is computed in UTC (`App.tsx:22`), so between 00:00 and 02:00 Swedish time journal entries default to yesterday. The calendar uses local dates. | Code reading. |
-| C7 | The AI evaluation script cannot run: its URL uses single quotes, so `${port}` is never interpolated (`scripts/utvardera-utlasning.mjs:26`). | `new URL(...)` throws `ERR_INVALID_URL`. |
+| C7 | The AI evaluation script cannot run: its URL uses single quotes, so `${port}` is never interpolated (`scripts/evaluate-analysis-reading.mjs:26`). | `new URL(...)` throws `ERR_INVALID_URL`. |
 | C8 | `produktId` returned by the AI is not checked against the catalogue (`HorseStep.tsx:431`); an invented ID becomes an "unknown product" note instead of a match. | Code reading. |
 
 ### Error handling

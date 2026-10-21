@@ -1,5 +1,5 @@
 // Gör om butikernas produktfiler till appens format (src/data/products.json).
-// Körs: node scripts/importera-produkter.mjs [källkatalog]
+// Körs: node scripts/import-products.mjs [källkatalog]
 // Urvalsprodukter och deras doser styrs av scripts/produktval.json, som granskas för hand.
 
 import { readFileSync, writeFileSync } from 'node:fs'

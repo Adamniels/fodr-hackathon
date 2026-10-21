@@ -1,5 +1,5 @@
 // Jämför AI-utläsningen mot kollegans facit. Kräver att dev-servern kör (npm run dev) och API-nyckel.
-// Användning: node scripts/utvardera-utlasning.mjs [testdata-v2-katalog] [port]
+// Användning: node scripts/evaluate-analysis-reading.mjs [testdata-v2-katalog] [port]
 // Kostar ett API-anrop per fil (11 st). Facit räknas från oavrundade värden, så små avrundningsskillnader
 // i rapporter per kg vara (t.ex. koppar i B06) är väntade.
 import { readFileSync } from 'node:fs'

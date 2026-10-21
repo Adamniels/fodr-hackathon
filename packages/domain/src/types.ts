@@ -24,7 +24,7 @@ export interface Miljo {
   lagstaTempC: number
 }
 
-/** Ingredienser som kan härledas ur produkternas namn och beskrivning (scripts/importera-produkter.mjs). */
+/** Ingredienser som kan härledas ur produkternas namn och beskrivning (scripts/import-products.mjs). */
 export const INGREDIENSER = ['spannmål', 'lusern', 'soja', 'melass', 'linfrö', 'betfiber'] as const
 export type Ingrediens = (typeof INGREDIENSER)[number]
 
