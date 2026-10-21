@@ -88,8 +88,8 @@ interface Plandelar {
  */
 export type Plan = Plandelar &
   (
-    | { urval: Urval; alternativ: Urval | null; urvalHinder: null }
-    | { urval: null; alternativ: null; urvalHinder: Urvalshinder }
+    | { urval: Urval; alternativ: Urval | null; urvalshinder: null }
+    | { urval: null; alternativ: null; urvalshinder: Urvalshinder }
   )
 
 const ENERGI_OVER = 1.1
@@ -271,6 +271,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const { tillatna, uteslutna } = filtreraProdukter(produkter, h)
   const utfall = valjProdukter({
     bas,
+    grovfoder: grovfoderIntag(analys, grovKg),
     behov,
     produkter: tillatna,
     berakningsviktKg: behovsres.berakningsviktKg,
@@ -280,8 +281,11 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const { urval } = utfall
   const nyaPoster = urval?.poster ?? []
   const ersatta = nuvarande.filter((p) => ERSATTS.includes(p.produkt.kategori))
+  // When nothing can be added, today's mineral feed, supplements and salt stay as they are: stopping them could make
+  // the plan worse (a calcium source when Ca:P is short, salt when sodium is), and the plan must not look cheaper (C3).
+  if (!urval) behallna = [...behallna, ...ersatta]
   const hanterade = new Set<string>()
-  for (const gammal of ersatta) {
+  for (const gammal of urval ? ersatta : []) {
     const kvar = nyaPoster.find((n) => n.produkt.id === gammal.produkt.id)
     if (kvar) {
       hanterade.add(kvar.produkt.id)
@@ -352,7 +356,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     })
   }
 
-  const slutIntag = urval?.intag ?? bas
+  const slutIntag = urval?.intag ?? laggTill(bas, ersatta)
   const styrande = styrandeAmnen(bas, behov)
   const resultat = balans(slutIntag, behov, styrande)
   const proteinOver = Math.max(0, slutIntag.smbRp.varde - behov.smbRp!.min!)
@@ -367,8 +371,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     grovfoderKgPerDag: grovKg,
     behallnaFoder: behallna,
     ...(utfall.urval
-      ? { urval: utfall.urval, alternativ: utfall.alternativ, urvalHinder: null }
-      : { urval: null, alternativ: null, urvalHinder: utfall.hinder }),
+      ? { urval: utfall.urval, alternativ: utfall.alternativ, urvalshinder: null }
+      : { urval: null, alternativ: null, urvalshinder: utfall.hinder }),
     resultat,
     caP: slutIntag.p.varde > 0 ? slutIntag.ca.varde / slutIntag.p.varde : null,
     kvaveOverskottKgPerAr: kvave,

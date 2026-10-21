@@ -133,11 +133,14 @@ export type Trendvarning =
   Message<'trend.weightLossFast', { percentPerWeek: number }> | Message<'trend.conditionRising'>
 
 /**
- * Why the selection could not add any supplement at all (optimize.ts, C3): the roughage and the kept feeds already
- * exceed an SLU maximum, or no combination reaches Ca:P 1,1 without exceeding one.
+ * Why the selection could not add any supplement at all (optimize.ts, C3): the roughage alone already exceeds an SLU
+ * maximum (check the analysis value), the roughage with the kept feeds does (look at those feeds), or no combination
+ * reaches Ca:P 1,1 within the maximums.
  */
 export type Urvalshinder =
-  Message<'infeasible.overMax', { nutrients: NutrientKey[] }> | Message<'infeasible.caP', { minRatio: number }>
+  | Message<'infeasible.roughageOverMax', { nutrients: NutrientKey[] }>
+  | Message<'infeasible.overMax', { nutrients: NutrientKey[] }>
+  | Message<'infeasible.caP', { minRatio: number }>
 
 /** Why a number in a horse profile or an analysis cannot be used (validation.ts). */
 export type ValidationMessage =

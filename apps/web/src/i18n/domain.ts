@@ -24,7 +24,7 @@ const tabell32Grupp = (group: Params<'quality.proteinHigh'>['group']) => i18n.t(
 const lista = (delar: string[]) => delar.join(', ')
 
 /** Items in a sentence, the last joined by the catalogue's "and": "selen, järn och vitamin A" (#14). */
-const ochLista = (delar: string[]) =>
+const andList = (delar: string[]) =>
   delar.length < 2
     ? lista(delar)
     : i18n.t('domain.list.and', { items: lista(delar.slice(0, -1)), last: delar[delar.length - 1] })
@@ -144,7 +144,8 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   // JournalStep).
   'trend.weightLossFast': (p) => ({ percentPerWeek: tal(p.percentPerWeek, 2) }),
   'trend.conditionRising': tom,
-  'infeasible.overMax': (p) => ({ nutrients: ochLista(p.nutrients.map(shortNutrientLabel)) }),
+  'infeasible.roughageOverMax': (p) => ({ nutrients: andList(p.nutrients.map(shortNutrientLabel)) }),
+  'infeasible.overMax': (p) => ({ nutrients: andList(p.nutrients.map(shortNutrientLabel)) }),
   'infeasible.caP': (p) => ({ minRatio: tal(p.minRatio, 1) }),
   // Limits are whole numbers; one decimal leaves them whole and keeps a future decimal limit (#13).
   'validation.range': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),

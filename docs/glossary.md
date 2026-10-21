@@ -19,7 +19,7 @@ The code names what the domain is about in Swedish and how the software works in
 | överskott | surplus | status `'overskott'` |
 | schablon | default value used when the analysis lacks a nutrient | `hittaSchablon` |
 | urval | product selection by the optimiser | `valjProdukter`, `Urval` |
-| urvalshinder | why the selection cannot add any supplement: an SLU maximum already exceeded, or Ca:P out of reach | `Urvalshinder`, `urvalHinder`, `Urvalsutfall` |
+| urvalshinder | why the selection cannot add any supplement: an SLU maximum already exceeded, or Ca:P out of reach | `Urvalshinder`, `urvalshinder`, `Urvalsutfall` |
 | kraftfoder | concentrate feed | category `'kraftfoder'` |
 | mineralfoder | mineral feed | category `'mineralfoder'` |
 | tillskott | supplement | category `'tillskott'` |

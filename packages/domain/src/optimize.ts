@@ -51,7 +51,10 @@ export type Urvalsutfall =
   { urval: Urval; alternativ: Urval | null; hinder: null } | { urval: null; alternativ: null; hinder: Urvalshinder }
 
 export interface UrvalsIndata {
+  /** Roughage and kept feeds: what every combination adds to. */
   bas: Intag
+  /** The roughage alone, to tell an analysis value over a maximum from a kept feed pushing it over. */
+  grovfoder: Intag
   behov: Behov
   produkter: Produkt[]
   berakningsviktKg: number
@@ -132,7 +135,7 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   type Kandidat = Urval & { bristpoang: number }
   const basta: Kandidat[] = []
   // What the roughage and kept feeds exceed on their own, with salt only as the empty combination adds it.
-  let overMaxUtanTillskott: NutrientKey[] = []
+  let overskridnaUtanTillskott: NutrientKey[] = []
 
   for (const kombo of kombinationer) {
     const dosRutnat = kombo.map((p) => doser(p, vikt))
@@ -150,7 +153,7 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
         intag = laggTill(bas, poster)
       }
       const e = utvardera(intag, behov, amnen)
-      if (kombo.length === 0) overMaxUtanTillskott = e.overMax
+      if (kombo.length === 0) overskridnaUtanTillskott = e.overMax
       if (e.overMax.length > 0) return
       if (e.caP !== null && e.caP < CA_P_MIN) return
       const kostnad = poster.reduce((sum, p) => sum + monthlyCost(p.produkt, p.gramPerDag), 0)
@@ -179,12 +182,16 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
     caP: k.caP,
   }))
   if (forsta) return { urval: forsta, alternativ: andra ?? null, hinder: null }
+  const nutrients = overskridnaUtanTillskott
+  const franGrovfodret = nutrients.every((k) => input.grovfoder[k].varde > behov[k]!.max! + 1e-9)
   return {
     urval: null,
     alternativ: null,
-    hinder: overMaxUtanTillskott.length
-      ? { code: 'infeasible.overMax', params: { nutrients: overMaxUtanTillskott } }
-      : { code: 'infeasible.caP', params: { minRatio: CA_P_MIN } },
+    hinder: !nutrients.length
+      ? { code: 'infeasible.caP', params: { minRatio: CA_P_MIN } }
+      : franGrovfodret
+        ? { code: 'infeasible.roughageOverMax', params: { nutrients } }
+        : { code: 'infeasible.overMax', params: { nutrients } },
   }
 }
 
