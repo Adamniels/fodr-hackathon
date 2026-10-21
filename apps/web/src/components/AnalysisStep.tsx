@@ -4,7 +4,7 @@ import { filTillBase64, lasAnalys } from '../api'
 import { analysBas, analysKomplett } from '../data/exempel'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
 import { hittaSchablon } from '@fodr/domain/forage'
-import type { NutrientKey } from '@fodr/domain/nutrients'
+import type { NutrientKey, NutrientValues } from '@fodr/domain/nutrients'
 import { validateAnalysis, type AnalysisField } from '@fodr/domain/validation'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { analysEnhet, etikett, formatDate } from '../format'
@@ -69,9 +69,11 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
   /** A typed value, or undefined when the field is cleared: the value is then missing, never 0. */
   const andra = (k: NutrientKey, v: number | undefined) => {
     if (!analys) return
-    const perKgTs = { ...analys.perKgTs }
-    if (v === undefined) delete perKgTs[k]
-    else perKgTs[k] = v
+    // A cleared value is missing, so its key goes rather than becoming undefined or 0.
+    const perKgTs: NutrientValues =
+      v === undefined
+        ? Object.fromEntries(Object.entries(analys.perKgTs).filter(([key]) => key !== k))
+        : { ...analys.perKgTs, [k]: v }
     onAnalys(
       { ...analys, perKgTs },
       omrakningar.filter((o) => o.amne !== k),

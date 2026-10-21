@@ -46,8 +46,8 @@ export function sorteradePoster(poster: Journalpost[]): Journalpost[] {
 
 export function beraknaTrend(poster: Journalpost[], idag: string): Trend {
   const sorterade = sorteradePoster(poster)
-  const vikter = sorterade.filter((p) => p.viktKg !== undefined)
-  const hull = sorterade.filter((p) => p.hull !== undefined)
+  const vikter = sorterade.filter((p): p is Journalpost & { viktKg: number } => p.viktKg !== undefined)
+  const hull = sorterade.filter((p): p is Journalpost & { hull: number } => p.hull !== undefined)
   const matningar = sorterade.filter((p) => p.viktKg !== undefined || p.hull !== undefined)
   const trend: Trend = { uppfoljningForfallen: false, varningar: [] }
 
@@ -55,15 +55,15 @@ export function beraknaTrend(poster: Journalpost[], idag: string): Trend {
     const forsta = vikter[0]
     const senaste = vikter[vikter.length - 1]
     const dagar = daysBetween(forsta.datum, senaste.datum)
-    const procent = ((senaste.viktKg! - forsta.viktKg!) / forsta.viktKg!) * 100
+    const procent = ((senaste.viktKg - forsta.viktKg) / forsta.viktKg) * 100
     const procentPerVecka = dagar > 0 ? (procent / dagar) * 7 : 0
-    trend.vikt = { forsta: forsta.viktKg!, senaste: senaste.viktKg!, dagar, procentPerVecka }
+    trend.vikt = { forsta: forsta.viktKg, senaste: senaste.viktKg, dagar, procentPerVecka }
     if (procentPerVecka < -MAX_NEDGANG_PROCENT_PER_VECKA) {
       trend.varningar.push({ code: 'trend.weightLossFast', params: { percentPerWeek: Math.abs(procentPerVecka) } })
     }
   }
   if (hull.length >= 1) {
-    trend.hull = { forsta: hull[0].hull!, senaste: hull[hull.length - 1].hull! }
+    trend.hull = { forsta: hull[0].hull, senaste: hull[hull.length - 1].hull }
     if (hull.length >= 2 && trend.hull.senaste > trend.hull.forsta && trend.hull.forsta >= 6) {
       trend.varningar.push({ code: 'trend.conditionRising', params: {} })
     }

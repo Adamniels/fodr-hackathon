@@ -24,8 +24,8 @@ describe('SLU-behov, handräknat demofall', () => {
   it('energi och protein', () => {
     expect(r.underhallMJ).toBeCloseTo(56.0, 0)
     expect(r.arbetsMJ).toBeCloseTo(8.96, 1)
-    expect(r.behov.energi!.min).toBeCloseTo(65.0, 0)
-    expect(r.behov.smbRp!.min).toBeCloseTo(390, -1)
+    expect(r.behov.energi.min).toBeCloseTo(65.0, 0)
+    expect(r.behov.smbRp.min).toBeCloseTo(390, -1)
   })
   it('mineraler enligt tabell 15 och 17', () => {
     expect(r.behov.ca!.min).toBeCloseTo(6.0 * 5.06, 1)
@@ -45,7 +45,7 @@ describe('SLU-behov, handräknat demofall', () => {
       ridning: { passPerVecka: 5, minuterPerPass: 60, travGaloppMinPerPass: 15 },
     })
     expect(ex.arbetsMJ).toBeCloseTo(10.17, 1)
-    expect(ex.behov.energi!.min).toBeCloseTo(65.7, 0)
+    expect(ex.behov.energi.min).toBeCloseTo(65.7, 0)
   })
 })
 
@@ -114,6 +114,8 @@ describe('foderplanens meddelanden (ADR 0014)', () => {
     expect(ge.map((a) => a.params)).toEqual(
       plan.urval!.poster.map((p) => ({ product: displayName(p.produkt), grams: p.gramPerDag })),
     )
+    // The type maps each code to its typ; this checks that the engine actually sets it.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     expect(ge.every((a) => a.typ === 'tillskott')).toBe(true)
   })
   it('dagens tillskott som fortsätter, ändras eller tas bort', () => {

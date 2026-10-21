@@ -148,7 +148,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const noteringar: Notering[] = [...behovsres.noteringar]
   const atgarder: Atgard[] = []
   const ts = analys.tsProcent / 100
-  const energiBehov = behov.energi!.min!
+  const energiBehov = behov.energi.min
 
   // Nuläge: grovfoder plus allt hästen får i dag.
   const nuvarande: Foderpost[] = []
@@ -254,7 +254,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   }
 
   const bas = laggTill(grovfoderIntag(analys, grovKg), behallna)
-  if (bas.smbRp.varde < behov.smbRp!.min!) {
+  if (bas.smbRp.varde < behov.smbRp.min) {
     atgarder.push({ typ: 'protein', code: 'action.proteinShort', params: {} })
   }
 
@@ -368,7 +368,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const slutIntag = urval?.intag ?? laggTill(bas, ersatta)
   const styrande = styrandeAmnen(bas, behov)
   const resultat = balans(slutIntag, behov, styrande)
-  const proteinOver = Math.max(0, slutIntag.smbRp.varde - behov.smbRp!.min!)
+  const proteinOver = Math.max(0, slutIntag.smbRp.varde - behov.smbRp.min)
   // Kväve = protein / 6,25. Gram per dag till kg per år.
   const kvave = ((proteinOver / 6.25) * 365) / 1000
 
@@ -392,7 +392,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     kansligheter: granskaKansligheter(
       h,
       nuvarande,
-      { intag: slutIntag.smbRp.varde, behov: behov.smbRp!.min! },
+      { intag: slutIntag.smbRp.varde, behov: behov.smbRp.min },
       behovsres.berakningsviktKg,
     ),
     bortvalda: uteslutna.filter((u) => u.produkt.iUrval).map((u) => ({ namn: u.produkt.namn, skal: u.skal })),

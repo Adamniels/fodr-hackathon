@@ -10,7 +10,7 @@ export function Login({ onInloggad }: { onInloggad: (a: Anvandare) => void }) {
   const [losenord, setLosenord] = useState('')
   const [fel, setFel] = useState<string | null>(null)
 
-  function skicka(e: React.FormEvent) {
+  function skicka(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setFel(null)
     try {

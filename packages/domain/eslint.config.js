@@ -28,13 +28,17 @@ export default tseslint.config(
     rules: { 'no-template-curly-in-string': 'error' },
   },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
+    extends: [js.configs.recommended, ...tseslint.configs.strictTypeChecked],
     files: ['**/*.ts'],
     languageOptions: {
       ecmaVersion: 2022,
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
     rules: {
+      // Strict type-aware rules (#17), with two settings that keep idiomatic code: an arrow that only calls a void
+      // function (onClick={() => setX(y)}), and numbers in template strings, since UI text has its own number rule.
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       'no-restricted-globals': ['error', ...IO_GLOBALS],
       'no-restricted-imports': [
         'error',
@@ -76,6 +80,11 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // In a test, `x!` states what the test expects; if x is missing the test fails anyway (#17).
+    files: ['**/*.test.ts'],
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
   {
     extends: [js.configs.recommended, tseslint.configs.disableTypeChecked],

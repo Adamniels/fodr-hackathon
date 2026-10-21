@@ -164,6 +164,7 @@ export const DOMAIN_CODES = Object.keys(FORMAT) as Kod[]
 // A code without a catalogue entry is a compile error here (and fails the unit test at run time).
 type SaknadeNycklar = Exclude<`domain.${Kod}`, ParseKeys>
 const allaNycklarFinns: [SaknadeNycklar] extends [never] ? true : SaknadeNycklar = true
+// eslint-disable-next-line @typescript-eslint/no-meaningless-void-operator -- marks the compile-time check as used
 void allaNycklarFinns
 
 // The catalogue's typed t() checks each key's own placeholders, which a union of codes cannot satisfy.

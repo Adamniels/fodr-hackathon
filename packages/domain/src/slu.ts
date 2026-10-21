@@ -5,7 +5,7 @@
 import type { Kallhanvisning, Notering, SluNiva } from './messages'
 import { NA_PER_NACL, type NutrientKey } from './nutrients'
 import { hittaRas } from './breeds'
-import type { Arbetsniva, Hastprofil, Prestanda } from './types'
+import type { Arbetsniva, Hastprofil, Prestanda, Ridning } from './types'
 
 export interface Krav {
   min?: number
@@ -13,7 +13,11 @@ export interface Krav {
   kalla: Kallhanvisning
 }
 
-export type Behov = Partial<Record<NutrientKey, Krav>>
+/** Energy and digestible protein always have a minimum: beraknaBehov sets both (#17). */
+export type Behov = Partial<Record<NutrientKey, Krav>> & {
+  energi: Krav & { min: number }
+  smbRp: Krav & { min: number }
+}
 
 export interface Behovsresultat {
   behov: Behov
@@ -62,13 +66,12 @@ export function viktFranLansmarke(lansmarkeCm: number, mankhojdCm: number): numb
 }
 
 /** Tabell 11: ridträning, MJ per dag, räknat på aktuell vikt. */
-function arbetsMJFranRidning(p: Hastprofil): number {
-  const r = p.ridning!
+function arbetsMJFranRidning(r: Ridning, viktKg: number): number {
   const passPerDag = r.passPerVecka / 7
   const travMin = r.travGaloppMinPerPass * passPerDag
   const skrittMin = Math.max(0, r.minuterPerPass - r.travGaloppMinPerPass) * passPerDag
   const per100kg = 0.2 * (skrittMin / 10) + 1.3 * (travMin / 10)
-  return per100kg * (p.viktKg / 100)
+  return per100kg * (viktKg / 100)
 }
 
 /** Lägsta arbetstillägg för gren och nivå, i MJ per dag. */
@@ -141,7 +144,9 @@ export function beraknaBehov(p: Hastprofil): Behovsresultat {
   const underhallMJ = 0.5 * vikt ** 0.75 * TYPFAKTOR[p.typ]
   const hingstMJ = p.kon === 'hingst' ? 0.1 * underhallMJ : 0
 
-  const franPass = p.ridning ? arbetsMJFranRidning(p) : (ARBETE_PROCENT[p.arbetsniva ?? 'ingen'] / 100) * underhallMJ
+  const franPass = p.ridning
+    ? arbetsMJFranRidning(p.ridning, p.viktKg)
+    : (ARBETE_PROCENT[p.arbetsniva ?? 'ingen'] / 100) * underhallMJ
   const prestandaMJ = p.prestanda ? prestandaMinimumMJ(p.prestanda, underhallMJ, p.viktKg) : 0
   const arbetsMJ = Math.max(franPass, prestandaMJ)
   if (prestandaMJ > franPass) {

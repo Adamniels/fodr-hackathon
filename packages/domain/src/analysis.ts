@@ -24,7 +24,7 @@ export function tillGrovfoderanalys(u: UtlastAnalys): { analys: Grovfoderanalys;
   if (!u.tsProcent) throw new Error('Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt.')
   const { energiIdisslare, raprotein, ...rest } = u.perKgTs
   const perKgTs: NutrientValues = {}
-  for (const [k, v] of Object.entries(rest)) if (v !== null && v !== undefined) perKgTs[k as NutrientKey] = v
+  for (const [k, v] of Object.entries(rest)) if (typeof v === 'number') perKgTs[k as NutrientKey] = v
   const omrakningar: Omrakning[] = []
   if (perKgTs.energi === undefined && energiIdisslare) {
     perKgTs.energi = round(energiHastFranIdisslare(energiIdisslare), 1)
