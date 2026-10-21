@@ -86,6 +86,19 @@ test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
   await expect(page.getByLabel('Kg per dag (som det utfodras)')).toHaveValue('12.5')
 })
 
+test("switching horse leaves the other horse's weight estimate and AI text behind (#109)", async ({ page }) => {
+  await enterDemo(page)
+  await page.getByLabel('Bröstomfång (cm)').fill('180')
+  await page.getByLabel('Längd armbåge–sittben (cm)').fill('160')
+  await expect(page.getByText(/^Uppskattad vikt/)).toBeVisible()
+  await page.getByLabel('Om hästen och vad den äter i dag').fill('Sixten äter hösilage')
+
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await expect(page.getByLabel('Bröstomfång (cm)')).toHaveValue('')
+  await expect(page.getByText(/^Uppskattad vikt/)).toBeHidden()
+  await expect(page.getByLabel('Om hästen och vad den äter i dag')).toHaveValue('')
+})
+
 test('clearing weight is rejected (C2)', async ({ page }) => {
   await enterDemo(page)
   const weight = page.getByLabel('Vikt (kg)')

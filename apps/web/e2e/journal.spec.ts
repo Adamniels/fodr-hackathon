@@ -1,4 +1,4 @@
-import { enterDemo, expect, goToStep, loadExamplePlan, test } from './support/helpers'
+import { enterDemo, expect, goToStep, horseList, loadExamplePlan, test } from './support/helpers'
 
 test('demo journal shows trend', async ({ page }) => {
   await enterDemo(page)
@@ -62,6 +62,21 @@ test('the entry date follows today past midnight unless one was picked (#107)', 
   await page.clock.setSystemTime(new Date('2026-10-17T00:10:00+02:00'))
   await shownAgain()
   await expect(datum).toHaveValue('2026-10-10')
+})
+
+test("switching horse leaves the other horse's draft and AI analysis behind (#109)", async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Journal')
+  await page.getByLabel('Vikt (kg)').fill('540')
+  await page.getByLabel('Vad har du sett?').fill('Sixtens anteckning')
+  await page.getByRole('button', { name: 'Analysera journalen' }).click()
+  await expect(page.getByText('Kontakta veterinär.')).toBeVisible()
+
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await expect(page.getByLabel('Vikt (kg)')).toHaveValue('')
+  await expect(page.getByLabel('Vad har du sett?')).toHaveValue('')
+  await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
+  await expect(page.getByText('Kontakta veterinär.')).toBeHidden()
 })
 
 test('entry with weight updates the profile', async ({ page }) => {
