@@ -54,7 +54,13 @@ Then wait. When he confirms a ticket (the proposal or another number), continue 
 4. **Plan.** Tasks, tests and files; exactly one type from `refactor`, `fix`, `feature`, `chore` (tests, tooling, data), `docs`. Refactor and behaviour changes never share a PR. Wait for the owner's approval. **No code before approval.**
 5. **Decisions comment** on the issue (template in `templates.md`), right after approval.
 6. **Implement** test first: watch each new test fail, then pass. Run format, lint, typecheck, unit, integration and e2e, and read the output. (superpowers:test-driven-development and superpowers:verification-before-completion, if installed.)
-7. **Fresh review.** Dispatch one fresh reviewer agent over `git diff origin/main...HEAD` with the issue, the plan and the spec. Fix important findings, test first. (superpowers:requesting-code-review, if installed.)
+7. **Fresh review.** Dispatch one fresh reviewer agent over `git diff origin/main...HEAD` with the issue, the plan and the spec. (superpowers:requesting-code-review, if installed.) The backlog must not grow from review nits, so every finding gets exactly one outcome, the first that applies:
+   1. **Fixed**, test first, when it stops the ticket's criteria from holding. If that needs a decision from the owner, stop and ask before opening the PR; it never becomes a follow-up.
+   2. **Fixed**, test first where behaviour changes, when all three hold: it is in a file the diff changes; it is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own type); it needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
+   3. **Ticket proposed**, when it is important (the reviewer's ranking), or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed here. Draft it with `/write-ticket` and put the draft in the summary comment; the issue is created only after he approves. If an existing issue covers it, propose a comment on that issue instead.
+   4. **Not done**, anything else: no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file): the PR line is where he decides.
+
+   The PR's "Review" section lists every finding with its outcome: fixed, ticket proposed (or `#N` once created), or not done and why.
 8. **Finish.** Push; `gh pr create` with the PR template from `templates.md`; then `gh pr checks <pr> --watch`.
    - A check fails because of this PR: fix it test first, push, watch again.
    - A check fails for an unrelated reason (flaky, infrastructure): do not rerun or work around it; report it to the owner with the log excerpt.
@@ -73,7 +79,7 @@ Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{
 
 ## Stop and ask, mid-ticket
 
-A conflict with the spec or an ADR; a new dependency; scope growing beyond the ticket (offer `/write-ticket` for a follow-up); anything destructive or irreversible.
+A conflict with the spec or an ADR; a new dependency; scope growing beyond the ticket (sort what you notice with step 7's outcomes, and stop and ask only for what needs the owner); anything destructive or irreversible.
 
 ## Never
 
@@ -88,6 +94,7 @@ A conflict with the spec or an ADR; a new dependency; scope growing beyond the t
 | "The owner told me to merge" | You never merge. He merges after approving. |
 | "Plan approved, I'll just branch here" | Worktree first, every time. |
 | "It's a one-line config change, review is overkill" | The fresh review is part of every ticket. |
+| "This review nit deserves its own ticket" | A ticket is only for what is important or needs the owner and cannot be fixed here (step 7). Otherwise fix it or list it as not done. |
 | "I'll name the branch chore/7-..." | `<n>-<slug>`, equal to the worktree folder. |
 | "No number given; the ticket in progress / the earliest one looks next" | Run `next.sh`. In-flight tickets are mentioned, never proposed; the order is the script's, not yours. |
 | "The API says 404, so it's off" / "The ticket says the owner must turn it on" | Not verified. Tell the owner how to check, not what to switch on. |

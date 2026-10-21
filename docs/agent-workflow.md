@@ -10,12 +10,23 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 | Ticket on the board | `write-ticket` | Issue with the ticket shape, `type:*` label, suggested milestone, board status **Todo** |
 | Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini, or `/pick-up-ticket` alone to get a proposal (below) and confirm it; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
 | Decisions | Agent and owner | Agent asks the ticket's open questions and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue |
-| Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch |
+| Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch; each finding is fixed, proposed as a ticket, or listed as not done (below) |
 | Pull request | Agent (as the bot) | PR with `Closes #<n>` and a link to the decisions comment; board **In Review**; summary comment on the issue |
 | Review round | Owner, then agent | Owner comments on the PR; `/pick-up-ticket <number>` again addresses each comment and pushes |
 | Merge | A human | Owner or teammate approves and merges; the issue closes; board **Done** |
 
 A ticket fixes **what** and **why**. **How** is decided at pickup, so tickets stay valid however long they wait. Agents never merge, never use the branch protection bypass and never add agent attribution (`.claude/CLAUDE.md`).
+
+## Review findings
+
+The backlog must not grow from review nits (owner, 2026-10-21, #110). Every finding of the fresh review gets exactly one outcome, the first that applies:
+
+1. **Fixed**, when it stops the ticket's criteria from holding; if that needs the owner's decision, the agent stops and asks before opening the PR.
+2. **Fixed**, test first where behaviour changes, when it is in a file the diff changes, is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own) and needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
+3. **Ticket proposed**, when it is important, or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed in the branch. The draft goes in the summary comment; the issue is created after the owner approves.
+4. **Not done**, anything else: one line in the PR, and no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file), which he decides on that line.
+
+The PR's "Review" section lists every finding with its outcome. The rule is step 7 of `.claude/skills/pick-up-ticket/SKILL.md`.
 
 ## Choosing the next ticket
 
