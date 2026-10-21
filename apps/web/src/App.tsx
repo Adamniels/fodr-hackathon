@@ -9,20 +9,20 @@ import { laddaHastar, laddaJournal, newJournalEntryId, nyHast, sparaHastar, spar
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
-import { formatDate, hullText, localIsoDate, tal } from './format'
+import { formatDate, bodyConditionText, localIsoDate, formatNumber } from './format'
 import { Login } from './components/Login'
-import { Startsida } from './components/LandingPage'
+import { LandingPage } from './components/LandingPage'
 import { HorseStep } from './components/HorseStep'
 import { AnalysisStep } from './components/AnalysisStep'
 import { PlanStep } from './components/PlanStep'
 import { InvalidInput } from './components/InvalidInput'
 import { JournalStep } from './components/JournalStep'
-import { Ordmarke } from './components/Brand'
+import { Wordmark } from './components/Brand'
 
 const produkter = produkterJson as Produkt[]
-type Steg = 'hast' | 'analys' | 'plan' | 'journal'
+type Step = 'hast' | 'analys' | 'plan' | 'journal'
 
-const STEG: Steg[] = ['hast', 'analys', 'plan', 'journal']
+const STEPS: Step[] = ['hast', 'analys', 'plan', 'journal']
 
 export default function App() {
   const { t } = useTranslation()
@@ -43,11 +43,11 @@ export default function App() {
   if (!anvandare || visaStart) {
     return (
       <>
-        <Startsida
+        <LandingPage
           produkter={produkter}
           inloggadSom={anvandare?.namn ?? null}
           onDemo={() => oppna(anvandare ?? loggaIn(DEMOKONTO.epost))}
-          onLoggaIn={() => setVisaLogin(true)}
+          onLogIn={() => setVisaLogin(true)}
         />
         {visaLogin && (
           <div className="dialog-bakgrund" onClick={() => setVisaLogin(false)}>
@@ -61,7 +61,7 @@ export default function App() {
               <button className="dialog-stang" aria-label={t('common.close')} onClick={() => setVisaLogin(false)}>
                 ×
               </button>
-              <Login onInloggad={oppna} />
+              <Login onLoggedIn={oppna} />
             </div>
           </div>
         )}
@@ -70,11 +70,11 @@ export default function App() {
   }
 
   return (
-    <Arbetsyta
+    <Workspace
       key={anvandare.id}
       anvandare={anvandare}
-      onStartsida={() => setVisaStart(true)}
-      onLoggaUt={() => {
+      onToLanding={() => setVisaStart(true)}
+      onLogOut={() => {
         loggaUt()
         setAnvandare(null)
         setVisaStart(true)
@@ -84,19 +84,19 @@ export default function App() {
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
-function Arbetsyta({
+function Workspace({
   anvandare,
-  onStartsida,
-  onLoggaUt,
+  onToLanding,
+  onLogOut,
 }: {
   anvandare: Anvandare
-  onStartsida: () => void
-  onLoggaUt: () => void
+  onToLanding: () => void
+  onLogOut: () => void
 }) {
   const { t } = useTranslation()
   const [hastar, setHastar] = useState<Hastprofil[]>(() => laddaHastar(anvandare.id))
   const [valdId, setValdId] = useState(hastar[0]?.id)
-  const [steg, setSteg] = useState<Steg>('hast')
+  const [steg, setSteg] = useState<Step>('hast')
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
   const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => laddaJournal(anvandare.id))
@@ -125,7 +125,7 @@ function Arbetsyta({
     [hast, analys],
   )
 
-  function gaTill(s: Steg) {
+  function gaTill(s: Step) {
     setSteg(s)
     window.scrollTo({ top: 0 })
   }
@@ -147,7 +147,7 @@ function Arbetsyta({
     [t(`roughageTitle.${a.typ}`), a.labb, a.provdatum].filter(Boolean).join(', ')
   const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, savedAnalysisText(analys)) : null
 
-  const tillganglig = (s: Steg) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
+  const tillganglig = (s: Step) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
   const analysText = (a: Grovfoderanalys) => {
     const lab = a.labb ?? t('app.properties.analysisUploaded')
@@ -159,7 +159,7 @@ function Arbetsyta({
     <div className={`arbetsyta ${menyOppen ? 'meny-oppen' : ''}`}>
       <aside className="sidofalt" aria-label={t('app.sidebar.label')}>
         <div className="sidofalt-topp">
-          <Ordmarke />
+          <Wordmark />
           <button
             className="sidofalt-stang"
             aria-label={t('app.sidebar.closeMenu')}
@@ -198,10 +198,10 @@ function Arbetsyta({
               <span>{anvandare.epost}</span>
             </span>
           </div>
-          <button className="sidofalt-lank" onClick={onStartsida}>
+          <button className="sidofalt-lank" onClick={onToLanding}>
             {t('app.sidebar.toLanding')}
           </button>
-          <button className="sidofalt-lank" onClick={onLoggaUt}>
+          <button className="sidofalt-lank" onClick={onLogOut}>
             {t('app.sidebar.logOut')}
           </button>
         </div>
@@ -230,7 +230,7 @@ function Arbetsyta({
             <dl className="egenskaper">
               <div>
                 <dt>{t('app.properties.age')}</dt>
-                <dd>{t('app.properties.ageValue', { years: tal(hast.alderAr, 1) })}</dd>
+                <dd>{t('app.properties.ageValue', { years: formatNumber(hast.alderAr, 1) })}</dd>
               </div>
               <div>
                 <dt>{t('app.properties.breed')}</dt>
@@ -238,14 +238,14 @@ function Arbetsyta({
               </div>
               <div>
                 <dt>{t('app.properties.weight')}</dt>
-                <dd>{t('units.kg', { value: tal(hast.viktKg, 1) })}</dd>
+                <dd>{t('units.kg', { value: formatNumber(hast.viktKg, 1) })}</dd>
               </div>
               <div>
                 <dt>{t('app.properties.hull')}</dt>
                 <dd>
                   {t('app.properties.hullValue', {
-                    hull: tal(hast.hull, 0),
-                    text: hullText(hast.hull)?.toLowerCase() ?? '',
+                    hull: formatNumber(hast.hull, 0),
+                    text: bodyConditionText(hast.hull)?.toLowerCase() ?? '',
                   })}
                 </dd>
               </div>
@@ -253,7 +253,7 @@ function Arbetsyta({
                 <dt>{t('app.properties.roughage')}</dt>
                 <dd>
                   {t('app.properties.roughageValue', {
-                    kg: tal(hast.grovfoder.kgPerDag, 1),
+                    kg: formatNumber(hast.grovfoder.kgPerDag, 1),
                     type: t(hast.grovfoder.typ === 'ho' ? 'roughage.ho' : 'roughage.hosilage'),
                   })}
                 </dd>
@@ -266,7 +266,7 @@ function Arbetsyta({
           )}
 
           <nav className="flikar" aria-label={t('app.stepsNav')}>
-            {STEG.map((id, i) => (
+            {STEPS.map((id, i) => (
               <button
                 key={id}
                 className={steg === id ? 'vald' : ''}
@@ -274,7 +274,7 @@ function Arbetsyta({
                 disabled={!tillganglig(id)}
                 onClick={() => gaTill(id)}
               >
-                <span className="flik-nr">{tal(i + 1, 0)}</span>
+                <span className="flik-nr">{formatNumber(i + 1, 0)}</span>
                 {t(`steps.${id}`)}
               </button>
             ))}
@@ -285,9 +285,9 @@ function Arbetsyta({
               <HorseStep
                 vald={hast}
                 produkter={produkter}
-                onAndra={uppdateraHast}
-                onNy={laggTillHast}
-                onVidare={() => gaTill('analys')}
+                onChange={uppdateraHast}
+                onNew={laggTillHast}
+                onNext={() => gaTill('analys')}
               />
             )}
             {steg === 'analys' && hast && (
@@ -295,11 +295,11 @@ function Arbetsyta({
                 hast={hast}
                 analys={analys}
                 omrakningar={omrakningar}
-                onAnalys={(a, o) => {
+                onAnalysisChange={(a, o) => {
                   setAnalys(a)
                   setOmrakningar(o)
                 }}
-                onVidare={() => gaTill('plan')}
+                onNext={() => gaTill('plan')}
               />
             )}
             {steg === 'plan' &&
@@ -317,7 +317,7 @@ function Arbetsyta({
                   hast={hast}
                   analys={analys}
                   plan={plan.plan}
-                  onSparaIJournal={() => {
+                  onSaveToJournal={() => {
                     // The plan is shown, so its snapshot exists.
                     if (planOgonblick)
                       laggTillPost(
@@ -334,7 +334,7 @@ function Arbetsyta({
                 poster={journal[hast.id] ?? []}
                 aktuellPlan={planOgonblick}
                 idag={today}
-                onLaggTill={(post, uppdateraProfil) => {
+                onAdd={(post, uppdateraProfil) => {
                   laggTillPost(hast.id, post)
                   if (uppdateraProfil) {
                     uppdateraHast({ ...hast, viktKg: post.viktKg ?? hast.viktKg, hull: post.hull ?? hast.hull })

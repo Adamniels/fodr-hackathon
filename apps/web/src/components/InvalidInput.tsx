@@ -2,7 +2,7 @@ import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import type { InputError } from '@fodr/domain/validation'
 import type { NutrientKey } from '@fodr/domain/nutrients'
-import { etikett } from '../format'
+import { nutrientLabel } from '../format'
 import { domainText } from '../i18n/domain'
 
 const FEED_ROW = /^nuvarandeFoder\.(\d+)\.gramPerDag$/
@@ -41,7 +41,7 @@ export function InvalidInput({
   const label = (field: InputError['field']): string => {
     const row = FEED_ROW.exec(field)
     if (row) return t('plan.invalid.feedRow', { row: String(Number(row[1]) + 1) })
-    if (field.startsWith('perKgTs.')) return etikett(field.slice('perKgTs.'.length) as NutrientKey)
+    if (field.startsWith('perKgTs.')) return nutrientLabel(field.slice('perKgTs.'.length) as NutrientKey)
     return t(LABELS[field as NamedField])
   }
   const inAnalysis = (field: InputError['field']) =>

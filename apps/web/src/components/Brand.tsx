@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 /** Hästsko som logotyp. Färgen ärvs från texten. */
-export function Logga({ storlek = 22 }: { storlek?: number }) {
+export function Logo({ storlek = 22 }: { storlek?: number }) {
   return (
     <svg width={storlek} height={storlek} viewBox="0 0 32 32" aria-hidden className="logga-ikon">
       <path
@@ -21,11 +21,11 @@ export function Logga({ storlek = 22 }: { storlek?: number }) {
   )
 }
 
-export function Ordmarke() {
+export function Wordmark() {
   const { t } = useTranslation()
   return (
     <span className="ordmarke">
-      <Logga />
+      <Logo />
       {t('common.brand')}
     </span>
   )

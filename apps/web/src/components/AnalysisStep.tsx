@@ -7,7 +7,7 @@ import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey, NutrientValues } from '@fodr/domain/nutrients'
 import { validateAnalysis, type AnalysisField } from '@fodr/domain/validation'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { analysEnhet, etikett, formatDate } from '../format'
+import { analysisUnit, nutrientLabel, formatDate } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
 
@@ -15,11 +15,11 @@ interface Props {
   hast: Hastprofil
   analys: Grovfoderanalys | null
   omrakningar: Omrakning[]
-  onAnalys: (a: Grovfoderanalys, o: Omrakning[]) => void
-  onVidare: () => void
+  onAnalysisChange: (a: Grovfoderanalys, o: Omrakning[]) => void
+  onNext: () => void
 }
 
-const VISADE: NutrientKey[] = [
+const SHOWN_NUTRIENTS: NutrientKey[] = [
   'energi',
   'smbRp',
   'socker',
@@ -37,7 +37,7 @@ const VISADE: NutrientKey[] = [
   'se',
 ]
 
-export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: Props) {
+export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNext }: Props) {
   const { t } = useTranslation()
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
@@ -52,7 +52,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
       const utlast = await lasAnalys(await filTillBase64(fil))
       const { analys: a, omrakningar: o } = tillGrovfoderanalys(utlast)
       setAnmarkningar(utlast.anmarkningar)
-      onAnalys(a, o)
+      onAnalysisChange(a, o)
     } catch (e) {
       setFel(e instanceof Error ? e.message : String(e))
     } finally {
@@ -74,7 +74,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
       v === undefined
         ? Object.fromEntries(Object.entries(analys.perKgTs).filter(([key]) => key !== k))
         : { ...analys.perKgTs, [k]: v }
-    onAnalys(
+    onAnalysisChange(
       { ...analys, perKgTs },
       omrakningar.filter((o) => o.amne !== k),
     )
@@ -105,11 +105,11 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
       </label>
       <div className="exempel">
         {t('analysis.noReport')}{' '}
-        <button className="lank" onClick={() => onAnalys(analysKomplett, [])}>
+        <button className="lank" onClick={() => onAnalysisChange(analysKomplett, [])}>
           {t('analysis.exampleComplete')}
         </button>{' '}
         ·{' '}
-        <button className="lank" onClick={() => onAnalys(analysBas, [])}>
+        <button className="lank" onClick={() => onAnalysisChange(analysBas, [])}>
           {t('analysis.exampleBasic')}
         </button>
       </div>
@@ -127,7 +127,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                 className="smal"
                 value={analys.tsProcent}
                 error={errorFor('tsProcent')}
-                onChange={(tsProcent) => onAnalys({ ...analys, tsProcent }, omrakningar)}
+                onChange={(tsProcent) => onAnalysisChange({ ...analys, tsProcent }, omrakningar)}
               />{' '}
               %
             </label>
@@ -138,8 +138,8 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                 value={analys.askaGPerKgTs}
                 placeholder="–"
                 error={errorFor('askaGPerKgTs')}
-                onChange={(askaGPerKgTs) => onAnalys({ ...analys, askaGPerKgTs }, omrakningar)}
-                onClear={() => onAnalys({ ...analys, askaGPerKgTs: undefined }, omrakningar)}
+                onChange={(askaGPerKgTs) => onAnalysisChange({ ...analys, askaGPerKgTs }, omrakningar)}
+                onClear={() => onAnalysisChange({ ...analys, askaGPerKgTs: undefined }, omrakningar)}
               />{' '}
               {t('units.perKgDm', { unit: 'g' })}
             </label>
@@ -154,25 +154,25 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
               </tr>
             </thead>
             <tbody>
-              {VISADE.map((k) => {
+              {SHOWN_NUTRIENTS.map((k) => {
                 const v = analys.perKgTs[k]
                 const omr = omrakningar.find((o) => o.amne === k)
                 const schablon = hittaSchablon(analys.typ, k)
                 return (
                   <tr key={k} className={v === undefined ? 'saknas' : ''}>
-                    <td>{etikett(k)}</td>
+                    <td>{nutrientLabel(k)}</td>
                     <td>
                       <DecimalInput
                         className="smal"
                         value={v}
                         placeholder="–"
-                        label={etikett(k)}
+                        label={nutrientLabel(k)}
                         error={errorFor(`perKgTs.${k}`)}
                         onChange={(n) => andra(k, n)}
                         onClear={() => andra(k, undefined)}
                       />
                     </td>
-                    <td className="enhet">{analysEnhet(k)}</td>
+                    <td className="enhet">{analysisUnit(k)}</td>
                     <td className="kalla">
                       {v !== undefined
                         ? (omr?.text ?? t('analysis.source.report'))
@@ -196,7 +196,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
             </div>
           )}
           <div className="atgardsrad">
-            <button className="knapp" onClick={onVidare} disabled={analys.perKgTs.energi === undefined}>
+            <button className="knapp" onClick={onNext} disabled={analys.perKgTs.energi === undefined}>
               {t('analysis.toPlan')}
             </button>
           </div>

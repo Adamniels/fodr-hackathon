@@ -1,28 +1,30 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/transition'
-import { addDays, localIsoDate, parseIsoDate, tal } from '../format'
+import { addDays, localIsoDate, parseIsoDate, formatNumber } from '../format'
 import i18n, { locale } from '../i18n'
 
-const VECKODAGAR = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
-const kortDatum = (d: Date) => d.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })
+const shortDate = (d: Date) => d.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })
 
-function mangd(r: Injusteringsrad, v: number): string {
-  return r.enhet === 'kg' ? i18n.t('units.kg', { value: tal(v, 1) }) : i18n.t('units.g', { value: tal(v, 0) })
+function amountText(r: Injusteringsrad, v: number): string {
+  return r.enhet === 'kg'
+    ? i18n.t('units.kg', { value: formatNumber(v, 1) })
+    : i18n.t('units.g', { value: formatNumber(v, 0) })
 }
 
-function andring(r: Injusteringsrad, i: number): { text: string; klass: string } {
+function changeText(r: Injusteringsrad, i: number): { text: string; klass: string } {
   const fore = i === 0 ? r.fran : r.perSteg[i - 1]
   const efter = r.perSteg[i]
   const d = efter - fore
   if (Math.abs(d) < 1e-9) return { text: i18n.t('calendar.change.same'), klass: 'samma' }
   if (fore === 0) return { text: i18n.t('calendar.change.new'), klass: 'upp' }
   if (efter === 0) return { text: i18n.t('calendar.change.end'), klass: 'ner' }
-  return { text: `${d > 0 ? '+' : '−'}${mangd(r, Math.abs(d))}`, klass: d > 0 ? 'upp' : 'ner' }
+  return { text: `${d > 0 ? '+' : '−'}${amountText(r, Math.abs(d))}`, klass: d > 0 ? 'upp' : 'ner' }
 }
 
-export function Injusteringskalender({ injustering, hastNamn }: { injustering: Injustering; hastNamn: string }) {
+export function TransitionCalendar({ injustering, hastNamn }: { injustering: Injustering; hastNamn: string }) {
   const { t } = useTranslation()
   const [start, setStart] = useState(() => localIsoDate(addDays(new Date(), 1)))
   const [valtSteg, setValtSteg] = useState(0)
@@ -75,7 +77,11 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     const handelser = steg.map((x, i) => {
       const rad = rader
         .map((r) =>
-          t('calendar.ics.row', { name: rowName(r), amount: mangd(r, r.perSteg[i]), change: andring(r, i).text }),
+          t('calendar.ics.row', {
+            name: rowName(r),
+            amount: amountText(r, r.perSteg[i]),
+            change: changeText(r, i).text,
+          }),
         )
         .join('\n')
       const sista = i === steg.length - 1
@@ -85,7 +91,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`,
         `DTSTART;VALUE=DATE:${ical(stegDatum(i))}`,
         `DTEND;VALUE=DATE:${ical(addDays(stegDatum(i), 1))}`,
-        `SUMMARY:${esc(sista ? t('calendar.ics.summaryDone', { name: hastNamn }) : t('calendar.ics.summaryStep', { name: hastNamn, step: tal(x.nr, 0), total: tal(steg.length, 0) }))}`,
+        `SUMMARY:${esc(sista ? t('calendar.ics.summaryDone', { name: hastNamn }) : t('calendar.ics.summaryStep', { name: hastNamn, step: formatNumber(x.nr, 0), total: formatNumber(steg.length, 0) }))}`,
         `DESCRIPTION:${esc(t('calendar.ics.description', { rows: rad }))}`,
         'BEGIN:VALARM',
         'TRIGGER:-PT6H',
@@ -110,13 +116,13 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     <div className="injustering">
       <div className="injustering-topp">
         <div>
-          <h4>{t('calendar.title', { days: tal(dagar, 0) })}</h4>
+          <h4>{t('calendar.title', { days: formatNumber(dagar, 0) })}</h4>
           <p className="liten">
             {t(`transitionPace.${kanslighet}.name`)}
             {forvald ? t('calendar.preselected') : ''}
             {t('calendar.rhythm', {
               every: takt.dagarPerSteg === 2 ? t('calendar.everyOther') : t('calendar.everyThird'),
-              steps: tal(steg.length, 0),
+              steps: formatNumber(steg.length, 0),
             })}
           </p>
         </div>
@@ -127,7 +133,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
       </div>
 
       <div className="kalender" role="group" aria-label={t('calendar.label')}>
-        {VECKODAGAR.map((v) => (
+        {WEEKDAYS.map((v) => (
           <span key={v} className="kalender-vd" aria-hidden="true">
             {t(`calendar.weekdays.${v}`)}
           </span>
@@ -146,7 +152,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
           const innehall = (
             <>
               <span className="kalender-nr">{c.datum.toLocaleDateString(locale(), { day: 'numeric' })}</span>
-              {c.steg && <span className="kalender-tagg">{t('calendar.stepTag', { step: tal(c.steg.nr, 0) })}</span>}
+              {c.steg && (
+                <span className="kalender-tagg">{t('calendar.stepTag', { step: formatNumber(c.steg.nr, 0) })}</span>
+              )}
               {c.klart && <span className="kalender-tagg">{t('calendar.done')}</span>}
             </>
           )
@@ -156,7 +164,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
               type="button"
               className={klass}
               aria-pressed={i === visatSteg}
-              aria-label={t('calendar.stepButton', { date: kortDatum(c.datum), step: tal(c.steg.nr, 0) })}
+              aria-label={t('calendar.stepButton', { date: shortDate(c.datum), step: formatNumber(c.steg.nr, 0) })}
               onClick={() => setValtSteg(i)}
             >
               {innehall}
@@ -171,18 +179,18 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
 
       <div className="injustering-steg" aria-live="polite">
         <div className="injustering-steg-rubrik">
-          <strong>{t('calendar.stepOf', { step: tal(s.nr, 0), total: tal(steg.length, 0) })}</strong>
+          <strong>{t('calendar.stepOf', { step: formatNumber(s.nr, 0), total: formatNumber(steg.length, 0) })}</strong>
           <span className="liten">
-            {kortDatum(stegDatum(visatSteg))}
-            {s.slutDag ? ` – ${kortDatum(addDays(startDatum, s.slutDag - 1))}` : t('calendar.onwards')}
+            {shortDate(stegDatum(visatSteg))}
+            {s.slutDag ? ` – ${shortDate(addDays(startDatum, s.slutDag - 1))}` : t('calendar.onwards')}
           </span>
         </div>
         {rader.map((r) => {
-          const a = andring(r, visatSteg)
+          const a = changeText(r, visatSteg)
           return (
             <div key={rowName(r)} className="injustering-rad">
               <span>{rowName(r)}</span>
-              <strong>{mangd(r, r.perSteg[visatSteg])}</strong>
+              <strong>{amountText(r, r.perSteg[visatSteg])}</strong>
               <span className={`injustering-andring ${a.klass}`}>{a.text}</span>
             </div>
           )
@@ -210,10 +218,10 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
             {rader.map((r) => (
               <tr key={rowName(r)}>
                 <td>{rowName(r)}</td>
-                <td className="hoger">{mangd(r, r.fran)}</td>
+                <td className="hoger">{amountText(r, r.fran)}</td>
                 {r.perSteg.map((v, i) => (
                   <td key={i} className="hoger">
-                    {mangd(r, v)}
+                    {amountText(r, v)}
                   </td>
                 ))}
               </tr>

@@ -5,7 +5,7 @@ The code names what the domain is about in Swedish and how the software works in
 | Swedish | English | In code |
 |---|---|---|
 | häst | horse | `Hastprofil`, `hast` |
-| hull | body condition score, SLU scale 1 to 9 | `hull` |
+| hull | body condition score, SLU scale 1 to 9 | `hull`, `HULLSKALA`, `Hullpoang`, `giltigHullpoang` |
 | grovfoder | roughage, forage | `grovfoder`, `Grovfoderanalys` |
 | hö | hay | `'ho'` |
 | hösilage | haylage | `'hosilage'` |

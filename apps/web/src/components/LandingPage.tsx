@@ -4,31 +4,31 @@ import { analysKomplett, demoHast } from '../data/examples'
 import { monthlyCost } from '@fodr/domain/intake'
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
-import { enhet, kr, tal } from '../format'
+import { nutrientUnit, formatMoney, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
-import { Ordmarke } from './Brand'
+import { Wordmark } from './Brand'
 
 /** The figures band. Their sources are listed in landing.figures.sources. */
-const SIFFROR = { hastar: 355_500, hosilageProcent: 55, analysKostnadKr: { min: 600, max: 1_800 } }
+const FIGURES = { hastar: 355_500, hosilageProcent: 55, analysKostnadKr: { min: 600, max: 1_800 } }
 
 /** The lab report excerpt on step 2: typical values, with selenium shown as missing to illustrate the idea. */
-const UTSNITT = { tsProcent: 39.7, perKgTs: { energi: 10.2, smbRp: 104, socker: 61 } }
+const SAMPLE_ANALYSIS = { tsProcent: 39.7, perKgTs: { energi: 10.2, smbRp: 104, socker: 61 } }
 
 interface Props {
   produkter: Produkt[]
   inloggadSom: string | null
   onDemo: () => void
-  onLoggaIn: () => void
+  onLogIn: () => void
 }
 
 /** Marknadssidan: Notions upplägg (vit yta, tydlig rubrik, produktbild) med Wildlife-känsla (foton, serif, skogsgrönt). */
-export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) {
+export function LandingPage({ produkter, inloggadSom, onDemo, onLogIn }: Props) {
   const { t } = useTranslation()
   return (
     <div className="start">
       <header className="start-meny">
         <div className="start-meny-inre">
-          <Ordmarke />
+          <Wordmark />
           <nav className="start-lankar" aria-label={t('landing.nav.label')}>
             <a href="#sa-funkar">{t('landing.nav.howItWorks')}</a>
             <a href="#trovardigt">{t('landing.nav.howWeCalculate')}</a>
@@ -36,7 +36,7 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
           </nav>
           <div className="start-meny-hoger">
             {!inloggadSom && (
-              <button className="knapp text" onClick={onLoggaIn}>
+              <button className="knapp text" onClick={onLogIn}>
                 {t('landing.logIn')}
               </button>
             )}
@@ -62,7 +62,7 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
           </a>
         </div>
         <p className="start-not">{t('landing.hero.note')}</p>
-        <Produktbild produkter={produkter} />
+        <ProductPreview produkter={produkter} />
       </section>
 
       <p className="kallrad">
@@ -80,18 +80,18 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
         <p className="siffror-rubrik">{t('landing.figures.title')}</p>
         <div className="siffror-rad">
           <div>
-            <strong>{tal(SIFFROR.hastar, 0)}</strong>
+            <strong>{formatNumber(FIGURES.hastar, 0)}</strong>
             <span>{t('landing.figures.horsesText')}</span>
           </div>
           <div>
-            <strong>{t('units.percent', { value: tal(SIFFROR.hosilageProcent, 0) })}</strong>
+            <strong>{t('units.percent', { value: formatNumber(FIGURES.hosilageProcent, 0) })}</strong>
             <span>{t('landing.figures.haylageText')}</span>
           </div>
           <div>
             <strong>
               {t('landing.figures.analysisCost', {
-                min: tal(SIFFROR.analysKostnadKr.min, 0),
-                max: tal(SIFFROR.analysKostnadKr.max, 0),
+                min: formatNumber(FIGURES.analysKostnadKr.min, 0),
+                max: formatNumber(FIGURES.analysKostnadKr.max, 0),
               })}
             </strong>
             <span>{t('landing.figures.analysisCostText')}</span>
@@ -117,19 +117,34 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
             <div className="stegkort-utsnitt" aria-hidden>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.dryMatter')}</span>
-                <b>{t('units.percent', { value: tal(UTSNITT.tsProcent, 1) })}</b>
+                <b>{t('units.percent', { value: formatNumber(SAMPLE_ANALYSIS.tsProcent, 1) })}</b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.energy')}</span>
-                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.energi, 1), unit: enhet('energi') })}</b>
+                <b>
+                  {t('units.quantity', {
+                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.energi, 1),
+                    unit: nutrientUnit('energi'),
+                  })}
+                </b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.protein')}</span>
-                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.smbRp, 1), unit: enhet('smbRp') })}</b>
+                <b>
+                  {t('units.quantity', {
+                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.smbRp, 1),
+                    unit: nutrientUnit('smbRp'),
+                  })}
+                </b>
               </div>
               <div className="utsnitt-rad">
                 <span>{t('landing.steps.sample.sugar')}</span>
-                <b>{t('units.quantity', { value: tal(UTSNITT.perKgTs.socker, 1), unit: enhet('socker') })}</b>
+                <b>
+                  {t('units.quantity', {
+                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.socker, 1),
+                    unit: nutrientUnit('socker'),
+                  })}
+                </b>
               </div>
               <div className="utsnitt-rad saknas">
                 <span>{t('landing.steps.sample.selenium')}</span>
@@ -222,7 +237,7 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
       </section>
 
       <footer className="start-fot">
-        <Ordmarke />
+        <Wordmark />
         <p>{t('landing.footer.text')}</p>
         <p className="liten">{t('landing.footer.photos')}</p>
       </footer>
@@ -231,7 +246,7 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
 }
 
 /** Riktig foderplan för demohästen, i en webbläsarram. Siffrorna räknas av samma motor som appen. */
-function Produktbild({ produkter }: { produkter: Produkt[] }) {
+function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {
     const result = skapaPlan(
@@ -278,13 +293,18 @@ function Produktbild({ produkter }: { produkter: Produkt[] }) {
             <div className="pb-rader">
               <div className="pb-summa">
                 <span>{t('landing.preview.perMonth')}</span>
-                <strong>{kr(total)}</strong>
+                <strong>{formatMoney(total)}</strong>
                 {plan.nulageKostnadPerManad > total && (
-                  <em>{t('landing.preview.cheaper', { amount: kr(plan.nulageKostnadPerManad - total) })}</em>
+                  <em>{t('landing.preview.cheaper', { amount: formatMoney(plan.nulageKostnadPerManad - total) })}</em>
                 )}
               </div>
               <ol className="pb-atgarder">
-                <li>{t('plan.giveRoughage', { kg: tal(plan.grovfoderKgPerDag, 1), type: t('roughage.hosilage') })}</li>
+                <li>
+                  {t('plan.giveRoughage', {
+                    kg: formatNumber(plan.grovfoderKgPerDag, 1),
+                    type: t('roughage.hosilage'),
+                  })}
+                </li>
                 {plan.atgarder.slice(0, 3).map((a) => {
                   const text = domainText(a)
                   return (
