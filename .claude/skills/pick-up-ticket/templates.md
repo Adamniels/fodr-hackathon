@@ -14,6 +14,7 @@ Picked up on <YYYY-MM-DD>. Branch `<n>-<slug>`.
 
 ### Plan
 - <task>: <test that proves it>
+- Folded in: <#N, why it fits (same type, code the change touches, small); its criteria are verified in the PR too; or "none">
 - Type: `<refactor|fix|feature|chore|docs>`. Files: <main files>.
 
 ### Out of scope
@@ -30,6 +31,7 @@ Use `.github/pull_request_template.md` and fill it:
 <What changed and why, two to four sentences.>
 
 Closes #<n>   (or: Refs #<n>. Remaining after merge: <criterion>)
+Closes #<folded-in ticket>   (one line each, if any)
 
 Decisions: <link to the "Decisions at pickup" comment>
 

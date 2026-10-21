@@ -216,3 +216,17 @@ Method: fresh Sonnet subagents read one scenario and one version of the skill, a
 
 RED shows the problem: small fixes in the branch are skipped and a cosmetic bug elsewhere becomes a ticket. GREEN rep 1 ran before the text said that a small change needing only the owner's yes is "not done"; it chose that for F5 anyway, and the text was aligned. GREEN rep 2 flagged F2 and F7 as judgement calls ("a test or a typo is not strictly a fix"); the text now says tests and comments for the changed code count as the PR's own type. Not rerun after that last wording, which only confirms the outcome both GREEN runs chose.
 
+## Same bug anywhere, and folding in small tickets (#113, 2026-10-21)
+
+Method as for #110: the same scenario with two more items. F8 (important): the ticket's own bug (an entry saved with an empty date) also exists in `App.tsx`, which the diff does not change. F9 (at pickup): open issue #950, a small fix in `JournalStep.tsx`, which the change touches.
+
+| Item | Expected | RED (skill on `main` after #110) | GREEN |
+|---|---|---|---|
+| F1 to F7 | as in the #110 table | as in the #110 table | as in the #110 table |
+| F8 | Fixed, scope grows | **Ticket proposed** (outside the diff) | Fixed, scope grows (outcome 2) |
+| F9 | Proposed as a fold-in at pickup | **Kept separate** ("no step absorbs a related issue") | Proposed as a fold-in; with the owner's yes, `Closes #950` |
+
+RED shows the two gaps the owner named after #109: the same bug in another file became a ticket, and a small related open ticket stayed in the backlog.
+
+GREEN ran twice: once on the first wording, and again after the fresh review changed it ("same root cause" became "the same mistake causing the same wrong behaviour", outcome 2 got a decision guard, the fold-in search and exclusions were added). Both runs matched all nine expected outcomes; the second also explained why F3 is not the ticket's own bug (another cause and symptom), which is the distinction the new wording draws.
+
