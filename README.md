@@ -24,12 +24,13 @@ Without an API key everything except the AI parts works (reading an uploaded rep
 
 ## Commands
 
-Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`); `dev`, `build` and `test:e2e` run `apps/web`. CI runs format, lint, typecheck, unit and e2e on every PR.
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`); `dev`, `build` and `test:e2e` run `apps/web`; `test:scripts` runs the agent script tests. CI runs format, lint, typecheck, unit, script and e2e tests on every PR.
 
 | Command | What |
 |---|---|
 | `npm test` | Unit tests for the calculation engine, including hand calculated SLU cases |
 | `npm run test:e2e` | Playwright tests of every user flow, AI mocked, no key needed |
+| `npm run test:scripts` | Offline tests of the agent scripts in `scripts/agent/` (needs `jq`) |
 | `npm run lint` | ESLint (type aware) |
 | `npm run typecheck` | TypeScript |
 | `npm run format` | Prettier |

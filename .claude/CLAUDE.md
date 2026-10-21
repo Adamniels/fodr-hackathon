@@ -14,13 +14,14 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`) and fail if one lacks the script; `dev`, `build` and `test:e2e` run `apps/web`. Every one must pass before a PR is opened; CI runs the same set.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`) and fail if one lacks the script; `dev`, `build` and `test:e2e` run `apps/web`; `test:scripts` runs the agent script tests in `scripts/agent/`. Every one must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e`.
 
 | Command | What |
 |---|---|
 | `npm run dev` | Vite dev server with the `/api` routes (the AI routes need `apps/web/.env`) |
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`) |
 | `npm run test:e2e` | Playwright e2e tests, AI mocked, no API key needed |
+| `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
 | `npm run lint` | ESLint, type aware |
 | `npm run typecheck` | TypeScript in every workspace |
 | `npm run format` / `format:check` | Prettier |
