@@ -284,10 +284,10 @@ const FALL: [DomainMessage, string][] = [
     { code: 'sensitivity.ulcer', params: { starchPerMealG: 750 } },
     'Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är 750 g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.',
   ],
-  // Unformatted as before (#12, decision 4): a horse over 667 kg shows "1050", not "1 050".
+  // Grouped for the locale (#97): a horse over 667 kg gets four digits.
   [
     { code: 'sensitivity.ulcer', params: { starchPerMealG: 1050 } },
-    'Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är 1050 g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.',
+    'Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är 1\u00a0050 g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.',
   ],
   [
     { code: 'sensitivity.pssm', params: {} },
@@ -306,26 +306,29 @@ const FALL: [DomainMessage, string][] = [
     'Hästen får 69 % mer protein än den behöver. Vid proteinkänslighet: välj ett grovfoder med lägre proteinhalt eller blanda in halm.',
   ],
   [
+    { code: 'sensitivity.proteinExcess', params: { percent: 1250 } },
+    'Hästen får 1\u00a0250 % mer protein än den behöver. Vid proteinkänslighet: välj ett grovfoder med lägre proteinhalt eller blanda in halm.',
+  ],
+  [
     { code: 'sensitivity.avoidedIngredients', params: { ingredients: ['spannmål', 'melass'] } },
     'Produkter med spannmål, melass är bortvalda. Ingredienserna är tolkade ur butikernas beskrivningar, så kontrollera förpackningen.',
   ],
-  // Journal trend (#12). The weekly loss always shows one decimal, as toFixed(1) did before.
+  // Journal trend. The weekly loss has up to two decimals, like the trend chip on the same screen (#97).
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 1.2346 } },
+    'Vikten minskar 1,23 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
   [
     { code: 'trend.weightLossFast', params: { percentPerWeek: 1.2 } },
     'Vikten minskar 1,2 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
   ],
   [
     { code: 'trend.weightLossFast', params: { percentPerWeek: 2 } },
-    'Vikten minskar 2,0 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+    'Vikten minskar 2 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
   ],
-  // On a .x5 boundary it rounds the binary value down, as toFixed(1) did (300 to 261 kg in 20 days is 4.55 % a week).
   [
     { code: 'trend.weightLossFast', params: { percentPerWeek: 4.55 } },
-    'Vikten minskar 4,5 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
-  ],
-  [
-    { code: 'trend.weightLossFast', params: { percentPerWeek: 3.15 } },
-    'Vikten minskar 3,1 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+    'Vikten minskar 4,55 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
   ],
   [
     { code: 'trend.conditionRising', params: {} },
