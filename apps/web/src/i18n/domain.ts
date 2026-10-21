@@ -2,7 +2,7 @@ import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
 import { kr, tal } from '../format'
-import i18n, { locale } from '.'
+import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
 // formatter here that turns its params into strings; the mapped type makes a missing formatter a compile error.
@@ -128,21 +128,15 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'exclusion.containsIngredient': (p) => ({ ingredient: p.ingredient }),
   'exclusion.proteinFeed': tom,
   'sensitivity.currentFeed': (p) => ({ product: p.product, reasons: lista(p.reasons.map(domainText)) }),
-  // Unformatted, as before (#12, decision 4): a horse over 667 kg shows "1050", not "1 050".
-  'sensitivity.ulcer': (p) => ({ starchPerMealG: String(p.starchPerMealG) }),
+  'sensitivity.ulcer': (p) => ({ starchPerMealG: tal(p.starchPerMealG, 0) }),
   'sensitivity.pssm': tom,
   'sensitivity.airways': tom,
   'sensitivity.teeth': tom,
-  'sensitivity.proteinExcess': (p) => ({ percent: String(p.percent) }),
+  'sensitivity.proteinExcess': (p) => ({ percent: tal(p.percent, 0) }),
   'sensitivity.avoidedIngredients': (p) => ({ ingredients: lista(p.ingredients) }),
-  // Always one decimal ("2,0"), rounded by toFixed(1) as before (#12, decision 4): toFixed rounds the binary value
-  // (4.55 gives 4,5), where Intl alone would round its decimal form up (4,6).
-  'trend.weightLossFast': (p) => ({
-    percentPerWeek: Number(p.percentPerWeek.toFixed(1)).toLocaleString(locale(), {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }),
-  }),
+  // Up to two decimals, like the weekly rate in the trend chip on the same screen (journal.trend.weightRate in
+  // JournalStep).
+  'trend.weightLossFast': (p) => ({ percentPerWeek: tal(p.percentPerWeek, 2) }),
   'trend.conditionRising': tom,
   'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
 }
