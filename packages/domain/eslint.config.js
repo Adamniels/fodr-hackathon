@@ -35,8 +35,8 @@ export default tseslint.config(
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
     rules: {
-      // Strict type-aware rules (#17), with two settings that keep idiomatic code: an arrow that only calls a void
-      // function (onClick={() => setX(y)}), and numbers in template strings, since UI text has its own number rule.
+      // Strict type-aware rules (#17), with the same two settings as the web app: an arrow that only calls a void
+      // function, and numbers in template strings (text for a reader is never built in the domain, ADR 0014).
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       'no-restricted-globals': ['error', ...IO_GLOBALS],

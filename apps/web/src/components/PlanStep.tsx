@@ -68,7 +68,7 @@ export function PlanStep({
   const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map((r) => shortNutrientLabel(r.amne))
   // The current state lists every nutrient, energy included, against its requirement.
   const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')
-  const energiProcent = nulageEnergi ? Math.round((nulageEnergi.intag / plan.behov.behov.energi.min - 1) * 100) : 0
+  const energiProcent = (intag: number) => Math.round((intag / plan.behov.behov.energi.min - 1) * 100)
   const ersatter = (id: string) => {
     const namn = plan.byten.filter((x) => x.till.produkt.id === id).map((x) => displayName(x.fran.produkt))
     return namn.length ? namn.join(t('plan.shopping.and')) : undefined
@@ -246,7 +246,8 @@ export function PlanStep({
             <p className="nulage">
               {t('plan.basis.today')}{' '}
               {[
-                nulageEnergi?.status === 'overskott' && t('plan.basis.moreEnergy', { percent: tal(energiProcent, 0) }),
+                nulageEnergi?.status === 'overskott' &&
+                  t('plan.basis.moreEnergy', { percent: tal(energiProcent(nulageEnergi.intag), 0) }),
                 nulageBrister.length > 0 && t('plan.basis.tooLittle', { nutrients: nulageBrister.join(', ') }),
               ]
                 .filter(Boolean)

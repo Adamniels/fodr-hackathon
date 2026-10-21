@@ -77,7 +77,7 @@ export async function lasAnalys(fil: { mediaType: string; base64: string }): Pro
     output_config: { effort: 'low', format: zodOutputFormat(AnalysSchema) },
     messages: [{ role: 'user', content: [dokument, { type: 'text', text: 'Läs ut analysen.' }] }],
   })
-  return tolkat(kravSvar(svar))
+  return parsedOutput(kravSvar(svar))
 }
 
 const ProfilSchema = z.object({
@@ -153,7 +153,7 @@ export async function tolkaProfil(input: {
     output_config: { effort: 'low', format: zodOutputFormat(ProfilSchema) },
     messages: [{ role: 'user', content: text }],
   })
-  return tolkat(kravSvar(svar))
+  return parsedOutput(kravSvar(svar))
 }
 
 const FORKLARING_SYSTEM = `Du förklarar en färdigberäknad foderplan för en hästägare på vanlig svenska.
@@ -188,7 +188,7 @@ export async function forklaraPlan(underlag: unknown): Promise<string> {
  * The parsed reply. With structured output the SDK parses it against the schema, and kravSvar has already turned a
  * refusal or a cut-off reply into an error, so it is present.
  */
-function tolkat<T>(svar: { parsed_output: T | null }): T {
+function parsedOutput<T>(svar: { parsed_output: T | null }): T {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- see the comment above
   return svar.parsed_output!
 }
@@ -235,5 +235,5 @@ export async function analyseraJournal(underlag: unknown): Promise<JournalSvar> 
     output_config: { effort: 'medium', format: zodOutputFormat(JournalSchema) },
     messages: [{ role: 'user', content: JSON.stringify(underlag) }],
   })
-  return tolkat(kravSvar(svar))
+  return parsedOutput(kravSvar(svar))
 }
