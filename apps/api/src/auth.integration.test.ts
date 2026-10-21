@@ -310,14 +310,18 @@ describe('cross-site requests (#22 review)', () => {
 })
 
 describe('the account name (#22 review)', () => {
-  it('refuses a name over 100 characters', async () => {
+  it.each([
+    ['over 100 characters', 'x'.repeat(101), 'NAME_TOO_LONG'],
+    ['of only spaces', '   ', 'NAME_REQUIRED'],
+  ])('refuses a name %s with a code the web app translates', async (_case, name, code) => {
     const res = await newClient().post('/api/auth/sign-up/email', {
-      name: 'x'.repeat(101),
+      name,
       email: newEmail(),
       password: PASSWORD,
       callbackURL: '/horses',
     })
     expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({ code })
   })
 
   it('never puts the name in a mail, so it cannot carry a message from Fodr', async () => {

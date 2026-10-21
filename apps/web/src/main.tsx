@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router/dom'
 import './index.css'
 import './i18n'
+import { forgetMockAccounts } from './demo'
 import { router } from './router'
+
+forgetMockAccounts()
 
 // Server state (ADR 0012). Each query sets its own caching and retries; today only the plan explanation is one.
 const queryClient = new QueryClient()

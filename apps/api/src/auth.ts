@@ -81,8 +81,13 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
     databaseHooks: {
       user: {
         create: {
+          // Codes the web app turns into text (i18n/auth.ts).
           before: (user) => {
-            if (user.name.length > MAX_NAME_LENGTH) throw new APIError('BAD_REQUEST', { message: 'Name too long' })
+            if (user.name.trim() === '')
+              throw new APIError('BAD_REQUEST', { code: 'NAME_REQUIRED', message: 'Name required' })
+            if (user.name.length > MAX_NAME_LENGTH) {
+              throw new APIError('BAD_REQUEST', { code: 'NAME_TOO_LONG', message: 'Name too long' })
+            }
             return Promise.resolve({ data: user })
           },
         },

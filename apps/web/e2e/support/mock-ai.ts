@@ -1,6 +1,7 @@
 // Intercepts /api requests in the browser context. Known AI routes answer from fixtures; anything else is aborted
-// and recorded, and the test fixture in helpers.ts fails the test if that happened. /api/v1 is not intercepted:
-// it belongs to the real backend (ADR 0007). When the AI routes move under /api/v1 (M3), mock them there.
+// and recorded, and the test fixture in helpers.ts fails the test if that happened. /api/v1 and /api/auth are not
+// intercepted: they belong to the real backend (ADR 0007, ADR 0009). When the AI routes move under /api/v1 (M3), mock
+// them there.
 
 import { expect, type BrowserContext } from '@playwright/test'
 import * as fixtures from '../fixtures/ai'
@@ -20,7 +21,7 @@ export interface AiMock {
 
 const QUIET_MS = 500
 
-const isBackend = (path: string) => path === '/api/v1' || path.startsWith('/api/v1/')
+const isBackend = (path: string) => ['/api/v1', '/api/auth'].some((p) => path === p || path.startsWith(`${p}/`))
 
 const DEFAULTS: Record<AiRoute, unknown> = {
   analys: fixtures.analysA01,

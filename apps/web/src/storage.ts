@@ -1,7 +1,7 @@
 // Horse profiles per user, saved locally in the browser. This is the only file that has to be
 // replaced with API calls when real accounts and a database arrive.
 
-import { DEMO_ACCOUNT } from './auth'
+import { DEMO_USER } from './demo'
 import { demoHast, demoJournal, ponny } from './data/examples'
 import type { Journalpost } from '@fodr/domain/journal'
 import type { Hastprofil } from '@fodr/domain/types'
@@ -17,7 +17,7 @@ export function loadHorses(userId: string): Hastprofil[] {
     // Storage unavailable or corrupt.
   }
   // The demo account starts with two horses, new accounts start empty.
-  return userId === DEMO_ACCOUNT.id ? [demoHast, ponny] : []
+  return userId === DEMO_USER.id ? [demoHast, ponny] : []
 }
 
 export function saveHorses(userId: string, hastar: Hastprofil[]) {
@@ -64,7 +64,7 @@ export function loadJournal(userId: string): Record<string, Journalpost[]> {
   } catch {
     // Storage unavailable or corrupt.
   }
-  return userId === DEMO_ACCOUNT.id ? demoJournal : {}
+  return userId === DEMO_USER.id ? demoJournal : {}
 }
 
 export function saveJournal(userId: string, journal: Record<string, Journalpost[]>) {

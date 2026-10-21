@@ -4,8 +4,9 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ mode }) => {
-  // The API (apps/api) listens on PORT from the root .env, 3000 by default.
-  const apiPort = loadEnv(mode, fileURLToPath(new URL('../..', import.meta.url)), '').PORT || '3000'
+  // The API (apps/api) listens on PORT from the root .env, 3000 by default; API_PORT overrides it (the e2e run's API).
+  const apiPort =
+    process.env.API_PORT ?? (loadEnv(mode, fileURLToPath(new URL('../..', import.meta.url)), '').PORT || '3000')
   return {
     plugins: [react()],
     // Every /api route belongs to the API (apps/api), the AI routes included (#20). Only VITE_ variables reach the

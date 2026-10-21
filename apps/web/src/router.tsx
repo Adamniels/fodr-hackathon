@@ -3,6 +3,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { Root } from './routes/Root'
 import { Landing } from './routes/Landing'
+import { ResetPassword } from './routes/ResetPassword'
 import { WorkspaceGate } from './routes/Workspace'
 import { AnalysisRoute, HorsesIndex, JournalRoute, PlanRoute, ProfileRoute } from './routes/steps'
 import { RouteError, StepNotFound } from './routes/RouteError'
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Landing />, errorElement: pageError },
       { path: 'login', element: <Landing login />, errorElement: pageError },
+      { path: 'reset-password', element: <ResetPassword />, errorElement: pageError },
       {
         path: 'horses',
         element: <WorkspaceGate />,

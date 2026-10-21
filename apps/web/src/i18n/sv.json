@@ -47,8 +47,26 @@
     "submitCreate": "Skapa konto",
     "switchToCreate": "Ny här? Skapa konto",
     "switchToLogIn": "Har du redan ett konto? Logga in",
-    "note": "Prototyp: lösenordet kontrolleras inte och allt sparas bara i den här webbläsaren.",
-    "noAccount": "Det finns inget konto med den e-postadressen. Skapa ett nytt."
+    "titleMagicLink": "Logga in med en länk",
+    "titleForgot": "Glömt lösenordet?",
+    "introMagicLink": "Vi mejlar en länk som loggar in dig direkt.",
+    "introForgot": "Vi mejlar en länk där du väljer ett nytt lösenord.",
+    "passwordHint": "Minst 8 tecken.",
+    "submitMagicLink": "Skicka inloggningslänk",
+    "submitForgot": "Skicka länk för nytt lösenord",
+    "switchToMagicLink": "Logga in med en länk i stället",
+    "switchToForgot": "Glömt lösenordet?",
+    "backToLogIn": "Tillbaka till inloggningen",
+    "checkEmailTitle": "Kolla din e-post",
+    "checkEmailSignUp": "Vi har skickat en länk till {{email}}. Klicka på den för att bekräfta din e-postadress och logga in.",
+    "checkEmailMagicLink": "Om det finns ett konto för {{email}} har vi skickat en inloggningslänk dit.",
+    "checkEmailForgot": "Om det finns ett konto för {{email}} har vi skickat en länk för att välja ett nytt lösenord.",
+    "notVerified": "Bekräfta din e-postadress först. Vi skickade en länk när du skapade kontot.",
+    "resend": "Skicka länken igen",
+    "resent": "Vi har skickat en ny länk.",
+    "linkFailed": "Länken är ogiltig eller har gått ut.",
+    "busy": "Skickar …",
+    "newLink": "Skicka en ny länk"
   },
   "steps": {
     "hast": "Hästen",
@@ -702,5 +720,27 @@
   "form": {
     "required": "Fyll i ett värde.",
     "notANumber": "Skriv ett tal, till exempel 12,5."
+  },
+  "auth": {
+    "errors": {
+      "INVALID_EMAIL_OR_PASSWORD": "Fel e-postadress eller lösenord.",
+      "INVALID_EMAIL": "Ange en giltig e-postadress.",
+      "PASSWORD_TOO_SHORT": "Lösenordet måste vara minst 8 tecken.",
+      "PASSWORD_TOO_LONG": "Lösenordet är för långt.",
+      "INVALID_TOKEN": "Länken är ogiltig eller har gått ut. Be om en ny.",
+      "RATE_LIMITED": "För många försök. Vänta en minut och försök igen.",
+      "NAME_REQUIRED": "Skriv ditt namn.",
+      "NAME_TOO_LONG": "Namnet får vara högst 100 tecken.",
+      "UNKNOWN": "Något gick fel. Försök igen."
+    }
+  },
+  "resetPassword": {
+    "title": "Välj ett nytt lösenord",
+    "newPassword": "Nytt lösenord",
+    "submit": "Spara lösenordet",
+    "done": "Lösenordet är bytt. Logga in med ditt nya lösenord.",
+    "toLogIn": "Logga in",
+    "invalid": "Länken är ogiltig eller har gått ut.",
+    "requestNew": "Be om en ny länk"
   }
 }

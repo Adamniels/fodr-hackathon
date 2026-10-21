@@ -81,8 +81,8 @@ test('a deep link while logged out asks for login, then opens the page', async (
   await page.goto(link)
   const dialog = page.getByRole('dialog', { name: 'Logga in' })
   await expect(dialog).toBeVisible()
-  await dialog.getByLabel('E-post').fill('demo@fodr.se')
-  await dialog.getByRole('button', { name: 'Logga in', exact: true }).click()
+  // The demo opens from the dialog; a real account's return is the same path (Landing.tsx).
+  await dialog.getByRole('button', { name: 'Fortsätt med demohästen Sixten' }).click()
   await expectOn(page, 'Pysen', 'Journal')
 })
 
