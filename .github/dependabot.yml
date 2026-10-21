@@ -27,6 +27,10 @@ updates:
       # @types/node majors follow the Node version in .nvmrc, so they are bumped by hand together with Node.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # TypeScript 7 is postponed (#61): typescript-eslint does not support it yet, and fodr/no-raw-number-text
+      # uses the TypeScript compiler API that TS 7 does not provide in that form. Remove this when it does.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
