@@ -107,7 +107,7 @@ Every flow below must work against the real backend with no mocks. Each flow has
 ### Removed
 
 - localStorage accounts and persistence (`auth.ts`, `storage.ts` as they are today).
-- The always-seeded demo account and the "Exempel" analysis buttons. `src/data/exempel.ts` stays, as test fixtures only.
+- The always-seeded demo account and the "Exempel" analysis buttons. `src/data/examples.ts` stays, as test fixtures only.
 - `app/scratchverify/`, the tracked `.DS_Store` files and `Krubba – pitch.pdf` (moved out of the repo).
 
 ### Out of scope for the beta

@@ -8,7 +8,7 @@ import { doseGrams, enhet, etikett, kr, tal, shortNutrientLabel } from '../forma
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
-import { Injusteringskalender } from './Injusteringskalender'
+import { Injusteringskalender } from './TransitionCalendar'
 
 const STATUS_KLASS: Record<Status, string> = {
   brist: 'brist',

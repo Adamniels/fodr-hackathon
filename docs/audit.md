@@ -88,7 +88,7 @@ The important properties:
 | F5 | Upload a lab report (PDF or photo), review and correct values | `AnalysisStep.tsx:28` → base64 → `POST /api/analys` → `lasAnalys` → `tillGrovfoderanalys` (SLU conversions) → editable table | Yes | No. Fallback: two "Exempel" buttons load hardcoded analyses. |
 | F6 | Compute feed plan | `App.tsx:105` `skapaPlan` → `PlanStep`: actions, shopping list, cost, alternative, swaps, sensitivities, roughage quality, nutrient balance table, nitrogen surplus | No | Yes |
 | F7 | AI explanation of the plan | `PlanStep.tsx:39` auto calls `POST /api/forklaring`, cached per horse by fingerprint in localStorage | Yes | Degrades with a message |
-| F8 | Transition calendar and .ics export | `Injusteringskalender.tsx`, client side ICS generation | No | Yes |
+| F8 | Transition calendar and .ics export | `TransitionCalendar.tsx`, client side ICS generation | No | Yes |
 | F9 | Journal: add entry, trend, follow up, save plan snapshot | `JournalStep` → `beraknaTrend`; optional "update profile" rewrites weight and body condition | No | Yes |
 | F10 | AI journal analysis (patterns, vet flag) | `POST /api/journal` → `analyseraJournal` | Yes | No, shows an error |
 
@@ -105,12 +105,12 @@ Flow level gaps:
 | M1 | **Accounts.** Any email logs in, the password is never checked or stored, users live in localStorage | `auth.ts` (whole file, marked MOCK at `:1`), `Login.tsx:44-51` | A real auth provider (hosted, e.g. Supabase Auth or similar, or own sessions). `Anvandare` is a good seam, but `aktuellAnvandare()` is synchronous and every caller assumes so. |
 | M2 | **Persistence.** Horses, journal and AI explanations in localStorage, per browser | `storage.ts` (whole file) | A backend with a database and an API. The seam exists, but its functions are synchronous; going async touches `App.tsx` state initialisation. |
 | M3 | **The backend.** API only runs inside the Vite dev server | `server/apiPlugin.ts:39` | A real server process or serverless functions. `ai.ts` is portable as is. |
-| M4 | Demo seeding: the demo account always gets Sixten, Pysen and a journal | `storage.ts:20`, `storage.ts:59`, `data/exempel.ts` | Seed data in the database, or keep as an explicit demo mode. |
-| M5 | Example analyses that bypass AI extraction | `AnalysisStep.tsx:72-81`, `data/exempel.ts:45-87` | Keep as an explicit demo or onboarding feature, or remove. |
+| M4 | Demo seeding: the demo account always gets Sixten, Pysen and a journal | `storage.ts:20`, `storage.ts:59`, `data/examples.ts` | Seed data in the database, or keep as an explicit demo mode. |
+| M5 | Example analyses that bypass AI extraction | `AnalysisStep.tsx:72-81`, `data/examples.ts:45-87` | Keep as an explicit demo or onboarding feature, or remove. |
 | M6 | **Product catalogue** is a one day scrape (all 228 items `insamlad: 2026-10-14`). Only 41 have complete nutrition data, 47 none. Prices are a snapshot. | `src/data/products.json` (generated), `scripts/importera-produkter.mjs` | Decide a source of truth (manual curation, supplier feeds, or scraping on a schedule), store it server side with versioning and a "last verified" date. |
 | M7 | Selectable products and their doses are hand converted for a 550 kg horse | `scripts/produktval.json` (15 products; several doses are "assumed same as sibling product") | Verified dose data per product, reviewed by someone with domain knowledge. |
 | M8 | Ingredients are inferred from shop descriptions with keyword matching | `importera-produkter.mjs`; weakness admitted in `malbild.md` | Hand entered ingredient lists for the selectable products at minimum. The allergy filter is unsafe until then. |
-| M9 | Landing page statistics and a hardcoded "screenshot" of analysis values | `Startsida.tsx:81-95` (stats, with sources), `Startsida.tsx:113-117` (static values) | Fine for marketing; mark as content, not data. The plan preview on the same page is computed live from demo data, which is good. |
+| M9 | Landing page statistics and a hardcoded "screenshot" of analysis values | `LandingPage.tsx:81-95` (stats, with sources), `LandingPage.tsx:113-117` (static values) | Fine for marketing; mark as content, not data. The plan preview on the same page is computed live from demo data, which is good. |
 | M10 | Model ID and token limits hardcoded | `ai.ts:10`, `ai.ts:75,151,175,224` | Configuration. |
 | M11 | Domain assumptions outside SLU (body condition weight factor, sugar limit, trace mineral defaults, etc.) | Marked `ANTAGANDE` throughout `src/domain` | Not mocks. They are documented assumptions and should stay visible; consider collecting them in one registry so they can be reviewed. |
 

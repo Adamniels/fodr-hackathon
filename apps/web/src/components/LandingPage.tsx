@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { analysKomplett, demoHast } from '../data/exempel'
+import { analysKomplett, demoHast } from '../data/examples'
 import { monthlyCost } from '@fodr/domain/intake'
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
 import { enhet, kr, tal } from '../format'
 import { domainText } from '../i18n/domain'
-import { Ordmarke } from './Varumarke'
+import { Ordmarke } from './Brand'
 
 /** The figures band. Their sources are listed in landing.figures.sources. */
 const SIFFROR = { hastar: 355_500, hosilageProcent: 55, analysKostnadKr: { min: 600, max: 1_800 } }

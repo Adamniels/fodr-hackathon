@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { filTillBase64, lasAnalys } from '../api'
-import { analysBas, analysKomplett } from '../data/exempel'
+import { analysBas, analysKomplett } from '../data/examples'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
 import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey, NutrientValues } from '@fodr/domain/nutrients'
