@@ -39,11 +39,28 @@ export function createApp({ config, logger }: AppDeps): Hono<AppEnv> {
   if (config.webDistDir) {
     const root = config.webDistDir
     const files = serveStatic({ root })
-    // Client routes are the SPA's: any other GET gets index.html, so a reload keeps the page.
     const index = serveStatic({ root, path: 'index.html' })
     // /api paths never reach the web app, so an unknown API route stays a problem+json 404 from notFound.
-    app.get('*', (c, next) => (c.req.path.startsWith('/api/') ? next() : files(c, next)))
-    app.get('*', (c, next) => (c.req.path.startsWith('/api/') ? next() : index(c, next)))
+    const isApi = (path: string) => path === '/api' || path.startsWith('/api/')
+    // serveStatic returns a Response only when it found the file (otherwise what next() returns), so a 404 never gets
+    // these cache headers. A directory such as / is left to the index route below.
+    app.get('*', async (c, next) => {
+      if (isApi(c.req.path) || c.req.path.endsWith('/')) return next()
+      const res = await files(c, next)
+      // Built assets have the content hash in their name, so the browser may keep them.
+      if (res instanceof Response && c.req.path.startsWith('/assets/'))
+        res.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+      return res
+    })
+    // Client routes are the SPA's: any other GET gets index.html, so a reload keeps the page. A path with a file
+    // extension is a file, so a missing one is a 404 rather than HTML (a stale page asking for an older build's asset).
+    app.get('*', async (c, next) => {
+      if (isApi(c.req.path) || /\.[^/]*$/.test(c.req.path)) return next()
+      const res = await index(c, next)
+      // Revalidated on every load, so a deploy reaches the browser.
+      if (res instanceof Response) res.headers.set('Cache-Control', 'no-cache')
+      return res
+    })
   }
 
   app.notFound((c) => problem(c, 404, 'http.not_found'))

@@ -2,6 +2,8 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Writable } from 'node:stream'
+import { DrizzleQueryError } from 'drizzle-orm'
+import { DatabaseError } from 'pg'
 import { describe, expect, it } from 'vitest'
 import { createApp } from './app'
 import type { Config } from './config'
@@ -66,7 +68,7 @@ describe('GET /api/v1/health', () => {
 })
 
 describe('problem+json errors', () => {
-  it.each(['/api/v1/nope', '/api/nope', '/nope'])('answers an unknown route %s with 404', async (path) => {
+  it.each(['/api/v1/nope', '/api/nope', '/api', '/nope'])('answers an unknown route %s with 404', async (path) => {
     const { app } = setup()
     const res = await app.request(path)
     expect(res.status).toBe(404)
@@ -104,6 +106,39 @@ describe('problem+json errors', () => {
     expect(errorLine).toMatchObject({ requestId, err: { message: 'connection to db-internal.example failed' } })
     expect(lines.find((l) => l.msg === 'request')).toMatchObject({ requestId, status: 500 })
   })
+
+  // A failed query carries its SQL and parameters, and Postgres puts row values in `detail`: personal data and health
+  // notes, which never go to the logs (ADR 0015). What identifies the failure (the error type, the Postgres code and
+  // constraint, the stack frames) is kept.
+  function failedQuery() {
+    const pgError = new DatabaseError('duplicate key value violates unique constraint "users_email_key"', 0, 'error')
+    pgError.code = '23505'
+    pgError.constraint = 'users_email_key'
+    pgError.detail = 'Key (email)=(anna@example.se) already exists.'
+    return new DrizzleQueryError(
+      'insert into "users" ("email", "note") values ($1, $2)',
+      ['anna@example.se', 'fang 2025'],
+      pgError,
+    )
+  }
+
+  it.each([
+    ['a failed query', failedQuery],
+    ['an error caused by a failed query', () => new Error('saving the horse failed', { cause: failedQuery() })],
+  ])('logs %s without its SQL, parameters or row values', async (_name, error) => {
+    const { app, lines } = setup()
+    app.get('/api/v1/boom', () => {
+      throw error()
+    })
+    const res = await app.request('/api/v1/boom')
+    expect(res.status).toBe(500)
+    const logged = JSON.stringify(lines)
+    expect(logged).not.toMatch(/anna@example\.se|fang 2025|insert into/)
+    expect(logged).toMatch(/DrizzleQueryError/)
+    expect(logged).toMatch(/23505/)
+    expect(logged).toMatch(/users_email_key/)
+    expect(logged).toMatch(/app\.test\.ts/)
+  })
 })
 
 describe('the web app from WEB_DIST_DIR', () => {
@@ -136,10 +171,30 @@ describe('the web app from WEB_DIST_DIR', () => {
     expect(await res.text()).toMatch(/<title>Fodr<\/title>/)
   })
 
-  it('still answers an unknown API route with problem+json', async () => {
+  it.each(['/api/v1/nope', '/api'])('still answers the unknown API route %s with problem+json', async (path) => {
     const { app } = setup({ webDistDir: webDist() })
-    const res = await app.request('/api/v1/nope')
+    const res = await app.request(path)
     expect(res.status).toBe(404)
     expect(res.headers.get('Content-Type')).toBe('application/problem+json')
+  })
+
+  // A stale index.html asking for an asset from an older build must get a 404, not HTML served as JavaScript.
+  it.each(['/assets/missing.js', '/favicon.ico'])('answers a missing file %s with 404', async (path) => {
+    const { app } = setup({ webDistDir: webDist() })
+    const res = await app.request(path)
+    expect(res.status).toBe(404)
+    expect(res.headers.get('Content-Type')).toBe('application/problem+json')
+  })
+
+  it.each(['/', '/horses/123'])('has index.html at %s revalidated, so a deploy reaches the browser', async (path) => {
+    const { app } = setup({ webDistDir: webDist() })
+    const res = await app.request(path)
+    expect(res.headers.get('Cache-Control')).toBe('no-cache')
+  })
+
+  it('lets the browser keep a built asset, whose name changes with its content', async () => {
+    const { app } = setup({ webDistDir: webDist() })
+    const res = await app.request('/assets/app.js')
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable')
   })
 })
