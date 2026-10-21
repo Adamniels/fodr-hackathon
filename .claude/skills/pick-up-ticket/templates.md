@@ -37,14 +37,15 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 ## Type
 
-- [x] <the one type from the plan>
+<the template's five boxes; tick only the plan's type: Refactor, Fix, Feature, Chore (tests, tooling, CI, data), Docs>
 
 ## Checklist
 
-- [x] New or changed behaviour has a test that failed first
-- [x] `npm run format:check`, `lint`, `typecheck`, `test` and `test:e2e` pass locally
-- [x] Refactoring and behaviour changes are not mixed in this PR
-- [x] Docs updated if behaviour or conventions changed
+<tick only what is true; an unticked item gets one line under Verification saying why>
+- [ ] New or changed behaviour has a test that failed first
+- [ ] `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e` pass locally
+- [ ] Refactoring and behaviour changes are not mixed in this PR
+- [ ] Docs (spec, ADRs, glossary, README) updated if behaviour or conventions changed
 
 ## Verification
 
