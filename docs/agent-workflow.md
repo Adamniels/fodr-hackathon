@@ -36,7 +36,7 @@ The PR's "Review" section lists every finding with its outcome. The rule is step
 `/pick-up-ticket` without a number runs `bash scripts/agent/next.sh`, which anyone can run to see the same answer. The order comes only from the issues and the board, so there is no list to keep up to date:
 
 1. **In flight first.** Tickets In Progress or In Review are mentioned before anything new, and never proposed as new work.
-2. **Candidates** are open issues with board status Todo, no status, or not on the board, whose dependencies are all closed. Under "Depends on", a line with `#N` waits for those issues in this repository; otherwise a line starting with "None" or "Note" is ignored, and any other text (for example "all of M5." or `other-repo#3`) counts as an open dependency, so a person decides.
+2. **Candidates** are open issues with board status Todo, no status, or not on the board, whose dependencies are all closed. Under "Depends on", a line with `#N` waits for those issues in this repository; otherwise a line starting with "None" or "Note", and the "_No response_" an issue form writes for an empty field, is ignored, and any other text (for example "all of M5." or `other-repo#3`) counts as an open dependency, so a person decides.
 3. **Order:** milestone M1 to M5 (by the number in the milestone title; a milestone without that prefix comes after M5); within a milestone, a `type:fix` without slice ID first, then the slices in slice order (`[M1-01]`, `[M1-02]`, ...), then other tickets without slice ID by issue number. Backlog tickets (no milestone) come last.
 4. **Proposal and alternatives:** the first candidate with a milestone is proposed. The alternatives are the next one and the top backlog ticket (or the one after that, if the backlog is empty). Only when no milestone ticket is free is a backlog ticket proposed.
 5. **Skipped:** tickets that rank before the proposal but wait for a dependency are shown with what blocks them.
@@ -75,7 +75,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
 - **Start:** `ssh` to the Mac mini, then `tmux new -s fodr-<number>`, `cd ~/Projects/fodr-hackathon`, `git pull`, `claude`, and `/pick-up-ticket <number>` (or `/pick-up-ticket` alone for a proposal).
 - **Leave and come back:** detach with `Ctrl-b d`; reattach with `tmux attach -t fodr-<number>`. From the phone, use Claude Code Remote Control to answer the agent's questions.
 - **Two tickets at once:** one tmux session per ticket; each has its own worktree, Docker services are shared.
-- **After merge:** `git worktree remove .worktrees/<number>-<slug>`, `git branch -d <number>-<slug>`, `git worktree prune`.
+- **After merge:** `git worktree remove .worktrees/<number>-<slug>`, `git branch -D <number>-<slug>`, `git fetch --prune`, `git worktree prune`. `-D`, because a squash-merged branch never counts as merged in git, so `-d` refuses it; look at the PR first to be sure it was merged.
 
 ## Troubleshooting
 

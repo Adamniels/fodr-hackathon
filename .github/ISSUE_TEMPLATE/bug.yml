@@ -64,3 +64,9 @@ body:
     attributes:
       label: Open questions
       description: Decisions to make with the owner when the ticket is picked up.
+  - type: textarea
+    id: depends-on
+    attributes:
+      label: Depends on
+      description: Issues that must be closed before this one can start, one "- #N" line each. Leave empty if none; scripts/agent/next.sh reads this section.
+      placeholder: "- #12"
