@@ -25,11 +25,15 @@ export type AnalysisResult = { analys: Grovfoderanalys; omrakningar: Omrakning[]
 
 export function tillGrovfoderanalys(u: UtlastAnalys): AnalysisResult {
   if (!u.arAnalys) return { error: { code: 'analysis.notAnAnalysis', params: {} } }
-  if (!u.tsProcent) return { error: { code: 'analysis.missingDryMatter', params: {} } }
+  // A present 0 is a value, never unknown (#102): it loads, and the validator shows it is out of range.
+  if (u.tsProcent == null) return { error: { code: 'analysis.missingDryMatter', params: {} } }
   const { energiIdisslare, raprotein, ...rest } = u.perKgTs
   const perKgTs: NutrientValues = {}
   for (const [k, v] of Object.entries(rest)) if (typeof v === 'number') perKgTs[k as NutrientKey] = v
   const omrakningar: Omrakning[] = []
+  // A ruminant energy or crude protein of 0 is not converted, so the horse value stays unknown: a lab's 0 there is no
+  // measurement to convert from, and SLU's crude protein formula divides by it (NaN). Other implausible results of
+  // the formulas, such as a negative energy, are converted and then shown out of range by the validator.
   if (perKgTs.energi === undefined && energiIdisslare) {
     perKgTs.energi = round(energiHastFranIdisslare(energiIdisslare), 1)
     omrakningar.push({
@@ -47,7 +51,7 @@ export function tillGrovfoderanalys(u: UtlastAnalys): AnalysisResult {
       labb: u.labb ?? undefined,
       provdatum: u.provdatum ?? undefined,
       tsProcent: u.tsProcent,
-      ...(u.askaGPerKgTs ? { askaGPerKgTs: u.askaGPerKgTs } : {}),
+      ...(u.askaGPerKgTs != null ? { askaGPerKgTs: u.askaGPerKgTs } : {}),
       perKgTs,
     },
     omrakningar,

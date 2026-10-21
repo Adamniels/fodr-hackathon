@@ -51,4 +51,17 @@ describe('tillGrovfoderanalys', () => {
       error: { code: 'analysis.missingDryMatter', params: {} },
     })
   })
+  it('a reported ash of 0 is kept: a present zero is a value, never unknown (#102)', () => {
+    expect(converted(tillGrovfoderanalys({ ...hoBas, askaGPerKgTs: 0 })).analys.askaGPerKgTs).toBe(0)
+    expect(converted(tillGrovfoderanalys({ ...hoBas, askaGPerKgTs: null })).analys).not.toHaveProperty('askaGPerKgTs')
+  })
+  it('a reported dry matter of 0 is kept for the validator to reject next to the field (#102, #13)', () => {
+    expect(converted(tillGrovfoderanalys({ ...hoBas, tsProcent: 0 })).analys.tsProcent).toBe(0)
+  })
+  it('a ruminant energy or crude protein of 0 is not converted: the SLU formulas are undefined there', () => {
+    const { analys, omrakningar } = converted(
+      tillGrovfoderanalys({ ...hoBas, perKgTs: { ...hoBas.perKgTs, energiIdisslare: 0, raprotein: 0 } }),
+    )
+    expect([analys.perKgTs.energi, analys.perKgTs.smbRp, omrakningar]).toEqual([undefined, undefined, []])
+  })
 })

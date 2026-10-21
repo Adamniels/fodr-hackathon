@@ -177,9 +177,9 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'validation.date': noParams,
   'analysis.notAnAnalysis': noParams,
   'analysis.missingDryMatter': noParams,
-  // The report's own number, printed as the engine used to print it ("10.5"); #102 formats it for the locale.
-  'conversion.energyFromRuminant': (p) => ({ mj: String(p.mj) }),
-  'conversion.proteinFromCrude': (p) => ({ grams: String(p.grams) }),
+  // The report's own figure: up to two decimals, so 123.4 g is not rounded to 123 as the automatic precision would (#102).
+  'conversion.energyFromRuminant': (p) => ({ mj: formatNumber(p.mj, 2) }),
+  'conversion.proteinFromCrude': (p) => ({ grams: formatNumber(p.grams, 2) }),
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */

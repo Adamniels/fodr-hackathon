@@ -14,6 +14,7 @@ import {
   typeKeyByKey,
 } from './support/helpers'
 import type { Locator, Page } from '@playwright/test'
+import type { AiMock } from './support/mock-ai'
 
 const A01_PDF = fileURLToPath(
   new URL('../../../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf', import.meta.url),
@@ -261,4 +262,43 @@ test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai })
   await ai.settled()
   const [underlag] = ai.calls('forklaring') as { varningar: string[] }[]
   expect(underlag.varningar.some((v) => v.startsWith(reason))).toBe(true)
+})
+
+/** The analysis step after the mocked AI read the A01 report with these values changed (#102). */
+async function readA01With(page: Page, ai: AiMock, values: object) {
+  ai.respondWith('analys', { ...analysA01, ...values })
+  await enterDemo(page)
+  await goToStep(page, 'Analysen')
+  await page.getByLabel(/Välj analysrapport/).setInputFiles(A01_PDF)
+}
+
+test('a reported ash of 0 is a value, not a missing one (#102)', async ({ page, ai }) => {
+  await readA01With(page, ai, { askaGPerKgTs: 0 })
+  await expect(page.getByLabel('Aska')).toHaveValue('0')
+})
+
+test('a reported dry matter of 0 loads and is shown as out of range (#102)', async ({ page, ai }) => {
+  // Out-of-range input is shown next to the field (#13), instead of rejecting the report.
+  await readA01With(page, ai, { tsProcent: 0 })
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue('0')
+  await expect(page.getByLabel('Torrsubstans')).toHaveAccessibleDescription('Ange ett värde mellan 1 och 100.')
+  await expect(page.getByText('Hittade ingen torrsubstanshalt')).toHaveCount(0)
+})
+
+test('a missing ash stays missing (#102)', async ({ page, ai }) => {
+  await readA01With(page, ai, { askaGPerKgTs: null })
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue(String(analysA01.tsProcent))
+  await expect(page.getByLabel('Aska')).toHaveValue('')
+})
+
+test('a missing dry matter still rejects the report (#102)', async ({ page, ai }) => {
+  await readA01With(page, ai, { tsProcent: null })
+  await expect(page.getByText('Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt.')).toBeVisible()
+})
+
+test('a conversion note shows the report value formatted for the locale (#102)', async ({ page, ai }) => {
+  const perKgTs = { ...analysA01.perKgTs, energi: null, energiIdisslare: 10.5, smbRp: null, raprotein: 123.4 }
+  await readA01With(page, ai, { perKgTs })
+  await expect(nutrientRow(page, 'Energi')).toContainText('Räknat från idisslarvärdet 10,5 MJ med SLU:s formel')
+  await expect(nutrientRow(page, 'Smältbart råprotein')).toContainText('Räknat från råprotein 123,4 g med SLU:s formel')
 })

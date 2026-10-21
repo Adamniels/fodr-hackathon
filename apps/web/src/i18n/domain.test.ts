@@ -214,8 +214,8 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'validation.positiveUpTo', params: { min: 0, max: 40 } }, 'Ange ett värde över 0 och högst 40.'],
   [{ code: 'validation.trotWithinRide', params: {} }, 'Kan inte vara fler än minuterna per pass.'],
   [{ code: 'validation.date', params: {} }, 'Ange ett datum.'],
-  // The analysis step (#95): the errors tillGrovfoderanalys used to throw, and the conversion notes, whose number
-  // prints as JavaScript writes it until #102 formats it for the locale.
+  // The analysis step (#95): the errors tillGrovfoderanalys used to throw, and the conversion notes, whose number keeps
+  // the report's decimals with the locale's comma (#102).
   [{ code: 'analysis.notAnAnalysis', params: {} }, 'Dokumentet ser inte ut att vara en foderanalys.'],
   [
     { code: 'analysis.missingDryMatter', params: {} },
@@ -223,9 +223,9 @@ const FALL: [DomainMessage, string][] = [
   ],
   [
     { code: 'conversion.energyFromRuminant', params: { mj: 10.5 } },
-    'Räknat från idisslarvärdet 10.5 MJ med SLU:s formel',
+    'Räknat från idisslarvärdet 10,5 MJ med SLU:s formel',
   ],
-  [{ code: 'conversion.proteinFromCrude', params: { grams: 123.4 } }, 'Räknat från råprotein 123.4 g med SLU:s formel'],
+  [{ code: 'conversion.proteinFromCrude', params: { grams: 123.4 } }, 'Räknat från råprotein 123,4 g med SLU:s formel'],
   // Roughage estimate sources (#95), as forage.ts held them.
   [{ code: 'source.typicalForage', params: {} }, 'Typvärde svenskt vallfoder (ej SLU)'],
   [{ code: 'source.typicalForageLowSelenium', params: {} }, 'Typvärde selenfattigt svenskt vallfoder (ej SLU)'],
