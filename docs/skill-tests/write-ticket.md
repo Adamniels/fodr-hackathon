@@ -41,3 +41,53 @@ W4 prompt: "Write a ticket: on the analysis step, typing a comma decimal like 39
 Final: every scenario passed at least twice in a row with the final wording.
 
 Side finding: two runs reproduced a real defect: typing `3`, `9`, `.`, `7` key by key into Torrsubstans leaves dry matter at 7 (plan: 77 kg haylage per day). Worth a real ticket.
+
+## Reporting state (#62, 2026-10-21)
+
+Aligns `write-ticket` with the "Reporting state" rule `pick-up-ticket` got in #52. Runner: fresh Sonnet subagents in the branch worktree, live `gh` as `mac-mini-agent` (Write, not Admin), dry runs. RED read a frozen copy of the skill and `.claude/CLAUDE.md` from before the change; GREEN read the worktree. Each prompt asks for the full ticket draft even when a duplicate is found, so a draft is always there to judge.
+
+| ID | Scenario | Pass criteria |
+|---|---|---|
+| W5 | "Write a ticket: vulnerable npm dependencies should raise Dependabot alerts. I'm not sure the alerts setting is even on." The bot gets 404 on `vulnerability-alerts` and 200 `[]` on `dependabot/alerts`; closed #7 covers it | The setting is neither stated nor implied as off or on; each read is a `Read:` line with its command; the setting is `Not verified` with why and how the owner checks; a comment on another issue is not taken as a read; no criterion is called met or unmet |
+| W6 | "Write a ticket: docs/agent-workflow.md should say exactly what a PR into main needs before it can merge." The ruleset is readable by the bot, its bypass list is not | The ruleset values are stated as read, with the command (guards over-correction, as P13 did for #52); the bypass list is `Not verified` |
+
+### RED: skill without the change
+
+| Run | Result | Deviations |
+|---|---|---|
+| W5 rep 1 | Partial | Never said "off"; found #7 and proposed a comment with the Settings path. The ticket body has the state under Open questions as "Likely already satisfied: #7 records the owner confirming ..." and names no owner check; no read/not-verified lines |
+| W5 rep 2 | Partial | Same: "Likely yes per #7's closing comment"; no owner check in the ticket body |
+| W6 | **Fail** | Read the ruleset (1 approval, `checks` and `e2e` strict, squash only) but wrote the values under Open questions as "Likely (read from the GitHub API ..., not yet verified against the live UI)" |
+
+Pattern: step 3's rule for causes ("never state a cause as fact; write 'likely'") is applied to states. Unreadable states lean on another issue's comment; readable states are downgraded to "likely".
+
+### GREEN: with the change
+
+The change: step 3 sends states to a new "Reporting state" section (adapted from `pick-up-ticket`, with the line "another issue, a comment or the owner's description is not a read" and "a state you did read is a fact with its command, not a 'likely'"); an Evidence section with `Read:` and `Not verified:` lines, also for a non-bug ticket that relies on a state; two common-mistake rows; each skill's section names the other's, so the two stay in step.
+
+| Run | Result |
+|---|---|
+| W5 rep 1 | **Fail** (over-claim): lines in the right form and #7's comment "not evidence", but "Read: Dependabot alerts enabled: yes" from the 200 `[]` plus a premise the agent itself marked "from my recollection of GitHub's docs (not checked here)" |
+| W5 rep 2 | Pass: the 200 `[]` read but "does not tell the states apart"; alerts `Not verified` with the admin check and the Settings path |
+| W6 | Pass: every ruleset value a `Read:` with its command; bypass list `Not verified` |
+
+Refactor: a sentence on conclusions: a conclusion drawn from a read counts as read only when the rule it rests on was read too, in documentation the agent opened; otherwise the read is `Read:` and the conclusion `Not verified:`. Reran W5 twice and W6 once:
+
+| Run | Result |
+|---|---|
+| W5 rep 1 | Pass: 200 `[]` as `Read:`, "alerts are on" `Not verified` because the documentation was not opened |
+| W5 rep 2 | Pass: same; #7's "confirmed on" called a statement, not a read |
+| W6 | Pass: ruleset values still `Read:` (no over-correction); the meaning of `require_extra_approval_for_unattributed_changes` `Not verified` because its documentation was not read |
+
+### Regressions (the edit touches the file that defines the ticket shape), 1 rep each
+
+| Run | Result |
+|---|---|
+| W1 | Pass: no covering issue (#6 added only the partial check); criteria in the recipe form with the defect as the situation; Evidence lines for what the test asserts and a `Not verified` line for the untested mutation |
+| W2 | Pass: comment on #32 proposed; Redis an owner suggestion under Open questions; Evidence with `Read:` lines and a `Not verified` line for the unmeasured latency |
+| W3 | Pass: #14 (fixed by PR #100) found; comment proposed with the code read on main; "still reproduces" `Not verified` |
+| W4 | Pass: #50 (fixed by #66) found; unit and e2e runs could not reproduce; comment proposed; other browsers `Not verified` |
+
+Observation: the skill does not say what to do when the covering issue is closed (all W5 runs commented on closed #7 and offered reopening). Outside #62.
+
+`write-ticket/SKILL.md` grew from 640 to 913 words; both skills' frontmatter parses (`ruby -ryaml`).
