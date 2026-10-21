@@ -199,3 +199,20 @@ The prompts state #7 as Todo with no PR or branch.
 ### Fresh review fixes
 
 The review found that a `#N` dependency line without a bullet ended the section (read as a heading) and left the ticket unblocked; that a "Note" line with `#N` was ignored; that `other-repo#52` was read as local #52; and that any unknown board status was a candidate. Each got a failing case in `next.test.sh` first (3 cases, all seen failing), then the fix; 14 of 14 pass. The live proposal did not change. The planned P16 dry run (a blocked ticket ranking first) was not run: the live board has no such case, and AC3 is covered by `next.test.sh`.
+
+## Review findings rule (#110, 2026-10-21)
+
+Method: fresh Sonnet subagents read one scenario and one version of the skill, and give one action per finding. Scenario: ticket #900, a fix PR changing `JournalStep.tsx`, `validation.ts` and its test; seven review findings: F1 rename nit (refactor) in a changed file; F2 missing assertion in a changed test; F3 important bug in an unchanged file (data reaches the wrong horse); F4 an acceptance criterion fails and the fix needs a UX choice; F5 a dead file next to the change, worth deleting; F6 a cosmetic bug in an unchanged file; F7 a comment typo in a changed file.
+
+| Finding | Expected | RED (step 7 on `main`) | GREEN rep 1 | GREEN rep 2 |
+|---|---|---|---|---|
+| F1 | Not done | Not done | Not done | Not done |
+| F2 | Fixed | **Not done** ("only important findings") | Fixed | Fixed |
+| F3 | Ticket proposed | Stop and ask | Ticket proposed | Ticket proposed |
+| F4 | Stop and ask | Stop and ask | Stop and ask | Stop and ask |
+| F5 | Not done (the PR line is where the owner says yes) | Stop and ask | Not done | Not done |
+| F6 | Not done | **Ticket** | Not done | Not done |
+| F7 | Fixed | **Not done** | Fixed | Fixed |
+
+RED shows the problem: small fixes in the branch are skipped and a cosmetic bug elsewhere becomes a ticket. GREEN rep 1 ran before the text said that a small change needing only the owner's yes is "not done"; it chose that for F5 anyway, and the text was aligned. GREEN rep 2 flagged F2 and F7 as judgement calls ("a test or a typo is not strictly a fix"); the text now says tests and comments for the changed code count as the PR's own type. Not rerun after that last wording, which only confirms the outcome both GREEN runs chose.
+

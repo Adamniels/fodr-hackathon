@@ -16,7 +16,7 @@ Most development moves to an always-on Mac mini that runs Claude Code, reached o
 | Gates | At pickup the agent asks the open questions, then shows a short plan and waits for approval before writing code. After that it stops only for genuine blockers. |
 | Decision record | Questions, answers and the approved plan are posted as a "Decisions at pickup" comment on the issue and linked from the PR. Architecture-level decisions still become ADRs. |
 | Identity | On the Mac mini, git and `gh` run as the owner's bot account, so PRs are authored by the bot and the owner approves them normally. The bypass is never needed. |
-| Execution | Inline test-driven implementation, then one fresh reviewer agent over the whole branch before the PR; important findings are fixed first. |
+| Execution | Inline test-driven implementation, then one fresh reviewer agent over the whole branch before the PR; important findings are fixed first. (Since #110, every finding is fixed, proposed as a ticket, or listed as not done: `docs/agent-workflow.md`, "Review findings".) |
 | Finish | Open the PR, move the board item to In Review, summarise on the issue, and stop. Never merge. Running the skill again on the same ticket handles PR review comments. |
 | Workspace | One git worktree per ticket under `.worktrees/`, so two tickets can run in parallel tmux sessions. Docker services are shared. |
 | Open dependencies | Stop and ask: proceed anyway (for example stacked on the dependency's branch) or pick another ticket. |
