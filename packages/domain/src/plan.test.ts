@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { beraknaBehov, smbRpFranRaprotein, viktFranBrostomfang } from './slu'
-import { displayName } from './intake'
+import { displayName, roundDose } from './intake'
 import { planFor } from '../test/plan'
 import type { Produkt } from './types'
 
@@ -274,5 +274,82 @@ describe('en regel för lite socker: fång, EMS, PPID och korsförlamning (C5)',
       const plan = planFor({ ...demoHast, halsa: { ...frisk, ...halsa } }, analysKomplett, produkter)
       expect([namn, koder(plan).includes('warning.metabolicVet')]).toEqual([namn, namn !== 'korsförlamning'])
     }
+  })
+})
+
+describe('doser jämförs som de visas: hela gram (#103)', () => {
+  const urvalsdos = planFor(demoHast, analysKomplett, produkter).urval!.poster[0]
+  const medDos = (gramPerDag: number) =>
+    planFor(
+      { ...demoHast, nuvarandeFoder: [{ produktId: urvalsdos.produkt.id, namn: '', gramPerDag }] },
+      analysKomplett,
+      produkter,
+    )
+  const tillskott = (p: ReturnType<typeof planFor>) =>
+    p.atgarder.filter((a) => a.typ === 'tillskott' || a.code === 'action.stopSupplement')
+
+  it('en dos som avrundas till planens dos fortsätter, i stället för "ändra från 12 till 12"', () => {
+    for (const skillnad of [0.4, -0.4]) {
+      expect(tillskott(medDos(urvalsdos.gramPerDag + skillnad))).toContainEqual({
+        typ: 'tillskott',
+        code: 'action.continueSupplement',
+        params: { product: displayName(urvalsdos.produkt), grams: urvalsdos.gramPerDag },
+      })
+    }
+  })
+
+  it('en synligt annan dos ändras som förut', () => {
+    expect(tillskott(medDos(urvalsdos.gramPerDag + 0.6)).map((a) => a.code)).toContain('action.changeSupplement')
+  })
+
+  it('ett foder på 0 g ges inte: ingen åtgärd och ingen kostnad', () => {
+    const valda = new Set(planFor(demoHast, analysKomplett, produkter).urval!.poster.map((p) => p.produkt.id))
+    const mineral = produkter.find((p) => p.kategori === 'mineralfoder' && !valda.has(p.id))!
+    const kraftfoder = produkter.find(
+      (p) => p.kategori === 'kraftfoder' && p.id !== demoHast.nuvarandeFoder[0].produktId,
+    )!
+    const plan = planFor(
+      {
+        ...demoHast,
+        nuvarandeFoder: [
+          ...demoHast.nuvarandeFoder,
+          { produktId: mineral.id, namn: '', gramPerDag: 0 },
+          { produktId: kraftfoder.id, namn: '', gramPerDag: 0 },
+        ],
+      },
+      analysKomplett,
+      produkter,
+    )
+    const namn = [displayName(mineral), displayName(kraftfoder)]
+    const omNoll = plan.atgarder.filter((a) =>
+      Object.values(a.params).some((v) => typeof v === 'string' && namn.includes(v)),
+    )
+    expect(omNoll).toEqual([])
+    expect(plan.behallnaFoder.map((p) => p.produkt.id)).not.toContain(kraftfoder.id)
+    // Today's cost and the notes are as without the feeds.
+    const utan = planFor(demoHast, analysKomplett, produkter)
+    expect(plan.nulageKostnadPerManad).toBe(utan.nulageKostnadPerManad)
+    expect(plan.noteringar).toEqual(utan.noteringar)
+  })
+
+  it('en dos som visas som 0 ges inte heller', () => {
+    const valda = new Set(planFor(demoHast, analysKomplett, produkter).urval!.poster.map((p) => p.produkt.id))
+    const mineral = produkter.find((p) => p.kategori === 'mineralfoder' && !valda.has(p.id))!
+    const plan = planFor(
+      {
+        ...demoHast,
+        nuvarandeFoder: [...demoHast.nuvarandeFoder, { produktId: mineral.id, namn: '', gramPerDag: 0.04 }],
+      },
+      analysKomplett,
+      produkter,
+    )
+    const omMineral = plan.atgarder.filter((a) => Object.values(a.params).includes(displayName(mineral)))
+    expect(omMineral).toEqual([])
+  })
+
+  it('doser avrundas som de visas: hela gram, en decimal under 1 g', () => {
+    expect([0.04, 0.05, 0.3, 0.6, 0.96, 1, 12.4, 12.5, 1000.4].map(roundDose)).toEqual([
+      0, 0.1, 0.3, 0.6, 1, 1, 12, 13, 1000,
+    ])
   })
 })
