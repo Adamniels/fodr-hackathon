@@ -66,7 +66,8 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
 
       <div className="kolumner-lika">
         {/* Keyed on the horse, like the profile form: switching horse starts a fresh draft and drops the other
-            horse's AI analysis, also one still loading (#109). */}
+            horse's AI analysis, including one still loading, whose answer then has nowhere to land (#109).
+            Siblings need distinct keys: with the same key, React kept the old form next to the new one. */}
         <NyAnteckning key={`ny-${hast.id}`} hast={hast} idag={idag} onLaggTill={onLaggTill} />
         <AiAnalys key={`ai-${hast.id}`} hast={hast} poster={poster} trend={trend} aktuellPlan={aktuellPlan} />
       </div>
