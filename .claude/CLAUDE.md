@@ -14,7 +14,7 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`) and fail if one lacks the script; `dev`, `build` and `test:e2e` run `apps/web`; `test:scripts` runs the agent script tests in `scripts/agent/`. Every one must pass before a PR is opened; CI runs the same set.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`) and fail if one lacks the script; `dev`, `build` and `test:e2e` run `apps/web`; `test:scripts` runs the agent script tests in `scripts/agent/`. Every one must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e`.
 
 | Command | What |
 |---|---|
