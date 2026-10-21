@@ -9,7 +9,7 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 | A bug or idea appears | Anyone | `/write-ticket <description>` in a Claude Code session, or the Bug or Feature form on GitHub |
 | Ticket on the board | `write-ticket` | Issue with the ticket shape, `type:*` label, suggested milestone, board status **Todo** |
 | Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini, or `/pick-up-ticket` alone to get a proposal (below) and confirm it; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
-| Decisions | Agent and owner | Agent asks the ticket's open questions and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue |
+| Decisions | Agent and owner | Agent asks the ticket's open questions, proposes small open tickets to fold in, and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue |
 | Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch; each finding is fixed, proposed as a ticket, or listed as not done (below) |
 | Pull request | Agent (as the bot) | PR with `Closes #<n>` and a link to the decisions comment; board **In Review**; summary comment on the issue |
 | Review round | Owner, then agent | Owner comments on the PR; `/pick-up-ticket <number>` again addresses each comment and pushes |
@@ -22,11 +22,14 @@ A ticket fixes **what** and **why**. **How** is decided at pickup, so tickets st
 The backlog must not grow from review nits (owner, 2026-10-21, #110). Every finding of the fresh review gets exactly one outcome, the first that applies:
 
 1. **Fixed**, when it stops the ticket's criteria from holding; if that needs the owner's decision, the agent stops and asks before opening the PR.
-2. **Fixed**, test first where behaviour changes, when it is in a file the diff changes, is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own) and needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
-3. **Ticket proposed**, when it is important, or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed in the branch. The draft goes in the summary comment; the issue is created after the owner approves.
-4. **Not done**, anything else: one line in the PR, and no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file), which he decides on that line.
+2. **Fixed**, when it is the ticket's own bug (the same root cause) somewhere else, in any file (owner, 2026-10-21, #113); the PR says its scope grew.
+3. **Fixed**, test first where behaviour changes, when it is in a file the diff changes, is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own) and needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
+4. **Ticket proposed**, when it is important, or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed in the branch. The draft goes in the summary comment; the issue is created after the owner approves.
+5. **Not done**, anything else: one line in the PR, and no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file), which he decides on that line.
 
 The PR's "Review" section lists every finding with its outcome. The rule is step 7 of `.claude/skills/pick-up-ticket/SKILL.md`.
+
+**Folding in.** So the backlog shrinks, the agent also proposes at pickup to fold in open tickets that are small, of the same type and about code the change touches (step 3). With the owner's yes, the branch fixes them and the PR closes them too, one `Closes #N` line each.
 
 ## Choosing the next ticket
 

@@ -50,24 +50,25 @@ Then wait. When he confirms a ticket (the proposal or another number), continue 
 
 1. **Dependencies.** Every `#N` under "Depends on" must be closed. If one is open, stop and ask: pick it first (recommended), stack on its branch, or pick another ticket.
 2. **Worktree.** `git fetch origin && git worktree add .worktrees/<n>-<slug> -b <n>-<slug> origin/main`. The branch name is the folder name, nothing else. Install dependencies there. `bash scripts/agent/board.sh status <n> "In Progress"`.
-3. **Questions.** The ticket's Open questions plus any the code raises, each with a proposal and a recommendation.
+3. **Questions.** The ticket's Open questions plus any the code raises, each with a proposal and a recommendation. Also look for **tickets to fold in**, so the backlog shrinks: an open ticket that is small, of the same type and about code this change touches (`gh issue list --state open --label type:<type>`, then the bodies that name the files you will change). Propose each as a question; with the owner's yes, the branch fixes it, test first, and the PR closes it too.
 4. **Plan.** Tasks, tests and files; exactly one type from `refactor`, `fix`, `feature`, `chore` (tests, tooling, data), `docs`. Refactor and behaviour changes never share a PR. Wait for the owner's approval. **No code before approval.**
 5. **Decisions comment** on the issue (template in `templates.md`), right after approval.
 6. **Implement** test first: watch each new test fail, then pass. Run format, lint, typecheck, unit, integration and e2e, and read the output. (superpowers:test-driven-development and superpowers:verification-before-completion, if installed.)
 7. **Fresh review.** Dispatch one fresh reviewer agent over `git diff origin/main...HEAD` with the issue, the plan and the spec. (superpowers:requesting-code-review, if installed.) The backlog must not grow from review nits, so every finding gets exactly one outcome, the first that applies:
    1. **Fixed**, test first, when it stops the ticket's criteria from holding. If that needs a decision from the owner, stop and ask before opening the PR; it never becomes a follow-up.
-   2. **Fixed**, test first where behaviour changes, when all three hold: it is in a file the diff changes; it is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own type); it needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
-   3. **Ticket proposed**, when it is important (the reviewer's ranking), or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed here. Draft it with `/write-ticket` and put the draft in the summary comment; the issue is created only after he approves. If an existing issue covers it, propose a comment on that issue instead.
-   4. **Not done**, anything else: no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file): the PR line is where he decides.
+   2. **Fixed**, test first, when it is the ticket's own bug (the same root cause) somewhere else, in any file. The PR's scope grows to cover it and says so.
+   3. **Fixed**, test first where behaviour changes, when all three hold: it is in a file the diff changes; it is of the PR's own type (a fix in a fix PR, a cleanup in a refactor PR; tests and comments for the changed code count as its own type); it needs no decision from the owner (a deletion, a new dependency or an architecture change always needs one).
+   4. **Ticket proposed**, when it is important (the reviewer's ranking), or needs an answer from the owner that is more than a yes to a small change, and cannot be fixed here. Draft it with `/write-ticket` and put the draft in the summary comment; the issue is created only after he approves. If an existing issue covers it, propose a comment on that issue instead.
+   5. **Not done**, anything else: no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file): the PR line is where he decides.
 
    The PR's "Review" section lists every finding with its outcome: fixed, ticket proposed (or `#N` once created), or not done and why.
 8. **Finish.** Push; `gh pr create` with the PR template from `templates.md`; then `gh pr checks <pr> --watch`.
    - A check fails because of this PR: fix it test first, push, watch again.
    - A check fails for an unrelated reason (flaky, infrastructure): do not rerun or work around it; report it to the owner with the log excerpt.
 
-   Only then `board.sh status <n> "In Review"` and the summary comment with the real check result; **stop**.
+   Only then `board.sh status <n> "In Review"` (for each folded-in ticket too) and the summary comment with the real check result, with a line on each folded-in ticket; **stop**.
 
-Use `Closes #<n>` unless an acceptance criterion can only be checked after merge; then use `Refs #<n>` and say in the PR which criterion remains.
+Use `Closes #<n>`, one line per ticket including each folded-in one, unless an acceptance criterion can only be checked after merge; then use `Refs #<n>` and say in the PR which criterion remains.
 
 ## Reporting state
 

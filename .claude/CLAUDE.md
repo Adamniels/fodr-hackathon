@@ -10,7 +10,7 @@ Read before changing anything substantial:
 - `docs/glossary.md`: the Swedish domain vocabulary used in code
 - `docs/agent-workflow.md`: how tickets are written and worked by agents, and the Mac mini runbook
 
-Work is tracked as issues in the GitHub Project "fodr". One issue is one PR. Write a ticket with `/write-ticket <description>`; work on one with `/pick-up-ticket <number>`.
+Work is tracked as issues in the GitHub Project "fodr". One PR delivers one ticket, and may fold in small open tickets of the same type in the code it changes when the owner agrees at pickup. Write a ticket with `/write-ticket <description>`; work on one with `/pick-up-ticket <number>`.
 
 ## Commands
 
