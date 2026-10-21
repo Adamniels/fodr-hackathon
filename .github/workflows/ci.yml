@@ -28,6 +28,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # The agent scripts' offline tests (fake gh, no GitHub calls), so a broken script fails the PR (#64).
+      - run: npm run test:scripts
 
   e2e:
     runs-on: ubuntu-latest
