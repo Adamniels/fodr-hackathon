@@ -2,6 +2,7 @@
 // annars märkta med sin källa.
 
 import type { Kallhanvisning, QualityMessage, QualityTitle, Tabell32Grupp } from './messages'
+import { kraverLagSockerStarkelse } from './sensitivity'
 import type { Grovfoderanalys, Hastprofil } from './types'
 
 export interface Kvalitetsflagga {
@@ -22,7 +23,7 @@ const TABELL_32 = {
 // ANTAGANDE: gränser för jordinblandning enligt Eurofins tolkningsstöd, inte SLU.
 const ASKA_JORD_G = 90
 const JARN_JORD_MG = 250
-// ANTAGANDE: sockergräns vid fång och EMS, branschpraxis (se plan.ts).
+// ANTAGANDE: sockergräns vid fång, EMS, PPID och korsförlamning, branschpraxis (se plan.ts).
 const SOCKER_HOGT_G = 100
 
 const TABELL_32_KALLA: Kallhanvisning = { code: 'source.table32', params: {} }
@@ -112,7 +113,8 @@ export function bedomGrovfoder(analys: Grovfoderanalys, profil: Hastprofil): Kva
     })
   }
 
-  if (v.socker !== undefined && v.socker > SOCKER_HOGT_G && !profil.halsa.fang && !profil.halsa.ems) {
+  // General advice for a horse without the low sugar rule; one with it gets the plan's warning instead (C5).
+  if (v.socker !== undefined && v.socker > SOCKER_HOGT_G && !kraverLagSockerStarkelse(profil.halsa)) {
     flaggor.push({
       niva: 'info',
       rubrik: { code: 'qualityTitle.sugarHigh', params: {} },
