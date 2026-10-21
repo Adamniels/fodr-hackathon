@@ -19,6 +19,18 @@ const IO_GLOBALS = [
   'Buffer',
 ].map((name) => ({ name, message: 'The domain package is pure: no I/O, timers or platform APIs (ADR 0004).' }))
 
+// The clock and randomness make a result depend on when it ran (#80). The caller passes such values in.
+const CLOCK_MESSAGE = 'The domain package is pure: the caller passes the time, a date or an ID in (ADR 0004).'
+const CLOCK_PROPERTIES = [
+  { object: 'Date', property: 'now', message: CLOCK_MESSAGE },
+  { object: 'Math', property: 'random', message: CLOCK_MESSAGE },
+]
+// Shared with every no-restricted-syntax block below: in a flat config, a later block's options replace these.
+const CLOCK_SYNTAX = [
+  { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: CLOCK_MESSAGE },
+  { selector: "CallExpression[callee.name='Date']", message: CLOCK_MESSAGE },
+]
+
 export default tseslint.config(
   {
     // Unused disable directives are errors, so the guard file fails lint if a purity rule stops reporting.
@@ -40,6 +52,8 @@ export default tseslint.config(
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       'no-restricted-globals': ['error', ...IO_GLOBALS],
+      'no-restricted-properties': ['error', ...CLOCK_PROPERTIES],
+      'no-restricted-syntax': ['error', ...CLOCK_SYNTAX],
       'no-restricted-imports': [
         'error',
         {
@@ -74,6 +88,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-syntax': [
         'error',
+        ...CLOCK_SYNTAX,
         {
           selector: 'Literal[value=/[ÅÄÖåäö]/], TemplateElement[value.raw=/[ÅÄÖåäö]/]',
           message: 'The domain returns message codes with params, not Swedish text (ADR 0014).',

@@ -5,7 +5,7 @@ import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
 import { skapaPlan } from '@fodr/domain/plan'
-import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './storage'
+import { laddaHastar, laddaJournal, newJournalEntryId, nyHast, sparaHastar, sparaJournal } from './storage'
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
@@ -319,7 +319,11 @@ function Arbetsyta({
                   plan={plan.plan}
                   onSparaIJournal={() => {
                     // The plan is shown, so its snapshot exists.
-                    if (planOgonblick) laggTillPost(hast.id, nyPost(localIsoDate(), { text: '', plan: planOgonblick }))
+                    if (planOgonblick)
+                      laggTillPost(
+                        hast.id,
+                        nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: planOgonblick }),
+                      )
                     gaTill('journal')
                   }}
                 />

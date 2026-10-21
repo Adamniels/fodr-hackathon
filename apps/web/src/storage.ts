@@ -28,6 +28,14 @@ export function sparaHastar(anvandarId: string, hastar: Hastprofil[]) {
   }
 }
 
+/**
+ * The ID of a new journal entry. It starts with the time, so entries on the same date keep the order they were
+ * added in (sorteradePoster sorts by date, then ID); #28 replaces it with the database ID and an explicit order.
+ */
+export function newJournalEntryId(): string {
+  return `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
 export function nyHast(): Hastprofil {
   return {
     id: `hast-${Date.now()}`,

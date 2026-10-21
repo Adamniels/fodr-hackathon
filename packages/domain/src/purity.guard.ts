@@ -15,3 +15,9 @@ export { readFile } from 'node:fs/promises' // eslint-disable-line no-restricted
 
 // @ts-expect-error Array.prototype.at is ES2022; lib stays ES2020 to match the web app's build target.
 export const es2022 = [1].at(-1)
+
+// The clock and randomness make a result depend on when it ran (#80): the caller passes such values in.
+export const now = Date.now() // eslint-disable-line no-restricted-properties -- deliberate, guards the purity rule
+export const random = Math.random() // eslint-disable-line no-restricted-properties -- deliberate, guards the purity rule
+export const today = new Date() // eslint-disable-line no-restricted-syntax -- deliberate, guards the purity rule
+export const todayText = Date() // eslint-disable-line no-restricted-syntax -- deliberate, guards the purity rule
