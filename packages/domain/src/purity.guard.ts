@@ -24,3 +24,4 @@ export const todayText = Date() // eslint-disable-line no-restricted-syntax -- d
 
 // Text for a reader belongs in the web catalogue; the engine returns codes (ADR 0014, #95).
 export const sentence = 'Räkna om' // eslint-disable-line no-restricted-syntax -- deliberate, guards the message-code rule
+export const pattern = /Räkna/ // eslint-disable-line no-restricted-syntax -- deliberate, guards the rule on regex literals

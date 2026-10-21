@@ -24,7 +24,7 @@ import type {
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 import { validateAnalysis, validateProfile, type InputError } from './validation'
 
-/** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
+/** 'osaker': an estimated value below the requirement, for a nutrient that does not steer the selection. */
 export type Status = 'brist' | 'ok' | 'overskott' | 'over_max' | 'okand' | 'osaker' | 'ej_krav'
 
 export interface Balansrad {
@@ -71,20 +71,20 @@ interface Plandelar {
   behallnaFoder: Foderpost[]
   resultat: Balansrad[]
   caP: number | null
-  /** Ungefärligt kväveöverskott, kg N per år, från smältbart protein över behovet. */
+  /** Approximate nitrogen surplus, kg N per year, from digestible protein above the requirement. */
   kvaveOverskottKgPerAr: number
   varningar: Varning[]
   noteringar: Notering[]
   saknadeAnalysvarden: NutrientKey[]
-  /** Bedömning av grovfodret i sig (SLU tabell 32, ts, jordinblandning). */
+  /** Assessment of the roughage itself (SLU table 32, DM, soil contamination). */
   grovfoderkvalitet: Kvalitetsflagga[]
-  /** Råd och varningar utifrån hästens känsligheter. */
+  /** Advice and warnings from the horse's sensitivities. */
   kansligheter: Kanslighetsrad[]
-  /** Urvalsprodukter som valdes bort på grund av känsligheter, med skäl. */
+  /** Selectable products left out because of sensitivities, with reasons. */
   bortvalda: { namn: string; skal: Uteslutningsskal[] }[]
-  /** Dagens foder som byts mot en liknande eller bättre passande produkt, med kostnad före och efter. */
+  /** Today's feeds swapped for a similar or better fitting product, with the cost before and after. */
   byten: Byte[]
-  /** Hur dagens foder trappas över till planen, i takt med hästens känslighet för foderbyten. */
+  /** How today's feed is phased over to the plan, at the pace of the horse's sensitivity to feed changes. */
   injustering: Injustering
 }
 
@@ -150,7 +150,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const ts = analys.tsProcent / 100
   const energiBehov = behov.energi.min
 
-  // Nuläge: grovfoder plus allt hästen får i dag.
+  // Current state: roughage plus everything the horse gets today.
   const nuvarande: Foderpost[] = []
   for (const f of profil.nuvarandeFoder) {
     // A feed whose dose rounds to 0 g is not given: it gets no action and no cost line (#103).
@@ -166,13 +166,13 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const nulageIntag = laggTill(grovfoderIntag(analys, profil.grovfoder.kgPerDag), nuvarande)
   const nulageKostnad = nuvarande.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
 
-  // Mineralfoder, tillskott och salt väljs om av urvalet. Allt annat behålls tills vidare.
+  // Mineral feeds, supplements and salt are chosen again by the selection. Everything else is kept for now.
   const ERSATTS = ['mineralfoder', 'tillskott', 'salt']
   let behallna = nuvarande.filter((p) => !ERSATTS.includes(p.produkt.kategori))
   let grovKg = profil.grovfoder.kgPerDag
   const energiVidKg = (kg: number, foder: Foderpost[]) => laggTill(grovfoderIntag(analys, kg), foder).energi.varde
 
-  // SLU: vid överhull minskas i första hand kraftfodret.
+  // SLU: in overweight condition, reduce the concentrate first.
   if (energiVidKg(grovKg, behallna) > energiBehov * ENERGI_OVER) {
     for (const k of [...behallna].filter((p) => p.produkt.kategori === 'kraftfoder')) {
       behallna = behallna.filter((p) => p !== k)
@@ -185,8 +185,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     }
   }
 
-  // Dagens kraft- och proteinfoder jämförs med liknande produkter. Finns ett billigare foder med
-  // samma energi och protein byts det, med en giva som ger lika mycket energi.
+  // Today's concentrates and protein feeds are compared with similar products. When a cheaper feed with
+  // the same energy and protein exists, it is swapped in at a ration that gives as much energy.
   const byten: Byte[] = []
   behallna = behallna.map((p) => {
     const b = hittaBilligareLiknande(p, produkter, profil.halsa)
@@ -206,7 +206,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     })
     return b.till
   })
-  // Två foder kan bytas mot samma produkt; då blir det en rad med den sammanlagda givan.
+  // Two feeds can be swapped for the same product; that becomes one row with the combined ration.
   behallna = behallna.reduce<Foderpost[]>((ut, p) => {
     const finns = ut.find((x) => x.produkt.id === p.produkt.id)
     if (finns) finns.gramPerDag += p.gramPerDag
@@ -230,7 +230,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     }
   }
 
-  // SLU: vid underhull ökas i första hand vallfodergivan.
+  // SLU: in underweight condition, increase the roughage ration first.
   if (energiPerKgFoder > 0 && energiVidKg(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
     const ovrigEnergi = energiVidKg(0, behallna)
     const kgSomTackerEnergi = (energiBehov - ovrigEnergi) / energiPerKgFoder
@@ -284,8 +284,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     produkter: tillatna,
     berakningsviktKg: behovsres.berakningsviktKg,
   })
-  // Dagens mineralfoder, tillskott och salt ställs mot urvalet så att det syns vad som byts,
-  // vad som tas bort och vad som är nytt, i stället för att gamla produkter bara försvinner.
+  // Today's mineral feeds, supplements and salt are set against the selection, so it shows what is swapped,
+  // what is removed and what is new, instead of old products just disappearing.
   const { urval } = utfall
   const nyaPoster = urval?.poster ?? []
   const ersatta = nuvarande.filter((p) => ERSATTS.includes(p.produkt.kategori))
@@ -315,7 +315,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
     }
     const ersattare = nyaPoster.find(
       (n) =>
-        // Ett tillskott paras inte ihop med ett annat, de innehåller ofta helt olika saker.
+        // A supplement is not paired with another; they often contain entirely different things.
         n.produkt.kategori === gammal.produkt.kategori &&
         gammal.produkt.kategori !== 'tillskott' &&
         !hanterade.has(n.produkt.id) &&
@@ -369,7 +369,7 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
   const styrande = styrandeAmnen(bas, behov)
   const resultat = balans(slutIntag, behov, styrande)
   const proteinOver = Math.max(0, slutIntag.smbRp.varde - behov.smbRp.min)
-  // Kväve = protein / 6,25. Gram per dag till kg per år.
+  // Nitrogen = protein / 6.25. Grams per day to kg per year.
   const kvave = ((proteinOver / 6.25) * 365) / 1000
 
   return {

@@ -425,6 +425,7 @@ function explanationPayload(hast: Hastprofil, analys: Grovfoderanalys, plan: Pla
     // Why no supplement could be added goes with the warnings, so the explanation never says none are needed (C3).
     varningar: [...plan.varningar, ...(plan.urvalshinder ? [plan.urvalshinder] : [])].map(domainText),
     foderbyte: { dagar: plan.injustering.dagar, steg: plan.injustering.steg.length },
+    // Reaches the model as well, so the same applies as for the labels above.
     saknasIAnalysen: plan.saknadeAnalysvarden.map(nutrientLabel),
   }
 }

@@ -82,7 +82,7 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'note.looseHousing': noParams,
   'note.weightOutsideBreed': (p) => ({
     kg: formatNumber(p.kg, 1),
-    // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of breeds.ts.
+    // The catalogue name, lowercased inside the sentence; an unknown id is shown as it is.
     breed: hittaRas(p.breedId) ? breedName(p.breedId).toLowerCase() : p.breedId,
     minKg: formatNumber(p.minKg, 0),
     maxKg: formatNumber(p.maxKg, 0),

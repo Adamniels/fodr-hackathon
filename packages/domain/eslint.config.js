@@ -32,12 +32,14 @@ const CLOCK_SYNTAX = [
 ]
 
 // The engine returns message codes, never sentences (ADR 0014). A string with å, ä or ö is almost always Swedish text
-// for a reader; the stored ingredient values are the exceptions, each with a disable comment naming why. A Swedish
-// string without those letters is not caught, which the unit tests on codes cover instead. Tests and fixtures may hold
-// Swedish data (titles, characterisation inputs, fixture text), so the rule covers modules only (owner, #95).
+// for a reader; stored ingredient values and product-data patterns are the exceptions, each with a disable comment
+// naming why. A Swedish string without those letters is not caught, which the unit tests on codes cover instead.
+// Tests and fixtures may hold Swedish data (titles, characterisation inputs, fixture text), so the rule covers modules
+// only (owner, #95).
 const SWEDISH_TEXT = [
   {
-    selector: 'Literal[value=/[ÅÄÖåäö]/], TemplateElement[value.raw=/[ÅÄÖåäö]/]',
+    // A regex literal's value is a RegExp, which [value=/.../] never matches, so its pattern is checked too.
+    selector: 'Literal[value=/[ÅÄÖåäö]/], Literal[regex.pattern=/[ÅÄÖåäö]/], TemplateElement[value.raw=/[ÅÄÖåäö]/]',
     message: 'The domain returns message codes with params, not Swedish text (ADR 0014).',
   },
 ]
