@@ -21,6 +21,12 @@ const STARKELSE_HOG_G_PER_KG = 100
 // ANTAGANDE: proteinöverskott värt att påpeka vid proteinkänslighet, över 30 % mer än behovet.
 const PROTEIN_OVER_ANDEL = 1.3
 
+// ANTAGANDE: vanlig rekommendation för hästar med fång eller EMS är grovfoder med under ca 10 % socker
+// (100 g/kg ts). SLU Rapport 289 anger ingen sockergräns. Gäller alla som kräver lite socker och stärkelse,
+// även PPID och korsförlamning (#15). En gräns för planens varning och grovfoderflaggan, så att en häst får
+// den ena eller den andra, aldrig båda eller ingen.
+export const SOCKER_GRANS_G_PER_KG_TS = 100
+
 /** Fång, EMS, PPID och korsförlamning kräver alla lågt socker och lite stärkelse. */
 export function kraverLagSockerStarkelse(h: Halsa): boolean {
   return h.fang || h.ems || Boolean(h.ppid) || Boolean(h.pssm)
