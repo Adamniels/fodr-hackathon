@@ -33,6 +33,20 @@ updates:
       - dependency-name: "typescript"
         versions: [">=7.0.0"]
 
+  # The images in compose.yaml (ADR 0006). The cooldown keeps the two-week rule for the release in each tag.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Stockholm
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

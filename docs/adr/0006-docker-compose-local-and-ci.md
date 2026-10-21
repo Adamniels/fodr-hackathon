@@ -14,7 +14,7 @@ A `compose.yaml` at the repository root starts the backing services:
 - **MinIO** as the S3 compatible file store (SeaweedFS since 2026-10-21, see Notes)
 - **Mailpit** to catch outgoing email, with a web inbox for verification and magic link flows
 
-The API and the web app run on the host with `npm run dev`, configured through `.env` pointing at these services. CI uses the same images as GitHub Actions service containers, so integration and e2e tests run against real Postgres, S3 and SMTP.
+The API and the web app run on the host with `npm run dev`, configured through `.env` pointing at these services. CI uses the same images as GitHub Actions service containers (Compose since 2026-10-21, see Notes), so integration and e2e tests run against real Postgres, S3 and SMTP.
 
 ## Alternatives
 

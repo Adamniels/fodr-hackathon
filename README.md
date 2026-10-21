@@ -11,7 +11,7 @@ Upload a roughage analysis, describe the horse, and get a feeding plan following
 
 ## Setup
 
-Requires Node 24 or newer (see `.nvmrc`) and Docker (Docker Desktop, or any Docker with Compose).
+Requires Node 24 or newer (see `.nvmrc`) and Docker (Docker Desktop, or any Docker with Compose v2).
 
 ```bash
 cp apps/web/.env.example apps/web/.env   # add ANTHROPIC_API_KEY to use the AI features

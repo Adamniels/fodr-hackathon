@@ -43,10 +43,14 @@ jobs:
           cache: npm
       # The backing services from compose.yaml (ADR 0006), the same images and configuration as locally; M2's e2e
       # runs against them. Compose rather than service containers, which cannot pass the S3 store's start command.
-      - run: docker compose up --wait --wait-timeout 180
-      - run: bash scripts/dev/check-services.sh
+      # Started first so the image pulls overlap the installs, then waited for.
+      - run: docker compose up -d
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: docker compose up --wait --wait-timeout 180
+      - run: bash scripts/dev/check-services.sh
+      - if: failure()
+        run: docker compose ps -a && docker compose logs --no-color
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v6
         if: failure()
