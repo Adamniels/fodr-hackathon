@@ -228,3 +228,5 @@ Method as for #110: the same scenario with two more items. F8 (important): the t
 
 RED shows the two gaps the owner named after #109: the same bug in another file became a ticket, and a small related open ticket stayed in the backlog.
 
+GREEN ran twice: once on the first wording, and again after the fresh review changed it ("same root cause" became "the same mistake causing the same wrong behaviour", outcome 2 got a decision guard, the fold-in search and exclusions were added). Both runs matched all nine expected outcomes; the second also explained why F3 is not the ticket's own bug (another cause and symptom), which is the distinction the new wording draws.
+

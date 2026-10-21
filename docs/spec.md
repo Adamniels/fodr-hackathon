@@ -159,7 +159,7 @@ All AI endpoints require auth, validate requests with shared schemas, and are li
 
 ## 7. Ways of working
 
-- **Team:** two people. Work is split in vertical slices: one issue is one PR, owned end to end by one person and reviewed by the other.
+- **Team:** two people. Work is split in vertical slices: one PR delivers one issue end to end, owned by one person and reviewed by the other, and may fold in small open tickets of the same type (`.claude/CLAUDE.md`).
 - **Git:** `main` is protected and always releasable. Short lived branch per issue, PR with green CI and one approval, squash merge, Conventional Commit titles.
 - **Refactoring and features never share a PR.** A refactor keeps behaviour identical (tests unchanged and green); a fix or feature changes behaviour on purpose and says so.
 - **Language:** the Swedish domain vocabulary (hull, grovfoder, smbRp, foderplan) stays as the ubiquitous language, with a glossary in `docs/glossary.md`. Everything else (new technical code, comments, commits, PRs, docs) is in English.

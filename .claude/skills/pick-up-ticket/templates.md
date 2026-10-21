@@ -14,7 +14,7 @@ Picked up on <YYYY-MM-DD>. Branch `<n>-<slug>`.
 
 ### Plan
 - <task>: <test that proves it>
-- Folded in: <#N, why it fits (small, same type, code this change touches); or "none">
+- Folded in: <#N, why it fits (same type, code the change touches, small); its criteria are verified in the PR too; or "none">
 - Type: `<refactor|fix|feature|chore|docs>`. Files: <main files>.
 
 ### Out of scope

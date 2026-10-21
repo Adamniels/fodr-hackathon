@@ -10,7 +10,7 @@ Read before changing anything substantial:
 - `docs/glossary.md`: the Swedish domain vocabulary used in code
 - `docs/agent-workflow.md`: how tickets are written and worked by agents, and the Mac mini runbook
 
-Work is tracked as issues in the GitHub Project "fodr". One PR delivers one ticket, and may fold in small open tickets of the same type in the code it changes when the owner agrees at pickup. Write a ticket with `/write-ticket <description>`; work on one with `/pick-up-ticket <number>`.
+Work is tracked as issues in the GitHub Project "fodr". One PR delivers one ticket, and may fold in small open tickets of the same type about code the change touches, when the owner agrees at pickup. Write a ticket with `/write-ticket <description>`; work on one with `/pick-up-ticket <number>`.
 
 ## Commands
 
@@ -28,7 +28,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 ## Rules
 
 - **Refactoring and features never share a PR.** A refactor keeps behaviour identical and leaves tests unchanged; a fix or feature changes behaviour on purpose and says so in the PR.
-- **Vertical slices.** A PR delivers one issue end to end (data, API, UI, tests), not one layer.
+- **Vertical slices.** A PR delivers its ticket end to end (data, API, UI, tests), not one layer.
 - **Commits and PR titles** follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`, `ci:`, `style:`).
 - **Language.** Names follow ADR 0016: an identifier is Swedish when its concept is a term in the glossary (domain types, fields, values and functions that compute a domain result: `Hastprofil`, `beraknaBehov`), and English otherwise, even when it handles domain data (`HorseStep`, `loadHorses`, `InputError`); no identifier mixes the two, file names are English, and a new Swedish name adds its glossary row. Contracts keep their names: anything persisted (values, field names, storage keys), the fields and routes between web and server, every field that reaches the model, and i18n keys. Comments, commits, PRs and docs are in English. UI text is Swedish and lives in the i18n catalogue `apps/web/src/i18n/sv.json` (ADR 0014): components render it with `t()` or `<Trans>`, never inline, and numbers, dates and money are formatted with `Intl` for the active locale (`format.ts`). A number reaches `t()` or JSX already formatted, with `tal()` or `kr()`, or `String()` for identifiers such as a status code; the `fodr/no-raw-number-text` lint rule enforces this. A stored date (`YYYY-MM-DD`) reaches the screen through `formatDate()`, which reads it as a local calendar day; no lint rule catches a raw date string. The domain returns message codes with params, not sentences (`packages/domain/src/messages.ts`); the web renders them with `domainText()` from `apps/web/src/i18n/domain.ts`, text under `domain.*` in the catalogue. ESLint rejects inline text in JSX and any string containing å, ä or ö; a Swedish constant without those letters outside JSX is not caught, so keep text out of helpers and constants too.
 - **Never commit secrets.** The Anthropic key lives only in `apps/web/.env`, which is git ignored. Copy `apps/web/.env.example`.
