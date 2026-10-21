@@ -25,8 +25,10 @@ function andring(r: Injusteringsrad, i: number): { text: string; klass: string }
 export function Injusteringskalender({ injustering, hastNamn }: { injustering: Injustering; hastNamn: string }) {
   const { t } = useTranslation()
   const [start, setStart] = useState(() => localIsoDate(addDays(new Date(), 1)))
-  const [valtSteg, setValtSteg] = useState(0)
+  const [valdIndex, setValtSteg] = useState(0)
   const { steg, rader, dagar, kanslighet, forvald } = injustering
+  // A plan for the same horse can have fewer steps after a change (#109); the selection then stays on the last one.
+  const valtSteg = Math.min(valdIndex, Math.max(steg.length - 1, 0))
   // The date field never stores an empty value (see its onChange), so start is always a real day.
   const startDatum = parseIsoDate(start) ?? addDays(new Date(), 1)
   const takt = BYTESTAKT[kanslighet]

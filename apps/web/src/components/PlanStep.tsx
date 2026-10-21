@@ -116,7 +116,8 @@ export function PlanStep({
               ))}
             </div>
           )}
-          <Injusteringskalender injustering={plan.injustering} hastNamn={hast.namn} />
+          {/* Keyed on the horse: its start date and selected step belong to this horse's plan (#109). */}
+          <Injusteringskalender key={hast.id} injustering={plan.injustering} hastNamn={hast.namn} />
         </section>
 
         <section className="kort forklaring">

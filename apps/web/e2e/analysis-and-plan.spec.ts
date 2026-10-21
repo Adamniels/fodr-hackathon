@@ -8,6 +8,7 @@ import {
   expectGrams,
   expectMoney,
   goToStep,
+  horseList,
   loadExamplePlan,
   test,
   typeKeyByKey,
@@ -169,6 +170,52 @@ test('the plan explanation gets grams as the page shows them (#103)', async ({ p
   await ai.settled()
   const [underlag] = ai.calls('forklaring') as { byten: { fran: string }[] }[]
   expect(underlag.byten.map((b) => b.fran)).toContain('Pellets 15 kg Mineral Röd 100 g/dag')
+})
+
+test.describe('the transition calendar across horses and plans (#109)', () => {
+  const steps = (page: Page) => page.getByRole('button', { name: /steg \d+: ändra måtten/ })
+
+  async function pysenPlanWithLastStep(page: Page) {
+    await enterDemo(page)
+    // Sixten tolerates changes well: 4 steps. Pysen has EMS, so she is sensitive: 5 steps.
+    await page.getByRole('radio', { name: /Tål byten bra/ }).click()
+    await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+    await goToStep(page, 'Analysen')
+    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+    await expect(steps(page)).toHaveCount(5)
+    await steps(page).last().click()
+  }
+
+  test('switching to a horse with fewer steps shows its calendar from the first step', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (e) => errors.push(e.message))
+    await pysenPlanWithLastStep(page)
+    await horseList(page).getByRole('button', { name: 'Sixten' }).click()
+    await expect(steps(page)).toHaveCount(4)
+    await expect(steps(page).first()).toHaveAttribute('aria-pressed', 'true')
+    expect(errors).toEqual([])
+  })
+
+  test('a plan with fewer steps for the same horse keeps a valid step selected', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (e) => errors.push(e.message))
+    await pysenPlanWithLastStep(page)
+    await goToStep(page, 'Hästen')
+    await page.getByRole('radio', { name: /Tål byten bra/ }).click()
+    await goToStep(page, 'Foderplan')
+    await expect(steps(page)).toHaveCount(4)
+    // Leaving for the horse step remounts the plan, so the calendar starts again on a step the plan has.
+    await expect(page.getByRole('button', { name: /steg \d+: ändra måtten/, pressed: true })).toHaveCount(1)
+    expect(errors).toEqual([])
+  })
+
+  test('a start date picked for one horse does not carry over', async ({ page }) => {
+    await loadExamplePlan(page)
+    await page.getByLabel('Första dagen').fill('2026-11-02')
+    await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+    await expect(page.getByLabel('Första dagen')).toHaveValue('2026-10-16')
+  })
 })
 
 test('calendar download is a valid ics', async ({ page }) => {
