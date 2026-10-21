@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { DomanMeddelande } from '@fodr/domain/meddelanden'
+import type { DomainMessage } from '@fodr/domain/messages'
 import i18n from '.'
 import { DOMAIN_CODES, domainText } from './domain'
 
 // Each code renders its exact sentence. Numbers are formatted for sv-SE (#86): a decimal comma, and U+00A0, the
 // no-break space sv-SE puts between thousands and before "kr".
-const FALL: [DomanMeddelande, string][] = [
+const FALL: [DomainMessage, string][] = [
   [
     { code: 'action.removeConcentrate', params: { product: 'Krafft Leisure Pellets 20kg', grams: 1000 } },
     'Ta bort Krafft Leisure Pellets 20kg (1\u00a0000 g/dag). Grovfodret täcker energibehovet ändå.',

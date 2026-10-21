@@ -4,7 +4,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
-import { RASER } from '@fodr/domain/raser'
+import { RASER } from '@fodr/domain/breeds'
 import { INGREDIENSER } from '@fodr/domain/types'
 
 const MODEL = 'claude-sonnet-5-5'

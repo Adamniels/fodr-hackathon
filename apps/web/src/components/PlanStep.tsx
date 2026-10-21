@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { forklaraPlan } from '../api'
-import { kostnadPerManad, visningsnamn } from '@fodr/domain/intake'
+import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { enhet, etikett, kr, tal } from '../format'
@@ -61,7 +61,7 @@ export function PlanStep({
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
-  const behallnaKostnad = plan.behallnaFoder.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0)
+  const behallnaKostnad = plan.behallnaFoder.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
   const totalNy = nyKostnad + behallnaKostnad
   const besparing = plan.nulageKostnadPerManad - totalNy
   // "Kalcium (Ca)" blir "kalcium", men "Vitamin E" behåller sin bokstav.
@@ -73,7 +73,7 @@ export function PlanStep({
   const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
   const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
   const ersatter = (id: string) => {
-    const namn = plan.byten.filter((x) => x.till.produkt.id === id).map((x) => visningsnamn(x.fran.produkt))
+    const namn = plan.byten.filter((x) => x.till.produkt.id === id).map((x) => displayName(x.fran.produkt))
     return namn.length ? namn.join(t('plan.shopping.and')) : undefined
   }
   const inkop = [...plan.behallnaFoder, ...(u?.poster ?? [])]
@@ -174,7 +174,7 @@ export function PlanStep({
               {inkop.map((p) => (
                 <tr key={p.produkt.id}>
                   <td>
-                    <strong>{visningsnamn(p.produkt)}</strong>
+                    <strong>{displayName(p.produkt)}</strong>
                     {ersatter(p.produkt.id) && (
                       <span className="liten ersatter">
                         {t('plan.shopping.replaces', { products: ersatter(p.produkt.id) })}
@@ -197,7 +197,7 @@ export function PlanStep({
                     {t('plan.shopping.price', { price: kr(p.produkt.prisKr), kg: tal(p.produkt.forpackningKg) })}
                   </td>
                   <td className="hoger">{t('units.g', { value: tal(p.gramPerDag, 0) })}</td>
-                  <td className="hoger">{kr(kostnadPerManad(p.produkt, p.gramPerDag))}</td>
+                  <td className="hoger">{kr(monthlyCost(p.produkt, p.gramPerDag))}</td>
                 </tr>
               ))}
             </tbody>
@@ -222,7 +222,7 @@ export function PlanStep({
             {t('plan.shopping.alternative', {
               products: plan.alternativ.poster
                 .map((p) =>
-                  t('plan.shopping.productGrams', { name: visningsnamn(p.produkt), grams: tal(p.gramPerDag, 0) }),
+                  t('plan.shopping.productGrams', { name: displayName(p.produkt), grams: tal(p.gramPerDag, 0) }),
                 )
                 .join(' + '),
               amount: t('units.perMonth', { amount: kr(plan.alternativ.kostnadPerManad + behallnaKostnad) }),
@@ -386,19 +386,19 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     efterForslaget: plan.resultat.filter((r) => r.status !== 'ej_krav').map(rad),
     kostnadMedForslagetKrPerManad: Math.round(
       (plan.urval?.kostnadPerManad ?? 0) +
-        plan.behallnaFoder.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0),
+        plan.behallnaFoder.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0),
     ),
     kostnadIdagKrPerManad: Math.round(plan.nulageKostnadPerManad),
     alternativ: plan.alternativ && {
-      produkter: plan.alternativ.poster.map((p) => `${visningsnamn(p.produkt)} ${p.gramPerDag} g/dag`),
+      produkter: plan.alternativ.poster.map((p) => `${displayName(p.produkt)} ${p.gramPerDag} g/dag`),
       kostnadKrPerManad: Math.round(
         plan.alternativ.kostnadPerManad +
-          plan.behallnaFoder.reduce((s, p) => s + kostnadPerManad(p.produkt, p.gramPerDag), 0),
+          plan.behallnaFoder.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0),
       ),
     },
     byten: plan.byten.map((b) => ({
-      fran: `${visningsnamn(b.fran.produkt)} ${b.fran.gramPerDag} g/dag`,
-      till: `${visningsnamn(b.till.produkt)} ${b.till.gramPerDag} g/dag`,
+      fran: `${displayName(b.fran.produkt)} ${b.fran.gramPerDag} g/dag`,
+      till: `${displayName(b.till.produkt)} ${b.till.gramPerDag} g/dag`,
       varfor: domainText(b.skal),
       kostnadForeKrPerManad: Math.round(b.kostnadFore),
       kostnadEfterKrPerManad: Math.round(b.kostnadEfter),

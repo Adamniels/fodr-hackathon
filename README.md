@@ -46,9 +46,9 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Roughage | `packages/domain/src/forage.ts`, `intake.ts` | Supply from the roughage, default values when the analysis lacks a nutrient |
 | Selection | `packages/domain/src/optimize.ts` | Cheapest product combination within min and max limits |
 | Plan | `packages/domain/src/plan.ts` | SLU adjustment order, warnings, nitrogen |
-| Roughage quality | `packages/domain/src/kvalitet.ts` | SLU table 32, dry matter range, soil contamination |
-| Sensitivities | `packages/domain/src/kanslighet.ts` | Excludes products and gives advice based on health |
-| Feed transition | `packages/domain/src/injustering.ts` | Step schedule for changing feed, by sensitivity |
+| Roughage quality | `packages/domain/src/quality.ts` | SLU table 32, dry matter range, soil contamination |
+| Sensitivities | `packages/domain/src/sensitivity.ts` | Excludes products and gives advice based on health |
+| Feed transition | `packages/domain/src/transition.ts` | Step schedule for changing feed, by sensitivity |
 | Journal | `packages/domain/src/journal.ts` | Trend, follow up and saved plans per horse |
 | AI | `apps/web/server/ai.ts` | Reads reports, interprets free text, explains. Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |

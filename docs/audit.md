@@ -159,7 +159,7 @@ Data model issues:
 | C2 | UI paths that produce such values: `Siffra` turns an empty field into 0 (`HorseStep.tsx:519`); analysis edits go through `Number()` unchecked, so text becomes `NaN` (`AnalysisStep.tsx:48`) and empty dry matter becomes 0 (`AnalysisStep.tsx:96`); negative numbers are accepted everywhere. | Code reading, consequences shown by C1. |
 | C3 | **Infeasible optimisation is shown as "no supplements needed".** If the roughage alone exceeds a SLU maximum, every candidate including the empty one is rejected (`optimize.ts:129`), `urval` is `null`, and `PlanStep.tsx:197` says "Inga tillskott behövs utöver grovfodret". A µg versus mg mix up in AI extraction of selenium is a realistic trigger. | Probe: Se 60 mg/kg ts gives `urval: null`, `overMax: ["se"]`. |
 | C4 | Switching horse reuses the previous horse's analysis (`App.tsx:96,108`). | Code reading. |
-| C5 | PSSM is treated as needing low sugar in `kanslighet.ts:25`, but the sugar warning in `plan.ts:210` checks only laminitis, EMS and PPID. | Code reading. |
+| C5 | PSSM is treated as needing low sugar in `sensitivity.ts:25`, but the sugar warning in `plan.ts:210` checks only laminitis, EMS and PPID. | Code reading. |
 | C6 | "Today" is computed in UTC (`App.tsx:22`), so between 00:00 and 02:00 Swedish time journal entries default to yesterday. The calendar uses local dates. | Code reading. |
 | C7 | The AI evaluation script cannot run: its URL uses single quotes, so `${port}` is never interpolated (`scripts/utvardera-utlasning.mjs:26`). | `new URL(...)` throws `ERR_INVALID_URL`. |
 | C8 | `produktId` returned by the AI is not checked against the catalogue (`HorseStep.tsx:431`); an invented ID becomes an "unknown product" note instead of a match. | Code reading. |

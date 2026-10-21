@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { analysKomplett, demoHast } from '../test/fixtures/exempel'
+import { analysKomplett, demoHast } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
-import { hittaBilligareLiknande } from './byten'
-import { kostnadPerManad, visningsnamn } from './intake'
+import { hittaBilligareLiknande } from './swaps'
+import { monthlyCost, displayName } from './intake'
 import { skapaPlan } from './plan'
 import type { Produkt } from './types'
 
@@ -37,8 +37,8 @@ describe('billigare liknande foder', () => {
     if (behallen) {
       expect(plan.byten.length).toBeGreaterThan(0)
       expect(plan.atgarder.some((a) => a.typ === 'byt')).toBe(true)
-      expect(kostnadPerManad(behallen.produkt, behallen.gramPerDag)).toBeLessThan(
-        kostnadPerManad(hitta('Krafft Senior Pellets'), 800),
+      expect(monthlyCost(behallen.produkt, behallen.gramPerDag)).toBeLessThan(
+        monthlyCost(hitta('Krafft Senior Pellets'), 800),
       )
     }
   })
@@ -52,8 +52,8 @@ describe('billigare liknande foder', () => {
       expect(
         plan.atgarder.some(
           (a) =>
-            (a.code === 'action.swapSupplement' && a.params.from === visningsnamn(mineral)) ||
-            (a.code === 'action.stopSupplement' && a.params.product === visningsnamn(mineral)),
+            (a.code === 'action.swapSupplement' && a.params.from === displayName(mineral)) ||
+            (a.code === 'action.stopSupplement' && a.params.product === displayName(mineral)),
         ),
       ).toBe(true)
     }

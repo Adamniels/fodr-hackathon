@@ -4,7 +4,7 @@
 
 import type { NutrientKey } from './nutrients'
 import type { Behov } from './slu'
-import { kostnadPerManad, laggTill, type Foderpost, type Intag } from './intake'
+import { monthlyCost, laggTill, type Foderpost, type Intag } from './intake'
 import type { Produkt } from './types'
 
 /** Ämnen som urvalet ska täcka. Energi och protein styrs via grovfoder och kraftfoder. */
@@ -42,7 +42,7 @@ export interface Urval {
   caP: number | null
 }
 
-export interface UrvalsInput {
+export interface UrvalsIndata {
   bas: Intag
   behov: Behov
   produkter: Produkt[]
@@ -101,9 +101,9 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
   return { produkt: salt, gramPerDag: Math.min(gram, Math.round(maxGram)) }
 }
 
-export function valjProdukter(input: UrvalsInput): Urval[] {
+export function valjProdukter(input: UrvalsIndata): Urval[] {
   const { bas, behov, berakningsviktKg: vikt } = input
-  // Produkterna är redan filtrerade efter hästens känsligheter (kanslighet.ts).
+  // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
   const valbara = input.produkter.filter((p) => p.iUrval && p.dosGramPer100kg)
   const kandidater = valbara.filter((p) => p.kategori === 'mineralfoder' || p.kategori === 'tillskott')
   const salt = valbara
@@ -142,7 +142,7 @@ export function valjProdukter(input: UrvalsInput): Urval[] {
       const e = utvardera(intag, behov, amnen)
       if (e.overMax.length > 0) return
       if (e.caP !== null && e.caP < CA_P_MIN) return
-      const kostnad = poster.reduce((sum, p) => sum + kostnadPerManad(p.produkt, p.gramPerDag), 0)
+      const kostnad = poster.reduce((sum, p) => sum + monthlyCost(p.produkt, p.gramPerDag), 0)
       const kandidat: Kandidat = {
         poster,
         kostnadPerManad: kostnad,

@@ -3,9 +3,9 @@
 // stärkelse eller nya känsliga ingredienser, och inget som hästens känsligheter talar emot.
 // Givan räknas om så att hästen får lika mycket energi som i dag.
 
-import { skalMotProdukt } from './kanslighet'
-import type { Byteskal, LiknandeSkal } from './meddelanden'
-import { kostnadPerManad, type Foderpost } from './intake'
+import { skalMotProdukt } from './sensitivity'
+import type { Byteskal, LiknandeSkal } from './messages'
+import { monthlyCost, type Foderpost } from './intake'
 import type { Halsa, Produkt } from './types'
 
 export interface Byte {
@@ -75,12 +75,12 @@ export function hittaBilligareLiknande(
   halsa: Halsa,
 ): (Byte & { skal: LiknandeSkal }) | null {
   if (!LIKNANDE_KATEGORIER.includes(fran.produkt.kategori)) return null
-  const kostnadFore = kostnadPerManad(fran.produkt, fran.gramPerDag)
+  const kostnadFore = monthlyCost(fran.produkt, fran.gramPerDag)
   let basta: (Byte & { skal: LiknandeSkal }) | null = null
   for (const kandidat of produkter) {
     if (!likvardig(fran.produkt, kandidat, halsa)) continue
     const till: Foderpost = { produkt: kandidat, gramPerDag: sammaEnergi(fran, kandidat) }
-    const kostnadEfter = kostnadPerManad(kandidat, till.gramPerDag)
+    const kostnadEfter = monthlyCost(kandidat, till.gramPerDag)
     const besparing = kostnadFore - kostnadEfter
     if (besparing < MIN_BESPARING_KR || besparing < kostnadFore * MIN_BESPARING_ANDEL) continue
     if (!basta || kostnadEfter < basta.kostnadEfter) {

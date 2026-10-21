@@ -4,11 +4,11 @@ import './App.css'
 import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
-import { DomanFel } from '@fodr/domain/meddelanden'
+import { DomainError } from '@fodr/domain/messages'
 import { skapaPlan } from '@fodr/domain/plan'
 import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './storage'
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
-import { hittaRas } from '@fodr/domain/raser'
+import { hittaRas } from '@fodr/domain/breeds'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
 import { formatDate, hullText, tal } from './format'
 import { domainText } from './i18n/domain'
@@ -113,7 +113,7 @@ function Arbetsyta({
     try {
       return { ok: skapaPlan({ ...hast, grovfoder: { ...hast.grovfoder, typ: analys.typ } }, analys, produkter) }
     } catch (e) {
-      return { fel: e instanceof DomanFel ? domainText(e.meddelande) : e instanceof Error ? e.message : String(e) }
+      return { fel: e instanceof DomainError ? domainText(e.meddelande) : e instanceof Error ? e.message : String(e) }
     }
   }, [hast, analys])
 

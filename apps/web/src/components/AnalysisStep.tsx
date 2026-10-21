@@ -3,7 +3,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { filTillBase64, lasAnalys } from '../api'
 import { analysBas, analysKomplett } from '../data/exempel'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
-import { schablonFor } from '@fodr/domain/forage'
+import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey } from '@fodr/domain/nutrients'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { analysEnhet, etikett, formatDate } from '../format'
@@ -149,7 +149,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
               {VISADE.map((k) => {
                 const v = analys.perKgTs[k]
                 const omr = omrakningar.find((o) => o.amne === k)
-                const schablon = schablonFor(analys.typ, k)
+                const schablon = hittaSchablon(analys.typ, k)
                 return (
                   <tr key={k} className={v === undefined ? 'saknas' : ''}>
                     <td>{etikett(k)}</td>

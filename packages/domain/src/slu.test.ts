@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { demoHast, ponny } from '../test/fixtures/exempel'
-import { DomanFel } from './meddelanden'
+import { demoHast, ponny } from '../test/fixtures/examples'
+import { DomainError } from './messages'
 import { beraknaBehov } from './slu'
 
 describe('kyla (SLU sid 15, regel 1)', () => {
@@ -93,11 +93,11 @@ describe('meddelanden (ADR 0014)', () => {
     expect(behov.vitE!.kalla).toEqual({ code: 'source.vitamins', params: {} })
   })
   it('unghäst ger ett domänfel med kod', () => {
-    expect(() => beraknaBehov({ ...demoHast, alderAr: 2 })).toThrow(DomanFel)
+    expect(() => beraknaBehov({ ...demoHast, alderAr: 2 })).toThrow(DomainError)
     try {
       beraknaBehov({ ...demoHast, alderAr: 2 })
     } catch (e) {
-      expect((e as DomanFel).meddelande).toEqual({ code: 'error.adultsOnly', params: { minAgeYears: 3 } })
+      expect((e as DomainError).meddelande).toEqual({ code: 'error.adultsOnly', params: { minAgeYears: 3 } })
     }
   })
 })

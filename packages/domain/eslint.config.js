@@ -57,7 +57,7 @@ export default tseslint.config(
     // The engine returns message codes, never sentences (ADR 0014). A string with å, ä or ö is almost always Swedish
     // text for a reader. Modules move under this rule as they are converted; #12 extends it to the whole package.
     // A Swedish string without those letters is not caught, which the unit tests on codes cover instead.
-    files: ['src/plan.ts', 'src/slu.ts', 'src/optimize.ts', 'src/byten.ts'],
+    files: ['src/plan.ts', 'src/slu.ts', 'src/optimize.ts', 'src/swaps.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',

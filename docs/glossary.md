@@ -17,7 +17,7 @@ The code names what the domain is about in Swedish and how the software works in
 | intag, tillförsel | intake, supply | `Intag`, `intag` |
 | brist | deficiency | status `'brist'` |
 | överskott | surplus | status `'overskott'` |
-| schablon | default value used when the analysis lacks a nutrient | `schablonFor` |
+| schablon | default value used when the analysis lacks a nutrient | `hittaSchablon` |
 | urval | product selection by the optimiser | `valjProdukter`, `Urval` |
 | kraftfoder | concentrate feed | category `'kraftfoder'` |
 | mineralfoder | mineral feed | category `'mineralfoder'` |

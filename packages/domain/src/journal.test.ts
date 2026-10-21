@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { demoJournal } from '../test/fixtures/exempel'
+import { demoJournal } from '../test/fixtures/examples'
 import { beraknaTrend, type Journalpost } from './journal'
 
 const post = (datum: string, viktKg?: number, hull?: number): Journalpost => ({
