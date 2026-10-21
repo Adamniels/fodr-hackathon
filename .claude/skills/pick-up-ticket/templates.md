@@ -37,14 +37,15 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 ## Type
 
-- [x] <the one type from the plan>
+<the five Type boxes copied verbatim from .github/pull_request_template.md; tick only the plan's type>
 
 ## Checklist
 
-- [x] New or changed behaviour has a test that failed first
-- [x] `npm run format:check`, `lint`, `typecheck`, `test` and `test:e2e` pass locally
-- [x] Refactoring and behaviour changes are not mixed in this PR
-- [x] Docs updated if behaviour or conventions changed
+<tick only what is true; give the reason for each unticked item under Verification>
+- [ ] New or changed behaviour has a test that failed first
+- [ ] `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e` pass locally
+- [ ] Refactoring and behaviour changes are not mixed in this PR
+- [ ] Docs (spec, ADRs, glossary, README) updated if behaviour or conventions changed
 
 ## Verification
 

@@ -11,7 +11,7 @@ How tickets are written and worked by AI agents, mainly on the Mac mini. Design:
 | Picked up | Owner names it | `/pick-up-ticket <number>` on the Mac mini, or `/pick-up-ticket` alone to get a proposal (below) and confirm it; board **In Progress**; own worktree `.worktrees/<number>-<slug>` |
 | Decisions | Agent and owner | Agent asks the ticket's open questions, proposes small open tickets to fold in, and shows a plan; after approval it posts a "Decisions at pickup" comment on the issue, and moves each folded-in ticket to **In Progress** with a note |
 | Implementation | Agent | Test first, all checks, then a fresh reviewer agent over the branch; each finding is fixed, proposed as a ticket, or listed as not done (below) |
-| Pull request | Agent (as the bot) | PR with `Closes #<n>` (one line per folded-in ticket too) and a link to the decisions comment; board **In Review**; summary comment on the issue |
+| Pull request | Agent (as the bot) | PR with `Closes #<n>` (one line per folded-in ticket too) and a link to the decisions comment; once the checks are green, board **In Review** and a summary comment on the issue (a check that fails for an unrelated reason waits for the owner's rerun, board **In Progress**) |
 | Review round | Owner, then agent | Owner comments on the PR; `/pick-up-ticket <number>` again addresses each comment and pushes |
 | Merge | A human | Owner or teammate approves and merges; the issue closes; board **Done** |
 
