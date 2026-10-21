@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Trans, useTranslation } from 'react-i18next'
 import { explainPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
@@ -36,30 +37,24 @@ export function PlanStep({
   // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
   const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
-  const [explanation, setExplanation] = useState<string | null>(() => loadExplanation(hast.id, payloadFingerprint))
-  const [explanationError, setExplanationError] = useState<string | null>(null)
-  const [omgang, setOmgang] = useState(0)
-
-  useEffect(() => {
-    const cached = omgang === 0 ? loadExplanation(hast.id, payloadFingerprint) : null
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs with the cache and the AI request and resets per request, as data fetching may; the server-state layer (#21) replaces this effect
-    setExplanationError(null)
-    if (cached) {
-      setExplanation(cached)
-      return
-    }
-    let avbruten = false
-    setExplanation(null)
-    explainPlan(payload)
-      .then((r) => {
-        saveExplanation(hast.id, payloadFingerprint, r.text)
-        if (!avbruten) setExplanation(r.text)
-      })
-      .catch((e: unknown) => !avbruten && setExplanationError(e instanceof Error ? e.message : String(e)))
-    return () => {
-      avbruten = true
-    }
-  }, [hast.id, payloadFingerprint, payload, omgang])
+  const explanationQuery = useQuery({
+    queryKey: ['explanation', hast.id, payloadFingerprint],
+    queryFn: async () => {
+      const { text } = await explainPlan(payload)
+      saveExplanation(hast.id, payloadFingerprint, text)
+      return text
+    },
+    // The saved text for this plan, so a revisit or a reload asks nothing; never refetched on its own, and a failure
+    // is shown at once rather than retried, as before the server-state layer (#21).
+    initialData: () => loadExplanation(hast.id, payloadFingerprint) ?? undefined,
+    staleTime: Infinity,
+    retry: false,
+  })
+  // While a text is written, and after a failed "Skriv om", the old text gives way to the writing note or the error,
+  // as before: the query keeps the old text as data in both cases.
+  const settled = !explanationQuery.isFetching
+  const explanation = settled && !explanationQuery.error ? (explanationQuery.data ?? null) : null
+  const explanationError = settled && explanationQuery.error ? explanationQuery.error.message : null
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
@@ -135,7 +130,7 @@ export function PlanStep({
           )}
           {explanation && (
             <div className="forklaring-fot">
-              <button className="lank liten" onClick={() => setOmgang((n) => n + 1)}>
+              <button className="lank liten" onClick={() => void explanationQuery.refetch()}>
                 {t('plan.explanation.rewrite')}
               </button>
             </div>
