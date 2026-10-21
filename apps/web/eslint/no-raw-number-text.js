@@ -1,4 +1,4 @@
-// Numbers shown to the user are formatted for the active locale before they become text (ADR 0014): tal() or kr()
+// Numbers shown to the user are formatted for the active locale before they become text (ADR 0014): formatNumber() or formatMoney()
 // from src/format.ts, or String() for identifiers that must not be grouped. A raw number renders as "8.5" in
 // Swedish. This rule needs type information, so it only runs on files in a TypeScript project.
 //
@@ -54,7 +54,7 @@ export default {
     type: 'problem',
     docs: { description: 'Require numbers to be formatted for the locale before they are rendered as text' },
     messages: {
-      raw: 'Format this number with tal() or kr() from src/format.ts (String() for identifiers) before it becomes text (ADR 0014).',
+      raw: 'Format this number with formatNumber() or formatMoney() from src/format.ts (String() for identifiers) before it becomes text (ADR 0014).',
     },
     schema: [],
   },

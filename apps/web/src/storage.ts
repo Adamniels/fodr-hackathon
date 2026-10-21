@@ -2,7 +2,7 @@
 // bytas mot API-anrop när riktiga konton och en databas kommer.
 
 import { DEMOKONTO } from './auth'
-import { demoHast, demoJournal, ponny } from './data/exempel'
+import { demoHast, demoJournal, ponny } from './data/examples'
 import type { Journalpost } from '@fodr/domain/journal'
 import type { Hastprofil } from '@fodr/domain/types'
 

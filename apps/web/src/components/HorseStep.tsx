@@ -17,17 +17,17 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
-import { hullText, tal } from '../format'
+import { bodyConditionText, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
-  vald: Hastprofil | undefined
+  selected: Hastprofil | undefined
   produkter: Produkt[]
-  onAndra: (h: Hastprofil) => void
-  onNy: (h: Hastprofil) => void
-  onVidare: () => void
+  onChange: (h: Hastprofil) => void
+  onNew: (h: Hastprofil) => void
+  onNext: () => void
 }
 
 const PRESTANDA = [
@@ -42,35 +42,35 @@ const STANDARD_MILJO: Miljo = { hallning: 'box', timmarUtePerDag: 8, klippt: fal
 
 const TYPER = ['lattfodd', 'normalfodd', 'svarfodd'] as const satisfies readonly Hasttyp[]
 
-export function HorseStep({ vald, produkter, onAndra, onNy, onVidare }: Props) {
+export function HorseStep({ selected, produkter, onChange, onNew, onNext }: Props) {
   const { t } = useTranslation()
-  // Hästlistan ligger i appens sidofält, här visas bara den valda hästens profil.
-  return vald ? (
-    <Profilformular key={vald.id} hast={vald} produkter={produkter} onAndra={onAndra} onVidare={onVidare} />
+  // The horse list lives in the app's sidebar; this shows only the selected horse's profile.
+  return selected ? (
+    <ProfileForm key={selected.id} hast={selected} produkter={produkter} onChange={onChange} onNext={onNext} />
   ) : (
     <section className="kort tomt">
       <h2>{t('horse.welcome.title')}</h2>
       <p className="ingress">{t('horse.welcome.intro')}</p>
-      <button className="knapp" onClick={() => onNy(nyHast())}>
+      <button className="knapp" onClick={() => onNew(nyHast())}>
         {t('horse.welcome.add')}
       </button>
     </section>
   )
 }
 
-function Profilformular({
+function ProfileForm({
   hast,
   produkter,
-  onAndra,
-  onVidare,
+  onChange,
+  onNext,
 }: {
   hast: Hastprofil
   produkter: Produkt[]
-  onAndra: (h: Hastprofil) => void
-  onVidare: () => void
+  onChange: (h: Hastprofil) => void
+  onNext: () => void
 }) {
   const { t } = useTranslation()
-  const set = (patch: Partial<Hastprofil>) => onAndra({ ...hast, ...patch })
+  const set = (patch: Partial<Hastprofil>) => onChange({ ...hast, ...patch })
   const errorFor = useErrors(hast)
   const [matt, setMatt] = useState({ brost: '', langd: '' })
   const uppskattadVikt =
@@ -83,27 +83,27 @@ function Profilformular({
       <h2>{t('horse.title', { name: hast.namn || t('common.theHorse') })}</h2>
       <p className="ingress">{t('horse.intro')}</p>
 
-      <AiHjalp hast={hast} produkter={produkter} onAndra={onAndra} />
+      <AiFill hast={hast} produkter={produkter} onChange={onChange} />
 
       <h3 className="rubrik">{t('horse.basics')}</h3>
 
       <div className="grupp">
-        <Falt label={t('horse.name')}>
+        <Field label={t('horse.name')}>
           <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
-        </Falt>
-        <Falt label={t('horse.age')}>
-          <Siffra value={hast.alderAr} error={errorFor('alderAr')} onChange={(v) => set({ alderAr: v })} />
-        </Falt>
-        <Falt label={t('horse.sex.label')}>
+        </Field>
+        <Field label={t('horse.age')}>
+          <NumberField value={hast.alderAr} error={errorFor('alderAr')} onChange={(v) => set({ alderAr: v })} />
+        </Field>
+        <Field label={t('horse.sex.label')}>
           <select value={hast.kon} onChange={(e) => set({ kon: e.target.value as Kon })}>
             <option value="sto">{t('horse.sex.sto')}</option>
             <option value="valack">{t('horse.sex.valack')}</option>
             <option value="hingst">{t('horse.sex.hingst')}</option>
           </select>
-        </Falt>
+        </Field>
       </div>
 
-      <Falt label={t('horse.breed')} hjalp={rasHjalp(hast, t)}>
+      <Field label={t('horse.breed')} hint={breedHint(hast, t)}>
         <select
           value={hast.ras ?? ''}
           onChange={(e) => {
@@ -118,9 +118,9 @@ function Profilformular({
             </option>
           ))}
         </select>
-      </Falt>
+      </Field>
 
-      <Falt label={t('horse.type.label')} hjalp={t('horse.type.hint')} grupp>
+      <Field label={t('horse.type.label')} hint={t('horse.type.hint')} group>
         <div className="segment">
           {TYPER.map((id) => (
             <button
@@ -134,31 +134,31 @@ function Profilformular({
             </button>
           ))}
         </div>
-      </Falt>
+      </Field>
 
       <div className="grupp">
-        <Falt label={t('horse.weight')}>
-          <Siffra value={hast.viktKg} error={errorFor('viktKg')} onChange={(v) => set({ viktKg: v })} />
-        </Falt>
-        <Falt label={t('horse.chest')} hjalp={t('horse.chestHint')}>
+        <Field label={t('horse.weight')}>
+          <NumberField value={hast.viktKg} error={errorFor('viktKg')} onChange={(v) => set({ viktKg: v })} />
+        </Field>
+        <Field label={t('horse.chest')} hint={t('horse.chestHint')}>
           <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
-        </Falt>
-        <Falt label={t('horse.length')}>
+        </Field>
+        <Field label={t('horse.length')}>
           <input inputMode="numeric" value={matt.langd} onChange={(e) => setMatt({ ...matt, langd: e.target.value })} />
-        </Falt>
+        </Field>
       </div>
       {uppskattadVikt !== null && uppskattadVikt > 0 && (
         <div className="tips">
-          {t('horse.weightEstimate', { kg: tal(uppskattadVikt, 1) })}{' '}
+          {t('horse.weightEstimate', { kg: formatNumber(uppskattadVikt, 1) })}{' '}
           <button className="lank" onClick={() => set({ viktKg: uppskattadVikt })}>
             {t('horse.useEstimate')}
           </button>
         </div>
       )}
 
-      <Falt
-        label={t('horse.hullLabel', { hull: tal(hast.hull, 0), text: hullText(hast.hull) })}
-        hjalp={t('horse.hullHint')}
+      <Field
+        label={t('horse.hullLabel', { hull: formatNumber(hast.hull, 0), text: bodyConditionText(hast.hull) })}
+        hint={t('horse.hullHint')}
       >
         <input
           type="range"
@@ -169,10 +169,10 @@ function Profilformular({
           onChange={(e) => set({ hull: Number(e.target.value) })}
         />
         {errorFor('hull') && <span className="falt-fel">{errorFor('hull')}</span>}
-      </Falt>
+      </Field>
 
       <h3 className="rubrik">{t('horse.work')}</h3>
-      <Falt label={t('horse.discipline')} hjalp={t('horse.disciplineHint')}>
+      <Field label={t('horse.discipline')} hint={t('horse.disciplineHint')}>
         <select value={hast.prestanda ?? 'fritid'} onChange={(e) => set({ prestanda: e.target.value as Prestanda })}>
           {PRESTANDA.map((id) => (
             <option key={id} value={id}>
@@ -180,36 +180,40 @@ function Profilformular({
             </option>
           ))}
         </select>
-      </Falt>
+      </Field>
       <div className="grupp">
-        <Falt label={t('horse.sessionsPerWeek')}>
-          <Siffra
+        <Field label={t('horse.sessionsPerWeek')}>
+          <NumberField
             value={hast.ridning?.passPerVecka ?? 0}
             error={errorFor('ridning.passPerVecka')}
             onChange={(v) => set({ ridning: { ...ridning(hast), passPerVecka: v } })}
           />
-        </Falt>
-        <Falt label={t('horse.minutesPerSession')}>
-          <Siffra
+        </Field>
+        <Field label={t('horse.minutesPerSession')}>
+          <NumberField
             value={hast.ridning?.minuterPerPass ?? 0}
             error={errorFor('ridning.minuterPerPass')}
             onChange={(v) => set({ ridning: { ...ridning(hast), minuterPerPass: v } })}
           />
-        </Falt>
-        <Falt label={t('horse.trotCanter')}>
-          <Siffra
+        </Field>
+        <Field label={t('horse.trotCanter')}>
+          <NumberField
             value={hast.ridning?.travGaloppMinPerPass ?? 0}
             error={errorFor('ridning.travGaloppMinPerPass')}
             onChange={(v) => set({ ridning: { ...ridning(hast), travGaloppMinPerPass: v } })}
           />
-        </Falt>
+        </Field>
       </div>
 
-      <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} errorFor={errorFor} onAndra={(miljo) => set({ miljo })} />
+      <EnvironmentSection
+        miljo={hast.miljo ?? STANDARD_MILJO}
+        errorFor={errorFor}
+        onChange={(miljo) => set({ miljo })}
+      />
 
       <h3 className="rubrik">{t('horse.roughageSection')}</h3>
       <div className="grupp">
-        <Falt label={t('horse.roughage')}>
+        <Field label={t('horse.roughage')}>
           <select
             value={hast.grovfoder.typ}
             onChange={(e) => set({ grovfoder: { ...hast.grovfoder, typ: e.target.value as 'hosilage' | 'ho' } })}
@@ -217,25 +221,25 @@ function Profilformular({
             <option value="hosilage">{t('roughageTitle.hosilage')}</option>
             <option value="ho">{t('roughageTitle.ho')}</option>
           </select>
-        </Falt>
-        <Falt label={t('horse.roughageKg')}>
-          <Siffra
+        </Field>
+        <Field label={t('horse.roughageKg')}>
+          <NumberField
             value={hast.grovfoder.kgPerDag}
             error={errorFor('grovfoder.kgPerDag')}
             onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
           />
-        </Falt>
+        </Field>
       </div>
-      <Foderlista hast={hast} produkter={produkter} errorFor={errorFor} onAndra={onAndra} />
+      <FeedList hast={hast} produkter={produkter} errorFor={errorFor} onChange={onChange} />
 
-      <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
-      <BytekanslighetSektion hast={hast} onAndra={(bytekanslighet) => set({ bytekanslighet })} />
-      <Falt label={t('horse.other')}>
+      <HealthSection halsa={hast.halsa} onChange={(halsa) => set({ halsa })} />
+      <FeedChangeSensitivitySection hast={hast} onChange={(bytekanslighet) => set({ bytekanslighet })} />
+      <Field label={t('horse.other')}>
         <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
-      </Falt>
+      </Field>
 
       <div className="atgardsrad">
-        <button className="knapp" disabled={!hast.namn} onClick={onVidare}>
+        <button className="knapp" disabled={!hast.namn} onClick={onNext}>
           {t('horse.toAnalysis')}
         </button>
       </div>
@@ -243,40 +247,48 @@ function Profilformular({
   )
 }
 
-function rasHjalp(h: Hastprofil, t: TFunction): string | undefined {
+function breedHint(h: Hastprofil, t: TFunction): string | undefined {
   const ras = hittaRas(h.ras)
   if (!ras?.viktKg) return undefined
-  return t('horse.breedWeight', { min: tal(ras.viktKg.min, 1), max: tal(ras.viktKg.max, 1) })
+  return t('horse.breedWeight', { min: formatNumber(ras.viktKg.min, 1), max: formatNumber(ras.viktKg.max, 1) })
 }
 
-function MiljoSektion({ miljo, errorFor, onAndra }: { miljo: Miljo; errorFor: ErrorFor; onAndra: (m: Miljo) => void }) {
+function EnvironmentSection({
+  miljo,
+  errorFor,
+  onChange,
+}: {
+  miljo: Miljo
+  errorFor: ErrorFor
+  onChange: (m: Miljo) => void
+}) {
   const { t } = useTranslation()
-  const set = (patch: Partial<Miljo>) => onAndra({ ...miljo, ...patch })
+  const set = (patch: Partial<Miljo>) => onChange({ ...miljo, ...patch })
   return (
     <>
       <h3 className="rubrik">{t('horse.environment.title')}</h3>
       <div className="grupp">
-        <Falt label={t('horse.environment.housing')}>
+        <Field label={t('horse.environment.housing')}>
           <select value={miljo.hallning} onChange={(e) => set({ hallning: e.target.value as Miljo['hallning'] })}>
             <option value="box">{t('horse.environment.box')}</option>
             <option value="losdrift">{t('horse.environment.losdrift')}</option>
           </select>
-        </Falt>
-        <Falt label={t('horse.environment.hoursOut')}>
-          <Siffra
+        </Field>
+        <Field label={t('horse.environment.hoursOut')}>
+          <NumberField
             value={miljo.timmarUtePerDag}
             error={errorFor('miljo.timmarUtePerDag')}
             onChange={(v) => set({ timmarUtePerDag: v })}
           />
-        </Falt>
-        <Falt label={t('horse.environment.lowestTemp')} hjalp={t('horse.environment.lowestTempHint')}>
-          <Siffra
+        </Field>
+        <Field label={t('horse.environment.lowestTemp')} hint={t('horse.environment.lowestTempHint')}>
+          <NumberField
             value={miljo.lagstaTempC}
             needsMinusKey
             error={errorFor('miljo.lagstaTempC')}
             onChange={(v) => set({ lagstaTempC: v })}
           />
-        </Falt>
+        </Field>
       </div>
       <div className="kryss">
         <label>
@@ -303,7 +315,7 @@ const KANSLIGHETER = [
   'proteinkanslig',
 ] as const satisfies readonly (keyof Halsa)[]
 
-function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) => void }) {
+function HealthSection({ halsa, onChange }: { halsa: Halsa; onChange: (h: Halsa) => void }) {
   const { t } = useTranslation()
   const undvik = halsa.undvik ?? []
   return (
@@ -316,13 +328,13 @@ function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) =>
             <input
               type="checkbox"
               checked={Boolean(halsa[nyckel])}
-              onChange={(e) => onAndra({ ...halsa, [nyckel]: e.target.checked })}
+              onChange={(e) => onChange({ ...halsa, [nyckel]: e.target.checked })}
             />
             {t(`horse.health.${nyckel}`)}
           </label>
         ))}
       </div>
-      <Falt label={t('horse.health.avoid')} grupp>
+      <Field label={t('horse.health.avoid')} group>
         <div className="chips">
           {INGREDIENSER.map((i) => (
             <button
@@ -330,32 +342,32 @@ function HalsaSektion({ halsa, onAndra }: { halsa: Halsa; onAndra: (h: Halsa) =>
               type="button"
               className={`chip-val ${undvik.includes(i) ? 'aktiv' : ''}`}
               onClick={() =>
-                onAndra({ ...halsa, undvik: undvik.includes(i) ? undvik.filter((x) => x !== i) : [...undvik, i] })
+                onChange({ ...halsa, undvik: undvik.includes(i) ? undvik.filter((x) => x !== i) : [...undvik, i] })
               }
             >
               {i}
             </button>
           ))}
         </div>
-      </Falt>
+      </Field>
     </>
   )
 }
 
 const KANSLIGHETSORDNING: Bytekanslighet[] = ['tal', 'normal', 'kanslig']
 
-function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (k: Bytekanslighet) => void }) {
+function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; onChange: (k: Bytekanslighet) => void }) {
   const { t } = useTranslation()
   const forval = standardKanslighet(hast.halsa)
-  const vald = hast.bytekanslighet ?? forval
-  const hjalp = hast.bytekanslighet
+  const selected = hast.bytekanslighet ?? forval
+  const hint = hast.bytekanslighet
     ? t('horse.sensitivity.hintChosen')
     : forval === 'kanslig'
       ? t('horse.sensitivity.hintDefaultSensitive')
       : t('horse.sensitivity.hintDefault')
   return (
     <>
-      <Falt label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hjalp={hjalp} grupp>
+      <Field label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hint={hint} group>
         <div className="segment" role="radiogroup" aria-label={t('horse.sensitivity.groupLabel')}>
           {KANSLIGHETSORDNING.map((k) => {
             const takt = BYTESTAKT[k]
@@ -364,19 +376,20 @@ function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (
                 key={k}
                 type="button"
                 role="radio"
-                aria-checked={vald === k}
-                className={vald === k ? 'aktiv' : ''}
-                onClick={() => onAndra(k)}
+                aria-checked={selected === k}
+                className={selected === k ? 'aktiv' : ''}
+                onClick={() => onChange(k)}
               >
                 {t(`transitionPace.${k}.name`)}
                 <small>
-                  {t(`transitionPace.${k}.description`)} {t('horse.sensitivity.duration', { days: tal(takt.dagar, 0) })}
+                  {t(`transitionPace.${k}.description`)}{' '}
+                  {t('horse.sensitivity.duration', { days: formatNumber(takt.dagar, 0) })}
                 </small>
               </button>
             )
           })}
         </div>
-      </Falt>
+      </Field>
     </>
   )
 }
@@ -385,24 +398,24 @@ function ridning(h: Hastprofil) {
   return h.ridning ?? { passPerVecka: 0, minuterPerPass: 0, travGaloppMinPerPass: 0 }
 }
 
-function Foderlista({
+function FeedList({
   hast,
   produkter,
   errorFor,
-  onAndra,
+  onChange,
 }: {
   hast: Hastprofil
   produkter: Produkt[]
   errorFor: ErrorFor
-  onAndra: (h: Hastprofil) => void
+  onChange: (h: Hastprofil) => void
 }) {
   const { t } = useTranslation()
   const foder = hast.nuvarandeFoder
   const satt = (i: number, patch: Partial<(typeof foder)[number]>) =>
-    onAndra({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
+    onChange({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
   return (
     <div className="foderlista">
-      {/* Sökbar lista: ett namn som matchar en produkt kopplas till den, annars sparas det som eget foder. */}
+      {/* Searchable list: a name matching a product is linked to it, otherwise it is saved as a custom feed. */}
       <datalist id="produktnamn">
         {produkter.map((p) => (
           <option key={p.id} value={p.namn}>
@@ -423,7 +436,7 @@ function Foderlista({
               satt(i, { produktId: p?.id ?? null, namn: e.target.value })
             }}
           />
-          <Siffra
+          <NumberField
             value={f.gramPerDag}
             error={errorFor(`nuvarandeFoder.${i}.gramPerDag`)}
             onChange={(v) => satt(i, { gramPerDag: v })}
@@ -431,7 +444,7 @@ function Foderlista({
           <span className="enhet">{t('horse.feeds.gramsPerDay')}</span>
           <button
             className="lank"
-            onClick={() => onAndra({ ...hast, nuvarandeFoder: foder.filter((_, j) => j !== i) })}
+            onClick={() => onChange({ ...hast, nuvarandeFoder: foder.filter((_, j) => j !== i) })}
           >
             {t('horse.feeds.remove')}
           </button>
@@ -439,7 +452,9 @@ function Foderlista({
       ))}
       <button
         className="lank"
-        onClick={() => onAndra({ ...hast, nuvarandeFoder: [...foder, { produktId: null, namn: '', gramPerDag: 100 }] })}
+        onClick={() =>
+          onChange({ ...hast, nuvarandeFoder: [...foder, { produktId: null, namn: '', gramPerDag: 100 }] })
+        }
       >
         {t('horse.feeds.add')}
       </button>
@@ -447,14 +462,14 @@ function Foderlista({
   )
 }
 
-function AiHjalp({
+function AiFill({
   hast,
   produkter,
-  onAndra,
+  onChange,
 }: {
   hast: Hastprofil
   produkter: Produkt[]
-  onAndra: (h: Hastprofil) => void
+  onChange: (h: Hastprofil) => void
 }) {
   const { t } = useTranslation()
   const [foderText, setFoderText] = useState('')
@@ -478,7 +493,7 @@ function AiHjalp({
       })
       const ras = hittaRas(t.ras ?? undefined)
       const miljo = hast.miljo ?? STANDARD_MILJO
-      onAndra({
+      onChange({
         ...hast,
         ...(ras ? { ras: ras.id, typ: ras.typ } : {}),
         prestanda: t.prestanda ?? hast.prestanda,
@@ -494,7 +509,7 @@ function AiHjalp({
           kgPerDag: t.grovfoderKgPerDag ?? hast.grovfoder.kgPerDag,
         },
         nuvarandeFoder: t.nuvarandeFoder.length ? t.nuvarandeFoder : hast.nuvarandeFoder,
-        // AI:n kan bara lägga till känsligheter, aldrig ta bort sådana som ägaren kryssat i.
+        // The AI can only add sensitivities, never remove ones the owner has ticked.
         halsa: {
           ...hast.halsa,
           fang: hast.halsa.fang || t.fang,
@@ -524,28 +539,28 @@ function AiHjalp({
       <div className="ai-rubrik">
         <span className="ai-bricka">{t('common.aiBadge')}</span> {t('horse.ai.title')}
       </div>
-      <Falt label={t('horse.ai.about')}>
+      <Field label={t('horse.ai.about')}>
         <textarea
           rows={3}
           placeholder={t('horse.ai.aboutPlaceholder')}
           value={foderText}
           onChange={(e) => setFoderText(e.target.value)}
         />
-      </Falt>
-      <Falt label={t('horse.ai.health')}>
+      </Field>
+      <Field label={t('horse.ai.health')}>
         <textarea
           rows={2}
           placeholder={t('horse.ai.healthPlaceholder')}
           value={halsaText}
           onChange={(e) => setHalsaText(e.target.value)}
         />
-      </Falt>
+      </Field>
       {fragor.length > 0 && (
         <div className="foljdfragor">
           {fragor.map((f) => (
-            <Falt key={f} label={f}>
+            <Field key={f} label={f}>
               <input value={svar[f] ?? ''} onChange={(e) => setSvar({ ...svar, [f]: e.target.value })} />
-            </Falt>
+            </Field>
           ))}
         </div>
       )}
@@ -561,29 +576,29 @@ function AiHjalp({
   )
 }
 
-function Falt({
+function Field({
   label,
-  hjalp,
-  grupp,
+  hint,
+  group,
   children,
 }: {
   label: string
-  hjalp?: string
-  grupp?: boolean
+  hint?: string
+  group?: boolean
   children: React.ReactNode
 }) {
-  // En knappgrupp får inte ligga i <label>, då aktiverar ett klick på etiketten första knappen.
-  const Tag = grupp ? 'div' : 'label'
+  // A button group must not sit inside <label>, or a click on the label activates the first button.
+  const Tag = group ? 'div' : 'label'
   return (
     <Tag className="falt">
       <span className="falt-label">{label}</span>
       {children}
-      {hjalp && <span className="falt-hjalp">{hjalp}</span>}
+      {hint && <span className="falt-hjalp">{hint}</span>}
     </Tag>
   )
 }
 
-function Siffra({
+function NumberField({
   value,
   error,
   onChange,

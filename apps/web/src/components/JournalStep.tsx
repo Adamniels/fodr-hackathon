@@ -5,7 +5,7 @@ import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonb
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
 import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
-import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
+import { HULLSKALA, formatDate, bodyConditionText, formatMoney, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { newJournalEntryId } from '../storage'
 import { DecimalInput } from './DecimalInput'
@@ -15,10 +15,10 @@ interface Props {
   poster: Journalpost[]
   aktuellPlan: PlanOgonblick | null
   idag: string
-  onLaggTill: (post: Journalpost, uppdateraProfil: boolean) => void
+  onAdd: (post: Journalpost, uppdateraProfil: boolean) => void
 }
 
-export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Props) {
+export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
   const { t } = useTranslation()
   const trend = useMemo(() => beraknaTrend(poster, idag), [poster, idag])
   const tidslinje = useMemo(() => sorteradePoster(poster).reverse(), [poster])
@@ -29,32 +29,35 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
         <h2>{t('journal.title', { name: hast.namn })}</h2>
         <p className="ingress">{t('journal.intro')}</p>
         <div className="trendrad">
-          <Trendruta
-            rubrik={t('journal.trend.weight')}
-            varde={
+          <TrendTile
+            title={t('journal.trend.weight')}
+            value={
               trend.vikt
-                ? t('journal.trend.weightValue', { first: tal(trend.vikt.forsta, 1), last: tal(trend.vikt.senaste, 1) })
+                ? t('journal.trend.weightValue', {
+                    first: formatNumber(trend.vikt.forsta, 1),
+                    last: formatNumber(trend.vikt.senaste, 1),
+                  })
                 : '–'
             }
-            under={
+            caption={
               trend.vikt
                 ? t('journal.trend.weightRate', {
                     sign: trend.vikt.procentPerVecka > 0 ? '+' : '',
-                    percent: tal(trend.vikt.procentPerVecka, 2),
-                    weeks: tal(trend.vikt.dagar / 7, 0),
+                    percent: formatNumber(trend.vikt.procentPerVecka, 2),
+                    weeks: formatNumber(trend.vikt.dagar / 7, 0),
                   })
                 : t('journal.trend.weightTooFew')
             }
           />
-          <Trendruta
-            rubrik={t('journal.trend.hull')}
-            varde={trend.hull ? `${tal(trend.hull.forsta, 0)} → ${tal(trend.hull.senaste, 0)}` : '–'}
-            under={trend.hull ? (hullText(trend.hull.senaste) ?? '') : t('journal.trend.hullNone')}
+          <TrendTile
+            title={t('journal.trend.hull')}
+            value={trend.hull ? `${formatNumber(trend.hull.forsta, 0)} → ${formatNumber(trend.hull.senaste, 0)}` : '–'}
+            caption={trend.hull ? (bodyConditionText(trend.hull.senaste) ?? '') : t('journal.trend.hullNone')}
           />
-          <Trendruta
-            rubrik={t('journal.trend.followUp')}
-            varde={trend.nastaUppfoljning ?? t('journal.trend.weighNow')}
-            under={trend.uppfoljningForfallen ? t('journal.trend.followUpDue') : t('journal.trend.followUpRule')}
+          <TrendTile
+            title={t('journal.trend.followUp')}
+            value={trend.nastaUppfoljning ?? t('journal.trend.weighNow')}
+            caption={trend.uppfoljningForfallen ? t('journal.trend.followUpDue') : t('journal.trend.followUpRule')}
             markerad={trend.uppfoljningForfallen || !trend.nastaUppfoljning}
           />
         </div>
@@ -69,8 +72,8 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
         {/* Keyed on the horse, like the profile form: switching horse starts a fresh draft and drops the other
             horse's AI analysis, including one still loading, whose answer then has nowhere to land (#109).
             Siblings need distinct keys: with the same key, React kept the old form next to the new one. */}
-        <NyAnteckning key={`ny-${hast.id}`} hast={hast} idag={idag} onLaggTill={onLaggTill} />
-        <AiAnalys key={`ai-${hast.id}`} hast={hast} poster={poster} trend={trend} aktuellPlan={aktuellPlan} />
+        <NewEntry key={`ny-${hast.id}`} hast={hast} idag={idag} onAdd={onAdd} />
+        <AiAnalysis key={`ai-${hast.id}`} hast={hast} poster={poster} trend={trend} aktuellPlan={aktuellPlan} />
       </div>
 
       <section className="kort">
@@ -84,10 +87,10 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
                 {(p.viktKg !== undefined || p.hull !== undefined) && (
                   <div className="tid-matt">
                     {p.viktKg !== undefined && (
-                      <span className="chip okand">{t('units.kg', { value: tal(p.viktKg, 1) })}</span>
+                      <span className="chip okand">{t('units.kg', { value: formatNumber(p.viktKg, 1) })}</span>
                     )}
                     {p.hull !== undefined && (
-                      <span className="chip okand">{t('journal.hullChip', { hull: tal(p.hull, 0) })}</span>
+                      <span className="chip okand">{t('journal.hullChip', { hull: formatNumber(p.hull, 0) })}</span>
                     )}
                   </div>
                 )}
@@ -96,11 +99,14 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
                   <div className="tid-plan">
                     <strong>{t('journal.planSaved')}</strong>
                     <span className="liten">
-                      {t('journal.planRoughage', { kg: tal(p.plan.grovfoderKgPerDag, 1), analysis: p.plan.analys })}
+                      {t('journal.planRoughage', {
+                        kg: formatNumber(p.plan.grovfoderKgPerDag, 1),
+                        analysis: p.plan.analys,
+                      })}
                       {p.plan.produkter
-                        .map((x) => t('journal.planProduct', { grams: tal(x.gramPerDag, 0), name: x.namn }))
+                        .map((x) => t('journal.planProduct', { grams: formatNumber(x.gramPerDag, 0), name: x.namn }))
                         .join('')}{' '}
-                      · {t('units.perMonth', { amount: kr(p.plan.kostnadPerManad) })}
+                      · {t('units.perMonth', { amount: formatMoney(p.plan.kostnadPerManad) })}
                     </span>
                   </div>
                 )}
@@ -113,34 +119,34 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
   )
 }
 
-function Trendruta({
-  rubrik,
-  varde,
-  under,
+function TrendTile({
+  title,
+  value,
+  caption,
   markerad,
 }: {
-  rubrik: string
-  varde: string
-  under: string
+  title: string
+  value: string
+  caption: string
   markerad?: boolean
 }) {
   return (
     <div className={`trendruta ${markerad ? 'markerad' : ''}`}>
-      <span className="liten">{rubrik}</span>
-      <strong>{varde}</strong>
-      <span className="liten">{under}</span>
+      <span className="liten">{title}</span>
+      <strong>{value}</strong>
+      <span className="liten">{caption}</span>
     </div>
   )
 }
 
-function NyAnteckning({
+function NewEntry({
   hast,
   idag,
-  onLaggTill,
+  onAdd,
 }: {
   hast: Hastprofil
   idag: string
-  onLaggTill: (post: Journalpost, uppdateraProfil: boolean) => void
+  onAdd: (post: Journalpost, uppdateraProfil: boolean) => void
 }) {
   const { t } = useTranslation()
   // Only a date the owner picks is kept, also after saving (for several back-dated entries in a row); otherwise the
@@ -165,7 +171,7 @@ function NyAnteckning({
   }
 
   function spara() {
-    onLaggTill(nyPost(newJournalEntryId(), datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
+    onAdd(nyPost(newJournalEntryId(), datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
     setVikt(undefined)
     setHull('')
     setText('')
@@ -194,7 +200,7 @@ function NyAnteckning({
           <span className="falt-label">{t('journal.newEntry.weight')}</span>
           <DecimalInput
             value={vikt}
-            placeholder={tal(hast.viktKg, 1)}
+            placeholder={formatNumber(hast.viktKg, 1)}
             error={errorFor('viktKg')}
             onChange={setVikt}
             onClear={() => setVikt(undefined)}
@@ -204,9 +210,9 @@ function NyAnteckning({
           <span className="falt-label">{t('journal.newEntry.hull')}</span>
           <select value={hull} onChange={(e) => setHull(e.target.value)}>
             <option value="">{t('journal.newEntry.hullNone')}</option>
-            {HULL_LEVELS.map((n) => (
+            {HULLSKALA.map((n) => (
               <option key={n} value={n}>
-                {tal(n, 0)}, {hullText(n)}
+                {formatNumber(n, 0)}, {bodyConditionText(n)}
               </option>
             ))}
           </select>
@@ -236,7 +242,7 @@ function NyAnteckning({
   )
 }
 
-function AiAnalys({
+function AiAnalysis({
   hast,
   poster,
   trend,
