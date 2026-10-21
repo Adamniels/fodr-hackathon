@@ -1,6 +1,6 @@
 import { NUTRIENT_KEYS, type NutrientKey } from './nutrients'
 import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
-import { grovfoderIntag, monthlyCost, laggTill, displayName as namn, type Foderpost, type Intag } from './intake'
+import { grovfoderIntag, monthlyCost, laggTill, displayName, type Foderpost, type Intag } from './intake'
 import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './sensitivity'
@@ -140,18 +140,18 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
   const ERSATTS = ['mineralfoder', 'tillskott', 'salt']
   let behallna = nuvarande.filter((p) => !ERSATTS.includes(p.produkt.kategori))
   let grovKg = profil.grovfoder.kgPerDag
-  const energiFor = (kg: number, foder: Foderpost[]) => laggTill(grovfoderIntag(analys, kg), foder).energi.varde
+  const energiVidKg = (kg: number, foder: Foderpost[]) => laggTill(grovfoderIntag(analys, kg), foder).energi.varde
 
   // SLU: vid överhull minskas i första hand kraftfodret.
-  if (energiFor(grovKg, behallna) > energiBehov * ENERGI_OVER) {
+  if (energiVidKg(grovKg, behallna) > energiBehov * ENERGI_OVER) {
     for (const k of [...behallna].filter((p) => p.produkt.kategori === 'kraftfoder')) {
       behallna = behallna.filter((p) => p !== k)
       atgarder.push({
         typ: 'ta_bort',
         code: 'action.removeConcentrate',
-        params: { product: namn(k.produkt), grams: k.gramPerDag },
+        params: { product: displayName(k.produkt), grams: k.gramPerDag },
       })
-      if (energiFor(grovKg, behallna) <= energiBehov * ENERGI_OVER) break
+      if (energiVidKg(grovKg, behallna) <= energiBehov * ENERGI_OVER) break
     }
   }
 
@@ -166,9 +166,9 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       typ: 'byt',
       code: 'action.swapCheaper',
       params: {
-        from: namn(p.produkt),
+        from: displayName(p.produkt),
         fromGrams: p.gramPerDag,
-        to: namn(b.till.produkt),
+        to: displayName(b.till.produkt),
         toGrams: b.till.gramPerDag,
         reason: b.skal,
         savingKr: b.besparingKrPerManad,
@@ -186,10 +186,10 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
 
   // SLU: i andra hand minskas grovfodret, dock aldrig under 1 kg ts per 100 kg.
   const energiPerKgFoder = (analys.perKgTs.energi ?? 0) * ts
-  if (energiPerKgFoder > 0 && energiFor(grovKg, behallna) > energiBehov * ENERGI_OVER) {
-    const ovrigEnergi = energiFor(0, behallna)
-    const kgForEnergi = (energiBehov - ovrigEnergi) / energiPerKgFoder
-    const nyKg = Math.max(kgForEnergi, grovfoderKgTs.minimum / ts)
+  if (energiPerKgFoder > 0 && energiVidKg(grovKg, behallna) > energiBehov * ENERGI_OVER) {
+    const ovrigEnergi = energiVidKg(0, behallna)
+    const kgSomTackerEnergi = (energiBehov - ovrigEnergi) / energiPerKgFoder
+    const nyKg = Math.max(kgSomTackerEnergi, grovfoderKgTs.minimum / ts)
     if (grovKg - nyKg > 0.3) {
       atgarder.push({
         typ: 'andra_grovfoder',
@@ -201,16 +201,16 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
   }
 
   // SLU: vid underhull ökas i första hand vallfodergivan.
-  if (energiPerKgFoder > 0 && energiFor(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
-    const ovrigEnergi = energiFor(0, behallna)
-    const kgForEnergi = (energiBehov - ovrigEnergi) / energiPerKgFoder
+  if (energiPerKgFoder > 0 && energiVidKg(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
+    const ovrigEnergi = energiVidKg(0, behallna)
+    const kgSomTackerEnergi = (energiBehov - ovrigEnergi) / energiPerKgFoder
     const maxKg = grovfoderKgTs.rekommenderatMax / ts
-    const nyKg = Math.min(kgForEnergi, maxKg)
+    const nyKg = Math.min(kgSomTackerEnergi, maxKg)
     if (nyKg - grovKg > 0.3) {
       atgarder.push({ typ: 'andra_grovfoder', code: 'action.increaseRoughage', params: { fromKg: grovKg, toKg: nyKg } })
       grovKg = nyKg
     }
-    if (energiFor(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
+    if (energiVidKg(grovKg, behallna) < energiBehov * ENERGI_UNDER) {
       atgarder.push({ typ: 'lagg_till_kraftfoder', code: 'action.roughageLacksEnergy', params: {} })
     }
   }
@@ -264,12 +264,12 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
           ? {
               typ: 'tillskott',
               code: 'action.continueSupplement',
-              params: { product: namn(kvar.produkt), grams: kvar.gramPerDag },
+              params: { product: displayName(kvar.produkt), grams: kvar.gramPerDag },
             }
           : {
               typ: 'tillskott',
               code: 'action.changeSupplement',
-              params: { product: namn(kvar.produkt), fromGrams: gammal.gramPerDag, toGrams: kvar.gramPerDag },
+              params: { product: displayName(kvar.produkt), fromGrams: gammal.gramPerDag, toGrams: kvar.gramPerDag },
             },
       )
       continue
@@ -302,9 +302,9 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
         typ: 'byt',
         code: 'action.swapSupplement',
         params: {
-          from: namn(gammal.produkt),
+          from: displayName(gammal.produkt),
           fromGrams: gammal.gramPerDag,
-          to: namn(ersattare.produkt),
+          to: displayName(ersattare.produkt),
           toGrams: ersattare.gramPerDag,
           reason: skal,
         },
@@ -313,7 +313,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
       atgarder.push({
         typ: 'ta_bort',
         code: 'action.stopSupplement',
-        params: { product: namn(gammal.produkt), grams: gammal.gramPerDag, costKr: fore },
+        params: { product: displayName(gammal.produkt), grams: gammal.gramPerDag, costKr: fore },
       })
     }
   }
@@ -322,7 +322,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     atgarder.push({
       typ: 'tillskott',
       code: 'action.giveSupplement',
-      params: { product: namn(p.produkt), grams: p.gramPerDag },
+      params: { product: displayName(p.produkt), grams: p.gramPerDag },
     })
   }
 

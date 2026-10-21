@@ -84,8 +84,8 @@ export function skapaInjustering(args: {
     slutDag: i === antal - 1 ? null : (i + 1) * takt.dagarPerSteg,
   }))
   // Steg i (1-baserat) ger andelen i/antal av förändringen; sista steget är alltid den nya givan.
-  const trappa = (fran: number, till: number, avrunda: (v: number) => number) =>
-    steg.map((s) => (s.nr === antal ? till : avrunda(fran + ((till - fran) * s.nr) / antal)))
+  const trappa = (fran: number, till: number, round: (v: number) => number) =>
+    steg.map((s) => (s.nr === antal ? till : round(fran + ((till - fran) * s.nr) / antal)))
 
   const rader: Injusteringsrad[] = []
   const { grovfoderFranKg: gf, grovfoderTillKg: gt } = args
