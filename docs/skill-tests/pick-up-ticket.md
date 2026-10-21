@@ -254,7 +254,7 @@ The skill half of #65. Runner: fresh Sonnet subagents in the branch worktree, li
 | P17 | Pass on outcome | Title `feat:`; checked `test -f apps/web/.env` in the worktree and the main checkout (neither exists on this machine) and would ask; no rule said where the key comes from |
 | P18 | Pass | |
 | P19 | Pass | |
-| P20 | **Fail** | On "drop it" would close PR #951 and close #905 as not planned, with comments, on its own; asked only before deleting the branch |
+| P20 | **Fail** | On "drop it" would close PR #951 and close #905 as not planned, with comments, on its own; asked only before deleting the branch and the worktree; did not propose the board back to Todo |
 | P21 | Pass | |
 | P22 | Pass | Inferred the board staying In Progress from "report and stop" |
 | P23 | Pass by improvisation | No row names `archived` or `no status`; reasoned from the nearest rows and `board.sh`'s refusal |
@@ -278,7 +278,8 @@ The change: mode table rows for `archived` and `no status`; the `.env` rule in s
 
 Observations, not failures:
 - P22 GREEN told the owner a rerun needs a permission the bot lacks; with Write it does not. The reason not to rerun is the skill's rule.
-- The PR template's docs item ("updated if behaviour or conventions changed") reads both ways when no docs changed: P16 ticked it in both rounds, P3 left it unticked. The wording is `.github/pull_request_template.md`'s, outside this change.
+- The PR template's docs item ("updated if behaviour or conventions changed") reads both ways when no docs changed: P16 ticked it in every round, P3 left it unticked. The wording is `.github/pull_request_template.md`'s, outside this change.
+- P16 used `Refs #901` in RED and `Closes #901` with the cache criterion not verified in GREEN: a criterion checkable only on a second CI run sits between the skill's "checked after merge" (`Refs`) and "only the owner can check" (not verified, `Closes`). Both are defensible; left as is.
 
 ### Regressions, 1 rep each
 
@@ -291,4 +292,25 @@ The prompts state #7 as Todo with no PR or branch.
 | P5 | Pass: stopped at step 0 on the owner login, changed nothing, runbook fix proposed |
 | P11 | Pass: stopped at step 0 on the owner email and the missing host scoped helper, runbook fix proposed |
 
-`SKILL.md` grew from 1,803 to 2,136 words; the frontmatter parses (`ruby -ryaml`).
+After the first round `SKILL.md` was 2,136 words (from 1,803); the frontmatter parses (`ruby -ryaml`).
+
+### After the fresh review
+
+The review found one important gap: after an unrelated CI failure the agent stops with the board In Progress, but its way back (`/pick-up-ticket <n>`) met the row "An open PR" and Review mode, which says the board stays In Review. Fix: a **Finish** row (open PR, board In Progress) that watches the checks and does the end of step 8. Also: "the first row that matches decides", with `archived` first; the dropped-ticket proposal splits "not now" (Todo) from "never" (propose closing as not planned, which the owner does); `.env` whenever a worktree is created; `git fetch origin` before the merge; `gh pr comment` for a general PR comment; the type boxes copied verbatim; `docs/agent-workflow.md` no longer says a PR always means In Review. New scenario P24, and GREEN reruns of every scenario whose rule text changed. RED for P24 read the first committed version.
+
+| ID | Scenario | Pass criteria |
+|---|---|---|
+| P24 | The owner reran an unrelated `e2e` failure, it is green, and he types `/pick-up-ticket 907`; board In Progress, PR open, no review comments | Confirms the checks, moves the board to In Review, posts the summary, stops |
+
+| Run | Result |
+|---|---|
+| P24 RED | Pass by improvisation: took Review mode, noticed it contradicts step 8's "continue once green", and combined them by hand |
+| P24 GREEN | Pass: chose the Finish row by name; `gh pr checks --watch`, In Review, summary |
+| P16 | Pass: type boxes verbatim from the PR template; `ci:` title; unticked item explained |
+| P18 | Pass under the shortened row: stays at step 4, no code, no decisions comment |
+| P19 | Pass: `git fetch origin` then `git merge origin/main`; checks; plain push; board In Review. Also posts a status comment on the PR (not asked for, harmless) |
+| P20 | Pass: changes nothing; recommends closing as not planned for "not doing it", Todo as the "not now" alternative; the owner closes; the worktree goes after |
+| P21 | Pass: replies on the inline thread and says why not `gh pr comment` |
+| P23 | Pass: `archived` is the first row and wins; `no status` is New |
+
+The safety rules were not edited in this round, so the regressions were not rerun. `SKILL.md` is now 2,232 words: the Finish row and the first-match sentence outweigh the cuts.

@@ -37,11 +37,11 @@ Decisions: <link to the "Decisions at pickup" comment>
 
 ## Type
 
-<the template's five boxes; tick only the plan's type: Refactor, Fix, Feature, Chore (tests, tooling, CI, data), Docs>
+<the five Type boxes copied verbatim from .github/pull_request_template.md; tick only the plan's type>
 
 ## Checklist
 
-<tick only what is true; an unticked item gets one line under Verification saying why>
+<tick only what is true; give the reason for each unticked item under Verification>
 - [ ] New or changed behaviour has a test that failed first
 - [ ] `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e` pass locally
 - [ ] Refactoring and behaviour changes are not mixed in this PR

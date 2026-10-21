@@ -37,22 +37,25 @@ Then wait. When he confirms a ticket (the proposal or another number), continue 
 
 ## 1. Choose the mode
 
+The first row that matches decides.
+
 | What exists | Mode |
 |---|---|
+| `board.sh get` prints `archived` | **Stop and ask**: he unarchives it on the board, or picks another ticket (`board.sh` never changes an archived item) |
+| An open PR for the issue, board In Progress | **Finish**: `gh pr checks <pr> --watch`; when they are green (a rerun after an unrelated failure), do the end of step 8: In Review and the summary comment; otherwise step 8's rules for a failing check apply |
 | An open PR for the issue | **Review**: go to step R |
 | A merged or closed PR for the issue | **Stop and ask** |
 | A branch `<n>-<slug>`, locally or on `origin`, no PR | **Continue**: use its worktree; if there is none, `git worktree add .worktrees/<branch> <branch>` (no `-b`). Never recreate, reset or force the branch. Resume at step 3 if the issue has no "Decisions at pickup" comment, otherwise at step 6 |
 | Issue closed, or board Done / In Review without a PR | **Stop and ask** |
 | Board In Progress but no branch anywhere | **Stop and ask**: someone else may be working on it |
-| `board.sh get` prints `archived` | **Stop and ask**: he unarchives it on the board, or picks another ticket (`board.sh` never changes an archived item) |
 | Nothing (`board.sh get` prints `none`, `no status` or Todo) | **New**: continue with step 2 |
 
 ## 2. New ticket
 
 1. **Dependencies.** Every `#N` under "Depends on" must be closed. If one is open, stop and ask: pick it first (recommended), stack on its branch, or pick another ticket.
-2. **Worktree.** `git fetch origin && git worktree add .worktrees/<n>-<slug> -b <n>-<slug> origin/main`. The branch name is the folder name, nothing else. Install dependencies there. `bash scripts/agent/board.sh status <n> "In Progress"`. If the ticket needs the live AI routes (an AI prompt check, `npm run dev` with AI), copy the key from the main checkout: `cp ../../apps/web/.env apps/web/.env` (git ignored; never commit, print or read it out). If there is none, ask the owner; without it the live check is **Not verified**. E2E needs no key: the AI is mocked.
+2. **Worktree.** `git fetch origin && git worktree add .worktrees/<n>-<slug> -b <n>-<slug> origin/main`. The branch name is the folder name, nothing else. Install dependencies there. `bash scripts/agent/board.sh status <n> "In Progress"`. Whenever you create a worktree (here or in Continue mode) for a ticket that needs the live AI routes (an AI prompt check, `npm run dev` with AI), copy the key from the main checkout: `cp ../../apps/web/.env apps/web/.env` (git ignored; never commit, print or read it out). If there is none, ask the owner; without it the live check is **Not verified**.
 3. **Questions.** The ticket's Open questions plus any the code raises, each with a proposal and a recommendation. Also look for **tickets to fold in**, so the backlog shrinks: an open ticket of the same type, about code the change touches, and small (no open question that needs more than a yes, and a fix of a few lines with its test). Search with `gh issue list --state open --label type:<the ticket's type> --limit 200 --json number,title,body`, and read the bodies for the files, components or screens the change will touch. Leave out roadmap slices (`[M#-##]` titles), tickets In Progress or In Review, and tickets with an open dependency. Propose each as a question; with the owner's yes, the branch fixes it, test first, and the PR closes it too.
-4. **Plan.** Tasks, tests and files; exactly one type from `refactor`, `fix`, `feature`, `chore` (tests, tooling, data), `docs`. Refactor and behaviour changes never share a PR. Wait for the owner's approval. **No code before approval.**
+4. **Plan.** Tasks, tests and files; exactly one type from `refactor`, `fix`, `feature`, `chore` (tests, tooling, CI, data), `docs`. Refactor and behaviour changes never share a PR. Wait for the owner's approval. **No code before approval.**
 5. **Decisions comment** on the issue (template in `templates.md`), right after approval. For each folded-in ticket, `board.sh status <N> "In Progress"` and a one-line comment on it: "Folded into #<n> (branch `<n>-<slug>`), decisions: <link>", so nobody picks it up in parallel.
 6. **Implement** test first: watch each new test fail, then pass. Run each of `npm run format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e` (the set in `.claude/CLAUDE.md`, which CI runs), and read the output. (superpowers:test-driven-development and superpowers:verification-before-completion, if installed.)
 7. **Fresh review.** Dispatch one fresh reviewer agent over `git diff origin/main...HEAD` with the issue and each folded-in issue, the plan and the spec. (superpowers:requesting-code-review, if installed.) The backlog must not grow from review nits, so every finding gets exactly one outcome, the first that applies:
@@ -63,7 +66,7 @@ Then wait. When he confirms a ticket (the proposal or another number), continue 
    5. **Not done**, anything else: no ticket. That includes small findings outside the diff, and a small change that only needs the owner's yes (deleting a dead file): the PR line is where he decides.
 
    The PR's "Review" section lists every finding with its outcome: fixed, ticket proposed (or `#N` once created), or not done and why.
-8. **Finish.** Push; `gh pr create` with the PR template from `templates.md` and a Conventional Commit title, which becomes the squash commit on `main`: `feat:` for a feature, `fix:`, `refactor:`, `docs:` as named, and `chore:` (or `ci:` / `test:` when that is all it touches) for a chore. Then `gh pr checks <pr> --watch`.
+8. **Finish.** Push; `gh pr create` with the PR template from `templates.md` and a Conventional Commit title, which becomes the squash commit on `main`: `feat:` for a feature, the type's own name for `fix`, `refactor` and `docs`, and `chore:` (or `ci:` / `test:` when that is all it touches) for a chore. Then `gh pr checks <pr> --watch`.
    - A check fails because of this PR: fix it test first, push, watch again.
    - A check fails for an unrelated reason (flaky, infrastructure): do not rerun or work around it; report it to the owner with the log excerpt and stop. The board stays **In Progress**; once he has rerun it and the checks are green, continue below.
 
@@ -77,15 +80,15 @@ In the decisions comment, the PR and the summary, state as fact only what you re
 
 ## R. Review mode
 
-Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{repo}/pulls/<pr>/comments`). Address each in the PR's worktree, test first where it changes behaviour, run the checks, push (never force), watch `gh pr checks <pr> --watch`, reply on each thread with what changed (`gh api repos/{owner}/{repo}/pulls/<pr>/comments/<comment-id>/replies -f body="..."`; the owner resolves threads). The board stays **In Review**. Stop.
+Read every review comment (`gh pr view <pr> --comments`, `gh api repos/{owner}/{repo}/pulls/<pr>/comments`). Address each in the PR's worktree, test first where it changes behaviour, run the checks, push (never force), watch `gh pr checks <pr> --watch`, reply on each with what changed: an inline review comment on its thread (`gh api repos/{owner}/{repo}/pulls/<pr>/comments/<comment-id>/replies -f body="..."`; the owner resolves threads), a general PR comment with `gh pr comment <pr> --body "..."`. The board stays **In Review**. Stop.
 
 ## Situations
 
 | Situation | What to do |
 |---|---|
-| The owner rejects or changes the plan | Revise it from his answer and propose it again; still no code and no decisions comment until he approves. His answers go into the decisions comment later |
-| The branch is behind `main` (the ruleset requires it up to date) | In the worktree: `git merge origin/main`, run the checks, push. Never rebase: it needs a force push. A conflict that needs a decision: `git merge --abort`, then ask with a proposal |
-| The owner drops the ticket | Stop and ask. Propose a comment on the issue saying why and the board back to Todo; leave the PR and the branch for him to close or delete. Close or delete nothing yourself |
+| The owner rejects or changes the plan | Revise it and propose it again; step 4 still holds. His answers go into the decisions comment later |
+| The branch is behind `main` (the ruleset requires it up to date) | In the worktree: `git fetch origin && git merge origin/main`, run the checks, push. Never rebase: it needs a force push. A conflict that needs a decision: `git merge --abort`, then ask with a proposal |
+| The owner drops the ticket | Stop and ask. Propose a comment on the issue saying why, and the board back to Todo if he means "not now", or closing the issue as not planned if he means "never"; the PR, the branch and the issue are his to close or delete (the worktree goes after, as in the runbook's cleanup) |
 
 ## Stop and ask, mid-ticket
 
