@@ -128,6 +128,34 @@ test.describe('dry matter entry (#50)', () => {
   })
 })
 
+test('a cleared dry matter shows the value it holds again when an example is loaded (#50, #13)', async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Analysen')
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  const torrsubstans = page.getByLabel('Torrsubstans')
+  await torrsubstans.fill('')
+  await expect(page.getByText('Fyll i ett värde.')).toBeVisible()
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await expect(torrsubstans).toHaveValue('39.7')
+})
+
+test('analysis values: text is refused, a cleared value is missing (C2)', async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Analysen')
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  const energi = page.getByRole('textbox', { name: 'Energi' })
+  const varde = await energi.inputValue()
+  await energi.fill('mycket')
+  await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeVisible()
+  await energi.blur()
+  await expect(energi).toHaveValue(varde)
+  // A cleared value is not reported as 0: it is missing, and the plan estimates it.
+  await page.getByRole('textbox', { name: 'Kalcium (Ca)' }).fill('')
+  await page.getByRole('textbox', { name: 'Kalcium (Ca)' }).blur()
+  await expect(page.getByRole('textbox', { name: 'Kalcium (Ca)' })).toHaveValue('')
+  await expect(page.getByRole('row', { name: /^Kalcium/ })).toContainText('Saknas, uppskattas')
+})
+
 test('calendar download is a valid ics', async ({ page }) => {
   await loadExamplePlan(page)
   const download = page.waitForEvent('download')

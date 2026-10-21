@@ -266,6 +266,15 @@
       "sourceEstimated": "Grovfoder: uppskattat",
       "sourceNotAnalysed": "Grovfoder: ej analyserat",
       "sourceAnalysis": "Grovfoder: analys"
+    },
+    "invalid": {
+      "title": "Foderplanen kan inte räknas fram",
+      "intro": "Rätta de här uppgifterna först:",
+      "toHorse": "Till hästen",
+      "toAnalysis": "Till analysen",
+      "normalWeight": "Vikt vid normalt hull",
+      "hull": "Hull",
+      "feedRow": "Nuvarande foder, rad {{row}}"
     }
   },
   "horse": {
@@ -551,9 +560,6 @@
       "arbete50to75": "arbete 50–75 %",
       "arbete75to130": "arbete 75–130 %"
     },
-    "error": {
-      "adultsOnly": "Modellen gäller vuxna hästar ({{minAgeYears}} år och äldre). Unghästar ingår inte i prototypen."
-    },
     "table32Group": {
       "hart": "hästar i hårt arbete",
       "ovriga": "hästar utan hårt arbete"
@@ -601,6 +607,14 @@
     "trend": {
       "weightLossFast": "Vikten minskar {{percentPerWeek}} % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.",
       "conditionRising": "Hullet ökar trots att hästen redan var i överhull. Se över energin i foderstaten."
+    },
+    "validation": {
+      "range": "Ange ett värde mellan {{min}} och {{max}}.",
+      "wholeRange": "Ange ett heltal mellan {{min}} och {{max}}.",
+      "atLeast": "Värdet kan inte vara lägre än {{min}}.",
+      "positiveUpTo": "Ange ett värde över {{min}} och högst {{max}}.",
+      "adultsOnly": "Modellen gäller vuxna hästar ({{minAgeYears}} år och äldre). Unghästar ingår inte i prototypen.",
+      "trotWithinRide": "Kan inte vara fler än minuterna per pass."
     }
   },
   "transitionPace": {
@@ -616,5 +630,9 @@
       "name": "Känslig",
       "description": "Lös avföring, kolik eller fång vid tidigare byten."
     }
+  },
+  "form": {
+    "required": "Fyll i ett värde.",
+    "notANumber": "Skriv ett tal, till exempel 12,5."
   }
 }

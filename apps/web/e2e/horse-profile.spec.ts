@@ -1,5 +1,14 @@
 import { FOLJDFRAGA, profilMedFoljdfraga } from './fixtures/ai'
-import { createAccount, enterDemo, expect, goToStep, horseList, test, typeKeyByKey } from './support/helpers'
+import {
+  createAccount,
+  enterDemo,
+  expect,
+  goToStep,
+  horseList,
+  loadExamplePlan,
+  test,
+  typeKeyByKey,
+} from './support/helpers'
 
 test('add a horse and it survives reload', async ({ page }) => {
   await createAccount(page, 'Hästägare', 'agare@example.se')
@@ -77,4 +86,26 @@ test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
   await expect(page.getByLabel('Kg per dag (som det utfodras)')).toHaveValue('12.5')
 })
 
-test.skip('clearing weight is rejected (C2, fixed in M1)', () => {})
+test('clearing weight is rejected (C2)', async ({ page }) => {
+  await enterDemo(page)
+  const weight = page.getByLabel('Vikt (kg)')
+  await expect(weight).toHaveValue('550')
+  await weight.fill('')
+  await expect(page.getByText('Fyll i ett värde.')).toBeVisible()
+  // Leaving the empty field brings back the weight it still holds; it never becomes 0.
+  await weight.blur()
+  await expect(weight).toHaveValue('550')
+  await expect(page.getByText('Fyll i ett värde.')).toBeHidden()
+})
+
+test('a weight outside the range is shown at the field and stops the plan (C1)', async ({ page }) => {
+  await loadExamplePlan(page)
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Vikt (kg)').fill('0')
+  await expect(page.getByText('Ange ett värde mellan 50 och 1 200.')).toBeVisible()
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByRole('heading', { name: 'Foderplanen kan inte räknas fram' })).toBeVisible()
+  await expect(page.getByText('Vikt (kg): Ange ett värde mellan 50 och 1 200.')).toBeVisible()
+  await page.getByRole('button', { name: 'Till hästen' }).click()
+  await expect(page.getByLabel('Vikt (kg)')).toHaveValue('0')
+})

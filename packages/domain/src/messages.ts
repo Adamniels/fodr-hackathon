@@ -131,7 +131,14 @@ export type SensitivityMessage =
 export type Trendvarning =
   Message<'trend.weightLossFast', { percentPerWeek: number }> | Message<'trend.conditionRising'>
 
-export type ErrorMessage = Message<'error.adultsOnly', { minAgeYears: number }>
+/** Why a number in a horse profile or an analysis cannot be used (validation.ts). */
+export type ValidationMessage =
+  | Message<'validation.range', { min: number; max: number }>
+  | Message<'validation.wholeRange', { min: number; max: number }>
+  | Message<'validation.atLeast', { min: number }>
+  | Message<'validation.positiveUpTo', { min: number; max: number }>
+  | Message<'validation.adultsOnly', { minAgeYears: number }>
+  | Message<'validation.trotWithinRide'>
 
 export type DomainMessage =
   | Byteskal
@@ -144,15 +151,4 @@ export type DomainMessage =
   | Uteslutningsskal
   | SensitivityMessage
   | Trendvarning
-  | ErrorMessage
-
-/** An input the engine cannot calculate for. The message says why, for the web app to render. */
-export class DomainError extends Error {
-  readonly meddelande: ErrorMessage
-
-  constructor(meddelande: ErrorMessage) {
-    super(meddelande.code)
-    this.name = 'DomainError'
-    this.meddelande = meddelande
-  }
-}
+  | ValidationMessage

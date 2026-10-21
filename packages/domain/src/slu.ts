@@ -2,7 +2,7 @@
 // (Jansson red., 7:e upplagan 2013). Tabellnummer i kommentarerna avser den rapporten.
 // Antaganden som inte kommer från SLU är märkta ANTAGANDE.
 
-import { DomainError, type Kallhanvisning, type Notering, type SluNiva } from './messages'
+import type { Kallhanvisning, Notering, SluNiva } from './messages'
 import { NA_PER_NACL, type NutrientKey } from './nutrients'
 import { hittaRas } from './breeds'
 import type { Arbetsniva, Hastprofil, Prestanda } from './types'
@@ -128,13 +128,8 @@ const VITAMIN = {
   biotin: { normal: 0.1, hart: 0.15, max: undefined },
 } as const
 
-/** The model covers adult horses only. */
-const MIN_ALDER_AR = 3
-
+/** Requirements for a valid profile (validateProfile, which skapaPlan applies first). */
 export function beraknaBehov(p: Hastprofil): Behovsresultat {
-  if (p.alderAr < MIN_ALDER_AR) {
-    throw new DomainError({ code: 'error.adultsOnly', params: { minAgeYears: MIN_ALDER_AR } })
-  }
   const noteringar: Notering[] = []
   const vikt = viktVidNormalHull(p)
   const per100 = vikt / 100

@@ -1284,6 +1284,11 @@
   color: var(--text-2);
   font-size: 14px;
 }
+/* A field's validation message (#13), in the error colour of .ruta.fel. */
+.falt-fel {
+  color: var(--brist);
+  font-size: 14px;
+}
 /* Fälten är 44 px höga med 16 px text, så att de är lätta att träffa och mobiler inte zoomar. */
 .falt input:not([type='checkbox']):not([type='range']),
 .falt select,

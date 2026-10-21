@@ -234,15 +234,12 @@ export function Startsida({ produkter, inloggadSom, onDemo, onLoggaIn }: Props) 
 function Produktbild({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {
-    try {
-      return skapaPlan(
-        { ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } },
-        analysKomplett,
-        produkter,
-      )
-    } catch {
-      return null
-    }
+    const result = skapaPlan(
+      { ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } },
+      analysKomplett,
+      produkter,
+    )
+    return 'plan' in result ? result.plan : null
   }, [produkter])
   if (!plan) return null
   const poster = [...plan.behallnaFoder, ...(plan.urval?.poster ?? [])]

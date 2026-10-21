@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { filTillBase64, lasAnalys } from '../api'
 import { analysBas, analysKomplett } from '../data/exempel'
 import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
 import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey } from '@fodr/domain/nutrients'
+import { validateAnalysis, type AnalysisField } from '@fodr/domain/validation'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { analysEnhet, etikett, formatDate } from '../format'
+import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
@@ -58,11 +60,18 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
     }
   }
 
-  const andra = (k: NutrientKey, v: string) => {
+  const errors = useMemo(() => (analys ? validateAnalysis(analys) : []), [analys])
+  const errorFor = (field: AnalysisField) => {
+    const error = errors.find((e) => e.field === field)
+    return error && domainText(error.message)
+  }
+
+  /** A typed value, or undefined when the field is cleared: the value is then missing, never 0. */
+  const andra = (k: NutrientKey, v: number | undefined) => {
     if (!analys) return
     const perKgTs = { ...analys.perKgTs }
-    if (v === '') delete perKgTs[k]
-    else perKgTs[k] = Number(v.replace(',', '.'))
+    if (v === undefined) delete perKgTs[k]
+    else perKgTs[k] = v
     onAnalys(
       { ...analys, perKgTs },
       omrakningar.filter((o) => o.amne !== k),
@@ -115,23 +124,20 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
               <DecimalInput
                 className="smal"
                 value={analys.tsProcent}
+                error={errorFor('tsProcent')}
                 onChange={(tsProcent) => onAnalys({ ...analys, tsProcent }, omrakningar)}
               />{' '}
               %
             </label>
             <label>
               {t('analysis.ash')}{' '}
-              <input
+              <DecimalInput
                 className="smal"
-                type="number"
-                value={analys.askaGPerKgTs ?? ''}
+                value={analys.askaGPerKgTs}
                 placeholder="–"
-                onChange={(e) =>
-                  onAnalys(
-                    { ...analys, askaGPerKgTs: e.target.value === '' ? undefined : Number(e.target.value) },
-                    omrakningar,
-                  )
-                }
+                error={errorFor('askaGPerKgTs')}
+                onChange={(askaGPerKgTs) => onAnalys({ ...analys, askaGPerKgTs }, omrakningar)}
+                onClear={() => onAnalys({ ...analys, askaGPerKgTs: undefined }, omrakningar)}
               />{' '}
               {t('units.perKgDm', { unit: 'g' })}
             </label>
@@ -154,11 +160,14 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                   <tr key={k} className={v === undefined ? 'saknas' : ''}>
                     <td>{etikett(k)}</td>
                     <td>
-                      <input
+                      <DecimalInput
                         className="smal"
-                        value={v ?? ''}
+                        value={v}
                         placeholder="–"
-                        onChange={(e) => andra(k, e.target.value)}
+                        label={etikett(k)}
+                        error={errorFor(`perKgTs.${k}`)}
+                        onChange={(n) => andra(k, n)}
+                        onClear={() => andra(k, undefined)}
                       />
                     </td>
                     <td className="enhet">{analysEnhet(k)}</td>
