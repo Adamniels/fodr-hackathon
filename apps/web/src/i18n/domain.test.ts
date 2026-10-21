@@ -214,6 +214,18 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'validation.positiveUpTo', params: { min: 0, max: 40 } }, 'Ange ett värde över 0 och högst 40.'],
   [{ code: 'validation.trotWithinRide', params: {} }, 'Kan inte vara fler än minuterna per pass.'],
   [{ code: 'validation.date', params: {} }, 'Ange ett datum.'],
+  // The analysis step (#95): the errors tillGrovfoderanalys used to throw, and the conversion notes, whose number
+  // prints as JavaScript writes it until #102 formats it for the locale.
+  [{ code: 'analysis.notAnAnalysis', params: {} }, 'Dokumentet ser inte ut att vara en foderanalys.'],
+  [
+    { code: 'analysis.missingDryMatter', params: {} },
+    'Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt.',
+  ],
+  [
+    { code: 'conversion.energyFromRuminant', params: { mj: 10.5 } },
+    'Räknat från idisslarvärdet 10.5 MJ med SLU:s formel',
+  ],
+  [{ code: 'conversion.proteinFromCrude', params: { grams: 123.4 } }, 'Räknat från råprotein 123.4 g med SLU:s formel'],
   // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
   [{ code: 'qualityTitle.proteinHigh', params: {} }, 'Mer protein än hästen behöver'],
   [{ code: 'qualityTitle.proteinLow', params: {} }, 'Proteinfattigt grovfoder'],

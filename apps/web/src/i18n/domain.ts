@@ -167,6 +167,11 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'validation.adultsOnly': (p) => ({ minAgeYears: formatNumber(p.minAgeYears, 0) }),
   'validation.trotWithinRide': noParams,
   'validation.date': noParams,
+  'analysis.notAnAnalysis': noParams,
+  'analysis.missingDryMatter': noParams,
+  // The report's own number, printed as the engine used to print it ("10.5"); #102 formats it for the locale.
+  'conversion.energyFromRuminant': (p) => ({ mj: String(p.mj) }),
+  'conversion.proteinFromCrude': (p) => ({ grams: String(p.grams) }),
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */

@@ -625,6 +625,14 @@
     },
     "list": {
       "and": "{{items}} och {{last}}"
+    },
+    "analysis": {
+      "notAnAnalysis": "Dokumentet ser inte ut att vara en foderanalys.",
+      "missingDryMatter": "Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt."
+    },
+    "conversion": {
+      "energyFromRuminant": "Räknat från idisslarvärdet {{mj}} MJ med SLU:s formel",
+      "proteinFromCrude": "Räknat från råprotein {{grams}} g med SLU:s formel"
     }
   },
   "transitionPace": {

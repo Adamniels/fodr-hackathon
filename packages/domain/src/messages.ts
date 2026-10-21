@@ -152,6 +152,13 @@ export type ValidationMessage =
   | Message<'validation.trotWithinRide'>
   | Message<'validation.date'>
 
+/** Why a read report cannot become an analysis (analysis.ts). */
+export type AnalysisErrorMessage = Message<'analysis.notAnAnalysis'> | Message<'analysis.missingDryMatter'>
+
+/** How a value was converted with an SLU formula, with the raw value the report gave (analysis.ts). */
+export type ConversionMessage =
+  Message<'conversion.energyFromRuminant', { mj: number }> | Message<'conversion.proteinFromCrude', { grams: number }>
+
 export type DomainMessage =
   | Byteskal
   | ActionMessage
@@ -165,3 +172,5 @@ export type DomainMessage =
   | Trendvarning
   | Urvalshinder
   | ValidationMessage
+  | AnalysisErrorMessage
+  | ConversionMessage
