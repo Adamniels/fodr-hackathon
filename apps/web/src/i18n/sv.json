@@ -494,7 +494,13 @@
     }
   },
   "errors": {
-    "http": "Fel {{status}}"
+    "http": "Fel {{status}}",
+    "notFoundTitle": "Sidan finns inte",
+    "notFoundText": "Adressen leder inte till någon sida i Fodr.",
+    "pageTitle": "Något gick fel",
+    "pageText": "Sidan kunde inte visas. Ladda om sidan eller gå till startsidan.",
+    "reload": "Ladda om sidan",
+    "toLanding": "Till startsidan"
   },
   "domain": {
     "action": {

@@ -83,6 +83,28 @@ test('explanation failure keeps the plan usable', async ({ page, ai }) => {
   await expect(page.getByRole('row').filter({ hasText: 'Salt 1,5 kg' })).toBeVisible()
 })
 
+test('a failed rewrite shows the error, and a revisit shows the saved text without asking again', async ({
+  page,
+  ai,
+}) => {
+  await loadExamplePlan(page)
+  const [first] = forklaring.text.split('\n')
+  const paragraphs = page.getByRole('paragraph')
+  await expect(paragraphs.filter({ hasText: first })).toBeVisible()
+
+  ai.respondWith('forklaring', { fel: 'Nere' }, 502)
+  await page.getByRole('button', { name: 'Skriv om' }).click()
+  await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
+  await ai.settled()
+  const callsAfterRewrite = ai.calls('forklaring').length
+
+  await goToStep(page, 'Journal')
+  await goToStep(page, 'Foderplan')
+  await expect(paragraphs.filter({ hasText: first })).toBeVisible()
+  await ai.settled()
+  expect(ai.calls('forklaring')).toHaveLength(callsAfterRewrite)
+})
+
 test.describe('dry matter entry (#50)', () => {
   test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 

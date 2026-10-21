@@ -1,99 +1,46 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import './App.css'
-import produkterJson from './data/products.json'
-import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
+import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
+import '../App.css'
+import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
 import { skapaPlan } from '@fodr/domain/plan'
-import { loadHorses, loadJournal, newJournalEntryId, nyHast, saveHorses, saveJournal } from './storage'
-import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
+import { loadHorses, loadJournal, nyHast, saveHorses, saveJournal } from '../storage'
+import { ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
-import { DEMO_ACCOUNT, currentUser, logIn, logOut, type User } from './auth'
-import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from './format'
-import { Login } from './components/Login'
-import { LandingPage } from './components/LandingPage'
-import { HorseStep } from './components/HorseStep'
-import { AnalysisStep } from './components/AnalysisStep'
-import { PlanStep } from './components/PlanStep'
-import { InvalidInput } from './components/InvalidInput'
-import { JournalStep } from './components/JournalStep'
-import { Wordmark } from './components/Brand'
+import { logOut, type User } from '../auth'
+import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
+import { Wordmark } from '../components/Brand'
+import { produkter } from '../products'
+import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
+import { useSession } from './session'
 
-const produkter = produkterJson as Produkt[]
-type Step = 'hast' | 'analys' | 'plan' | 'journal'
+const STEP_OF_PATH = Object.fromEntries(STEPS.map((s) => [STEP_PATH[s], s])) as Record<string, Step>
 
-const STEPS: Step[] = ['hast', 'analys', 'plan', 'journal']
-
-export default function App() {
-  const { t } = useTranslation()
-  const [user, setUser] = useState<User | null>(currentUser)
-  const [visaStart, setVisaStart] = useState(() => !currentUser())
-  const [visaLogin, setVisaLogin] = useState(false)
-
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [visaStart])
-
-  const oppna = (a: User) => {
-    setUser(a)
-    setVisaLogin(false)
-    setVisaStart(false)
-  }
-
-  if (!user || visaStart) {
-    return (
-      <>
-        <LandingPage
-          produkter={produkter}
-          loggedInAs={user?.namn ?? null}
-          onDemo={() => oppna(user ?? logIn(DEMO_ACCOUNT.epost))}
-          onLogIn={() => setVisaLogin(true)}
-        />
-        {visaLogin && (
-          <div className="dialog-bakgrund" onClick={() => setVisaLogin(false)}>
-            <div
-              className="dialog"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t('login.dialogLabel')}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button className="dialog-stang" aria-label={t('common.close')} onClick={() => setVisaLogin(false)}>
-                ×
-              </button>
-              <Login onLoggedIn={oppna} />
-            </div>
-          </div>
-        )}
-      </>
-    )
-  }
-
-  return (
-    <Workspace
-      key={user.id}
-      user={user}
-      onToLanding={() => setVisaStart(true)}
-      onLogOut={() => {
-        logOut()
-        setUser(null)
-        setVisaStart(true)
-      }}
-    />
-  )
+/** /horses and below: a logged-out visitor goes to /login and comes back here after logging in. */
+export function WorkspaceGate() {
+  const session = useSession()
+  const location = useLocation()
+  if (!session.user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  return <Workspace key={session.user.id} user={session.user} setUser={session.setUser} />
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
-function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: () => void; onLogOut: () => void }) {
+// The horse and step come from the URL, /horses/:horseId/<step>; the steps render in the Outlet (steps.tsx).
+function Workspace({ user, setUser }: { user: User; setUser: (user: User | null) => void }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const horseMatch = useMatch('/horses/:horseId/*')
+  const stepMatch = useMatch('/horses/:horseId/:step')
   const [hastar, setHastar] = useState<Hastprofil[]>(() => loadHorses(user.id))
-  const [valdId, setValdId] = useState(hastar[0]?.id)
-  const [step, setStep] = useState<Step>('hast')
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
   const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => loadJournal(user.id))
   const [menyOppen, setMenyOppen] = useState(false)
 
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
   useEffect(() => saveHorses(user.id, hastar), [user.id, hastar])
   // Read again when the page is shown (a laptop opened the next morning), so the journal's default date and the
   // follow-up check move to the new day (#107). A page left visible across midnight keeps the old day until then.
@@ -106,8 +53,10 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
     return () => document.removeEventListener('visibilitychange', onShown)
   }, [])
   useEffect(() => saveJournal(user.id, journal), [user.id, journal])
-  // Undefined for an account with no horses; hastar[0] alone is typed as always present (#17).
-  const hast = hastar.find((h) => h.id === valdId) ?? (hastar.length > 0 ? hastar[0] : undefined)
+  const horseId = horseMatch?.params.horseId
+  const hast = horseId === undefined ? undefined : hastar.find((h) => h.id === horseId)
+  // An account with no horses has only the profile step, at /horses.
+  const step: Step = (stepMatch?.params.step && STEP_OF_PATH[stepMatch.params.step]) || 'hast'
 
   const plan = useMemo(
     () =>
@@ -117,21 +66,27 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
     [hast, analys],
   )
 
-  function gaTill(s: Step) {
-    setStep(s)
+  // Choosing a horse keeps the step, as it did before the steps had URLs. flushSync renders the new step during the
+  // click, as the state change did: in a transition the old step stays on screen a moment and takes the next input.
+  const open = (id: string, s: Step, replace = false) => {
+    void navigate(`/horses/${id}/${STEP_PATH[s]}`, { flushSync: true, replace })
     window.scrollTo({ top: 0 })
   }
-  const valjHast = (id: string) => {
-    setValdId(id)
+  const goTo = (s: Step) => {
+    if (hast) open(hast.id, s)
+  }
+  const selectHorse = (id: string) => {
+    open(id, step)
     setMenyOppen(false)
   }
-  const uppdateraHast = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
-  const laggTillHast = (h: Hastprofil) => {
+  const updateHorse = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
+  const addHorse = (h: Hastprofil) => {
     setHastar((alla) => [...alla, h])
-    valjHast(h.id)
-    gaTill('hast')
+    // The first horse replaces /horses, which would only send back to it.
+    open(h.id, 'hast', horseId === undefined)
+    setMenyOppen(false)
   }
-  const laggTillPost = (hastId: string, post: Journalpost) =>
+  const addEntry = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
   // A saved plan stores its analysis as this text, exactly as before #12. The date stays YYYY-MM-DD because the text
   // is stored as it is; #27 stores the analysis as values instead.
@@ -146,6 +101,28 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
     return a.provdatum ? t('app.properties.analysisSampled', { lab, date: formatDate(a.provdatum) }) : lab
   }
   const initial = (h?: Hastprofil) => (h?.namn || '?').slice(0, 1).toUpperCase()
+
+  // A link to a horse this account does not have lands on the first horse.
+  if (horseId !== undefined && !hast) return <Navigate to="/horses" replace />
+
+  const context: WorkspaceContext = {
+    hastar,
+    hast,
+    analys,
+    omrakningar,
+    plan,
+    planOgonblick,
+    journal,
+    today,
+    goTo,
+    setAnalysis: (a, o) => {
+      setAnalys(a)
+      setOmrakningar(o)
+    },
+    updateHorse,
+    addHorse,
+    addEntry,
+  }
 
   return (
     <div className={`arbetsyta ${menyOppen ? 'meny-oppen' : ''}`}>
@@ -167,7 +144,7 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
               <button
                 className={`hastrad ${h.id === hast?.id ? 'vald' : ''}`}
                 aria-current={h.id === hast?.id ? 'page' : undefined}
-                onClick={() => valjHast(h.id)}
+                onClick={() => selectHorse(h.id)}
               >
                 <span className="hast-ikon">{initial(h)}</span>
                 <span className="hastrad-namn">{h.namn || t('app.sidebar.unnamedHorse')}</span>
@@ -175,7 +152,7 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
             </li>
           ))}
           <li>
-            <button className="hastrad ny" onClick={() => laggTillHast(nyHast())}>
+            <button className="hastrad ny" onClick={() => addHorse(nyHast())}>
               <span className="hast-ikon">+</span>
               <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
@@ -190,10 +167,18 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
               <span>{user.epost}</span>
             </span>
           </div>
-          <button className="sidofalt-lank" onClick={onToLanding}>
+          <button className="sidofalt-lank" onClick={() => void navigate('/')}>
             {t('app.sidebar.toLanding')}
           </button>
-          <button className="sidofalt-lank" onClick={onLogOut}>
+          <button
+            className="sidofalt-lank"
+            onClick={() => {
+              logOut()
+              // The landing page renders first, so the gate never sees the session end and sends to /login.
+              void navigate('/', { flushSync: true })
+              setUser(null)
+            }}
+          >
             {t('app.sidebar.logOut')}
           </button>
         </div>
@@ -264,7 +249,7 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
                 className={step === id ? 'vald' : ''}
                 aria-current={step === id ? 'page' : undefined}
                 disabled={!tillganglig(id)}
-                onClick={() => gaTill(id)}
+                onClick={() => goTo(id)}
               >
                 <span className="flik-nr">{formatNumber(i + 1, 0)}</span>
                 {t(`steps.${id}`)}
@@ -273,67 +258,7 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
           </nav>
 
           <main className="stegyta">
-            {step === 'hast' && (
-              <HorseStep
-                selected={hast}
-                produkter={produkter}
-                onChange={uppdateraHast}
-                onNew={laggTillHast}
-                onNext={() => gaTill('analys')}
-              />
-            )}
-            {step === 'analys' && hast && (
-              <AnalysisStep
-                hast={hast}
-                analys={analys}
-                omrakningar={omrakningar}
-                onAnalysisChange={(a, o) => {
-                  setAnalys(a)
-                  setOmrakningar(o)
-                }}
-                onNext={() => gaTill('plan')}
-              />
-            )}
-            {step === 'plan' &&
-              hast &&
-              analys &&
-              plan &&
-              ('errors' in plan ? (
-                <InvalidInput
-                  errors={plan.errors}
-                  onToHorse={() => gaTill('hast')}
-                  onToAnalysis={() => gaTill('analys')}
-                />
-              ) : (
-                <PlanStep
-                  hast={hast}
-                  analys={analys}
-                  plan={plan.plan}
-                  onSaveToJournal={() => {
-                    // The plan is shown, so its snapshot exists.
-                    if (planOgonblick)
-                      laggTillPost(
-                        hast.id,
-                        nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: planOgonblick }),
-                      )
-                    gaTill('journal')
-                  }}
-                />
-              ))}
-            {step === 'journal' && hast && (
-              <JournalStep
-                hast={hast}
-                poster={journal[hast.id] ?? []}
-                aktuellPlan={planOgonblick}
-                idag={today}
-                onAdd={(post, uppdateraProfil) => {
-                  laggTillPost(hast.id, post)
-                  if (uppdateraProfil) {
-                    uppdateraHast({ ...hast, viktKg: post.viktKg ?? hast.viktKg, hull: post.hull ?? hast.hull })
-                  }
-                }}
-              />
-            )}
+            <Outlet context={context} />
           </main>
           <p className="fotnot">{t('app.footnote')}</p>
         </div>
