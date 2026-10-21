@@ -14,12 +14,14 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `packages/domain`) and fail if one lacks the script; `dev`, `build` and `test:e2e` run `apps/web`; `test:scripts` runs the agent script tests in `scripts/agent/`. Every one must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts` and `test:e2e`.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration` and `db:migrate` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API and the integration tests need the Compose services (`docker compose up --wait`) and the root `.env` (copy `.env.example`). Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
 
 | Command | What |
 |---|---|
-| `npm run dev` | Vite dev server with the `/api` routes (the AI routes need `apps/web/.env`) |
-| `npm test` | Unit tests (Vitest, `src/**/*.test.ts`) |
+| `npm run dev` | The API on :3000 and the Vite dev server on :5173, which proxies `/api/v1` to the API and serves the AI routes under `/api` itself (they need `apps/web/.env`); `dev:api` and `dev:web` start one |
+| `npm test` | Unit tests (Vitest, `src/**/*.test.ts`), no services needed |
+| `npm run test:integration` | API integration tests against the Compose Postgres (`src/**/*.integration.test.ts`, own `fodr_test` database) |
+| `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
 | `npm run test:e2e` | Playwright e2e tests, AI mocked, no API key needed |
 | `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
 | `npm run lint` | ESLint, type aware |

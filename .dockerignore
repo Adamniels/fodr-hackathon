@@ -1,0 +1,15 @@
+# Only what `npm ci` and `npm run build` need goes into the build context; never secrets.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.worktrees
+.github
+.claude
+docs
+testdata
+scripts
+**/playwright-report
+**/test-results

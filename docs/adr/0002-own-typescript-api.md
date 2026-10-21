@@ -21,3 +21,7 @@ We build our own HTTP API in TypeScript with **Hono** (4.13.x) on Node (`@hono/n
 - More code we own and maintain, in exchange for one codebase where the rules live.
 - Portable: nothing ties us to a provider (see ADR 0005).
 - The API must be run locally during development (ADR 0006), replacing the Vite middleware in `app/server/apiPlugin.ts`.
+
+## Notes
+
+- 2026-10-21 (#19): `apps/api` runs TypeScript with `tsx` in development and as an esbuild bundle (`dist/main.mjs`) in production, because Node's built-in type stripping cannot load `packages/domain`'s extensionless imports. `GET /api/v1/health` is a liveness check that does not touch the database, so a host's polling neither keeps a scale-to-zero Postgres awake nor restarts the app when only the database is down; a readiness check can be added with the host in M5 (ADR 0005). In development Vite proxies `/api/v1` to the API; in production the API serves the built web app on the same origin (owner).

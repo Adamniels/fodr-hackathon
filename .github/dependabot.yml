@@ -47,6 +47,24 @@ updates:
       prefix: chore
       include: scope
 
+  # The Node base image in the Dockerfile (ADR 0005), with the same cooldown.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Stockholm
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      # The Node major follows .nvmrc and @types/node, so it is bumped by hand together with them.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
