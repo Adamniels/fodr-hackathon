@@ -160,7 +160,14 @@ function Profilformular({
         label={t('horse.hullLabel', { hull: tal(hast.hull, 0), text: hullText(hast.hull) })}
         hjalp={t('horse.hullHint')}
       >
-        <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
+        <input
+          type="range"
+          min={1}
+          max={9}
+          value={hast.hull}
+          aria-invalid={errorFor('hull') ? true : undefined}
+          onChange={(e) => set({ hull: Number(e.target.value) })}
+        />
         {errorFor('hull') && <span className="falt-fel">{errorFor('hull')}</span>}
       </Falt>
 

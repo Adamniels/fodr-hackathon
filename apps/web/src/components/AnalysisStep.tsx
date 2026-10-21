@@ -164,6 +164,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalys, onVidare }: 
                         className="smal"
                         value={v}
                         placeholder="–"
+                        label={etikett(k)}
                         error={errorFor(`perKgTs.${k}`)}
                         onChange={(n) => andra(k, n)}
                         onClear={() => andra(k, undefined)}

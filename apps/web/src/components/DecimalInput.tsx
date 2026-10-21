@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseDecimal } from '../format'
 
@@ -22,6 +22,7 @@ export function DecimalInput({
   error,
   className,
   placeholder,
+  label,
   needsMinusKey = false,
 }: {
   value: number | undefined
@@ -30,9 +31,12 @@ export function DecimalInput({
   error?: string
   className?: string
   placeholder?: string
+  /** The accessible name, for a field outside a <label> (the analysis table). */
+  label?: string
   needsMinusKey?: boolean
 }) {
   const { t } = useTranslation()
+  const messageId = useId()
   const [draft, setDraft] = useState(() => show(value))
   // The last value this field reported or received. Only a change from outside (an example or an uploaded report)
   // replaces the draft, so the draft is never reset while the user is typing.
@@ -51,7 +55,8 @@ export function DecimalInput({
         : parseDecimal(draft) === undefined
           ? t('form.notANumber')
           : undefined
-  const message = draftError ?? error
+  // A lone minus sign is a number being typed (a temperature below zero): no message yet, but it restores on blur.
+  const message = (draft.trim() === '-' ? undefined : draftError) ?? error
 
   return (
     <>
@@ -60,7 +65,9 @@ export function DecimalInput({
         inputMode={needsMinusKey ? 'text' : 'decimal'}
         value={draft}
         placeholder={placeholder}
+        aria-label={label}
         aria-invalid={message ? true : undefined}
+        aria-describedby={message ? messageId : undefined}
         onChange={(e) => {
           setDraft(e.target.value)
           if (onClear && e.target.value.trim() === '') {
@@ -78,7 +85,11 @@ export function DecimalInput({
           if (draftError) setDraft(show(value))
         }}
       />
-      {message && <span className="falt-fel">{message}</span>}
+      {message && (
+        <span id={messageId} className="falt-fel">
+          {message}
+        </span>
+      )}
     </>
   )
 }

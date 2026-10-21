@@ -612,7 +612,7 @@
       "range": "Ange ett värde mellan {{min}} och {{max}}.",
       "wholeRange": "Ange ett heltal mellan {{min}} och {{max}}.",
       "atLeast": "Värdet kan inte vara lägre än {{min}}.",
-      "positiveUpTo": "Ange ett värde över 0 och högst {{max}}.",
+      "positiveUpTo": "Ange ett värde över {{min}} och högst {{max}}.",
       "adultsOnly": "Modellen gäller vuxna hästar ({{minAgeYears}} år och äldre). Unghästar ingår inte i prototypen.",
       "trotWithinRide": "Kan inte vara fler än minuterna per pass."
     }

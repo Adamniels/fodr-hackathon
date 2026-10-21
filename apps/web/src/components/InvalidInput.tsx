@@ -1,3 +1,4 @@
+import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import type { InputError } from '@fodr/domain/validation'
 import type { NutrientKey } from '@fodr/domain/nutrients'
@@ -5,6 +6,25 @@ import { etikett } from '../format'
 import { domainText } from '../i18n/domain'
 
 const FEED_ROW = /^nuvarandeFoder\.(\d+)\.gramPerDag$/
+
+/** Fields with a fixed label; feed rows and nutrients are named from their row and nutrient. */
+type NamedField = Exclude<InputError['field'], `nuvarandeFoder.${number}.gramPerDag` | `perKgTs.${string}`>
+
+// A Record over every named field, so a new field without a label is a compile error.
+const LABELS: Record<NamedField, ParseKeys> = {
+  alderAr: 'horse.age',
+  viktKg: 'horse.weight',
+  viktVidNormalHullKg: 'plan.invalid.normalWeight',
+  hull: 'plan.invalid.hull',
+  'ridning.passPerVecka': 'horse.sessionsPerWeek',
+  'ridning.minuterPerPass': 'horse.minutesPerSession',
+  'ridning.travGaloppMinPerPass': 'horse.trotCanter',
+  'miljo.timmarUtePerDag': 'horse.environment.hoursOut',
+  'miljo.lagstaTempC': 'horse.environment.lowestTemp',
+  'grovfoder.kgPerDag': 'horse.roughageKg',
+  tsProcent: 'analysis.dryMatter',
+  askaGPerKgTs: 'analysis.ash',
+}
 
 /** Shown instead of a plan when the engine refuses the input (C1, #13): what to correct, and where. */
 export function InvalidInput({
@@ -22,34 +42,7 @@ export function InvalidInput({
     const row = FEED_ROW.exec(field)
     if (row) return t('plan.invalid.feedRow', { row: String(Number(row[1]) + 1) })
     if (field.startsWith('perKgTs.')) return etikett(field.slice('perKgTs.'.length) as NutrientKey)
-    switch (field) {
-      case 'alderAr':
-        return t('horse.age')
-      case 'viktKg':
-        return t('horse.weight')
-      case 'viktVidNormalHullKg':
-        return t('plan.invalid.normalWeight')
-      case 'hull':
-        return t('plan.invalid.hull')
-      case 'ridning.passPerVecka':
-        return t('horse.sessionsPerWeek')
-      case 'ridning.minuterPerPass':
-        return t('horse.minutesPerSession')
-      case 'ridning.travGaloppMinPerPass':
-        return t('horse.trotCanter')
-      case 'miljo.timmarUtePerDag':
-        return t('horse.environment.hoursOut')
-      case 'miljo.lagstaTempC':
-        return t('horse.environment.lowestTemp')
-      case 'grovfoder.kgPerDag':
-        return t('horse.roughageKg')
-      case 'tsProcent':
-        return t('analysis.dryMatter')
-      case 'askaGPerKgTs':
-        return t('analysis.ash')
-      default:
-        return field
-    }
+    return t(LABELS[field as NamedField])
   }
   const inAnalysis = (field: InputError['field']) =>
     field === 'tsProcent' || field === 'askaGPerKgTs' || field.startsWith('perKgTs.')

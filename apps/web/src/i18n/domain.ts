@@ -142,7 +142,7 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'validation.range': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),
   'validation.wholeRange': (p) => ({ min: tal(p.min, 0), max: tal(p.max, 0) }),
   'validation.atLeast': (p) => ({ min: tal(p.min, 1) }),
-  'validation.positiveUpTo': (p) => ({ max: tal(p.max, 1) }),
+  'validation.positiveUpTo': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),
   'validation.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
   'validation.trotWithinRide': tom,
 }

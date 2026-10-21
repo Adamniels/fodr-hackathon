@@ -20,7 +20,18 @@ describe('validateProfile', () => {
     ['age above 40', { alderAr: 40 }, { alderAr: 40.5 }, range(3, 40)],
     ['weight below 50 kg', { viktKg: 50 }, { viktKg: 49 }, range(50, 1200)],
     ['weight above 1200 kg', { viktKg: 1200 }, { viktKg: 1201 }, range(50, 1200)],
-    ['weight at normal condition', { viktVidNormalHullKg: 50 }, { viktVidNormalHullKg: 0 }, range(50, 1200)],
+    [
+      'weight at normal condition below 50 kg',
+      { viktVidNormalHullKg: 50 },
+      { viktVidNormalHullKg: 0 },
+      range(50, 1200),
+    ],
+    [
+      'weight at normal condition above 1200 kg',
+      { viktVidNormalHullKg: 1200 },
+      { viktVidNormalHullKg: 1201 },
+      range(50, 1200),
+    ],
     ['condition below 1', { hull: 1 }, { hull: 0 }, { code: 'validation.wholeRange', params: { min: 1, max: 9 } }],
     ['condition above 9', { hull: 9 }, { hull: 10 }, { code: 'validation.wholeRange', params: { min: 1, max: 9 } }],
     ['condition not whole', { hull: 5 }, { hull: 5.5 }, { code: 'validation.wholeRange', params: { min: 1, max: 9 } }],
@@ -28,13 +39,13 @@ describe('validateProfile', () => {
       'roughage at 0 kg',
       { grovfoder: { typ: 'hosilage', kgPerDag: 0.1 } },
       { grovfoder: { typ: 'hosilage', kgPerDag: 0 } },
-      { code: 'validation.positiveUpTo', params: { max: 40 } },
+      { code: 'validation.positiveUpTo', params: { min: 0, max: 40 } },
     ],
     [
       'roughage above 40 kg',
       { grovfoder: { typ: 'hosilage', kgPerDag: 40 } },
       { grovfoder: { typ: 'hosilage', kgPerDag: 40.5 } },
-      { code: 'validation.positiveUpTo', params: { max: 40 } },
+      { code: 'validation.positiveUpTo', params: { min: 0, max: 40 } },
     ],
   ]
   it.each(fall)('%s', (_, inside, outside, message) => {
@@ -56,6 +67,9 @@ describe('validateProfile', () => {
     expect(ridning({ passPerVecka: 14, minuterPerPass: 300, travGaloppMinPerPass: 300 })).toEqual([])
     expect(ridning({ passPerVecka: 15 })).toEqual([{ field: 'ridning.passPerVecka', message: range(0, 14) }])
     expect(ridning({ passPerVecka: -1 })).toEqual([{ field: 'ridning.passPerVecka', message: range(0, 14) }])
+    expect(ridning({ minuterPerPass: -1, travGaloppMinPerPass: 0 })).toEqual([
+      { field: 'ridning.minuterPerPass', message: range(0, 300) },
+    ])
     expect(ridning({ minuterPerPass: 301, travGaloppMinPerPass: 0 })).toEqual([
       { field: 'ridning.minuterPerPass', message: range(0, 300) },
     ])
@@ -72,6 +86,8 @@ describe('validateProfile', () => {
       validateProfile({ ...demoHast, miljo: { ...demoHast.miljo!, ...m } })
     expect(miljo({ timmarUtePerDag: 24, lagstaTempC: -50 })).toEqual([])
     expect(miljo({ lagstaTempC: 40 })).toEqual([])
+    expect(miljo({ timmarUtePerDag: 0 })).toEqual([])
+    expect(miljo({ timmarUtePerDag: -1 })).toEqual([{ field: 'miljo.timmarUtePerDag', message: range(0, 24) }])
     expect(miljo({ timmarUtePerDag: 25 })).toEqual([{ field: 'miljo.timmarUtePerDag', message: range(0, 24) }])
     expect(miljo({ lagstaTempC: -51 })).toEqual([{ field: 'miljo.lagstaTempC', message: range(-50, 40) }])
     expect(miljo({ lagstaTempC: 41 })).toEqual([{ field: 'miljo.lagstaTempC', message: range(-50, 40) }])
@@ -84,6 +100,33 @@ describe('validateProfile', () => {
       { field: 'nuvarandeFoder.1.gramPerDag', message: range(0, 20000) },
       { field: 'nuvarandeFoder.2.gramPerDag', message: range(0, 20000) },
     ])
+  })
+
+  it('the weight at normal condition is optional', () => {
+    expect(validateProfile({ ...demoHast, viktVidNormalHullKg: undefined })).toEqual([])
+  })
+
+  // Saved JSON turns NaN into null, and null >= 0 is true in JavaScript; the engine would then read it as 0.
+  it('null from saved data is an error, never 0', () => {
+    const fran = (json: string) => JSON.parse(json) as never
+    expect(validateProfile({ ...demoHast, viktKg: fran('null') })).toEqual([
+      { field: 'viktKg', message: range(50, 1200) },
+    ])
+    expect(validateProfile({ ...demoHast, viktVidNormalHullKg: fran('null') })).toEqual([
+      { field: 'viktVidNormalHullKg', message: range(50, 1200) },
+    ])
+    expect(validateProfile({ ...demoHast, miljo: { ...demoHast.miljo!, lagstaTempC: fran('null') } })).toEqual([
+      { field: 'miljo.lagstaTempC', message: range(-50, 40) },
+    ])
+    expect(
+      validateProfile({ ...demoHast, nuvarandeFoder: [{ produktId: null, namn: 'X', gramPerDag: fran('null') }] }),
+    ).toEqual([{ field: 'nuvarandeFoder.0.gramPerDag', message: range(0, 20000) }])
+    expect(
+      validateProfile({
+        ...demoHast,
+        ridning: { passPerVecka: 3, minuterPerPass: 45, travGaloppMinPerPass: fran('null') },
+      }),
+    ).toEqual([{ field: 'ridning.travGaloppMinPerPass', message: range(0, 300) }])
   })
 
   it('a missing number is never treated as valid', () => {
@@ -116,6 +159,8 @@ describe('validateAnalysis', () => {
     expect(aska(1000)).toEqual([])
     expect(aska(-1)).toEqual([{ field: 'askaGPerKgTs', message: range(0, 1000) }])
     expect(aska(1001)).toEqual([{ field: 'askaGPerKgTs', message: range(0, 1000) }])
+    expect(aska(Number.NaN)).toEqual([{ field: 'askaGPerKgTs', message: range(0, 1000) }])
+    expect(aska(JSON.parse('null') as never)).toEqual([{ field: 'askaGPerKgTs', message: range(0, 1000) }])
   })
 
   it('nutrients are not negative (spec CF4); a missing one is unknown, not an error', () => {
@@ -124,8 +169,13 @@ describe('validateAnalysis', () => {
     expect(halter({ energi: 10, ca: -0.1 })).toEqual([
       { field: 'perKgTs.ca', message: { code: 'validation.atLeast', params: { min: 0 } } },
     ])
-    expect(halter({ smbRp: Number.NaN })).toEqual([
-      { field: 'perKgTs.smbRp', message: { code: 'validation.atLeast', params: { min: 0 } } },
+    for (const v of [Number.NaN, Number.POSITIVE_INFINITY, JSON.parse('null') as never]) {
+      expect(halter({ smbRp: v })).toEqual([
+        { field: 'perKgTs.smbRp', message: { code: 'validation.atLeast', params: { min: 0 } } },
+      ])
+    }
+    expect(validateAnalysis({ ...analysKomplett, tsProcent: JSON.parse('null') as never })).toEqual([
+      { field: 'tsProcent', message: range(1, 100) },
     ])
   })
 })

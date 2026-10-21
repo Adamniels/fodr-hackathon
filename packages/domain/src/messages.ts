@@ -136,7 +136,7 @@ export type ValidationMessage =
   | Message<'validation.range', { min: number; max: number }>
   | Message<'validation.wholeRange', { min: number; max: number }>
   | Message<'validation.atLeast', { min: number }>
-  | Message<'validation.positiveUpTo', { max: number }>
+  | Message<'validation.positiveUpTo', { min: number; max: number }>
   | Message<'validation.adultsOnly', { minAgeYears: number }>
   | Message<'validation.trotWithinRide'>
 

@@ -27,8 +27,10 @@ export interface InputError {
   message: ValidationMessage
 }
 
-// NaN compares false with everything, so it is never inside a range.
-const inside = (v: number, { min, max }: Limit) => v >= min && v <= max
+// A real number only: saved JSON turns NaN into null, and null >= 0 is true, so a comparison alone would let it
+// through to the engine as 0. NaN and Infinity are refused too.
+const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+const inside = (v: number, { min, max }: Limit) => isNumber(v) && v >= min && v <= max
 const range = ({ min, max }: Limit): ValidationMessage => ({ code: 'validation.range', params: { min, max } })
 
 export function validateProfile(p: Hastprofil): InputError[] {
@@ -37,7 +39,7 @@ export function validateProfile(p: Hastprofil): InputError[] {
     if (!inside(v, limit)) errors.push({ field, message: range(limit) })
   }
 
-  if (p.alderAr < LIMITS.alderAr.min) {
+  if (isNumber(p.alderAr) && p.alderAr < LIMITS.alderAr.min) {
     errors.push({
       field: 'alderAr',
       message: { code: 'validation.adultsOnly', params: { minAgeYears: LIMITS.alderAr.min } },
@@ -55,7 +57,7 @@ export function validateProfile(p: Hastprofil): InputError[] {
     check('ridning.minuterPerPass', minuterPerPass, LIMITS.minuterPerPass)
     if (!inside(travGaloppMinPerPass, LIMITS.minuterPerPass)) {
       errors.push({ field: 'ridning.travGaloppMinPerPass', message: range(LIMITS.minuterPerPass) })
-    } else if (travGaloppMinPerPass > minuterPerPass) {
+    } else if (inside(minuterPerPass, LIMITS.minuterPerPass) && travGaloppMinPerPass > minuterPerPass) {
       errors.push({ field: 'ridning.travGaloppMinPerPass', message: { code: 'validation.trotWithinRide', params: {} } })
     }
   }
@@ -66,10 +68,10 @@ export function validateProfile(p: Hastprofil): InputError[] {
   }
 
   const kg = p.grovfoder.kgPerDag
-  if (!(kg > LIMITS.grovfoderKgPerDag.min && kg <= LIMITS.grovfoderKgPerDag.max)) {
+  if (!(isNumber(kg) && kg > LIMITS.grovfoderKgPerDag.min && kg <= LIMITS.grovfoderKgPerDag.max)) {
     errors.push({
       field: 'grovfoder.kgPerDag',
-      message: { code: 'validation.positiveUpTo', params: { max: LIMITS.grovfoderKgPerDag.max } },
+      message: { code: 'validation.positiveUpTo', params: LIMITS.grovfoderKgPerDag },
     })
   }
 
@@ -84,7 +86,7 @@ export function validateAnalysis(a: Grovfoderanalys): InputError[] {
     errors.push({ field: 'askaGPerKgTs', message: range(LIMITS.askaGPerKgTs) })
   }
   for (const [k, v] of Object.entries(a.perKgTs) as [NutrientKey, number | undefined][]) {
-    if (v !== undefined && !(v >= 0)) {
+    if (v !== undefined && !(isNumber(v) && v >= 0)) {
       errors.push({ field: `perKgTs.${k}`, message: { code: 'validation.atLeast', params: { min: 0 } } })
     }
   }
