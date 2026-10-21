@@ -176,10 +176,17 @@ const FALL: [DomainMessage, string][] = [
   [{ code: 'source.concentrateGuidelines', params: {} }, 'SLU riktlinjer kraftfoder'],
   [{ code: 'source.microMinerals', params: { level: 'arbete' } }, 'SLU tabell 17, arbete'],
   [{ code: 'source.vitamins', params: {} }, 'SLU tabell 18'],
+  // Input validation (#13). The age sentence is the one the engine used to throw.
   [
-    { code: 'error.adultsOnly', params: { minAgeYears: 3 } },
+    { code: 'validation.adultsOnly', params: { minAgeYears: 3 } },
     'Modellen gäller vuxna hästar (3 år och äldre). Unghästar ingår inte i prototypen.',
-  ], // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
+  ],
+  [{ code: 'validation.range', params: { min: 50, max: 1200 } }, 'Ange ett värde mellan 50 och 1\u00a0200.'],
+  [{ code: 'validation.range', params: { min: -50, max: 40 } }, 'Ange ett värde mellan \u221250 och 40.'],
+  [{ code: 'validation.wholeRange', params: { min: 1, max: 9 } }, 'Ange ett heltal mellan 1 och 9.'],
+  [{ code: 'validation.atLeast', params: { min: 0 } }, 'Värdet kan inte vara lägre än 0.'],
+  [{ code: 'validation.positiveUpTo', params: { max: 40 } }, 'Ange ett värde över 0 och högst 40.'],
+  [{ code: 'validation.trotWithinRide', params: {} }, 'Kan inte vara fler än minuterna per pass.'], // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
   [{ code: 'qualityTitle.proteinHigh', params: {} }, 'Mer protein än hästen behöver'],
   [{ code: 'qualityTitle.proteinLow', params: {} }, 'Proteinfattigt grovfoder'],
   [{ code: 'qualityTitle.energyHigh', params: {} }, 'Energirikt grovfoder'],

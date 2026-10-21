@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { analysKomplett, demoHast } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { filtreraProdukter, granskaKansligheter, skalMotProdukt } from './sensitivity'
-import { skapaPlan } from './plan'
+import { planFor } from '../test/plan'
 import type { Halsa, Produkt } from './types'
 
 const produkter = produkterJson as Produkt[]
@@ -108,12 +108,12 @@ describe('råd utan tal', () => {
 
 describe('planen med känsligheter', () => {
   it('Sixten: vitamin E styr urvalet, så inget sommarmineral utan vitaminer', () => {
-    const plan = skapaPlan(demoHast, analysKomplett, produkter)
+    const plan = planFor(demoHast, analysKomplett, produkter)
     expect(plan.urval!.poster.some((p) => p.produkt.namn.includes('Summer'))).toBe(false)
     expect(plan.resultat.find((r) => r.amne === 'vitE')!.status).toBe('ok')
   })
   it('luftvägar: inget pulver i förslaget och bortvalda urvalsprodukter redovisas', () => {
-    const plan = skapaPlan({ ...demoHast, halsa: { ...demoHast.halsa, luftvagar: true } }, analysKomplett, produkter)
+    const plan = planFor({ ...demoHast, halsa: { ...demoHast.halsa, luftvagar: true } }, analysKomplett, produkter)
     expect(plan.urval!.poster.every((p) => p.produkt.form !== 'pulver')).toBe(true)
     expect(plan.bortvalda.some((b) => b.namn.includes('Foderkrita'))).toBe(true)
   })

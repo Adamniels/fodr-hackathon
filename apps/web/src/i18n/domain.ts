@@ -138,7 +138,13 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   // JournalStep).
   'trend.weightLossFast': (p) => ({ percentPerWeek: tal(p.percentPerWeek, 2) }),
   'trend.conditionRising': tom,
-  'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
+  // Limits are whole numbers; one decimal leaves them whole and keeps a future decimal limit (#13).
+  'validation.range': (p) => ({ min: tal(p.min, 1), max: tal(p.max, 1) }),
+  'validation.wholeRange': (p) => ({ min: tal(p.min, 0), max: tal(p.max, 0) }),
+  'validation.atLeast': (p) => ({ min: tal(p.min, 1) }),
+  'validation.positiveUpTo': (p) => ({ max: tal(p.max, 1) }),
+  'validation.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
+  'validation.trotWithinRide': tom,
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */

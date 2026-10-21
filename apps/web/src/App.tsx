@@ -4,19 +4,18 @@ import './App.css'
 import produkterJson from './data/products.json'
 import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
-import { DomainError } from '@fodr/domain/messages'
 import { skapaPlan } from '@fodr/domain/plan'
 import { laddaHastar, laddaJournal, nyHast, sparaHastar, sparaJournal } from './storage'
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import { DEMOKONTO, aktuellAnvandare, loggaIn, loggaUt, type Anvandare } from './auth'
 import { formatDate, hullText, tal } from './format'
-import { domainText } from './i18n/domain'
 import { Login } from './components/Login'
 import { Startsida } from './components/Startsida'
 import { HorseStep } from './components/HorseStep'
 import { AnalysisStep } from './components/AnalysisStep'
 import { PlanStep } from './components/PlanStep'
+import { InvalidInput } from './components/InvalidInput'
 import { JournalStep } from './components/JournalStep'
 import { Ordmarke } from './components/Varumarke'
 
@@ -108,14 +107,13 @@ function Arbetsyta({
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
   const hast = hastar.find((h) => h.id === valdId) ?? hastar[0]
 
-  const plan = useMemo(() => {
-    if (!hast || !analys) return null
-    try {
-      return { ok: skapaPlan({ ...hast, grovfoder: { ...hast.grovfoder, typ: analys.typ } }, analys, produkter) }
-    } catch (e) {
-      return { fel: e instanceof DomainError ? domainText(e.meddelande) : e instanceof Error ? e.message : String(e) }
-    }
-  }, [hast, analys])
+  const plan = useMemo(
+    () =>
+      hast && analys
+        ? skapaPlan({ ...hast, grovfoder: { ...hast.grovfoder, typ: analys.typ } }, analys, produkter)
+        : null,
+    [hast, analys],
+  )
 
   function gaTill(s: Steg) {
     setSteg(s)
@@ -137,7 +135,7 @@ function Arbetsyta({
   // is stored as it is; #27 stores the analysis as values instead.
   const savedAnalysisText = (a: Grovfoderanalys) =>
     [t(`roughageTitle.${a.typ}`), a.labb, a.provdatum].filter(Boolean).join(', ')
-  const planOgonblick = plan && 'ok' in plan && analys ? ogonblickAvPlan(plan.ok!, savedAnalysisText(analys)) : null
+  const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, savedAnalysisText(analys)) : null
 
   const tillganglig = (s: Steg) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
@@ -298,13 +296,17 @@ function Arbetsyta({
               hast &&
               analys &&
               plan &&
-              ('fel' in plan ? (
-                <div className="ruta fel">{plan.fel}</div>
+              ('errors' in plan ? (
+                <InvalidInput
+                  errors={plan.errors}
+                  onToHorse={() => gaTill('hast')}
+                  onToAnalysis={() => gaTill('analys')}
+                />
               ) : (
                 <PlanStep
                   hast={hast}
                   analys={analys}
-                  plan={plan.ok}
+                  plan={plan.plan}
                   onSparaIJournal={() => {
                     laggTillPost(hast.id, nyPost(idag(), { text: '', plan: planOgonblick! }))
                     gaTill('journal')

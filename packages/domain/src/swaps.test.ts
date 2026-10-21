@@ -3,7 +3,7 @@ import { analysKomplett, demoHast } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { hittaBilligareLiknande } from './swaps'
 import { monthlyCost, displayName } from './intake'
-import { skapaPlan } from './plan'
+import { planFor } from '../test/plan'
 import type { Produkt } from './types'
 
 const produkter = produkterJson as Produkt[]
@@ -32,7 +32,7 @@ describe('billigare liknande foder', () => {
       ...demoHast,
       nuvarandeFoder: [{ produktId: hitta('Krafft Senior Pellets').id, namn: 'Senior', gramPerDag: 800 }],
     }
-    const plan = skapaPlan(hast, analysKomplett, produkter)
+    const plan = planFor(hast, analysKomplett, produkter)
     const behallen = plan.behallnaFoder.find((p) => p.produkt.kategori === 'kraftfoder')
     if (behallen) {
       expect(plan.byten.length).toBeGreaterThan(0)
@@ -46,7 +46,7 @@ describe('billigare liknande foder', () => {
   it('ett mineralfoder som inte väljs syns som byte eller borttagning, aldrig tyst', () => {
     const mineral = hitta('Krafft Miner VitaMinerals Pellets 20kg')
     const hast = { ...demoHast, nuvarandeFoder: [{ produktId: mineral.id, namn: mineral.namn, gramPerDag: 100 }] }
-    const plan = skapaPlan(hast, analysKomplett, produkter)
+    const plan = planFor(hast, analysKomplett, produkter)
     const valdes = plan.urval?.poster.some((p) => p.produkt.id === mineral.id)
     if (!valdes) {
       expect(

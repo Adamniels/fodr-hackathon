@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { tolkaProfil } from '../api'
 import { RASER, hittaRas } from '@fodr/domain/breeds'
 import { BYTESTAKT, standardKanslighet } from '@fodr/domain/transition'
 import { viktFranBrostomfang } from '@fodr/domain/slu'
+import { validateProfile, type ProfileField } from '@fodr/domain/validation'
 import {
   INGREDIENSER,
   type Bytekanslighet,
@@ -17,6 +18,7 @@ import {
   type Produkt,
 } from '@fodr/domain/types'
 import { hullText, tal } from '../format'
+import { domainText } from '../i18n/domain'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
@@ -69,6 +71,7 @@ function Profilformular({
 }) {
   const { t } = useTranslation()
   const set = (patch: Partial<Hastprofil>) => onAndra({ ...hast, ...patch })
+  const errorFor = useErrors(hast)
   const [matt, setMatt] = useState({ brost: '', langd: '' })
   const uppskattadVikt =
     Number(matt.brost) > 0 && Number(matt.langd) > 0
@@ -89,7 +92,7 @@ function Profilformular({
           <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
         </Falt>
         <Falt label={t('horse.age')}>
-          <Siffra value={hast.alderAr} onChange={(v) => set({ alderAr: v })} />
+          <Siffra value={hast.alderAr} error={errorFor('alderAr')} onChange={(v) => set({ alderAr: v })} />
         </Falt>
         <Falt label={t('horse.sex.label')}>
           <select value={hast.kon} onChange={(e) => set({ kon: e.target.value as Kon })}>
@@ -135,7 +138,7 @@ function Profilformular({
 
       <div className="grupp">
         <Falt label={t('horse.weight')}>
-          <Siffra value={hast.viktKg} onChange={(v) => set({ viktKg: v })} />
+          <Siffra value={hast.viktKg} error={errorFor('viktKg')} onChange={(v) => set({ viktKg: v })} />
         </Falt>
         <Falt label={t('horse.chest')} hjalp={t('horse.chestHint')}>
           <input inputMode="numeric" value={matt.brost} onChange={(e) => setMatt({ ...matt, brost: e.target.value })} />
@@ -158,6 +161,7 @@ function Profilformular({
         hjalp={t('horse.hullHint')}
       >
         <input type="range" min={1} max={9} value={hast.hull} onChange={(e) => set({ hull: Number(e.target.value) })} />
+        {errorFor('hull') && <span className="falt-fel">{errorFor('hull')}</span>}
       </Falt>
 
       <h3 className="rubrik">{t('horse.work')}</h3>
@@ -174,24 +178,27 @@ function Profilformular({
         <Falt label={t('horse.sessionsPerWeek')}>
           <Siffra
             value={hast.ridning?.passPerVecka ?? 0}
+            error={errorFor('ridning.passPerVecka')}
             onChange={(v) => set({ ridning: { ...ridning(hast), passPerVecka: v } })}
           />
         </Falt>
         <Falt label={t('horse.minutesPerSession')}>
           <Siffra
             value={hast.ridning?.minuterPerPass ?? 0}
+            error={errorFor('ridning.minuterPerPass')}
             onChange={(v) => set({ ridning: { ...ridning(hast), minuterPerPass: v } })}
           />
         </Falt>
         <Falt label={t('horse.trotCanter')}>
           <Siffra
             value={hast.ridning?.travGaloppMinPerPass ?? 0}
+            error={errorFor('ridning.travGaloppMinPerPass')}
             onChange={(v) => set({ ridning: { ...ridning(hast), travGaloppMinPerPass: v } })}
           />
         </Falt>
       </div>
 
-      <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} onAndra={(miljo) => set({ miljo })} />
+      <MiljoSektion miljo={hast.miljo ?? STANDARD_MILJO} errorFor={errorFor} onAndra={(miljo) => set({ miljo })} />
 
       <h3 className="rubrik">{t('horse.roughageSection')}</h3>
       <div className="grupp">
@@ -207,11 +214,12 @@ function Profilformular({
         <Falt label={t('horse.roughageKg')}>
           <Siffra
             value={hast.grovfoder.kgPerDag}
+            error={errorFor('grovfoder.kgPerDag')}
             onChange={(v) => set({ grovfoder: { ...hast.grovfoder, kgPerDag: v } })}
           />
         </Falt>
       </div>
-      <Foderlista hast={hast} produkter={produkter} onAndra={onAndra} />
+      <Foderlista hast={hast} produkter={produkter} errorFor={errorFor} onAndra={onAndra} />
 
       <HalsaSektion halsa={hast.halsa} onAndra={(halsa) => set({ halsa })} />
       <BytekanslighetSektion hast={hast} onAndra={(bytekanslighet) => set({ bytekanslighet })} />
@@ -234,7 +242,7 @@ function rasHjalp(h: Hastprofil, t: TFunction): string | undefined {
   return t('horse.breedWeight', { min: tal(ras.viktKg.min, 1), max: tal(ras.viktKg.max, 1) })
 }
 
-function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) => void }) {
+function MiljoSektion({ miljo, errorFor, onAndra }: { miljo: Miljo; errorFor: ErrorFor; onAndra: (m: Miljo) => void }) {
   const { t } = useTranslation()
   const set = (patch: Partial<Miljo>) => onAndra({ ...miljo, ...patch })
   return (
@@ -248,10 +256,19 @@ function MiljoSektion({ miljo, onAndra }: { miljo: Miljo; onAndra: (m: Miljo) =>
           </select>
         </Falt>
         <Falt label={t('horse.environment.hoursOut')}>
-          <Siffra value={miljo.timmarUtePerDag} onChange={(v) => set({ timmarUtePerDag: v })} />
+          <Siffra
+            value={miljo.timmarUtePerDag}
+            error={errorFor('miljo.timmarUtePerDag')}
+            onChange={(v) => set({ timmarUtePerDag: v })}
+          />
         </Falt>
         <Falt label={t('horse.environment.lowestTemp')} hjalp={t('horse.environment.lowestTempHint')}>
-          <Siffra value={miljo.lagstaTempC} needsMinusKey onChange={(v) => set({ lagstaTempC: v })} />
+          <Siffra
+            value={miljo.lagstaTempC}
+            needsMinusKey
+            error={errorFor('miljo.lagstaTempC')}
+            onChange={(v) => set({ lagstaTempC: v })}
+          />
         </Falt>
       </div>
       <div className="kryss">
@@ -364,10 +381,12 @@ function ridning(h: Hastprofil) {
 function Foderlista({
   hast,
   produkter,
+  errorFor,
   onAndra,
 }: {
   hast: Hastprofil
   produkter: Produkt[]
+  errorFor: ErrorFor
   onAndra: (h: Hastprofil) => void
 }) {
   const { t } = useTranslation()
@@ -397,7 +416,11 @@ function Foderlista({
               satt(i, { produktId: p?.id ?? null, namn: e.target.value })
             }}
           />
-          <Siffra value={f.gramPerDag} onChange={(v) => satt(i, { gramPerDag: v })} />
+          <Siffra
+            value={f.gramPerDag}
+            error={errorFor(`nuvarandeFoder.${i}.gramPerDag`)}
+            onChange={(v) => satt(i, { gramPerDag: v })}
+          />
           <span className="enhet">{t('horse.feeds.gramsPerDay')}</span>
           <button
             className="lank"
@@ -555,12 +578,25 @@ function Falt({
 
 function Siffra({
   value,
+  error,
   onChange,
   needsMinusKey,
 }: {
   value: number
+  error?: string
   onChange: (v: number) => void
   needsMinusKey?: boolean
 }) {
-  return <DecimalInput value={value} onChange={onChange} needsMinusKey={needsMinusKey} />
+  return <DecimalInput value={value} error={error} onChange={onChange} needsMinusKey={needsMinusKey} />
+}
+
+type ErrorFor = (field: ProfileField) => string | undefined
+
+/** The validation message for each field of the stored profile, so a value from any source shows its error (#13). */
+function useErrors(hast: Hastprofil): ErrorFor {
+  const errors = useMemo(() => validateProfile(hast), [hast])
+  return (field) => {
+    const error = errors.find((e) => e.field === field)
+    return error && domainText(error.message)
+  }
 }

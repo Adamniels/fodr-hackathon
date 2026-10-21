@@ -8,6 +8,7 @@ import { hittaBilligareLiknande, type Byte } from './swaps'
 import { skapaInjustering, type Injustering } from './transition'
 import type { ActionMessage, Kallhanvisning, Notering, UrvalsSkal, Uteslutningsskal, Varning } from './messages'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
+import { validateAnalysis, validateProfile, type InputError } from './validation'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
 export type Status = 'brist' | 'ok' | 'overskott' | 'over_max' | 'okand' | 'osaker' | 'ej_krav'
@@ -113,7 +114,15 @@ function hittaProdukt(produkter: Produkt[], id: string | null): Produkt | undefi
   return id ? produkter.find((p) => p.id === id) : undefined
 }
 
-export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produkt[]): Plan {
+/** A plan, or the fields that must be corrected before one can be calculated (C1, #13). */
+export type PlanResult = { plan: Plan } | { errors: InputError[] }
+
+export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produkt[]): PlanResult {
+  const errors = [...validateProfile(profil), ...validateAnalysis(analys)]
+  return errors.length ? { errors } : { plan: byggPlan(profil, analys, produkter) }
+}
+
+function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produkt[]): Plan {
   const behovsres = beraknaBehov(profil)
   const { behov, grovfoderKgTs } = behovsres
   const varningar: Varning[] = []
