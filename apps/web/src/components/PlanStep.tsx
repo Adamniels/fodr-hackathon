@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trans, useTranslation } from 'react-i18next'
 import { explainPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
@@ -37,8 +37,10 @@ export function PlanStep({
   // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
   const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
+  const queryClient = useQueryClient()
+  const queryKey = useMemo(() => ['explanation', hast.id, payloadFingerprint], [hast.id, payloadFingerprint])
   const explanationQuery = useQuery({
-    queryKey: ['explanation', hast.id, payloadFingerprint],
+    queryKey,
     queryFn: async () => {
       const { text } = await explainPlan(payload)
       saveExplanation(hast.id, payloadFingerprint, text)
@@ -55,6 +57,15 @@ export function PlanStep({
   const settled = !explanationQuery.isFetching
   const explanation = settled && !explanationQuery.error ? (explanationQuery.data ?? null) : null
   const explanationError = settled && explanationQuery.error ? explanationQuery.error.message : null
+  // A failure belongs to the visit that saw it: leaving the plan resets a failed query, so a revisit starts again from
+  // the saved text (or asks again when there is none), as the remounted component did before (#21).
+  useEffect(
+    () => () => {
+      if (queryClient.getQueryState(queryKey)?.status === 'error')
+        void queryClient.resetQueries({ queryKey, exact: true })
+    },
+    [queryClient, queryKey],
+  )
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0

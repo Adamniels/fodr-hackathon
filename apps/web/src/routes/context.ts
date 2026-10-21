@@ -1,16 +1,9 @@
-// What the route components share through React Router's outlet context: the session from Root, and the
-// workspace state from Workspace for the step routes.
+// What the step routes share through React Router's outlet context: the workspace state from Workspace.
 import { useOutletContext } from 'react-router'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
 import type { skapaPlan } from '@fodr/domain/plan'
 import type { Journalpost, PlanOgonblick } from '@fodr/domain/journal'
-import type { User } from '../auth'
-
-export interface Session {
-  user: User | null
-  setUser: (user: User | null) => void
-}
 
 /** The workspace's steps, as the state names them. */
 export type Step = 'hast' | 'analys' | 'plan' | 'journal'
@@ -37,5 +30,4 @@ export interface WorkspaceContext {
   addEntry: (horseId: string, entry: Journalpost) => void
 }
 
-export const useSession = () => useOutletContext<Session>()
 export const useWorkspace = () => useOutletContext<WorkspaceContext>()

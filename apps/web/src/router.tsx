@@ -5,7 +5,7 @@ import { Root } from './routes/Root'
 import { Landing } from './routes/Landing'
 import { WorkspaceGate } from './routes/Workspace'
 import { AnalysisRoute, HorsesIndex, JournalRoute, PlanRoute, ProfileRoute } from './routes/steps'
-import { RouteError } from './routes/RouteError'
+import { RouteError, StepNotFound } from './routes/RouteError'
 import { STEP_PATH } from './routes/context'
 
 // A route whose own component fails loses the whole page; a step fails inside the workspace, which stays.
@@ -34,6 +34,7 @@ export const router = createBrowserRouter([
               { path: STEP_PATH.analys, element: <AnalysisRoute />, errorElement: stepError },
               { path: STEP_PATH.plan, element: <PlanRoute />, errorElement: stepError },
               { path: STEP_PATH.journal, element: <JournalRoute />, errorElement: stepError },
+              { path: '*', element: <StepNotFound /> },
             ],
           },
         ],

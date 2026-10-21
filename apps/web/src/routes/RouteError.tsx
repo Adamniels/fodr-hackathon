@@ -4,17 +4,24 @@ import { useTranslation } from 'react-i18next'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 
 /**
- * `page` for the root route, whose boundary replaces the whole page (an unknown address); nested boundaries render
- * inside the workspace, which already has the page's main landmark and level 1 heading.
+ * `page` for a route whose boundary replaces the whole page; nested boundaries render inside the workspace, which
+ * already has the page's main landmark and level 1 heading.
  */
 export function RouteError({ page = false }: { page?: boolean }) {
-  const { t } = useTranslation()
   const error = useRouteError()
-  const notFound = isRouteErrorResponse(error) && error.status === 404
-  const Container = page ? 'main' : 'div'
+  return <ErrorContent page={page} notFound={isRouteErrorResponse(error) && error.status === 404} />
+}
+
+/** An address under a horse that is no step: the not-found text inside the workspace, which stays. */
+export function StepNotFound() {
+  return <ErrorContent page={false} notFound />
+}
+
+function ErrorContent({ page, notFound }: { page: boolean; notFound: boolean }) {
+  const { t } = useTranslation()
   const Heading = page ? 'h1' : 'h2'
-  return (
-    <Container className="kort" role="alert">
+  const content = (
+    <div className="kort" role="alert">
       <Heading>{t(notFound ? 'errors.notFoundTitle' : 'errors.pageTitle')}</Heading>
       <p>{t(notFound ? 'errors.notFoundText' : 'errors.pageText')}</p>
       <p>
@@ -25,6 +32,7 @@ export function RouteError({ page = false }: { page?: boolean }) {
         )}{' '}
         <Link to="/">{t('errors.toLanding')}</Link>
       </p>
-    </Container>
+    </div>
   )
+  return page ? <main>{content}</main> : content
 }

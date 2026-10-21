@@ -7,13 +7,15 @@ import { DEMO_ACCOUNT, logIn, type User } from '../auth'
 import { LandingPage } from '../components/LandingPage'
 import { Login } from '../components/Login'
 import { produkter } from '../products'
-import { useSession } from './context'
+import { useSession } from './session'
 
 export function Landing({ login = false }: { login?: boolean }) {
   const { t } = useTranslation()
   const { user, setUser } = useSession()
   const navigate = useNavigate()
-  const from = (useLocation().state as { from?: string } | null)?.from
+  // `from`: the page a logged-out visitor asked for (WorkspaceGate); `fromLanding`: the dialog was opened here.
+  const state = useLocation().state as { from?: string; fromLanding?: boolean } | null
+  const from = state?.from
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -23,7 +25,8 @@ export function Landing({ login = false }: { login?: boolean }) {
     setUser(a)
     void navigate(from ?? '/horses', { replace: login })
   }
-  const close = () => void navigate('/', { replace: true })
+  // Back to the landing page it was opened from, so history keeps one entry for it; else (a redirect) to /.
+  const close = () => void (state?.fromLanding ? navigate(-1) : navigate('/', { replace: true }))
 
   return (
     <>
@@ -31,7 +34,7 @@ export function Landing({ login = false }: { login?: boolean }) {
         produkter={produkter}
         loggedInAs={user?.namn ?? null}
         onDemo={() => open(user ?? logIn(DEMO_ACCOUNT.epost))}
-        onLogIn={() => void navigate('/login')}
+        onLogIn={() => void navigate('/login', { state: { fromLanding: true } })}
       />
       {login && (
         <div className="dialog-bakgrund" onClick={close}>

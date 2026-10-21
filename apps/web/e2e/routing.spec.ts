@@ -1,6 +1,16 @@
 // URLs for every horse and step (#21, ADR 0012): reload, back and deep links keep the horse and step.
 import type { Page } from '@playwright/test'
-import { enterDemo, expect, goToStep, horseList, loadExamplePlan, logIn, test, type Step } from './support/helpers'
+import {
+  createAccount,
+  enterDemo,
+  expect,
+  goToStep,
+  horseList,
+  loadExamplePlan,
+  logIn,
+  test,
+  type Step,
+} from './support/helpers'
 
 async function expectOn(page: Page, horse: string, step: Step): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(horse)
@@ -96,4 +106,38 @@ test('the login dialog has its own address', async ({ page }) => {
   await expect(page).toHaveURL(/\/login$/)
   await page.getByRole('button', { name: 'Stäng' }).click()
   await expect(page).toHaveURL(/\/$/)
+})
+
+test('an unknown step keeps the workspace and says the page does not exist', async ({ page }) => {
+  await enterDemo(page)
+  await page.goto('/horses/demo-sixten/finns-inte')
+  await expect(page.getByRole('heading', { name: 'Sidan finns inte' })).toBeVisible()
+  await expect(horseList(page).getByRole('button', { name: 'Pysen' })).toBeVisible()
+})
+
+test('logging out opens the landing page at the site root', async ({ page }) => {
+  await enterDemo(page)
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: /Rätt foder till din häst/ })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toHaveCount(0)
+})
+
+test('back after adding the first horse leaves the workspace in one step', async ({ page }) => {
+  await createAccount(page, 'Hästägare', 'agare@example.se')
+  await page.getByRole('button', { name: 'Lägg till din första häst' }).click()
+  await expect(page).toHaveURL(STEP_URL)
+  await page.goBack()
+  await expect(page).not.toHaveURL(/\/horses/)
+})
+
+test('closing the login dialog opened from the landing page goes back to it in history', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Logga in', exact: true }).click()
+  await expect(page).toHaveURL(/\/login$/)
+  await page.getByRole('button', { name: 'Stäng' }).click()
+  await expect(page).toHaveURL(/\/$/)
+  // One entry for the landing page: back leaves the site instead of showing it again.
+  await page.goBack()
+  await expect(page).not.toHaveURL(/localhost:5173\/$/)
 })

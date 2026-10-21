@@ -12,7 +12,8 @@ import { logOut, type User } from '../auth'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
 import { Wordmark } from '../components/Brand'
 import { produkter } from '../products'
-import { STEP_PATH, STEPS, useSession, type Step, type WorkspaceContext } from './context'
+import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
+import { useSession } from './session'
 
 const STEP_OF_PATH = Object.fromEntries(STEPS.map((s) => [STEP_PATH[s], s])) as Record<string, Step>
 
@@ -67,24 +68,25 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
 
   // Choosing a horse keeps the step, as it did before the steps had URLs. flushSync renders the new step during the
   // click, as the state change did: in a transition the old step stays on screen a moment and takes the next input.
-  const open = (id: string, s: Step) => {
-    void navigate(`/horses/${id}/${STEP_PATH[s]}`, { flushSync: true })
+  const open = (id: string, s: Step, replace = false) => {
+    void navigate(`/horses/${id}/${STEP_PATH[s]}`, { flushSync: true, replace })
     window.scrollTo({ top: 0 })
   }
-  const gaTill = (s: Step) => {
+  const goTo = (s: Step) => {
     if (hast) open(hast.id, s)
   }
-  const valjHast = (id: string) => {
+  const selectHorse = (id: string) => {
     open(id, step)
     setMenyOppen(false)
   }
-  const uppdateraHast = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
-  const laggTillHast = (h: Hastprofil) => {
+  const updateHorse = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
+  const addHorse = (h: Hastprofil) => {
     setHastar((alla) => [...alla, h])
-    open(h.id, 'hast')
+    // The first horse replaces /horses, which would only send back to it.
+    open(h.id, 'hast', horseId === undefined)
     setMenyOppen(false)
   }
-  const laggTillPost = (hastId: string, post: Journalpost) =>
+  const addEntry = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
   // A saved plan stores its analysis as this text, exactly as before #12. The date stays YYYY-MM-DD because the text
   // is stored as it is; #27 stores the analysis as values instead.
@@ -112,14 +114,14 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
     planOgonblick,
     journal,
     today,
-    goTo: gaTill,
+    goTo,
     setAnalysis: (a, o) => {
       setAnalys(a)
       setOmrakningar(o)
     },
-    updateHorse: uppdateraHast,
-    addHorse: laggTillHast,
-    addEntry: laggTillPost,
+    updateHorse,
+    addHorse,
+    addEntry,
   }
 
   return (
@@ -142,7 +144,7 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
               <button
                 className={`hastrad ${h.id === hast?.id ? 'vald' : ''}`}
                 aria-current={h.id === hast?.id ? 'page' : undefined}
-                onClick={() => valjHast(h.id)}
+                onClick={() => selectHorse(h.id)}
               >
                 <span className="hast-ikon">{initial(h)}</span>
                 <span className="hastrad-namn">{h.namn || t('app.sidebar.unnamedHorse')}</span>
@@ -150,7 +152,7 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
             </li>
           ))}
           <li>
-            <button className="hastrad ny" onClick={() => laggTillHast(nyHast())}>
+            <button className="hastrad ny" onClick={() => addHorse(nyHast())}>
               <span className="hast-ikon">+</span>
               <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
@@ -247,7 +249,7 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
                 className={step === id ? 'vald' : ''}
                 aria-current={step === id ? 'page' : undefined}
                 disabled={!tillganglig(id)}
-                onClick={() => gaTill(id)}
+                onClick={() => goTo(id)}
               >
                 <span className="flik-nr">{formatNumber(i + 1, 0)}</span>
                 {t(`steps.${id}`)}

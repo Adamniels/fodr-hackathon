@@ -57,7 +57,7 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Sensitivities | `packages/domain/src/sensitivity.ts` | Excludes products and gives advice based on health |
 | Feed transition | `packages/domain/src/transition.ts` | Step schedule for changing feed, by sensitivity |
 | Journal | `packages/domain/src/journal.ts` | Trend, follow up and saved plans per horse |
-| Web routes | `apps/web/src/router.tsx`, `routes/` | A URL for every page: `/`, `/login`, `/horses/:horseId/{profile,analysis,plan,journal}`; error boundary per route |
+| Web routes | `apps/web/src/router.tsx`, `routes/` | A URL for every page: `/`, `/login`, `/horses` and `/horses/:horseId/{profile,analysis,plan,journal}`; an error boundary on every page and step |
 | API | `apps/api/src/` | Hono app (`app.ts`), config from the environment (`config.ts`), problem+json errors, Drizzle (`db.ts`, migrations in `apps/api/drizzle/`) |
 | AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |
