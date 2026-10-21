@@ -183,7 +183,7 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNe
                           ? domainText(omr.message)
                           : t('analysis.source.report')
                         : schablon
-                          ? t('analysis.source.estimated', { source: schablon.kalla })
+                          ? t('analysis.source.estimated', { source: domainText(schablon.kalla) })
                           : t('analysis.source.missing')}
                     </td>
                   </tr>

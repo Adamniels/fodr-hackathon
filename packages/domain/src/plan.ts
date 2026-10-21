@@ -33,7 +33,7 @@ export interface Balansrad {
   behovMax?: number
   intag: number
   kalla: Kalla
-  schablonKalla?: string
+  schablonKalla?: Kallhanvisning
   behovKalla?: Kallhanvisning
   status: Status
 }

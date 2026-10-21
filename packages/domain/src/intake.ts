@@ -1,13 +1,14 @@
 import { NUTRIENT_KEYS, type NutrientKey, type NutrientValues } from './nutrients'
 import { hittaSchablon } from './forage'
+import type { Kallhanvisning } from './messages'
 import type { Grovfoderanalys, Kalla, Produkt } from './types'
 
 export interface IntagsVarde {
   varde: number
   /** Sämsta källan bland bidragen: okänd > schablon > analys. */
   kalla: Kalla
-  /** Källtext för grovfoderbidraget när det är en schablon. */
-  schablonKalla?: string
+  /** The source of the roughage contribution when it is an estimate. */
+  schablonKalla?: Kallhanvisning
 }
 
 export type Intag = Record<NutrientKey, IntagsVarde>

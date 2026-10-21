@@ -80,6 +80,14 @@ export type Kallhanvisning =
   | Message<'source.industryPractice'>
   | Message<'source.fodrRules'>
   | Message<'source.productDescriptions'>
+  | Message<'source.typicalForage'>
+  | Message<'source.typicalForageLowSelenium'>
+  | Message<'source.table26Timothy'>
+  | Message<'source.table29Grass'>
+  | Message<'source.table24CaroteneLower'>
+  | Message<'source.table24Lower'>
+  | Message<'source.table24FieldDriedHay'>
+  | Message<'source.table24'>
 
 /** The horse group of SLU table 32 that a roughage is judged for. */
 export type Tabell32Grupp = 'hart' | 'ovriga'

@@ -226,6 +226,15 @@ const FALL: [DomainMessage, string][] = [
     'Räknat från idisslarvärdet 10.5 MJ med SLU:s formel',
   ],
   [{ code: 'conversion.proteinFromCrude', params: { grams: 123.4 } }, 'Räknat från råprotein 123.4 g med SLU:s formel'],
+  // Roughage estimate sources (#95), as forage.ts held them.
+  [{ code: 'source.typicalForage', params: {} }, 'Typvärde svenskt vallfoder (ej SLU)'],
+  [{ code: 'source.typicalForageLowSelenium', params: {} }, 'Typvärde selenfattigt svenskt vallfoder (ej SLU)'],
+  [{ code: 'source.table26Timothy', params: {} }, 'SLU tabell 26 (timotej)'],
+  [{ code: 'source.table29Grass', params: {} }, 'SLU tabell 29 (gräs)'],
+  [{ code: 'source.table24CaroteneLower', params: {} }, 'SLU tabell 24 (karotin, nedre gräns)'],
+  [{ code: 'source.table24Lower', params: {} }, 'SLU tabell 24 (nedre gräns)'],
+  [{ code: 'source.table24FieldDriedHay', params: {} }, 'SLU tabell 24 (fälttorkat hö)'],
+  [{ code: 'source.table24', params: {} }, 'SLU tabell 24'],
   // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
   [{ code: 'qualityTitle.proteinHigh', params: {} }, 'Mer protein än hästen behöver'],
   [{ code: 'qualityTitle.proteinLow', params: {} }, 'Proteinfattigt grovfoder'],

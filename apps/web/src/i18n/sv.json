@@ -551,7 +551,15 @@
       "eurofinsSoil": "Eurofins tolkningsstöd (ej SLU)",
       "industryPractice": "Branschpraxis (ej SLU)",
       "fodrRules": "Fodrs känslighetsregler",
-      "productDescriptions": "Härlett ur produktbeskrivningar"
+      "productDescriptions": "Härlett ur produktbeskrivningar",
+      "typicalForage": "Typvärde svenskt vallfoder (ej SLU)",
+      "typicalForageLowSelenium": "Typvärde selenfattigt svenskt vallfoder (ej SLU)",
+      "table26Timothy": "SLU tabell 26 (timotej)",
+      "table29Grass": "SLU tabell 29 (gräs)",
+      "table24CaroteneLower": "SLU tabell 24 (karotin, nedre gräns)",
+      "table24Lower": "SLU tabell 24 (nedre gräns)",
+      "table24FieldDriedHay": "SLU tabell 24 (fälttorkat hö)",
+      "table24": "SLU tabell 24"
     },
     "sluLevel": {
       "underhall": "underhåll",
