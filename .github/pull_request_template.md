@@ -9,7 +9,7 @@ Closes #
 - [ ] Refactor (behaviour unchanged, tests unchanged)
 - [ ] Fix (behaviour changes on purpose)
 - [ ] Feature
-- [ ] Tooling / CI
+- [ ] Chore (tests, tooling, CI, data)
 - [ ] Docs
 
 ## Checklist

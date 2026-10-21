@@ -32,8 +32,9 @@ jq -r -n --arg repo "$OWNER/$REPO_NAME" --slurpfile issues "$tmp/issues.json" --
   | ([$all[] | {key: (.number | tostring), value: .state}] | from_entries) as $state
 
   # Lines under "### Depends on", up to the next heading. A line with #N references (in this
-  # repository) depends on those issues; otherwise "None" and "Note" lines are ignored, and any
-  # other text, including a reference to another repository, is a dependency written in words.
+  # repository) depends on those issues; otherwise "None" and "Note" lines are ignored, as is
+  # "_No response_", which an issue form writes for an empty field, and any other text,
+  # including a reference to another repository, is a dependency written in words.
   | def localrefs: [scan("(?:^|[^\\w/])#([0-9]+)")[0]];
     def deps:
       (.body // "" | gsub("\r"; "") | split("\n")) as $l
@@ -41,7 +42,7 @@ jq -r -n --arg repo "$OWNER/$REPO_NAME" --slurpfile issues "$tmp/issues.json" --
       | if $k == null then [] else
           ($l[$k + 1:]) as $r
           | ([range(0; $r | length) | select($r[.] | test("^#{1,6}\\s"))] | first // ($r | length)) as $e
-          | [$r[:$e][] | select(test("\\S")) | sub("^\\s*[-*]\\s*"; "") | select((localrefs != []) or (test("^(none|note)\\b"; "i") | not))]
+          | [$r[:$e][] | select(test("\\S")) | sub("^\\s*[-*]\\s*"; "") | select((localrefs != []) or (test("^(none|note)\\b|^_no response_\\s*$"; "i") | not))]
         end;
     def blockers:
       [deps[] | if localrefs != [] then

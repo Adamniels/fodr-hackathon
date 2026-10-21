@@ -18,6 +18,8 @@ esac
 FAKE
 chmod +x "$tmp/gh"
 export PATH="$tmp:$PATH" FAKE_ISSUES="$tmp/issues.json" FAKE_BOARD="$tmp/board.json"
+# Never reach the real, logged-in gh: if the fake is not first on PATH, stop before any test runs (#64 review).
+[ "$(command -v gh)" = "$tmp/gh" ] || { echo "the fake gh is not first on PATH" >&2; exit 1; }
 
 # Fixture builders. issue <number> <OPEN|CLOSED> <milestone or ""> <label> <title> [<depends-on lines>]
 # board <number>:<status> ...  (one page; "none" adds the item without a status)
@@ -127,6 +129,13 @@ board 6:Todo 45:Todo 19:Done
 run
 [ "$code" = 0 ] && section Proposal | grep -q '^  #6 ' && section Alternatives | grep -q '^  #45 ' && ! section Skipped | grep -q '#'
 check "\"None\" and \"Note:\" lines under Depends on do not block" $?
+
+reset
+issue 6 OPEN "$M1" type:chore "[M1-01] chore: written with the issue form" "_No response_"
+board 6:Todo
+run
+[ "$code" = 0 ] && section Proposal | grep -q '^  #6 ' && ! section Skipped | grep -q '#'
+check "an empty Depends on field from the issue form (\"_No response_\") does not block" $?
 
 reset
 issue 5 OPEN "$M1" type:chore "[M1-00] chore: bare reference" "#52"
