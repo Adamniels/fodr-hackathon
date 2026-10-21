@@ -93,6 +93,12 @@ const FALL: [DomainMessage, string][] = [
     'Ändra Salt 1,5 kg från 12 till 1\u00a0250 g/dag.',
   ],
   [{ code: 'swapReason.samePackCheaper', params: {} }, 'samma foder i billigare förpackning'],
+  [{ code: 'swapReason.sameEnergy', params: {} }, 'samma energi, liknande protein, inte mer stärkelse'],
+  [
+    { code: 'swapReason.coversNeedCheaper', params: { savingKr: 12.4 } },
+    'täcker behovet, 12\u00a0kr billigare i månaden',
+  ],
+  [{ code: 'swapReason.coversBetter', params: {} }, 'täcker det som saknas bättre med ditt grovfoder'],
   [
     { code: 'warning.roughageBelowMinimum', params: { kgDm: 4.56, minimumKgDm: 5.06 } },
     'Grovfodergivan (4,6 kg ts) är under SLU:s minimum på 5,1 kg ts per dag.',
@@ -312,6 +318,15 @@ const FALL: [DomainMessage, string][] = [
     { code: 'trend.weightLossFast', params: { percentPerWeek: 2 } },
     'Vikten minskar 2,0 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
   ],
+  // On a .x5 boundary it rounds the binary value down, as toFixed(1) did (300 to 261 kg in 20 days is 4.55 % a week).
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 4.55 } },
+    'Vikten minskar 4,5 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 3.15 } },
+    'Vikten minskar 3,1 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
   [
     { code: 'trend.conditionRising', params: {} },
     'Hullet ökar trots att hästen redan var i överhull. Se över energin i foderstaten.',
@@ -321,6 +336,11 @@ const FALL: [DomainMessage, string][] = [
 describe('domainText', () => {
   it('has a catalogue entry for every code', () => {
     expect(DOMAIN_CODES.filter((code) => !i18n.exists(`domain.${code}`))).toEqual([])
+  })
+
+  it('has a golden sentence for every code', () => {
+    const tested = new Set(FALL.map(([m]) => m.code))
+    expect(DOMAIN_CODES.filter((code) => !tested.has(code))).toEqual([])
   })
 
   it.each(FALL)('renders %j', (meddelande, text) => {

@@ -77,6 +77,35 @@ describe('filtrering och granskning', () => {
   })
 })
 
+describe('råd utan tal', () => {
+  it('korsförlamning, luftvägar, tänder och undvikna ingredienser ger kod och källa', () => {
+    const rader = granskaKansligheter(
+      { ...frisk, pssm: true, luftvagar: true, tandproblem: true, undvik: ['spannmål', 'melass'] },
+      [],
+      { intag: 400, behov: 390 },
+      500,
+    )
+    expect(rader.map((r) => [r.text, r.kalla])).toEqual([
+      [
+        { code: 'sensitivity.pssm', params: {} },
+        { code: 'source.industryPractice', params: {} },
+      ],
+      [
+        { code: 'sensitivity.airways', params: {} },
+        { code: 'source.page30', params: {} },
+      ],
+      [
+        { code: 'sensitivity.teeth', params: {} },
+        { code: 'source.industryPracticePage34', params: {} },
+      ],
+      [
+        { code: 'sensitivity.avoidedIngredients', params: { ingredients: ['spannmål', 'melass'] } },
+        { code: 'source.productDescriptions', params: {} },
+      ],
+    ])
+  })
+})
+
 describe('planen med känsligheter', () => {
   it('Sixten: vitamin E styr urvalet, så inget sommarmineral utan vitaminer', () => {
     const plan = skapaPlan(demoHast, analysKomplett, produkter)

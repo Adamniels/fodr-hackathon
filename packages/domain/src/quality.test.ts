@@ -42,6 +42,41 @@ describe('bedomGrovfoder', () => {
       kalla: { code: 'source.eurofinsSoil' },
     })
   })
+  it('jord: aska eller järn för sig ger var sin kod', () => {
+    const jord = (askaGPerKgTs: number | undefined, fe: number | undefined) =>
+      bedomGrovfoder({ ...analysKomplett, askaGPerKgTs, perKgTs: { ...analysKomplett.perKgTs, fe } }, demoHast).find(
+        (x) => x.rubrik.code === 'qualityTitle.soil',
+      )?.text
+    expect(jord(120, 100)).toEqual({ code: 'quality.soilAsh', params: { ashG: 120 } })
+    expect(jord(50, 320)).toEqual({ code: 'quality.soilIron', params: { ironMg: 320 } })
+    expect(jord(90, 250)).toBeUndefined()
+  })
+  it('hösilage: torrsubstansen följer med som rått tal, med SLU sid 30 som källa', () => {
+    const flagga = (tsProcent: number) =>
+      bedomGrovfoder({ ...analysKomplett, tsProcent }, demoHast).find((x) => x.text.code.startsWith('quality.haylage'))
+    expect(flagga(39.7)).toMatchObject({
+      text: { code: 'quality.haylageWet', params: { dmPercent: 39.7 } },
+      kalla: { code: 'source.page30' },
+    })
+    expect(flagga(70)).toMatchObject({ text: { code: 'quality.haylageDry', params: { dmPercent: 70 } } })
+    expect(flagga(55)).toBeUndefined()
+  })
+  it('energirikt och högt socker bär råa tal', () => {
+    const f = bedomGrovfoder(
+      { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, socker: 150 } },
+      { ...demoHast, halsa: { ...demoHast.halsa, fang: false } },
+    )
+    expect(f.find((x) => x.text.code === 'quality.energyHigh')!.text.params).toEqual({
+      mj: analysKomplett.perKgTs.energi,
+      min: 6.5,
+      max: 8,
+      group: 'ovriga',
+    })
+    expect(f.find((x) => x.text.code === 'quality.sugarHigh')).toMatchObject({
+      text: { params: { sugarG: 150 } },
+      kalla: { code: 'source.industryPractice' },
+    })
+  })
   it('hårt arbete: energi under 9 MJ är för lite', () => {
     const f = bedomGrovfoder(analysHo, { ...demoHast, prestanda: 'trav_galopp_traning' })
     expect(f.find((x) => x.text.code === 'quality.energyLow')!.text.params).toMatchObject({ min: 9, group: 'hart' })

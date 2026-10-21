@@ -135,9 +135,13 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'sensitivity.teeth': tom,
   'sensitivity.proteinExcess': (p) => ({ percent: String(p.percent) }),
   'sensitivity.avoidedIngredients': (p) => ({ ingredients: lista(p.ingredients) }),
-  // Always one decimal ("2,0"), as toFixed(1) gave before (#12, decision 4).
+  // Always one decimal ("2,0"), rounded by toFixed(1) as before (#12, decision 4): toFixed rounds the binary value
+  // (4.55 gives 4,5), where Intl alone would round its decimal form up (4,6).
   'trend.weightLossFast': (p) => ({
-    percentPerWeek: p.percentPerWeek.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    percentPerWeek: Number(p.percentPerWeek.toFixed(1)).toLocaleString(locale(), {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }),
   }),
   'trend.conditionRising': tom,
   'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
