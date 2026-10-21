@@ -193,11 +193,11 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
     await pysenPlanWithLastStep(page)
     await horseList(page).getByRole('button', { name: 'Sixten' }).click()
     await expect(steps(page)).toHaveCount(4)
-    await expect(steps(page).first()).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: /steg 1: ändra måtten/, pressed: true })).toHaveCount(1)
     expect(errors).toEqual([])
   })
 
-  test('a plan with fewer steps for the same horse keeps a valid step selected', async ({ page }) => {
+  test('coming back to a plan with fewer steps for the same horse selects a step it has', async ({ page }) => {
     const errors: string[] = []
     page.on('pageerror', (e) => errors.push(e.message))
     await pysenPlanWithLastStep(page)
@@ -213,9 +213,24 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
   test('a start date picked for one horse does not carry over', async ({ page }) => {
     await loadExamplePlan(page)
     await page.getByLabel('Första dagen').fill('2026-11-02')
+    await expect(page.getByLabel('Första dagen')).toHaveValue('2026-11-02')
     await horseList(page).getByRole('button', { name: 'Pysen' }).click()
     await expect(page.getByLabel('Första dagen')).toHaveValue('2026-10-16')
   })
+})
+
+// #106: the grid was sized in milliseconds, so the 25-hour day in October added an empty week.
+test('a period across a clock change shows only its own weeks (#106)', async ({ page }) => {
+  await loadExamplePlan(page)
+  const kalender = page.getByRole('group', { name: 'Kalender för foderbytet' })
+  // Sixten is sensitive: 14 days, Monday 19 October to Sunday 1 November, across the change on 25 October.
+  await page.getByLabel('Första dagen').fill('2026-10-19')
+  await expect(kalender.getByText('1', { exact: true })).toBeVisible()
+  await expect(kalender.getByText('8', { exact: true })).toHaveCount(0)
+  // Across the change to summer time (28 March 2027): Monday 22 March to Sunday 4 April.
+  await page.getByLabel('Första dagen').fill('2027-03-22')
+  await expect(kalender.getByText('4', { exact: true })).toBeVisible()
+  await expect(kalender.getByText('11', { exact: true })).toHaveCount(0)
 })
 
 test('calendar download is a valid ics', async ({ page }) => {
