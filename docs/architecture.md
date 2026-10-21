@@ -70,6 +70,7 @@ All data and files stay in the EU. Locally, Postgres, MinIO (S3) and Mailpit (SM
 | [0013](adr/0013-error-model-problem-json.md) | Error model: problem+json with stable codes |
 | [0014](adr/0014-i18n-message-codes.md) | i18n: message codes and react-i18next |
 | [0015](adr/0015-config-secrets-observability.md) | Configuration, secrets and observability |
+| [0016](adr/0016-swedish-domain-names-english-technical-names.md) | Swedish names for the domain, English names for the software |
 
 ## Refactor or rebuild, per area
 
