@@ -67,7 +67,8 @@ export function formatDate(iso: string): string {
   return parseIsoDate(iso)?.toLocaleDateString(locale(), { dateStyle: 'short' }) ?? iso
 }
 
-export const nutrientLabel = (k: NutrientKey) => NUTRIENTS[k].label
+/** A nutrient's name from the catalogue (domain.nutrient.<key>); the domain keeps only units and groups (#95). */
+export const nutrientLabel = (k: NutrientKey) => i18n.t(`domain.nutrient.${k}`)
 /** A breed's name from the catalogue (domain.breed.<id>); the domain keeps only ids, types and weights (#95). */
 export const breedName = (id: string) => (i18n.t as (key: string) => string)(`domain.breed.${id}`)
 export const nutrientUnit = (k: NutrientKey) => NUTRIENTS[k].unit

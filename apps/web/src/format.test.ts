@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { addDays, breedName, formatDate, localIsoDate, parseDecimal, parseIsoDate, formatNumber } from './format'
+import {
+  addDays,
+  breedName,
+  nutrientLabel,
+  shortNutrientLabel,
+  formatDate,
+  localIsoDate,
+  parseDecimal,
+  parseIsoDate,
+  formatNumber,
+} from './format'
 import { RASER } from '@fodr/domain/breeds'
+import { NUTRIENT_KEYS } from '@fodr/domain/nutrients'
 import i18n from './i18n'
 
 describe('parseDecimal', () => {
@@ -162,5 +173,41 @@ describe('breedName', () => {
       arab: 'Arabiskt fullblod',
       fullblod: 'Engelskt fullblod',
     })
+  })
+})
+
+describe('nutrientLabel', () => {
+  // The labels nutrients.ts held before #95. The plan explanation sends them to the model, so they must not change.
+  it('names every nutrient exactly as before', () => {
+    expect(Object.fromEntries(NUTRIENT_KEYS.map((k) => [k, nutrientLabel(k)]))).toEqual({
+      energi: 'Energi',
+      smbRp: 'Smältbart råprotein',
+      ca: 'Kalcium (Ca)',
+      p: 'Fosfor (P)',
+      mg: 'Magnesium (Mg)',
+      na: 'Natrium (Na)',
+      fe: 'Järn (Fe)',
+      mn: 'Mangan (Mn)',
+      cu: 'Koppar (Cu)',
+      zn: 'Zink (Zn)',
+      co: 'Kobolt (Co)',
+      jod: 'Jod (I)',
+      se: 'Selen (Se)',
+      vitA: 'Vitamin A',
+      vitD: 'Vitamin D',
+      vitE: 'Vitamin E',
+      b1: 'Vitamin B1',
+      b2: 'Vitamin B2',
+      biotin: 'Biotin',
+      socker: 'Socker',
+      starkelse: 'Stärkelse',
+    })
+  })
+  it('the short label inside a sentence drops the symbol and lowercases the first letter of a word', () => {
+    expect([shortNutrientLabel('ca'), shortNutrientLabel('vitE'), shortNutrientLabel('smbRp')]).toEqual([
+      'kalcium',
+      'vitamin E',
+      'smältbart råprotein',
+    ])
   })
 })

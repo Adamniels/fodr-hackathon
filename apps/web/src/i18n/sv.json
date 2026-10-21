@@ -654,6 +654,29 @@
       "varmblod_trav": "Varmblodig travhäst",
       "arab": "Arabiskt fullblod",
       "fullblod": "Engelskt fullblod"
+    },
+    "nutrient": {
+      "energi": "Energi",
+      "smbRp": "Smältbart råprotein",
+      "ca": "Kalcium (Ca)",
+      "p": "Fosfor (P)",
+      "mg": "Magnesium (Mg)",
+      "na": "Natrium (Na)",
+      "fe": "Järn (Fe)",
+      "mn": "Mangan (Mn)",
+      "cu": "Koppar (Cu)",
+      "zn": "Zink (Zn)",
+      "co": "Kobolt (Co)",
+      "jod": "Jod (I)",
+      "se": "Selen (Se)",
+      "vitA": "Vitamin A",
+      "vitD": "Vitamin D",
+      "vitE": "Vitamin E",
+      "b1": "Vitamin B1",
+      "b2": "Vitamin B2",
+      "biotin": "Biotin",
+      "socker": "Socker",
+      "starkelse": "Stärkelse"
     }
   },
   "transitionPace": {
