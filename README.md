@@ -11,10 +11,12 @@ Upload a roughage analysis, describe the horse, and get a feeding plan following
 
 ## Setup
 
-Requires Node 24 or newer (see `.nvmrc`).
+Requires Node 24 or newer (see `.nvmrc`) and Docker (Docker Desktop, or any Docker with Compose).
 
 ```bash
 cp apps/web/.env.example apps/web/.env   # add ANTHROPIC_API_KEY to use the AI features
+docker compose up --wait    # Postgres, the S3 store (SeaweedFS) and Mailpit (inbox: http://localhost:8025)
+bash scripts/dev/check-services.sh       # optional: checks that all three answer
 npm ci
 npx playwright install chromium
 npm run dev                 # http://localhost:5173

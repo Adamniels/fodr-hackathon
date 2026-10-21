@@ -33,7 +33,7 @@ flowchart LR
   API --> Logs[pino logs, Sentry EU]
 ```
 
-All data and files stay in the EU. Locally, Postgres, MinIO (S3) and Mailpit (SMTP) run in Docker Compose; in production, the provider is chosen in M5.
+All data and files stay in the EU. Locally, Postgres, SeaweedFS (S3) and Mailpit (SMTP) run in Docker Compose; in production, the provider is chosen in M5.
 
 ## Principles
 

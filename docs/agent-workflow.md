@@ -52,7 +52,7 @@ The Mac mini works as the bot account **`mac-mini-agent`**, so the PRs it opens 
 1. **GitHub (owner, once).**
    - Keep `mac-mini-agent` as a repository collaborator with **Write** permission. Never give it Admin: the ruleset lets admins bypass review, and the bot would inherit that.
    - Give it access to the project board: open the "Fodr" project, **Settings → Manage access**, add `mac-mini-agent` with **Write**. Repository access does not include the board, which is a private user project.
-2. **Tools.** Install Node 24 (see `.nvmrc`), Docker (Desktop or OrbStack), `gh`, `jq`, tmux and Claude Code. `scripts/agent/next.sh` calls the `jq` binary; macOS ships it (`/usr/bin/jq`), other systems must install it.
+2. **Tools.** Install Node 24 (see `.nvmrc`), Docker Desktop (in the `agent` user's session, set to start at sign-in), `gh`, `jq`, tmux and Claude Code. Docker Desktop asks the login keychain before every pull, which an SSH session cannot use, so the agent cannot pull images: pull a new image once from the Mac's own Terminal (`docker pull <image>`); the agent's `docker compose up` then uses it. `scripts/agent/next.sh` calls the `jq` binary; macOS ships it (`/usr/bin/jq`), other systems must install it.
 3. **Clone.** `git clone https://github.com/Adamniels/fodr-hackathon.git ~/dev/fodr-hackathon`
 4. **Log in as the bot.** `gh auth login` with the bot account; scopes `repo`, `workflow`, `project`, `read:org` (`gh auth refresh -s project` if the project scope is missing). Then `gh auth setup-git`, so git pushes use the bot's login instead of a keychain entry that may belong to the owner.
 5. **Git identity, this clone only.** In the clone:

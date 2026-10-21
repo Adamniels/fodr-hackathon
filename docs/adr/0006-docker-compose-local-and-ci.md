@@ -11,7 +11,7 @@ With a real backend, development and tests need Postgres, object storage and ema
 A `compose.yaml` at the repository root starts the backing services:
 
 - **Postgres** (same major version as production will use)
-- **MinIO** as the S3 compatible file store
+- **MinIO** as the S3 compatible file store (SeaweedFS since 2026-10-21, see Notes)
 - **Mailpit** to catch outgoing email, with a web inbox for verification and magic link flows
 
 The API and the web app run on the host with `npm run dev`, configured through `.env` pointing at these services. CI uses the same images as GitHub Actions service containers, so integration and e2e tests run against real Postgres, S3 and SMTP.
@@ -26,3 +26,7 @@ The API and the web app run on the host with `npm run dev`, configured through `
 - Both developers need Docker Desktop or OrbStack.
 - E2E tests in M2 run against the real API and database; only the Anthropic API stays mocked.
 - Seed data (the future demo or beta account, spec section 4) is loaded by a script into this database.
+
+## Notes
+
+- 2026-10-21 (#18): MinIO's images can no longer be pulled (Docker Hub and Quay), so **SeaweedFS** serves the S3 API locally and in CI (owner). CI runs the same `compose.yaml` with `docker compose up --wait` instead of service containers: same images and configuration, and service containers cannot pass the start command the S3 store needs.
