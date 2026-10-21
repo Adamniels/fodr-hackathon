@@ -2,6 +2,8 @@
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
+import { aiRoutes } from './ai/routes'
+import type { AiProvider } from './ai/provider'
 import type { Config } from './config'
 import type { Logger } from './logger'
 import { problem } from './problem'
@@ -9,11 +11,12 @@ import { problem } from './problem'
 export interface AppDeps {
   config: Config
   logger: Logger
+  ai: AiProvider
 }
 
 export type AppEnv = { Variables: RequestIdVariables }
 
-export function createApp({ config, logger }: AppDeps): Hono<AppEnv> {
+export function createApp({ config, logger, ai }: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
 
   // X-Request-Id on every response; a valid incoming ID (from a proxy) is kept, anything else is replaced.
@@ -35,6 +38,8 @@ export function createApp({ config, logger }: AppDeps): Hono<AppEnv> {
   })
 
   app.get('/api/v1/health', (c) => c.json({ status: 'ok' }))
+  // The AI routes keep their paths outside /api/v1 until #30 versions them.
+  app.route('/api', aiRoutes(ai, logger))
 
   if (config.webDistDir) {
     const root = config.webDistDir

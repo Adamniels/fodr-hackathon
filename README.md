@@ -14,8 +14,7 @@ Upload a roughage analysis, describe the horse, and get a feeding plan following
 Requires Node 24 or newer (see `.nvmrc`) and Docker (Docker Desktop, or any Docker with Compose v2).
 
 ```bash
-cp .env.example .env                     # service ports and DATABASE_URL for the API
-cp apps/web/.env.example apps/web/.env   # add ANTHROPIC_API_KEY to use the AI features
+cp .env.example .env        # service ports and DATABASE_URL; add ANTHROPIC_API_KEY to use the AI features
 docker compose up --wait    # Postgres, the S3 store (SeaweedFS) and Mailpit (inbox: http://localhost:8025)
 bash scripts/dev/check-services.sh       # optional: checks that all three answer
 npm ci
@@ -59,7 +58,7 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Feed transition | `packages/domain/src/transition.ts` | Step schedule for changing feed, by sensitivity |
 | Journal | `packages/domain/src/journal.ts` | Trend, follow up and saved plans per horse |
 | API | `apps/api/src/` | Hono app (`app.ts`), config from the environment (`config.ts`), problem+json errors, Drizzle (`db.ts`, migrations in `apps/api/drizzle/`) |
-| AI | `apps/web/server/ai.ts` | Reads reports, interprets free text, explains. Never calculates |
+| AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |
 | E2E tests | `apps/web/e2e/` | Playwright specs, AI mocks and fixtures |

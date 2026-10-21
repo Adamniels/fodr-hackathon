@@ -5,6 +5,7 @@ import { Writable } from 'node:stream'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { DatabaseError } from 'pg'
 import { describe, expect, it } from 'vitest'
+import { fakeAiProvider } from '../test/fake-ai-provider'
 import { createApp } from './app'
 import type { Config } from './config'
 import { createLogger } from './logger'
@@ -14,6 +15,7 @@ const CONFIG: Config = {
   port: 3000,
   logLevel: 'info',
   webDistDir: undefined,
+  anthropicApiKey: undefined,
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
@@ -26,7 +28,11 @@ function setup(config: Partial<Config> = {}) {
       done()
     },
   })
-  const app = createApp({ config: { ...CONFIG, ...config }, logger: createLogger('info', stream) })
+  const app = createApp({
+    config: { ...CONFIG, ...config },
+    logger: createLogger('info', stream),
+    ai: fakeAiProvider(),
+  })
   return { app, lines }
 }
 

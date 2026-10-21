@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// E2E tests run against the Vite dev server, because the /api routes only exist there today.
+// E2E tests run against the Vite dev server alone; the web app still keeps its data in the browser.
 // Every /api call except /api/v1 (the real backend) is intercepted in the browser (e2e/support/mock-ai.ts),
-// so no API key is needed.
+// so neither the API nor an API key is needed.
 export default defineConfig({
   testDir: 'e2e',
   forbidOnly: !!process.env.CI,

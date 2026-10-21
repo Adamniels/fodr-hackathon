@@ -33,9 +33,10 @@ export default tseslint.config(
     },
   },
   {
-    // Modules only; tests may hold Swedish data.
+    // Modules only; tests may hold Swedish data. The prompts and schema descriptions in ai/anthropic.ts are Swedish
+    // model input, not text for a reader.
     files: ['src/**/*.ts'],
-    ignores: ['**/*.test.ts'],
+    ignores: ['**/*.test.ts', 'src/ai/anthropic.ts'],
     rules: { 'no-restricted-syntax': ['error', SWEDISH_TEXT] },
   },
   {

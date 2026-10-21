@@ -1,21 +1,17 @@
-// Every call to Claude. Runs only on the server, so the API key never reaches the browser.
-// The AI reads, asks and explains. It never calculates requirements or doses; packages/domain does.
+// Every call to Claude, behind the AiProvider interface (#20). Runs only on the server, so the API key never reaches
+// the browser. The AI reads, asks and explains. It never calculates requirements or doses; packages/domain does.
+// The prompts and schema descriptions are Swedish model input, not text for a reader, so this file is exempt from the
+// Swedish-text lint rule (eslint.config.js).
 
-import Anthropic from '@anthropic-ai/sdk'
+import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
 import { RASER } from '@fodr/domain/breeds'
 import { INGREDIENSER } from '@fodr/domain/types'
+import { AiProviderError, type AiProvider, type AnalysisFile, type ProfileInput } from './provider'
 
 const MODEL = 'claude-sonnet-5-5'
 const BREED_IDS = RASER.map((r) => r.id) as [string, ...string[]]
-let client: Anthropic | null = null
-function anthropic(): Anthropic {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('Ingen API-nyckel. Lägg ANTHROPIC_API_KEY i app/.env och starta om servern.')
-  }
-  return (client ??= new Anthropic())
-}
 
 const nullableNumber = z.number().nullable()
 
@@ -58,7 +54,7 @@ Returnera värden omräknade till per kg torrsubstans (ts):
 - Socker kan heta WSC eller vattenlösliga kolhydrater.
 Ett värde som inte står i dokumentet ska vara null. Gissa aldrig och fyll aldrig i typvärden.`
 
-export async function readAnalysis(file: { mediaType: string; base64: string }): Promise<AnalysisResponse> {
+async function readAnalysis(client: Anthropic, file: AnalysisFile): Promise<AnalysisResponse> {
   const document: Anthropic.ContentBlockParam =
     file.mediaType === 'application/pdf'
       ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.base64 } }
@@ -70,7 +66,7 @@ export async function readAnalysis(file: { mediaType: string; base64: string }):
             data: file.base64,
           },
         }
-  const response = await anthropic().messages.parse({
+  const response = await client.messages.parse({
     model: MODEL,
     max_tokens: 16000,
     system: ANALYSIS_SYSTEM,
@@ -130,12 +126,7 @@ Du får fritext om hästen (ras, arbete, miljö), vad den äter i dag och om hä
 - Fråga bara om sådant som påverkar foderplanen. Inga följdfrågor om allt är tydligt.
 Svara på svenska.`
 
-export async function interpretProfile(input: {
-  foderText: string
-  halsaText: string
-  tidigareSvar: { fraga: string; svar: string }[]
-  produkter: { id: string; namn: string }[]
-}): Promise<ProfileResponse> {
+async function interpretProfile(client: Anthropic, input: ProfileInput): Promise<ProfileResponse> {
   const text = [
     `Om hästen och vad den äter i dag:\n${input.foderText || '(inget angivet)'}`,
     `Hälsa:\n${input.halsaText || '(inget angivet)'}`,
@@ -146,7 +137,7 @@ export async function interpretProfile(input: {
   ]
     .filter(Boolean)
     .join('\n\n')
-  const response = await anthropic().messages.parse({
+  const response = await client.messages.parse({
     model: MODEL,
     max_tokens: 8000,
     system: PROFILE_SYSTEM,
@@ -169,8 +160,8 @@ Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan kla
 - Inga förkortningar utan förklaring, inga tabeller.
 - Högst 120 ord i högst tre korta stycken: läget i dag, förslaget och varför, och det hästägaren ska tänka på. Hellre färre siffror än fler.`
 
-export async function explainPlan(payload: unknown): Promise<string> {
-  const response = await anthropic().messages.create({
+async function explainPlan(client: Anthropic, payload: unknown): Promise<string> {
+  const response = await client.messages.create({
     model: MODEL,
     max_tokens: 4000,
     system: EXPLANATION_SYSTEM,
@@ -194,8 +185,8 @@ function parsedOutput<T>(response: { parsed_output: T | null }): T {
 }
 
 function requireCompleteResponse<T extends { stop_reason: string | null }>(response: T): T {
-  if (response.stop_reason === 'refusal') throw new Error('Modellen avböjde att svara på förfrågan.')
-  if (response.stop_reason === 'max_tokens') throw new Error('Svaret blev avklippt. Försök igen.')
+  if (response.stop_reason === 'refusal') throw new AiProviderError('refusal')
+  if (response.stop_reason === 'max_tokens') throw new AiProviderError('truncated')
   return response
 }
 
@@ -227,8 +218,8 @@ Du får hästens profil, journalposterna i datumordning, trenden som redan är b
 - Nästa steg ska vara praktiska, till exempel när hästen ska vägas eller vad ägaren ska anteckna.
 Svara på enkel svenska.`
 
-export async function analyzeJournal(payload: unknown): Promise<JournalResponse> {
-  const response = await anthropic().messages.parse({
+async function analyzeJournal(client: Anthropic, payload: unknown): Promise<JournalResponse> {
+  const response = await client.messages.parse({
     model: MODEL,
     max_tokens: 8000,
     system: JOURNAL_SYSTEM,
@@ -236,4 +227,40 @@ export async function analyzeJournal(payload: unknown): Promise<JournalResponse>
     messages: [{ role: 'user', content: JSON.stringify(payload) }],
   })
   return parsedOutput(requireCompleteResponse(response))
+}
+
+export interface AnthropicProviderOptions {
+  /** ANTHROPIC_API_KEY. Without it every call fails with `missing_key` and the rest of the API works. */
+  apiKey: string | undefined
+  /** Passed to the SDK client; tests give it a fake fetch. */
+  clientOptions?: ClientOptions
+}
+
+export function createAnthropicProvider({ apiKey, clientOptions }: AnthropicProviderOptions): AiProvider {
+  let client: Anthropic | undefined
+  async function call<T>(run: (client: Anthropic) => Promise<T>): Promise<T> {
+    if (!apiKey) throw new AiProviderError('missing_key')
+    client ??= new Anthropic({ ...clientOptions, apiKey })
+    try {
+      return await run(client)
+    } catch (e) {
+      throw providerError(e)
+    }
+  }
+  return {
+    readAnalysis: (file) => call((c) => readAnalysis(c, file)),
+    interpretProfile: (input) => call((c) => interpretProfile(c, input)),
+    explainPlan: (payload) => call((c) => explainPlan(c, payload)),
+    analyzeJournal: (payload) => call((c) => analyzeJournal(c, payload)),
+  }
+}
+
+// The SDK's errors as provider errors, so the routes never depend on the SDK. AuthenticationError and RateLimitError
+// are APIErrors too, so they are checked first. Anything else (a reply that fails the schema) passes through.
+function providerError(e: unknown): unknown {
+  if (e instanceof Anthropic.AuthenticationError) return new AiProviderError('auth')
+  if (e instanceof Anthropic.RateLimitError) return new AiProviderError('rate_limit')
+  if (e instanceof Anthropic.APIError)
+    return new AiProviderError('upstream', typeof e.status === 'number' ? e.status : undefined)
+  return e
 }
