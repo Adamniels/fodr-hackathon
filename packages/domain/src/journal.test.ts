@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoJournal } from '../test/fixtures/examples'
-import { beraknaTrend, ogonblickAvPlan, type Journalpost } from './journal'
+import { beraknaTrend, nyPost, ogonblickAvPlan, type Journalpost } from './journal'
 
 const post = (datum: string, viktKg?: number, hull?: number): Journalpost => ({
   id: datum,
@@ -43,5 +43,13 @@ describe('beraknaTrend', () => {
   it('ordningen i listan spelar ingen roll', () => {
     const t = beraknaTrend([post('2026-10-01', 480), post('2026-09-01', 500)], '2026-10-02')
     expect(t.vikt).toMatchObject({ forsta: 500, senaste: 480 })
+  })
+})
+
+describe('nyPost (#80)', () => {
+  it('is pure: the caller gives the ID, so the same input gives the same entry', () => {
+    const a = nyPost('post-1', '2026-10-15', { text: 'Pigg', viktKg: 540 })
+    expect(a).toEqual({ id: 'post-1', datum: '2026-10-15', text: 'Pigg', viktKg: 540 })
+    expect(nyPost('post-1', '2026-10-15', { text: 'Pigg', viktKg: 540 })).toEqual(a)
   })
 })

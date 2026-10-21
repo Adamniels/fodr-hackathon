@@ -84,6 +84,20 @@ test("switching horse leaves the other horse's draft and AI analysis behind (#10
   await expect(page.getByLabel('Uppdatera profilen och räkna om foderplanen')).toBeChecked()
 })
 
+test('entries on the same date are listed in the order they were added (#80)', async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Journal')
+  for (const text of ['Första anteckningen', 'Andra anteckningen']) {
+    await page.getByLabel('Vad har du sett?').fill(text)
+    await page.getByRole('button', { name: 'Lägg till', exact: true }).click()
+  }
+  // The timeline shows the newest first.
+  const items = page.getByRole('listitem').filter({ hasText: /anteckningen/ })
+  await expect(items).toHaveCount(2)
+  await expect(items.nth(0)).toContainText('Andra anteckningen')
+  await expect(items.nth(1)).toContainText('Första anteckningen')
+})
+
 test('entry with weight updates the profile', async ({ page }) => {
   await enterDemo(page)
   await goToStep(page, 'Journal')

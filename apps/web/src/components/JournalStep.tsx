@@ -7,6 +7,7 @@ import type { Hastprofil } from '@fodr/domain/types'
 import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
 import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
 import { domainText } from '../i18n/domain'
+import { newJournalEntryId } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
@@ -164,7 +165,7 @@ function NyAnteckning({
   }
 
   function spara() {
-    onLaggTill(nyPost(datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
+    onLaggTill(nyPost(newJournalEntryId(), datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
     setVikt(undefined)
     setHull('')
     setText('')
