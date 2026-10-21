@@ -8,7 +8,7 @@ import { skapaPlan } from '@fodr/domain/plan'
 import { loadHorses, loadJournal, nyHast, saveHorses, saveJournal } from '../storage'
 import { ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
-import { logOut, type User } from '../auth'
+import type { User } from '@fodr/contracts/me'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
 import { Wordmark } from '../components/Brand'
 import { produkter } from '../products'
@@ -22,12 +22,12 @@ export function WorkspaceGate() {
   const session = useSession()
   const location = useLocation()
   if (!session.user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  return <Workspace key={session.user.id} user={session.user} setUser={session.setUser} />
+  return <Workspace key={session.user.id} user={session.user} logOut={session.logOut} />
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
 // The horse and step come from the URL, /horses/:horseId/<step>; the steps render in the Outlet (steps.tsx).
-function Workspace({ user, setUser }: { user: User; setUser: (user: User | null) => void }) {
+function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const horseMatch = useMatch('/horses/:horseId/*')
@@ -161,10 +161,10 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
 
         <div className="sidofalt-fot">
           <div className="konto">
-            <span className="konto-ikon">{user.namn.slice(0, 1).toUpperCase()}</span>
+            <span className="konto-ikon">{user.name.slice(0, 1).toUpperCase()}</span>
             <span className="konto-text">
-              <b>{user.namn}</b>
-              <span>{user.epost}</span>
+              <b>{user.name}</b>
+              <span>{user.email}</span>
             </span>
           </div>
           <button className="sidofalt-lank" onClick={() => void navigate('/')}>
@@ -173,10 +173,9 @@ function Workspace({ user, setUser }: { user: User; setUser: (user: User | null)
           <button
             className="sidofalt-lank"
             onClick={() => {
-              logOut()
               // The landing page renders first, so the gate never sees the session end and sends to /login.
               void navigate('/', { flushSync: true })
-              setUser(null)
+              void logOut()
             }}
           >
             {t('app.sidebar.logOut')}

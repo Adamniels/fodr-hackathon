@@ -20,6 +20,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@fodr/contracts": "*",
     "@fodr/domain": "*",
     "@tanstack/react-query": "5.104.1",
     "i18next": "^26.4.2",

@@ -1,12 +1,44 @@
-// The root route: holds the session (still the browser mock in auth.ts) and provides it to every route.
+// The root route: reads the session from the API (TanStack Query, ADR 0012) and provides it to every route. Nothing
+// renders until the first answer, so a signed-in user is never sent to /login on a reload.
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Outlet } from 'react-router'
-import { currentUser, type User } from '../auth'
+import { authClient, fetchMe } from '../auth-client'
+import { DEMO_USER, isDemoOpen, setDemoOpen } from '../demo'
 import { SessionContext, type Session } from './session'
 
+const ME = ['me']
+
 export function Root() {
-  const [user, setUser] = useState<User | null>(currentUser)
-  const session: Session = { user, setUser }
+  const queryClient = useQueryClient()
+  // A failed read (the API down) counts as signed out; the user can still open the demo.
+  const me = useQuery({ queryKey: ME, queryFn: fetchMe, retry: false, staleTime: Infinity })
+  const [demo, setDemo] = useState(isDemoOpen)
+  if (me.isPending) return null
+
+  const leaveDemo = () => {
+    setDemoOpen(false)
+    setDemo(false)
+  }
+  const session: Session = {
+    user: demo ? DEMO_USER : (me.data ?? null),
+    refresh: async () => {
+      leaveDemo()
+      await queryClient.invalidateQueries({ queryKey: ME })
+    },
+    openDemo: () => {
+      setDemoOpen(true)
+      setDemo(true)
+    },
+    logOut: async () => {
+      if (demo) {
+        leaveDemo()
+        return
+      }
+      await authClient.signOut()
+      queryClient.setQueryData(ME, null)
+    },
+  }
   return (
     <SessionContext value={session}>
       <Outlet />

@@ -33,7 +33,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 |---|---|
 | `npm test` | Unit tests for the calculation engine (including hand calculated SLU cases) and the API, no services needed |
 | `npm run test:integration` | API tests against the Compose Postgres, in their own `fodr_test` database |
-| `npm run test:e2e` | Playwright tests of every user flow, AI mocked, no key needed |
+| `npm run test:e2e` | Playwright tests of every user flow against the real API (needs `docker compose up --wait`), AI mocked, no key needed |
 | `npm run test:scripts` | Offline tests of the agent scripts in `scripts/agent/` (needs `jq`) |
 | `npm run lint` | ESLint (type aware) |
 | `npm run typecheck` | TypeScript |
