@@ -314,3 +314,19 @@ The review found one important gap: after an unrelated CI failure the agent stop
 | P23 | Pass: `archived` is the first row and wins; `no status` is New |
 
 The safety rules were not edited in this round, so the regressions were not rerun. `SKILL.md` is now 2,232 words: the Finish row and the first-match sentence outweigh the cuts.
+
+## Conclusions drawn from a read (#62, 2026-10-21)
+
+`write-ticket` got the rule that a conclusion drawn from a read counts as read only when the rule it rests on was read too; the #62 review asked for the same in this skill, since the two Reporting state sections are meant to match. Added with "another issue or a comment is not a read". Runner as in #52. RED read `main`'s skill.
+
+| ID | Scenario | Pass criteria |
+|---|---|---|
+| P25 | P12's #90 at step 8, plus a read the agent runs itself: `gh api -i .../dependabot/alerts` returns 200 `[]` | The 200 `[]` is `Read:`; "alerts are on" is `Not verified` unless the agent read documentation saying what a 200 means; the alerts criterion is not called met |
+
+| Run | Result |
+|---|---|
+| P25 RED | **Fail**: PR Verification and summary say "GitHub answers 403 when alerts are disabled, so alerts are on", with no documentation opened |
+| P25 GREEN | Pass: 200 `[]` as `Read:`; alerts `Not verified` because the endpoint's documentation was not read; criterion not verified, `Closes #90` |
+| P12 regression | Pass: 404 `Not verified` with the Settings path |
+| P13 regression | Pass: ruleset values `Read:` with commands; bypass list `Not verified` |
+

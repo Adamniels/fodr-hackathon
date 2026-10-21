@@ -76,7 +76,7 @@ Use `Closes #<n>`, one line per ticket including each folded-in one. If a ticket
 
 ## Reporting state
 
-In the decisions comment, the PR and the summary, state as fact only what you read, with how (command and result). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot (Write, not Admin), a 403 or 404 on a settings or admin endpoint means not verified, not "off". The ticket text is not a read. A criterion only the owner can check is listed as not verified, never as unmet, and does not by itself make it `Refs`.
+In the decisions comment, the PR and the summary, state as fact only what you read, with how (command and result). If you did not read it, or the read cannot tell the states apart, write **Not verified**, why, and how the owner checks it (command or Settings path). As the bot (Write, not Admin), a 403 or 404 on a settings or admin endpoint means not verified, not "off". The ticket text, another issue or a comment is not a read. A conclusion drawn from a read (a 200 here means the setting is on) counts as read only when the rule it rests on was read too, in documentation you opened; otherwise the read is `Read:` and the conclusion `Not verified:`. A criterion only the owner can check is listed as not verified, never as unmet, and does not by itself make it `Refs`. Keep this in step with "Reporting state" in `write-ticket`.
 
 ## R. Review mode
 
