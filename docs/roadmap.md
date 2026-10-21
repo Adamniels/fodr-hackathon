@@ -39,7 +39,7 @@ Real accounts and server persistence for horses, analyses, plans and journal. lo
 
 | Slice | Issue | Type | Title | Depends on |
 |---|---|---|---|---|
-| M2-01 | [#18](https://github.com/Adamniels/fodr-hackathon/issues/18) | chore | Docker Compose for Postgres, MinIO and Mailpit | M1-03 ([#8](https://github.com/Adamniels/fodr-hackathon/issues/8)) |
+| M2-01 | [#18](https://github.com/Adamniels/fodr-hackathon/issues/18) | chore | Docker Compose for Postgres, an S3 store (SeaweedFS) and Mailpit | M1-03 ([#8](https://github.com/Adamniels/fodr-hackathon/issues/8)) |
 | M2-02 | [#19](https://github.com/Adamniels/fodr-hackathon/issues/19) | feature | apps/api skeleton | M2-01 ([#18](https://github.com/Adamniels/fodr-hackathon/issues/18)) |
 | M2-03 | [#20](https://github.com/Adamniels/fodr-hackathon/issues/20) | refactor | move the AI routes from Vite middleware to apps/api | M2-02 ([#19](https://github.com/Adamniels/fodr-hackathon/issues/19)) |
 | M2-04 | [#21](https://github.com/Adamniels/fodr-hackathon/issues/21) | feature | URL routing and server-state layer | M1-05 ([#10](https://github.com/Adamniels/fodr-hackathon/issues/10)) |

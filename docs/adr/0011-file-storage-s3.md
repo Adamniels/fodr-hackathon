@@ -21,4 +21,4 @@ CF4 requires the original report (PDF or photo, a few MB) to be stored with the 
 ## Consequences
 
 - The API needs a body size limit that fits the documented upload limit (set in the M2 slice).
-- Locally MinIO serves the bucket (ADR 0006).
+- Locally SeaweedFS serves the bucket (ADR 0006; MinIO until 2026-10-21, when its images could no longer be pulled, #18).

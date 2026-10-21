@@ -33,7 +33,7 @@ flowchart LR
   API --> Logs[pino logs, Sentry EU]
 ```
 
-All data and files stay in the EU. Locally, Postgres, MinIO (S3) and Mailpit (SMTP) run in Docker Compose; in production, the provider is chosen in M5.
+All data and files stay in the EU. Locally, Postgres, SeaweedFS (S3) and Mailpit (SMTP) run in Docker Compose; in production, the provider is chosen in M5.
 
 ## Principles
 
@@ -85,4 +85,4 @@ All data and files stay in the EU. Locally, Postgres, MinIO (S3) and Mailpit (SM
 | Product data | Rebuild the process: versioned table and admin view | M4 |
 | Deployment | Build in M5 on the chosen provider | M5 |
 
-Library versions named in the ADRs were current on 2026-10-16. When installing, pin the newest release that is at least two weeks old. The rule covers transitive dependencies too (owner, 2026-10-21, #61): resolve an install or upgrade with `npm install --before=<the date 14 days ago>` and `npm dedupe --before=<same date>`, so every package in `package-lock.json` meets it. Dependabot's 14 day cooldown covers direct dependencies only.
+Library versions named in the ADRs were current on 2026-10-16. When installing, pin the newest release that is at least two weeks old. The rule covers transitive dependencies too (owner, 2026-10-21, #61): resolve an install or upgrade with `npm install --before=<the date 14 days ago>` and `npm dedupe --before=<same date>`, so every package in `package-lock.json` meets it. Dependabot's 14 day cooldown covers direct dependencies only. For a Docker image the rule applies to the software release in its tag (PostgreSQL 18.6, not the build date); rebuilds of the same tag with operating system patches are accepted (owner, 2026-10-21, #18).
