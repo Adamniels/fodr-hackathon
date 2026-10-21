@@ -6,7 +6,8 @@
 // and must stay as they are; our own tables reference users.id. Timestamps are timestamptz, unlike the generator's
 // plain timestamp: pg reads a plain timestamp in the process's time zone, which would shift expiry times whenever the
 // server and the database disagree on it.
-import { bigint, boolean, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import type { HorseProfile } from '@fodr/contracts/horses'
+import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 const id = () => uuid('id').defaultRandom().primaryKey()
 const instant = (name: string) => timestamp(name, { withTimezone: true })
@@ -88,3 +89,33 @@ export const rateLimits = pgTable('rate_limits', {
   count: integer('count').notNull(),
   lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
 })
+
+// Horses (#24, CF2, ADR 0008). The name is a column, for listing; the rest of the profile is jsonb, validated by the
+// contract on the way in. Deleting a horse deletes it outright, with everything that references it (owner, #24).
+export const horses = pgTable('horses', {
+  id: id(),
+  name: text('name').notNull(),
+  profile: jsonb('profile').$type<Omit<HorseProfile, 'namn'>>().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+})
+
+// Who may reach a horse. Every repository query goes through this table (ADR 0010); 'owner' is the only role until
+// sharing (spec 6.3), which adds roles here without migrating the horses.
+export const horseMembers = pgTable(
+  'horse_members',
+  {
+    horseId: uuid('horse_id')
+      .notNull()
+      .references(() => horses.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role', { enum: ['owner'] }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.horseId, table.userId] }),
+    index('horse_members_user_id_idx').on(table.userId),
+  ],
+)

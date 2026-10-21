@@ -6,7 +6,7 @@ import { DrizzleQueryError } from 'drizzle-orm'
 import { DatabaseError } from 'pg'
 import { describe, expect, it } from 'vitest'
 import { fakeAiProvider } from '../test/fake-ai-provider'
-import { UNIT_CONFIG, unitAuth } from '../test/unit-deps'
+import { UNIT_CONFIG, unitAuth, unitRepositories } from '../test/unit-deps'
 import { createApp } from './app'
 import type { Config } from './config'
 import { createLogger } from './logger'
@@ -28,6 +28,7 @@ function setup(config: Partial<Config> = {}) {
     logger: createLogger('info', stream),
     ai: fakeAiProvider(),
     auth: unitAuth(),
+    repositories: unitRepositories(),
   })
   return { app, lines }
 }

@@ -7,6 +7,7 @@ import { parseConfig } from './config'
 import { createDatabase } from './db'
 import { createLogger } from './logger'
 import { createSmtpMailer } from './mail/mailer'
+import { horseRepository } from './repositories/horses'
 
 const result = parseConfig(process.env)
 if (!result.ok) {
@@ -18,7 +19,13 @@ const logger = createLogger(config.logLevel)
 // The pool connects on the first query, so the API starts (and serves health) while the database is still coming up.
 const database = createDatabase(config.databaseUrl)
 const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
-const app = createApp({ config, logger, ai: createAnthropicProvider({ apiKey: config.anthropicApiKey }), auth })
+const app = createApp({
+  config,
+  logger,
+  ai: createAnthropicProvider({ apiKey: config.anthropicApiKey }),
+  auth,
+  repositories: { horses: horseRepository(database.db) },
+})
 
 const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
   logger.info({ port: info.port }, 'listening')
