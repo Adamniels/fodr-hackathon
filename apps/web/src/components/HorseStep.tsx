@@ -17,7 +17,7 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
-import { bodyConditionText, formatNumber } from '../format'
+import { bodyConditionText, breedName, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
@@ -114,7 +114,7 @@ function ProfileForm({
           <option value="">{t('horse.breedOther')}</option>
           {RASER.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.namn}
+              {breedName(r.id)}
             </option>
           ))}
         </select>

@@ -68,6 +68,8 @@ export function formatDate(iso: string): string {
 }
 
 export const nutrientLabel = (k: NutrientKey) => NUTRIENTS[k].label
+/** A breed's name from the catalogue (domain.breed.<id>); the domain keeps only ids, types and weights (#95). */
+export const breedName = (id: string) => (i18n.t as (key: string) => string)(`domain.breed.${id}`)
 export const nutrientUnit = (k: NutrientKey) => NUTRIENTS[k].unit
 /** A dose in grams per day, at the engine's precision (roundDose): whole grams, one decimal below 1 g (#103). */
 export const doseGrams = (g: number) => formatNumber(roundDose(g), 1)

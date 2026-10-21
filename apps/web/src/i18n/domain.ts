@@ -1,7 +1,7 @@
 import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
-import { doseGrams, formatMoney, shortNutrientLabel, formatNumber } from '../format'
+import { breedName, doseGrams, formatMoney, shortNutrientLabel, formatNumber } from '../format'
 import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
@@ -83,7 +83,7 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'note.weightOutsideBreed': (p) => ({
     kg: formatNumber(p.kg, 1),
     // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of breeds.ts.
-    breed: hittaRas(p.breedId)?.namn.toLowerCase() ?? p.breedId,
+    breed: hittaRas(p.breedId) ? breedName(p.breedId).toLowerCase() : p.breedId,
     minKg: formatNumber(p.minKg, 0),
     maxKg: formatNumber(p.maxKg, 0),
   }),

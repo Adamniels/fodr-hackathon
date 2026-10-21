@@ -641,6 +641,19 @@
     "conversion": {
       "energyFromRuminant": "Räknat från idisslarvärdet {{mj}} MJ med SLU:s formel",
       "proteinFromCrude": "Räknat från råprotein {{grams}} g med SLU:s formel"
+    },
+    "breed": {
+      "shetland": "Shetlandsponny",
+      "russ": "Gotlandsruss",
+      "ponny": "Ponny, övrig (t.ex. welsh, connemara)",
+      "islandshast": "Islandshäst",
+      "fjordhast": "Fjordhäst",
+      "nordsvensk": "Nordsvensk brukshäst / kallblodstravare",
+      "ardenner": "Ardenner",
+      "varmblod_rid": "Varmblodig ridhäst / halvblod",
+      "varmblod_trav": "Varmblodig travhäst",
+      "arab": "Arabiskt fullblod",
+      "fullblod": "Engelskt fullblod"
     }
   },
   "transitionPace": {

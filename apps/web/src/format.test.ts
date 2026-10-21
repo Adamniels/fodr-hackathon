@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { addDays, formatDate, localIsoDate, parseDecimal, parseIsoDate, formatNumber } from './format'
+import { addDays, breedName, formatDate, localIsoDate, parseDecimal, parseIsoDate, formatNumber } from './format'
+import { RASER } from '@fodr/domain/breeds'
 import i18n from './i18n'
 
 describe('parseDecimal', () => {
@@ -142,5 +143,24 @@ describe('addDays', () => {
     expect(localIsoDate(addDays(fore, 2))).toBe('2026-10-26')
     expect(addDays(fore, 2).getHours()).toBe(0)
     expect(localIsoDate(addDays(fore, -24))).toBe('2026-09-30')
+  })
+})
+
+describe('breedName', () => {
+  // The names breeds.ts held before #95. The journal AI receives them as `ras`, so they must not change.
+  it('names every breed exactly as before', () => {
+    expect(Object.fromEntries(RASER.map((r) => [r.id, breedName(r.id)]))).toEqual({
+      shetland: 'Shetlandsponny',
+      russ: 'Gotlandsruss',
+      ponny: 'Ponny, övrig (t.ex. welsh, connemara)',
+      islandshast: 'Islandshäst',
+      fjordhast: 'Fjordhäst',
+      nordsvensk: 'Nordsvensk brukshäst / kallblodstravare',
+      ardenner: 'Ardenner',
+      varmblod_rid: 'Varmblodig ridhäst / halvblod',
+      varmblod_trav: 'Varmblodig travhäst',
+      arab: 'Arabiskt fullblod',
+      fullblod: 'Engelskt fullblod',
+    })
   })
 })
