@@ -85,4 +85,4 @@ All data and files stay in the EU. Locally, Postgres, MinIO (S3) and Mailpit (SM
 | Product data | Rebuild the process: versioned table and admin view | M4 |
 | Deployment | Build in M5 on the chosen provider | M5 |
 
-Library versions named in the ADRs were current on 2026-10-16. When installing, pin the newest release that is at least two weeks old.
+Library versions named in the ADRs were current on 2026-10-16. When installing, pin the newest release that is at least two weeks old. The rule covers transitive dependencies too (owner, 2026-10-21, #61): resolve an install or upgrade with `npm install --before=<the date 14 days ago>` and `npm dedupe --before=<same date>`, so every package in `package-lock.json` meets it. Dependabot's 14 day cooldown covers direct dependencies only.

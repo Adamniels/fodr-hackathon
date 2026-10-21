@@ -42,6 +42,7 @@ export function PlanStep({
 
   useEffect(() => {
     const cached = omgang === 0 ? loadExplanation(hast.id, payloadFingerprint) : null
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs with the cache and the AI request and resets per request, as data fetching may; the server-state layer (#21) replaces this effect
     setExplanationError(null)
     if (cached) {
       setExplanation(cached)
