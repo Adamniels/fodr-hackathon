@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { tolkaProfil } from '../api'
-import { RASER, hittaRas } from '@fodr/domain/raser'
-import { BYTESTAKT, standardKanslighet } from '@fodr/domain/injustering'
+import { RASER, hittaRas } from '@fodr/domain/breeds'
+import { BYTESTAKT, standardKanslighet } from '@fodr/domain/transition'
 import { viktFranBrostomfang } from '@fodr/domain/slu'
 import {
   INGREDIENSER,

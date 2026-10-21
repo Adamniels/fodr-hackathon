@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/exempel'
-import { bedomGrovfoder } from './kvalitet'
+import { analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
+import { bedomGrovfoder } from './quality'
 
 const rubriker = (f: ReturnType<typeof bedomGrovfoder>) => f.map((x) => x.rubrik)
 

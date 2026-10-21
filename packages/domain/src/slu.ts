@@ -2,9 +2,9 @@
 // (Jansson red., 7:e upplagan 2013). Tabellnummer i kommentarerna avser den rapporten.
 // Antaganden som inte kommer från SLU är märkta ANTAGANDE.
 
-import { DomanFel, type Kallhanvisning, type Notering, type SluNiva } from './meddelanden'
+import { DomanFel, type Kallhanvisning, type Notering, type SluNiva } from './messages'
 import { NA_PER_NACL, type NutrientKey } from './nutrients'
-import { hittaRas } from './raser'
+import { hittaRas } from './breeds'
 import type { Arbetsniva, Hastprofil, Prestanda } from './types'
 
 export interface Krav {

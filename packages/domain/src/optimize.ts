@@ -103,7 +103,7 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
 
 export function valjProdukter(input: UrvalsInput): Urval[] {
   const { bas, behov, berakningsviktKg: vikt } = input
-  // Produkterna är redan filtrerade efter hästens känsligheter (kanslighet.ts).
+  // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
   const valbara = input.produkter.filter((p) => p.iUrval && p.dosGramPer100kg)
   const kandidater = valbara.filter((p) => p.kategori === 'mineralfoder' || p.kategori === 'tillskott')
   const salt = valbara

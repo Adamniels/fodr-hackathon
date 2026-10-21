@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import produkterJson from '../test/fixtures/products.json'
-import { skapaInjustering, standardKanslighet } from './injustering'
+import { skapaInjustering, standardKanslighet } from './transition'
 import type { Produkt } from './types'
 
 const produkter = produkterJson as Produkt[]

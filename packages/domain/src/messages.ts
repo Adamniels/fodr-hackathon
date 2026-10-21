@@ -8,7 +8,7 @@ export interface Meddelande<C extends string, P extends object = Record<string, 
   params: P
 }
 
-/** Why today's concentrate is swapped for a similar, cheaper one (byten.ts). */
+/** Why today's concentrate is swapped for a similar, cheaper one (swaps.ts). */
 export type LiknandeSkal = Meddelande<'swapReason.samePackCheaper'> | Meddelande<'swapReason.sameEnergy'>
 
 /** Why today's mineral feed or salt is swapped for the one the selection chose (plan.ts). */

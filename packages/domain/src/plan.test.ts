@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/exempel'
+import { analysBas, analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
 import produkterJson from '../test/fixtures/products.json'
 import { beraknaBehov, smbRpFranRaprotein, viktFranBrostomfang } from './slu'
 import { visningsnamn } from './intake'

@@ -3,8 +3,8 @@
 // stärkelse eller nya känsliga ingredienser, och inget som hästens känsligheter talar emot.
 // Givan räknas om så att hästen får lika mycket energi som i dag.
 
-import { skalMotProdukt } from './kanslighet'
-import type { Byteskal, LiknandeSkal } from './meddelanden'
+import { skalMotProdukt } from './sensitivity'
+import type { Byteskal, LiknandeSkal } from './messages'
 import { kostnadPerManad, type Foderpost } from './intake'
 import type { Halsa, Produkt } from './types'
 

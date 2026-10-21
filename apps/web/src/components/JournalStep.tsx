@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { analyseraJournal, type JournalAnalys } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
-import { hittaRas } from '@fodr/domain/raser'
+import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
 import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
 

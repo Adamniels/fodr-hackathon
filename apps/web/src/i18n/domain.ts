@@ -1,6 +1,6 @@
 import type { ParseKeys } from 'i18next'
-import type { DomanMeddelande } from '@fodr/domain/meddelanden'
-import { hittaRas } from '@fodr/domain/raser'
+import type { DomanMeddelande } from '@fodr/domain/messages'
+import { hittaRas } from '@fodr/domain/breeds'
 import { kr, tal } from '../format'
 import i18n from '.'
 
@@ -63,7 +63,7 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'note.looseHousing': tom,
   'note.weightOutsideBreed': (p) => ({
     kg: tal(p.kg, 1),
-    // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of raser.ts.
+    // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of breeds.ts.
     breed: hittaRas(p.breedId)?.namn.toLowerCase() ?? p.breedId,
     minKg: tal(p.minKg, 0),
     maxKg: tal(p.maxKg, 0),

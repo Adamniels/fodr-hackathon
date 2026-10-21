@@ -70,14 +70,14 @@ export interface Hastprofil {
   hull: number
   /** Vikt vid normalt hull, om ägaren vet den. Annars uppskattas den från hullet. */
   viktVidNormalHullKg?: number
-  /** Id i rasregistret (raser.ts). */
+  /** Id i rasregistret (breeds.ts). */
   ras?: string
   ridning?: Ridning
   arbetsniva?: Arbetsniva
   prestanda?: Prestanda
   miljo?: Miljo
   halsa: Halsa
-  /** Känslighet för foderbyten. Saknas den förväljs den utifrån hälsan (domain/injustering.ts). */
+  /** Känslighet för foderbyten. Saknas den förväljs den utifrån hälsan (domain/transition.ts). */
   bytekanslighet?: Bytekanslighet
   grovfoder: {
     typ: Grovfodertyp

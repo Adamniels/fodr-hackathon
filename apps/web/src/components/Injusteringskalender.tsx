@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/injustering'
+import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/transition'
 import { tal } from '../format'
 import i18n, { locale } from '../i18n'
 

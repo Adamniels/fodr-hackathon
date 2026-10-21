@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { demoHast, ponny } from '../test/fixtures/exempel'
-import { DomanFel } from './meddelanden'
+import { demoHast, ponny } from '../test/fixtures/examples'
+import { DomanFel } from './messages'
 import { beraknaBehov } from './slu'
 
 describe('kyla (SLU sid 15, regel 1)', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DomanMeddelande } from '@fodr/domain/meddelanden'
+import type { DomanMeddelande } from '@fodr/domain/messages'
 import i18n from '.'
 import { DOMAIN_CODES, domainText } from './domain'
 
