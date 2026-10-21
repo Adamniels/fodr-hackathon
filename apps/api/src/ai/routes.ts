@@ -35,7 +35,13 @@ const STATUS: Record<AiErrorKind, 429 | 500 | 502> = {
 
 export function aiRoutes(ai: AiProvider, logger: Logger): Hono<AppEnv> {
   const routes = new Hono<AppEnv>()
-  const limit = bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => c.json({ fel: TOO_LARGE }, 500) })
+  const limit = bodyLimit({
+    maxSize: MAX_BODY_BYTES,
+    onError: (c) => {
+      logger.warn({ requestId: c.get('requestId'), errorType: 'BodyLimit' }, 'ai request failed')
+      return c.json({ fel: TOO_LARGE }, 500)
+    },
+  })
 
   function route(path: string, handle: (body: unknown) => Promise<unknown>) {
     routes.post(path, limit, async (c) => {

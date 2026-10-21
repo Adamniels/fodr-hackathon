@@ -1,0 +1,595 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the Anthropic provider > analyzeJournal sends the request it always sent 1`] = `
+{
+  "max_tokens": 8000,
+  "messages": [
+    {
+      "content": "{"poster":[]}",
+      "role": "user",
+    },
+  ],
+  "model": "claude-sonnet-5-5",
+  "output_config": {
+    "effort": "medium",
+    "format": {
+      "schema": {
+        "$defs": {
+          "__schema0": {
+            "additionalProperties": false,
+            "properties": {
+              "datum": {
+                "type": [
+                  "string",
+                  "null",
+                ],
+              },
+              "iakttagelse": {
+                "type": "string",
+              },
+              "mojligKoppling": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/__schema1",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "T.ex. ett foderbyte eller en planändring nära i tid",
+              },
+            },
+            "required": [
+              "iakttagelse",
+              "mojligKoppling",
+              "datum",
+            ],
+            "type": "object",
+          },
+          "__schema1": {
+            "type": "string",
+          },
+          "__schema2": {
+            "type": "string",
+          },
+        },
+        "additionalProperties": false,
+        "description": "{$schema: "https://json-schema.org/draft/2020-12/schema"}",
+        "properties": {
+          "monster": {
+            "description": "Högst tre mönster eller samband i journalen",
+            "items": {
+              "$ref": "#/$defs/__schema0",
+            },
+            "type": "array",
+          },
+          "nastaSteg": {
+            "description": "Högst tre konkreta saker för ägaren att göra eller följa upp",
+            "items": {
+              "$ref": "#/$defs/__schema2",
+            },
+            "type": "array",
+          },
+          "sammanfattning": {
+            "description": "Högst 60 ord om hur det gått över tid",
+            "type": "string",
+          },
+          "veterinar": {
+            "additionalProperties": false,
+            "properties": {
+              "behovs": {
+                "type": "boolean",
+              },
+              "skal": {
+                "type": [
+                  "string",
+                  "null",
+                ],
+              },
+            },
+            "required": [
+              "behovs",
+              "skal",
+            ],
+            "type": "object",
+          },
+        },
+        "required": [
+          "sammanfattning",
+          "monster",
+          "veterinar",
+          "nastaSteg",
+        ],
+        "type": "object",
+      },
+      "type": "json_schema",
+    },
+  },
+  "system": "Du läser en hästs foderjournal åt ägaren och letar mönster över tid.
+Du får hästens profil, journalposterna i datumordning, trenden som redan är beräknad och den aktuella foderplanen.
+- Koppla iakttagelser till foderbyten eller planändringar nära i tid, men skriv "kan hänga ihop" och aldrig att något orsakat något.
+- Ge aldrig doser, gram eller nya foderstater. Planen räknas fram separat enligt SLU.
+- Ställ aldrig diagnoser.
+- Sätt veterinar.behovs till true vid tecken som kan vara allvarliga: ömhet i hovar eller stel gång (särskilt vid fånghistorik, EMS eller PPID), kolik, snabb avmagring, aptitförlust, feber, upprepad lös mage eller hosta som inte går över. Förklara kort varför.
+- Nästa steg ska vara praktiska, till exempel när hästen ska vägas eller vad ägaren ska anteckna.
+Svara på enkel svenska.",
+}
+`;
+
+exports[`the Anthropic provider > explainPlan sends the request it always sent 1`] = `
+{
+  "max_tokens": 4000,
+  "messages": [
+    {
+      "content": "{"behov":1}",
+      "role": "user",
+    },
+  ],
+  "model": "claude-sonnet-5-5",
+  "output_config": {
+    "effort": "medium",
+  },
+  "system": "Du förklarar en färdigberäknad foderplan för en hästägare på vanlig svenska.
+Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan klar. Du får den som JSON.
+- Använd bara siffror som finns i underlaget. Räkna inte om och hitta inte på nya värden.
+- Börja med det viktigaste: vad grovfodret täcker och vad som saknas eller är för mycket.
+- Förklara sedan förslaget och varför, och nämn det billigare eller alternativa förslaget om det finns.
+- Om underlaget har byten: säg att dagens produkt byts mot en liknande och vad det sparar per månad. Beskriv det som ett byte, inte som att något tas bort och något annat läggs till.
+- Om något bygger på uppskattade värden (schablon), säg det kort.
+- Nämn kort det viktigaste under omGrovfodret om det påverkar hästen.
+- Om hästen har känsligheter: säg i en mening hur planen tagit hänsyn till dem.
+- Om det finns varningar om fång, EMS eller sjukdom: avsluta med att rekommendera kontakt med veterinär.
+- Inga förkortningar utan förklaring, inga tabeller.
+- Högst 120 ord i högst tre korta stycken: läget i dag, förslaget och varför, och det hästägaren ska tänka på. Hellre färre siffror än fler.",
+}
+`;
+
+exports[`the Anthropic provider > interpretProfile sends the request it always sent 1`] = `
+{
+  "max_tokens": 8000,
+  "messages": [
+    {
+      "content": "Om hästen och vad den äter i dag:
+9 kg hö
+
+Hälsa:
+(inget angivet)
+
+Svar på tidigare följdfrågor:
+- Hur mycket? 1 liter
+
+Produktlista:
+p1: Mineral",
+      "role": "user",
+    },
+  ],
+  "model": "claude-sonnet-5-5",
+  "output_config": {
+    "effort": "low",
+    "format": {
+      "schema": {
+        "$defs": {
+          "__schema0": {
+            "type": "number",
+          },
+          "__schema1": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema0",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "__schema2": {
+            "type": "string",
+          },
+          "__schema3": {
+            "description": "{enum: ["shetland","russ","ponny","islandshast","fjordhast","nordsvensk","ardenner","varmblod_rid","varmblod_trav","arab","fullblod"]}",
+            "type": "string",
+          },
+          "__schema4": {
+            "description": "{enum: ["fritid","tavling_lokal","tavling_hog","trav_galopp_traning","distans"]}",
+            "type": "string",
+          },
+          "__schema5": {
+            "anyOf": [
+              {
+                "description": "{enum: ["box","losdrift"]}",
+                "type": "string",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "__schema6": {
+            "type": [
+              "boolean",
+              "null",
+            ],
+          },
+          "__schema7": {
+            "type": [
+              "boolean",
+              "null",
+            ],
+          },
+          "__schema8": {
+            "description": "{enum: ["spannmål","lusern","soja","melass","linfrö","betfiber"]}",
+            "type": "string",
+          },
+          "__schema9": {
+            "type": "string",
+          },
+        },
+        "additionalProperties": false,
+        "description": "{$schema: "https://json-schema.org/draft/2020-12/schema"}",
+        "properties": {
+          "ems": {
+            "type": "boolean",
+          },
+          "fang": {
+            "type": "boolean",
+          },
+          "foljdfragor": {
+            "description": "Högst två korta frågor om något som behövs men är oklart",
+            "items": {
+              "$ref": "#/$defs/__schema9",
+            },
+            "type": "array",
+          },
+          "grovfoderKgPerDag": {
+            "$ref": "#/$defs/__schema1",
+          },
+          "grovfoderTyp": {
+            "anyOf": [
+              {
+                "description": "{enum: ["hosilage","ho"]}",
+                "type": "string",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "luftvagar": {
+            "description": "Luftvägsbesvär, hosta, dammkänslighet, astma",
+            "type": "boolean",
+          },
+          "magsar": {
+            "type": "boolean",
+          },
+          "miljo": {
+            "additionalProperties": false,
+            "description": "Fält som inte framgår är null",
+            "properties": {
+              "hallning": {
+                "$ref": "#/$defs/__schema5",
+              },
+              "klippt": {
+                "$ref": "#/$defs/__schema6",
+              },
+              "tacke": {
+                "$ref": "#/$defs/__schema7",
+              },
+              "timmarUtePerDag": {
+                "$ref": "#/$defs/__schema1",
+              },
+            },
+            "required": [
+              "hallning",
+              "timmarUtePerDag",
+              "klippt",
+              "tacke",
+            ],
+            "type": "object",
+          },
+          "nuvarandeFoder": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "gramPerDag": {
+                  "description": "Gram per dag, omräknat från t.ex. liter, mått eller per mål",
+                  "type": "number",
+                },
+                "namn": {
+                  "type": "string",
+                },
+                "produktId": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/__schema2",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                  "description": "Id från produktlistan om det är samma produkt, annars null",
+                },
+              },
+              "required": [
+                "produktId",
+                "namn",
+                "gramPerDag",
+              ],
+              "type": "object",
+            },
+            "type": "array",
+          },
+          "ovrigt": {
+            "description": "Övrig hälsoinformation som påverkar utfodringen, kort",
+            "type": "string",
+          },
+          "ppid": {
+            "description": "PPID eller Cushings",
+            "type": "boolean",
+          },
+          "prestanda": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema4",
+              },
+              {
+                "type": "null",
+              },
+            ],
+            "description": "Gren och nivå om det framgår",
+          },
+          "proteinkanslig": {
+            "type": "boolean",
+          },
+          "pssm": {
+            "description": "Korsförlamning, PSSM",
+            "type": "boolean",
+          },
+          "ras": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema3",
+              },
+              {
+                "type": "null",
+              },
+            ],
+            "description": "Ras om den nämns. Halvblod räknas som varmblod_rid, kallblodstravare som nordsvensk",
+          },
+          "tandproblem": {
+            "type": "boolean",
+          },
+          "undvik": {
+            "description": "Ingredienser ägaren säger att hästen inte tål",
+            "items": {
+              "$ref": "#/$defs/__schema8",
+            },
+            "type": "array",
+          },
+        },
+        "required": [
+          "grovfoderKgPerDag",
+          "grovfoderTyp",
+          "nuvarandeFoder",
+          "ras",
+          "prestanda",
+          "miljo",
+          "fang",
+          "ems",
+          "ppid",
+          "magsar",
+          "pssm",
+          "luftvagar",
+          "tandproblem",
+          "proteinkanslig",
+          "undvik",
+          "ovrigt",
+          "foljdfragor",
+        ],
+        "type": "object",
+      },
+      "type": "json_schema",
+    },
+  },
+  "system": "Du hjälper en hästägare att fylla i en hästprofil för foderplanering.
+Du får fritext om hästen (ras, arbete, miljö), vad den äter i dag och om hälsan, samt en produktlista.
+- Gör om mängder till gram per dag. Om ett mått saknar vikt, ställ en följdfråga i stället för att gissa.
+- Matcha bara mot produktlistan när det tydligt är samma produkt.
+- Grovfoder (hö, hösilage) hör inte till nuvarandeFoder, utan till grovfoderKgPerDag.
+- Känsligheter sätts bara till true när texten tydligt säger det. Gissa inte diagnoser.
+- Lösdrift betyder ute dygnet runt: sätt timmarUtePerDag till 24 och fråga inte om det.
+- Fråga bara om sådant som påverkar foderplanen. Inga följdfrågor om allt är tydligt.
+Svara på svenska.",
+}
+`;
+
+exports[`the Anthropic provider > readAnalysis sends the request it always sent 1`] = `
+{
+  "max_tokens": 16000,
+  "messages": [
+    {
+      "content": [
+        {
+          "source": {
+            "data": "JVBERi0=",
+            "media_type": "application/pdf",
+            "type": "base64",
+          },
+          "type": "document",
+        },
+        {
+          "text": "Läs ut analysen.",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+  ],
+  "model": "claude-sonnet-5-5",
+  "output_config": {
+    "effort": "low",
+    "format": {
+      "schema": {
+        "$defs": {
+          "__schema0": {
+            "type": "string",
+          },
+          "__schema1": {
+            "type": "number",
+          },
+          "__schema2": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema1",
+              },
+              {
+                "type": "null",
+              },
+            ],
+          },
+          "__schema3": {
+            "type": "string",
+          },
+        },
+        "additionalProperties": false,
+        "description": "{$schema: "https://json-schema.org/draft/2020-12/schema"}",
+        "properties": {
+          "anmarkningar": {
+            "description": "Osäkerheter i läsningen, på svenska",
+            "items": {
+              "$ref": "#/$defs/__schema3",
+            },
+            "type": "array",
+          },
+          "arAnalys": {
+            "description": "False om dokumentet inte är en foderanalys",
+            "type": "boolean",
+          },
+          "askaGPerKgTs": {
+            "$ref": "#/$defs/__schema2",
+          },
+          "labb": {
+            "type": [
+              "string",
+              "null",
+            ],
+          },
+          "perKgTs": {
+            "additionalProperties": false,
+            "properties": {
+              "ca": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "co": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "cu": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "energi": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "energiIdisslare": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "fe": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "jod": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "mg": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "mn": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "na": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "p": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "raprotein": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "se": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "smbRp": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "socker": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "starkelse": {
+                "$ref": "#/$defs/__schema2",
+              },
+              "zn": {
+                "$ref": "#/$defs/__schema2",
+              },
+            },
+            "required": [
+              "energi",
+              "energiIdisslare",
+              "smbRp",
+              "raprotein",
+              "ca",
+              "p",
+              "mg",
+              "na",
+              "fe",
+              "mn",
+              "cu",
+              "zn",
+              "co",
+              "jod",
+              "se",
+              "socker",
+              "starkelse",
+            ],
+            "type": "object",
+          },
+          "provdatum": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/__schema0",
+              },
+              {
+                "type": "null",
+              },
+            ],
+            "description": "ÅÅÅÅ-MM-DD",
+          },
+          "tsProcent": {
+            "$ref": "#/$defs/__schema2",
+          },
+          "typ": {
+            "description": "{enum: ["hosilage","ho"]}",
+            "type": "string",
+          },
+        },
+        "required": [
+          "arAnalys",
+          "typ",
+          "labb",
+          "provdatum",
+          "tsProcent",
+          "askaGPerKgTs",
+          "perKgTs",
+          "anmarkningar",
+        ],
+        "type": "object",
+      },
+      "type": "json_schema",
+    },
+  },
+  "system": "Du läser svenska grovfoderanalyser för häst (hö eller hösilage) från vilket labb som helst.
+Returnera värden omräknade till per kg torrsubstans (ts):
+- Om labbet anger per kg foder (eller "i foder", "per kg vara"), dividera med ts-halten.
+- Procent av ts gånger 10 ger g/kg ts. g/100 g ts gånger 10 ger g/kg ts.
+- Energi: använd värdet för häst om det finns (MJ OE häst). Om bara idisslarvärde finns, lägg det i energiIdisslare och lämna energi null.
+- Protein: använd smältbart råprotein för häst om det finns, annars råprotein i raprotein.
+- Socker kan heta WSC eller vattenlösliga kolhydrater.
+Ett värde som inte står i dokumentet ska vara null. Gissa aldrig och fyll aldrig i typvärden.",
+}
+`;

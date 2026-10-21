@@ -2,7 +2,7 @@
 import type { ClientOptions } from '@anthropic-ai/sdk'
 import { describe, expect, it } from 'vitest'
 import { createAnthropicProvider } from './anthropic'
-import { AiProviderError } from './provider'
+import { AiProviderError, type AiProvider } from './provider'
 
 const ANALYSIS = {
   arAnalys: true,
@@ -61,6 +61,27 @@ function provider(status: number, body: unknown, withKey = true) {
 
 const PDF = { mediaType: 'application/pdf', base64: 'JVBERi0=' }
 
+const PROFILE = {
+  grovfoderKgPerDag: 9,
+  grovfoderTyp: 'ho',
+  nuvarandeFoder: [],
+  ras: null,
+  prestanda: null,
+  miljo: { hallning: null, timmarUtePerDag: null, klippt: null, tacke: null },
+  fang: false,
+  ems: false,
+  ppid: false,
+  magsar: false,
+  pssm: false,
+  luftvagar: false,
+  tandproblem: false,
+  proteinkanslig: false,
+  undvik: [],
+  ovrigt: '',
+  foljdfragor: [],
+}
+const JOURNAL = { sammanfattning: 'Stabil vikt.', monster: [], veterinar: { behovs: false, skal: null }, nastaSteg: [] }
+
 describe('the Anthropic provider', () => {
   it('reads an analysis: sends the document to the model and returns the parsed reply', async () => {
     const { ai, requests } = provider(200, message(JSON.stringify(ANALYSIS)))
@@ -92,6 +113,38 @@ describe('the Anthropic provider', () => {
     const { ai, requests } = provider(200, message('Grovfodret räcker.'))
     expect(await ai.explainPlan({ behov: 1 })).toBe('Grovfodret räcker.')
     expect(requests[0]).toMatchObject({ max_tokens: 4000, messages: [{ role: 'user', content: '{"behov":1}' }] })
+  })
+
+  // The whole request each method sends, so a change to a prompt, schema, model or limit fails here and is a
+  // deliberate snapshot update (and an eval run, .claude/CLAUDE.md), never a side effect.
+  it.each([
+    ['readAnalysis', ANALYSIS, (ai: AiProvider) => ai.readAnalysis(PDF)],
+    [
+      'interpretProfile',
+      PROFILE,
+      (ai: AiProvider) =>
+        ai.interpretProfile({
+          foderText: '9 kg hö',
+          halsaText: '',
+          tidigareSvar: [{ fraga: 'Hur mycket?', svar: '1 liter' }],
+          produkter: [{ id: 'p1', namn: 'Mineral' }],
+        }),
+    ],
+    ['explainPlan', 'Text.', (ai: AiProvider) => ai.explainPlan({ behov: 1 })],
+    ['analyzeJournal', JOURNAL, (ai: AiProvider) => ai.analyzeJournal({ poster: [] })],
+  ] as const)('%s sends the request it always sent', async (_method, reply, call) => {
+    const { ai, requests } = provider(200, message(typeof reply === 'string' ? reply : JSON.stringify(reply)))
+    expect(await call(ai)).toEqual(reply)
+    expect(requests).toHaveLength(1)
+    expect(requests[0]).toMatchSnapshot()
+  })
+
+  it('turns a failed connection into upstream without a status', async () => {
+    const fetch: ClientOptions['fetch'] = () => Promise.reject(new TypeError('fetch failed'))
+    const ai = createAnthropicProvider({ apiKey: 'test-key', clientOptions: { fetch, maxRetries: 0 } })
+    const error = await ai.explainPlan({}).catch((e: unknown) => e)
+    expect(error).toEqual(new AiProviderError('upstream'))
+    expect((error as AiProviderError).status).toBeUndefined()
   })
 
   it.each([

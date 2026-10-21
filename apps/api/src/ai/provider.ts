@@ -1,6 +1,7 @@
 // The AI behind an interface (#20): the routes call an AiProvider, main.ts gives them the Anthropic one
 // (anthropic.ts), and tests a fake. Request and response shapes are the ones the web app sends and reads; they move
-// to packages/contracts with request validation in #30.
+// to packages/contracts with request validation in #30, which also ends this file importing its response types from
+// the Anthropic implementation.
 import type { AnalysisResponse, JournalResponse, ProfileResponse } from './anthropic'
 
 export interface AnalysisFile {

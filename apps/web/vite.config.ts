@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     // Every /api route belongs to the API (apps/api), the AI routes included (#20). Only VITE_ variables reach the
     // browser; the API key is read by the API alone.
-    server: { proxy: { '/api': `http://localhost:${apiPort}` } },
+    // A regular expression, so /api and /api/... match but a client route such as /apiary does not.
+    server: { proxy: { '^/api(/|$)': `http://localhost:${apiPort}` } },
     // Vite 6's default browser target, kept when upgrading to Vite 8 (whose default needs Safari 16), so the
     // upgrade drops no browser; a browser-support policy is decided separately (#61).
     build: { target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'] },

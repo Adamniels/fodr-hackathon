@@ -17,7 +17,7 @@ const EnvSchema = z.object({
     .default(3000),
   LOG_LEVEL: z.enum(LOG_LEVELS, { error: required(`one of ${LOG_LEVELS.join(', ')}`) }).default('info'),
   // The built web app (apps/web/dist). When set, the API serves it on the same origin; unset in development, where
-  // Vite serves the web app and proxies /api/v1 here.
+  // Vite serves the web app and proxies /api here.
   WEB_DIST_DIR: z.string().optional(),
   // Optional: without it the AI routes answer with the missing-key error and everything else works.
   ANTHROPIC_API_KEY: z.string().optional(),
