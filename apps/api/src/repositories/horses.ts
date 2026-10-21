@@ -1,9 +1,9 @@
 // Horses, always for a user (ADR 0010): every query is scoped through horse_members, so a handler cannot reach a horse
 // the user is not a member of. A horse that does not exist and one that is not the user's are the same: undefined,
 // which the routes answer with 404, so IDs cannot be probed.
-import type { Horse, HorseProfile } from '@fodr/contracts/horses'
+import { HorseSchema, type Horse, type HorseProfile } from '@fodr/contracts/horses'
 import type { User } from '@fodr/contracts/me'
-import { and, asc, eq, exists } from 'drizzle-orm'
+import { and, asc, eq, exists, sql } from 'drizzle-orm'
 import type { Database } from '../db'
 import { horseMembers, horses } from '../db/schema'
 
@@ -12,7 +12,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type Row = typeof horses.$inferSelect
 
-const toHorse = (row: Row): Horse => ({ id: row.id, namn: row.name, ...row.profile })
+// The server's ID and name last, so nothing stored in the jsonb can replace them; parsed on the way out too, since jsonb
+// is only as safe as its schema (ADR 0008).
+const toHorse = (row: Row): Horse => HorseSchema.parse({ ...row.profile, id: row.id, namn: row.name })
 const toColumns = ({ namn, ...profile }: HorseProfile) => ({ name: namn, profile })
 
 export interface HorseRepository {
@@ -59,7 +61,8 @@ export function horseRepository(db: Database['db']): HorseRepository {
       if (!UUID.test(id)) return undefined
       const rows = await db
         .update(horses)
-        .set(toColumns(profile))
+        // The database's clock, like created_at.
+        .set({ ...toColumns(profile), updatedAt: sql`now()` })
         .where(and(eq(horses.id, id), isMember(user)))
         .returning()
       return rows.map(toHorse).at(0)

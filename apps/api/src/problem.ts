@@ -4,7 +4,14 @@ import type { Problem } from '@fodr/contracts/problem'
 import type { Context } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 
-const TITLES = { 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found', 500: 'Internal Server Error' } as const
+const TITLES = {
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  404: 'Not Found',
+  413: 'Content Too Large',
+  415: 'Unsupported Media Type',
+  500: 'Internal Server Error',
+} as const
 
 export function problem(
   c: Context,

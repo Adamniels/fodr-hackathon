@@ -43,7 +43,7 @@ Every flow below must work against the real backend with no mocks. Each flow has
 ### CF2. Horse profiles
 
 - A logged in user can create, edit and delete horses. Changes are saved on the server and visible after reload and on another device.
-- Every numeric field is validated on the client and the server: required fields cannot be empty, and values outside the documented range (for example weight, age at least 3, body condition 1 to 9, roughage kg per day) are rejected with a message next to the field. Clearing a field never silently becomes 0.
+- Every numeric field is validated: required fields cannot be empty, and values outside the documented range (for example weight, age at least 3, body condition 1 to 9, roughage kg per day) are shown with a message next to the field and stop the plan, which the engine refuses to calculate (`validateProfile`). The server refuses wrong types and missing fields; a value out of range is saved as a draft, so typing is never lost (owner, 2026-10-21, #24). Clearing a field never silently becomes 0.
 - Deleting a horse asks for confirmation and removes its analyses, plans and journal.
 
 ### CF3. AI profile fill

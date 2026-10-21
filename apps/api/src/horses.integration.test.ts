@@ -59,6 +59,7 @@ describe('horses of one user', () => {
     expect(horse.id).toMatch(UUID)
     const sixten = await createHorse(browser)
     const res = await put(browser, `/api/v1/horses/${sixten.id}`, { ...SIXTEN, id: horse.id })
+    expect(res.status).toBe(200)
     expect(((await res.json()) as { id: string }).id).toBe(sixten.id)
   })
 
@@ -103,9 +104,19 @@ describe("another user's horse (ADR 0010)", () => {
     const b = await user()
     const horse = await createHorse(a.browser)
 
-    expect((await b.browser.request(`/api/v1/horses/${horse.id}`)).status).toBe(404)
-    expect((await put(b.browser, `/api/v1/horses/${horse.id}`, { ...SIXTEN, namn: 'Stulen' })).status).toBe(404)
-    expect((await remove(b.browser, `/api/v1/horses/${horse.id}`)).status).toBe(404)
+    // The same answer as for an ID that names no horse: status, type and body (apart from the request ID).
+    const withoutRequestId = async (res: Response) => {
+      const body = Object.entries((await res.json()) as Record<string, unknown>).filter(([key]) => key !== 'requestId')
+      return { status: res.status, type: res.headers.get('Content-Type'), body: Object.fromEntries(body) }
+    }
+    const unknown = '00000000-0000-4000-8000-000000000000'
+    const expected = await withoutRequestId(await b.browser.request(`/api/v1/horses/${unknown}`))
+    expect(expected).toMatchObject({ status: 404, body: { code: 'horse.not_found' } })
+    expect(await withoutRequestId(await b.browser.request(`/api/v1/horses/${horse.id}`))).toEqual(expected)
+    expect(
+      await withoutRequestId(await put(b.browser, `/api/v1/horses/${horse.id}`, { ...SIXTEN, namn: 'Stulen' })),
+    ).toEqual(expected)
+    expect(await withoutRequestId(await remove(b.browser, `/api/v1/horses/${horse.id}`))).toEqual(expected)
     expect(await (await b.browser.request('/api/v1/horses')).json()).toEqual({ horses: [] })
 
     expect(await (await a.browser.request(`/api/v1/horses/${horse.id}`)).json()).toEqual(horse)
@@ -172,4 +183,44 @@ describe('validation (ADR 0013)', () => {
     expect(res.status).toBe(400)
     expect(await res.json()).toMatchObject({ code: 'validation.invalid_json' })
   })
+})
+
+describe('request bodies (#24 review)', () => {
+  const raw = async (browser: Browser, body: string, contentType = 'application/json') =>
+    app.request('http://localhost:3000/api/v1/horses', {
+      method: 'POST',
+      headers: {
+        'content-type': contentType,
+        cookie: [...browser.cookies].map(([n, v]) => `${n}=${v}`).join('; '),
+      },
+      body,
+    })
+
+  it('refuses a body over 64 KB with a 413 before parsing it', async () => {
+    const { browser } = await user()
+    const res = await raw(browser, JSON.stringify({ ...SIXTEN, junk: 'x'.repeat(70 * 1024) }))
+    expect(res.status).toBe(413)
+    expect(res.headers.get('Content-Type')).toBe('application/problem+json')
+    expect(await res.json()).toMatchObject({ code: 'request.too_large' })
+  })
+
+  it('refuses JSON sent as another content type with a 415', async () => {
+    const { browser } = await user()
+    for (const type of ['text/plain', 'application/x-www-form-urlencoded']) {
+      const res = await raw(browser, JSON.stringify(SIXTEN), type)
+      expect(res.status, type).toBe(415)
+      expect(await res.json()).toMatchObject({ code: 'request.unsupported_media_type' })
+    }
+    expect((await raw(browser, JSON.stringify(SIXTEN), 'application/json; charset=utf-8')).status).toBe(201)
+  })
+
+  it.each(['null', '[]', '"Sixten"'])(
+    'answers the non-object body %s with a 400 whose path is the body itself',
+    async (body) => {
+      const { browser } = await user()
+      const res = await raw(browser, body)
+      expect(res.status).toBe(400)
+      expect(await res.json()).toMatchObject({ code: 'validation.invalid', errors: [{ path: '' }] })
+    },
+  )
 })
