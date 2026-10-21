@@ -61,16 +61,16 @@ The code names what the domain is about in Swedish and how the software works in
 | krav | requirement range for one nutrient | `Krav` |
 | balans | intake against requirement, per nutrient | `balans`, `Balansrad` |
 | källa | where a nutrient value comes from: the analysis, a default value, or unknown | `Kalla` |
-| källhänvisning | SLU source cited for a requirement | `Kallhanvisning`, `kalla` on `Krav` |
+| källhänvisning | source cited for a requirement or a statement: SLU, or a source marked as not SLU | `Kallhanvisning`, `kalla` on `Krav`, `Kvalitetsflagga` and `Kanslighetsrad` |
 | SLU-nivå | the activity level at which SLU's tables are read | `SluNiva` |
 | åtgärd | action in a feeding plan | `Atgard`, `atgarder` |
 | varning | warning in a feeding plan | `Varning`, `varningar` |
 | notering | note in a feeding plan | `Notering`, `noteringar` |
 | byte (alone), produktbyte | swap of a current feed for a cheaper or better fitting product; in `Bytekanslighet` and `Bytestakt`, byte means foderbyte (feed transition) | `Byte`, `byten`, `Byteskal`, `hittaBilligareLiknande` |
 | skäl | reason given for a swap or an excluded product | `Byteskal`, `skal` |
-| uteslutning | product excluded because of a sensitivity | `Uteslutning` |
-| grovfoderkvalitet | quality of the roughage itself (SLU table 32) | `Kvalitetsflagga`, `bedomGrovfoder` |
+| uteslutning | product excluded because of a sensitivity | `Uteslutning`, `Uteslutningsskal` |
+| grovfoderkvalitet | quality of the roughage itself (SLU table 32, with its horse groups) | `Kvalitetsflagga`, `bedomGrovfoder`, `Tabell32Grupp` |
 | bytestakt | pace of a feed transition | `Bytestakt`, `BYTESTAKT` |
-| trend | weight and body condition over time, from the journal | `Trend`, `beraknaTrend` |
+| trend | weight and body condition over time, from the journal | `Trend`, `beraknaTrend`, `Trendvarning` |
 | sparad plan | snapshot of a plan saved in the journal | `PlanOgonblick`, `ogonblickAvPlan` |
 | ANTAGANDE | assumption not taken from SLU | code comment marker |

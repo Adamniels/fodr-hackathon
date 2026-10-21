@@ -133,7 +133,11 @@ function Arbetsyta({
   }
   const laggTillPost = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
-  const planOgonblick = plan && 'ok' in plan && analys ? ogonblickAvPlan(plan.ok!, analys) : null
+  // A saved plan stores its analysis as this text, exactly as before #12. The date stays YYYY-MM-DD because the text
+  // is stored as it is; #27 stores the analysis as values instead.
+  const savedAnalysisText = (a: Grovfoderanalys) =>
+    [t(`roughageTitle.${a.typ}`), a.labb, a.provdatum].filter(Boolean).join(', ')
+  const planOgonblick = plan && 'ok' in plan && analys ? ogonblickAvPlan(plan.ok!, savedAnalysisText(analys)) : null
 
   const tillganglig = (s: Steg) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined

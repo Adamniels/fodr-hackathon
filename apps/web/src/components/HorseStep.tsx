@@ -344,9 +344,9 @@ function BytekanslighetSektion({ hast, onAndra }: { hast: Hastprofil; onAndra: (
                 className={vald === k ? 'aktiv' : ''}
                 onClick={() => onAndra(k)}
               >
-                {takt.namn}
+                {t(`transitionPace.${k}.name`)}
                 <small>
-                  {takt.beskrivning} {t('horse.sensitivity.duration', { days: tal(takt.dagar, 0) })}
+                  {t(`transitionPace.${k}.description`)} {t('horse.sensitivity.duration', { days: tal(takt.dagar, 0) })}
                 </small>
               </button>
             )

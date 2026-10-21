@@ -5,6 +5,7 @@ import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonb
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
 import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
+import { domainText } from '../i18n/domain'
 
 interface Props {
   hast: Hastprofil
@@ -54,7 +55,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onLaggTill }: Pro
             markerad={trend.uppfoljningForfallen || !trend.nastaUppfoljning}
           />
         </div>
-        {trend.varningar.map((v) => (
+        {trend.varningar.map(domainText).map((v) => (
           <div key={v} className="ruta varn">
             {v}
           </div>
@@ -241,7 +242,8 @@ function AiAnalys({
             halsa: hast.halsa,
           },
           poster: sorteradePoster(poster),
-          trend,
+          // The model reads the warnings as text, as it did before the engine returned codes (#12).
+          trend: { ...trend, varningar: trend.varningar.map(domainText) },
           aktuellPlan,
         }),
       )

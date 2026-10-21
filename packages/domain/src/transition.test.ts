@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import produkterJson from '../test/fixtures/products.json'
-import { skapaInjustering, standardKanslighet } from './transition'
+import { displayName } from './intake'
+import { BYTESTAKT, skapaInjustering, standardKanslighet } from './transition'
 import type { Produkt } from './types'
 
 const produkter = produkterJson as Produkt[]
 const frisk = { fang: false, ems: false, ovrigt: '' }
 
 describe('injusteringsplan', () => {
+  it('bytestakten är bara tal; namn och beskrivning ligger i webbens katalog (ADR 0014)', () => {
+    expect(BYTESTAKT.kanslig).toEqual({ dagar: 14, dagarPerSteg: 3 })
+  })
+
   it('förväljer känslig för en häst med fång', () => {
     expect(standardKanslighet({ ...frisk, fang: true })).toBe('kanslig')
     expect(standardKanslighet(frisk)).toBe('normal')
@@ -17,7 +22,7 @@ describe('injusteringsplan', () => {
     const mineral = produkter.find((p) => p.kategori === 'mineralfoder')!
     const inj = skapaInjustering({
       halsa: { ...frisk, fang: true },
-      grovfoderNamn: 'Hösilage',
+      grovfodertyp: 'hosilage',
       grovfoderFranKg: 11,
       grovfoderTillKg: 15,
       fran: [{ produkt: pellets, gramPerDag: 1000 }],
@@ -28,6 +33,9 @@ describe('injusteringsplan', () => {
     expect(inj.dagar).toBe(14)
     expect(inj.steg.map((s) => s.startDag)).toEqual([1, 4, 7, 10, 13])
     const [grov, pell, min] = inj.rader
+    // Grovfodret bär sin typ, inte ett namn; webben namnger det (ADR 0014). Produkter bär produktens namn.
+    expect(grov).toMatchObject({ enhet: 'kg', grovfodertyp: 'hosilage' })
+    expect(pell).toMatchObject({ enhet: 'g', namn: displayName(pellets) })
     expect(grov.perSteg).toEqual([12, 12.5, 13.5, 14, 15])
     expect(pell.perSteg).toEqual([800, 600, 400, 200, 0])
     expect(min.perSteg[min.perSteg.length - 1]).toBe(100)
@@ -42,7 +50,7 @@ describe('injusteringsplan', () => {
     const inj = skapaInjustering({
       halsa: frisk,
       kanslighet: 'tal',
-      grovfoderNamn: 'Hö',
+      grovfodertyp: 'ho',
       grovfoderFranKg: 8,
       grovfoderTillKg: 10,
       fran: [],
@@ -55,7 +63,7 @@ describe('injusteringsplan', () => {
   it('har inga rader när ingenting ändras', () => {
     const inj = skapaInjustering({
       halsa: frisk,
-      grovfoderNamn: 'Hö',
+      grovfodertyp: 'ho',
       grovfoderFranKg: 10,
       grovfoderTillKg: 10.2,
       fran: [],

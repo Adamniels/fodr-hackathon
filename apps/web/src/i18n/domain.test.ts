@@ -93,6 +93,12 @@ const FALL: [DomainMessage, string][] = [
     'Ändra Salt 1,5 kg från 12 till 1\u00a0250 g/dag.',
   ],
   [{ code: 'swapReason.samePackCheaper', params: {} }, 'samma foder i billigare förpackning'],
+  [{ code: 'swapReason.sameEnergy', params: {} }, 'samma energi, liknande protein, inte mer stärkelse'],
+  [
+    { code: 'swapReason.coversNeedCheaper', params: { savingKr: 12.4 } },
+    'täcker behovet, 12\u00a0kr billigare i månaden',
+  ],
+  [{ code: 'swapReason.coversBetter', params: {} }, 'täcker det som saknas bättre med ditt grovfoder'],
   [
     { code: 'warning.roughageBelowMinimum', params: { kgDm: 4.56, minimumKgDm: 5.06 } },
     'Grovfodergivan (4,6 kg ts) är under SLU:s minimum på 5,1 kg ts per dag.',
@@ -173,12 +179,168 @@ const FALL: [DomainMessage, string][] = [
   [
     { code: 'error.adultsOnly', params: { minAgeYears: 3 } },
     'Modellen gäller vuxna hästar (3 år och äldre). Unghästar ingår inte i prototypen.',
+  ], // Roughage quality (#12). Numbers keep at most one decimal, as quality.ts formatted them before.
+  [{ code: 'qualityTitle.proteinHigh', params: {} }, 'Mer protein än hästen behöver'],
+  [{ code: 'qualityTitle.proteinLow', params: {} }, 'Proteinfattigt grovfoder'],
+  [{ code: 'qualityTitle.energyHigh', params: {} }, 'Energirikt grovfoder'],
+  [{ code: 'qualityTitle.energyLow', params: {} }, 'Energifattigt grovfoder'],
+  [{ code: 'qualityTitle.haylageWet', params: {} }, 'Blött hösilage'],
+  [{ code: 'qualityTitle.haylageDry', params: {} }, 'Torrt hösilage'],
+  [{ code: 'qualityTitle.soil', params: {} }, 'Möjlig jordinblandning'],
+  [{ code: 'qualityTitle.sugarHigh', params: {} }, 'Högt socker'],
+  [{ code: 'qualityTitle.seleniumMissing', params: {} }, 'Selen ej analyserat'],
+  [
+    { code: 'quality.proteinHigh', params: { ratio: 104 / 10.2, min: 5, max: 6, group: 'ovriga' } },
+    '10,2 g smältbart protein per MJ, över 5–6 som SLU rekommenderar för hästar utan hårt arbete. Överskottet blir kväve i gödseln. Passar bättre till unghästar och fölston.',
+  ],
+  [
+    { code: 'quality.proteinHigh', params: { ratio: 7.25, min: 5, max: 7, group: 'hart' } },
+    '7,3 g smältbart protein per MJ, över 5–7 som SLU rekommenderar för hästar i hårt arbete. Överskottet blir kväve i gödseln. Passar bättre till unghästar och fölston.',
+  ],
+  [
+    { code: 'quality.proteinLow', params: { ratio: 22 / 5.5, min: 5 } },
+    '4 g smältbart protein per MJ, under 5 som SLU rekommenderar. Proteinet kan behöva kompletteras.',
+  ],
+  [
+    { code: 'quality.energyHigh', params: { mj: 10.2, min: 6.5, max: 8, group: 'ovriga' } },
+    '10,2 MJ per kg ts, över 6,5–8 som SLU rekommenderar för hästar utan hårt arbete. Fri tillgång kan ge överhull. Att blanda in halm eller välja en senare skörd sänker energin.',
+  ],
+  [
+    { code: 'quality.energyLow', params: { mj: 5.5, min: 6.5, group: 'ovriga' } },
+    '5,5 MJ per kg ts, under 6,5 som SLU rekommenderar för hästar utan hårt arbete.',
+  ],
+  [
+    { code: 'quality.energyLow', params: { mj: 8.75, min: 9, group: 'hart' } },
+    '8,8 MJ per kg ts, under 9 som SLU rekommenderar för hästar i hårt arbete.',
+  ],
+  [
+    { code: 'quality.haylageWet', params: { dmPercent: 39.7 } },
+    'Torrsubstans 39,7 %, under 45–65 % som SLU rekommenderar för inplastat vallfoder till häst. Större risk för feljäsning och klostridier, och hästen behöver äta mycket vara. Kort hållbarhet efter öppning.',
+  ],
+  [
+    { code: 'quality.haylageDry', params: { dmPercent: 70 } },
+    'Torrsubstans 70 %, över 65 %. SLU anger förhöjd risk för mögel i inplastat vallfoder över 65–70 % ts.',
+  ],
+  [
+    { code: 'quality.soilAsh', params: { ashG: 120 } },
+    'Högt innehåll (aska 120 g per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.',
+  ],
+  [
+    { code: 'quality.soilIron', params: { ironMg: 1320.25 } },
+    'Högt innehåll (järn 1\u00a0320,3 mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.',
+  ],
+  [
+    { code: 'quality.soilAshIron', params: { ashG: 95.5, ironMg: 260 } },
+    'Högt innehåll (aska 95,5 g och järn 260 mg per kg ts) tyder på jord i fodret, vilket ökar risken för dålig hygienisk kvalitet.',
+  ],
+  [
+    { code: 'quality.sugarHigh', params: { sugarG: 150 } },
+    '150 g socker per kg ts. Olämpligt utan åtgärd, till exempel blötläggning, för hästar med fång eller EMS.',
+  ],
+  [
+    { code: 'quality.seleniumMissing', params: {} },
+    'Svenska jordar är selenfattiga och tillskott behövs i de allra flesta fall. Planen räknar med ett lågt typvärde.',
+  ],
+  [{ code: 'source.table32', params: {} }, 'SLU tabell 32'],
+  [{ code: 'source.page30', params: {} }, 'SLU sid 30'],
+  [{ code: 'source.page20', params: {} }, 'SLU sid 20'],
+  [{ code: 'source.eurofinsSoil', params: {} }, 'Eurofins tolkningsstöd (ej SLU)'],
+  [{ code: 'source.industryPractice', params: {} }, 'Branschpraxis (ej SLU)'],
+  [{ code: 'source.industryPracticePage34', params: {} }, 'Branschpraxis, SLU sid 34 (mun- och tandstatus)'],
+  [{ code: 'source.concentrateGuidelinesPage33', params: {} }, 'SLU riktlinjer för kraftfoder, sid 33'],
+  [{ code: 'source.fodrRules', params: {} }, 'Fodrs känslighetsregler'],
+  [{ code: 'source.productDescriptions', params: {} }, 'Härlett ur produktbeskrivningar'],
+  // Why a product does not suit the horse (#12).
+  [{ code: 'exclusion.sugarStarch', params: {} }, 'för mycket eller okänt socker och stärkelse'],
+  [{ code: 'exclusion.grainOrStarch', params: {} }, 'spannmål eller mycket stärkelse, olämpligt vid magsår'],
+  [{ code: 'exclusion.powder', params: {} }, 'pulverform kan damma'],
+  [{ code: 'exclusion.containsIngredient', params: { ingredient: 'lusern' } }, 'innehåller lusern'],
+  [{ code: 'exclusion.proteinFeed', params: {} }, 'proteinfoder'],
+  // Advice from the horse's sensitivities (#12).
+  [
+    {
+      code: 'sensitivity.currentFeed',
+      params: {
+        product: 'Hästfoder Krafft Leisure Pellets 20kg',
+        reasons: [{ code: 'exclusion.sugarStarch', params: {} }],
+      },
+    },
+    'Hästfoder Krafft Leisure Pellets 20kg, som hästen får i dag: för mycket eller okänt socker och stärkelse. Överväg att byta.',
+  ],
+  [
+    {
+      code: 'sensitivity.currentFeed',
+      params: {
+        product: 'Havre hel 18kg',
+        reasons: [
+          { code: 'exclusion.grainOrStarch', params: {} },
+          { code: 'exclusion.containsIngredient', params: { ingredient: 'spannmål' } },
+        ],
+      },
+    },
+    'Havre hel 18kg, som hästen får i dag: spannmål eller mycket stärkelse, olämpligt vid magsår, innehåller spannmål. Överväg att byta.',
+  ],
+  [
+    { code: 'sensitivity.ulcer', params: { starchPerMealG: 750 } },
+    'Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är 750 g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.',
+  ],
+  // Unformatted as before (#12, decision 4): a horse over 667 kg shows "1050", not "1 050".
+  [
+    { code: 'sensitivity.ulcer', params: { starchPerMealG: 1050 } },
+    'Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är 1050 g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.',
+  ],
+  [
+    { code: 'sensitivity.pssm', params: {} },
+    'Korsförlamning: håll socker och stärkelse låga och använd fett som energikälla om hästen behöver mer energi. Selen och vitamin E är viktiga, och planen täcker dem.',
+  ],
+  [
+    { code: 'sensitivity.airways', params: {} },
+    'Luftvägar: blötlägg eller ånga höet, eller välj hösilage, och undvik dammigt foder och strö. Mögligt och dammigt hö är en vanlig orsak till luftvägsbesvär.',
+  ],
+  [
+    { code: 'sensitivity.teeth', params: {} },
+    'Tandproblem: blötlägg pellets till mash. Om hästen inte kan tugga långstrå, ersätt en del av grovfodret med hackat grovfoder eller grovfoderpellets. Låt tandläkare kontrollera munnen.',
+  ],
+  [
+    { code: 'sensitivity.proteinExcess', params: { percent: 69 } },
+    'Hästen får 69 % mer protein än den behöver. Vid proteinkänslighet: välj ett grovfoder med lägre proteinhalt eller blanda in halm.',
+  ],
+  [
+    { code: 'sensitivity.avoidedIngredients', params: { ingredients: ['spannmål', 'melass'] } },
+    'Produkter med spannmål, melass är bortvalda. Ingredienserna är tolkade ur butikernas beskrivningar, så kontrollera förpackningen.',
+  ],
+  // Journal trend (#12). The weekly loss always shows one decimal, as toFixed(1) did before.
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 1.2 } },
+    'Vikten minskar 1,2 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 2 } },
+    'Vikten minskar 2,0 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
+  // On a .x5 boundary it rounds the binary value down, as toFixed(1) did (300 to 261 kg in 20 days is 4.55 % a week).
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 4.55 } },
+    'Vikten minskar 4,5 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
+  [
+    { code: 'trend.weightLossFast', params: { percentPerWeek: 3.15 } },
+    'Vikten minskar 3,1 % per vecka. Snabbare än ungefär 1 % per vecka ökar risken för ämnesomsättningsproblem; SLU rekommenderar att bantning sker över mer än en månad.',
+  ],
+  [
+    { code: 'trend.conditionRising', params: {} },
+    'Hullet ökar trots att hästen redan var i överhull. Se över energin i foderstaten.',
   ],
 ]
 
 describe('domainText', () => {
   it('has a catalogue entry for every code', () => {
     expect(DOMAIN_CODES.filter((code) => !i18n.exists(`domain.${code}`))).toEqual([])
+  })
+
+  it('has a golden sentence for every code', () => {
+    const tested = new Set(FALL.map(([m]) => m.code))
+    expect(DOMAIN_CODES.filter((code) => !tested.has(code))).toEqual([])
   })
 
   it.each(FALL)('renders %j', (meddelande, text) => {

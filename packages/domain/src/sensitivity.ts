@@ -2,17 +2,18 @@
 // Ingredienser är härledda ur produktbeskrivningar och kan missa saker; planen säger det.
 
 import type { Foderpost } from './intake'
+import type { Kallhanvisning, SensitivityMessage, Uteslutningsskal } from './messages'
 import type { Halsa, Produkt } from './types'
 
 export interface Kanslighetsrad {
   niva: 'info' | 'varning'
-  text: string
-  kalla: string
+  text: SensitivityMessage
+  kalla: Kallhanvisning
 }
 
 export interface Uteslutning {
   produkt: Produkt
-  skal: string[]
+  skal: Uteslutningsskal[]
 }
 
 // ANTAGANDE: "mycket stärkelse" vid magsår, mer än 100 g per kg foder. Branschpraxis, inte SLU.
@@ -26,17 +27,20 @@ export function kraverLagSockerStarkelse(h: Halsa): boolean {
 }
 
 /** Skäl till att produkten inte passar hästen. Tom lista betyder att inget talar emot. */
-export function skalMotProdukt(p: Produkt, h: Halsa): string[] {
-  const skal: string[] = []
-  if (kraverLagSockerStarkelse(h) && !p.lampligVidFangEms) skal.push('för mycket eller okänt socker och stärkelse')
+export function skalMotProdukt(p: Produkt, h: Halsa): Uteslutningsskal[] {
+  const skal: Uteslutningsskal[] = []
+  if (kraverLagSockerStarkelse(h) && !p.lampligVidFangEms) skal.push({ code: 'exclusion.sugarStarch', params: {} })
+  // eslint-disable-next-line no-restricted-syntax -- an ingredient identifier (the Ingrediens type), not text
   if (h.magsar && (p.ingredienser.includes('spannmål') || (p.perKg.starkelse ?? 0) > STARKELSE_HOG_G_PER_KG)) {
-    skal.push('spannmål eller mycket stärkelse, olämpligt vid magsår')
+    skal.push({ code: 'exclusion.grainOrStarch', params: {} })
   }
-  if (h.luftvagar && p.form === 'pulver') skal.push('pulverform kan damma')
+  if (h.luftvagar && p.form === 'pulver') skal.push({ code: 'exclusion.powder', params: {} })
   for (const ingrediens of h.undvik ?? []) {
-    if (p.ingredienser.includes(ingrediens)) skal.push(`innehåller ${ingrediens}`)
+    if (p.ingredienser.includes(ingrediens)) {
+      skal.push({ code: 'exclusion.containsIngredient', params: { ingredient: ingrediens } })
+    }
   }
-  if (h.proteinkanslig && p.kategori === 'proteinfoder') skal.push('proteinfoder')
+  if (h.proteinkanslig && p.kategori === 'proteinfoder') skal.push({ code: 'exclusion.proteinFeed', params: {} })
   return skal
 }
 
@@ -64,8 +68,8 @@ export function granskaKansligheter(
     if (skal.length) {
       rader.push({
         niva: 'varning',
-        text: `${produkt.namn}, som hästen får i dag: ${skal.join(', ')}. Överväg att byta.`,
-        kalla: 'Fodrs känslighetsregler',
+        text: { code: 'sensitivity.currentFeed', params: { product: produkt.namn, reasons: skal } },
+        kalla: { code: 'source.fodrRules', params: {} },
       })
     }
   }
@@ -75,44 +79,44 @@ export function granskaKansligheter(
     const perMal = Math.round(1.5 * viktKg)
     rader.push({
       niva: 'info',
-      text: `Magsår: ge grovfoder före kraftfoder och dela upp fodret på flera mål. SLU:s tak är ${perMal} g stärkelse per mål för den här hästen; vid magsår bör det ligga klart under.`,
-      kalla: 'SLU riktlinjer för kraftfoder, sid 33',
+      text: { code: 'sensitivity.ulcer', params: { starchPerMealG: perMal } },
+      kalla: { code: 'source.concentrateGuidelinesPage33', params: {} },
     })
   }
   if (h.pssm) {
     rader.push({
       niva: 'info',
-      text: 'Korsförlamning: håll socker och stärkelse låga och använd fett som energikälla om hästen behöver mer energi. Selen och vitamin E är viktiga, och planen täcker dem.',
-      kalla: 'Branschpraxis (ej SLU)',
+      text: { code: 'sensitivity.pssm', params: {} },
+      kalla: { code: 'source.industryPractice', params: {} },
     })
   }
   if (h.luftvagar) {
     rader.push({
       niva: 'info',
-      text: 'Luftvägar: blötlägg eller ånga höet, eller välj hösilage, och undvik dammigt foder och strö. Mögligt och dammigt hö är en vanlig orsak till luftvägsbesvär.',
-      kalla: 'SLU sid 30',
+      text: { code: 'sensitivity.airways', params: {} },
+      kalla: { code: 'source.page30', params: {} },
     })
   }
   if (h.tandproblem) {
     rader.push({
       niva: 'info',
-      text: 'Tandproblem: blötlägg pellets till mash. Om hästen inte kan tugga långstrå, ersätt en del av grovfodret med hackat grovfoder eller grovfoderpellets. Låt tandläkare kontrollera munnen.',
-      kalla: 'Branschpraxis, SLU sid 34 (mun- och tandstatus)',
+      text: { code: 'sensitivity.teeth', params: {} },
+      kalla: { code: 'source.industryPracticePage34', params: {} },
     })
   }
   if (h.proteinkanslig && protein.intag > protein.behov * PROTEIN_OVER_ANDEL) {
     const procent = Math.round((protein.intag / protein.behov - 1) * 100)
     rader.push({
       niva: 'varning',
-      text: `Hästen får ${procent} % mer protein än den behöver. Vid proteinkänslighet: välj ett grovfoder med lägre proteinhalt eller blanda in halm.`,
-      kalla: 'SLU tabell 32',
+      text: { code: 'sensitivity.proteinExcess', params: { percent: procent } },
+      kalla: { code: 'source.table32', params: {} },
     })
   }
   if (h.undvik?.length) {
     rader.push({
       niva: 'info',
-      text: `Produkter med ${h.undvik.join(', ')} är bortvalda. Ingredienserna är tolkade ur butikernas beskrivningar, så kontrollera förpackningen.`,
-      kalla: 'Härlett ur produktbeskrivningar',
+      text: { code: 'sensitivity.avoidedIngredients', params: { ingredients: [...h.undvik] } },
+      kalla: { code: 'source.productDescriptions', params: {} },
     })
   }
   return rader

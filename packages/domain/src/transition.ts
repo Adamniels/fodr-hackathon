@@ -4,11 +4,10 @@
 // lös avföring, kolik och, hos fångbenägna hästar, fång.
 
 import { displayName, type Foderpost } from './intake'
-import type { Bytekanslighet, Halsa } from './types'
+import type { Bytekanslighet, Grovfodertyp, Halsa } from './types'
 
+/** How fast a feed transition goes. Its name and description for the owner are in the web app's catalogue. */
 export interface Bytestakt {
-  namn: string
-  beskrivning: string
   /** Hela bytets längd i dagar. */
   dagar: number
   /** Dagar mellan varje ändring av måtten. */
@@ -18,14 +17,9 @@ export interface Bytestakt {
 // ANTAGANDE: 1–2 veckor är vanlig branschpraxis för foderbyten. SLU Rapport 289 anger att
 // förändringar ska göras gradvis men ingen exakt takt.
 export const BYTESTAKT: Record<Bytekanslighet, Bytestakt> = {
-  tal: { namn: 'Tål byten bra', beskrivning: 'Har aldrig reagerat på nytt foder.', dagar: 7, dagarPerSteg: 2 },
-  normal: { namn: 'Som de flesta', beskrivning: 'Kan bli lite lös i magen ibland.', dagar: 10, dagarPerSteg: 2 },
-  kanslig: {
-    namn: 'Känslig',
-    beskrivning: 'Lös avföring, kolik eller fång vid tidigare byten.',
-    dagar: 14,
-    dagarPerSteg: 3,
-  },
+  tal: { dagar: 7, dagarPerSteg: 2 },
+  normal: { dagar: 10, dagarPerSteg: 2 },
+  kanslig: { dagar: 14, dagarPerSteg: 3 },
 }
 
 /** Förval när ägaren inte har angett något: hästar med fång, EMS, PPID, magsår eller PSSM räknas som känsliga. */
@@ -41,14 +35,16 @@ export interface Injusteringssteg {
   slutDag: number | null
 }
 
-export interface Injusteringsrad {
-  namn: string
-  enhet: 'kg' | 'g'
+interface Radmangd {
   fran: number
   till: number
   /** Mängd per dag i varje steg, i samma ordning som stegen. */
   perSteg: number[]
 }
+
+/** Grovfodret vägs i kg och bär sin typ, som webben namnger; produkter vägs i gram och bär produktens namn. */
+export type Injusteringsrad =
+  (Radmangd & { enhet: 'kg'; grovfodertyp: Grovfodertyp }) | (Radmangd & { enhet: 'g'; namn: string })
 
 export interface Injustering {
   kanslighet: Bytekanslighet
@@ -69,7 +65,7 @@ const MIN_GROVFODER_ANDRING_KG = 0.5
 export function skapaInjustering(args: {
   halsa: Halsa
   kanslighet?: Bytekanslighet
-  grovfoderNamn: string
+  grovfodertyp: Grovfodertyp
   grovfoderFranKg: number
   grovfoderTillKg: number
   fran: Foderpost[]
@@ -91,7 +87,7 @@ export function skapaInjustering(args: {
   const { grovfoderFranKg: gf, grovfoderTillKg: gt } = args
   if (Math.abs(gt - gf) >= MIN_GROVFODER_ANDRING_KG) {
     const till = roundKg(gt)
-    rader.push({ namn: args.grovfoderNamn, enhet: 'kg', fran: gf, till, perSteg: trappa(gf, till, roundKg) })
+    rader.push({ enhet: 'kg', grovfodertyp: args.grovfodertyp, fran: gf, till, perSteg: trappa(gf, till, roundKg) })
   }
 
   // Samma produkt kan finnas i både dagens och nya fodret; slå ihop på produkt-id.
@@ -111,8 +107,8 @@ export function skapaInjustering(args: {
     const b = till.get(id)?.gramPerDag ?? 0
     if (a === b) continue
     rader.push({
-      namn: displayName(produkt),
       enhet: 'g',
+      namn: displayName(produkt),
       fran: a,
       till: b,
       perSteg: trappa(a, b, (v) => roundGrams(v, Math.max(a, b))),

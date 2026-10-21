@@ -2,7 +2,7 @@ import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
 import { kr, tal } from '../format'
-import i18n from '.'
+import i18n, { locale } from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
 // formatter here that turns its params into strings; the mapped type makes a missing formatter a compile error.
@@ -17,6 +17,11 @@ const gram = (n: number): string => tal(n, 0)
 const sluNiva = (level: Params<'source.sodium'>['level']) => i18n.t(`domain.sluLevel.${level}`)
 
 const tom = () => ({})
+
+const tabell32Grupp = (group: Params<'quality.proteinHigh'>['group']) => i18n.t(`domain.table32Group.${group}`)
+
+/** A list of messages or values as one phrase, comma separated as the engine joined them before (#12). */
+const lista = (delar: string[]) => delar.join(', ')
 
 const FORMAT: { [C in Kod]: Formatter<C> } = {
   'swapReason.samePackCheaper': tom,
@@ -76,6 +81,69 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'source.concentrateGuidelines': tom,
   'source.microMinerals': (p) => ({ level: sluNiva(p.level) }),
   'source.vitamins': tom,
+  'source.table32': tom,
+  'source.page20': tom,
+  'source.page30': tom,
+  'source.concentrateGuidelinesPage33': tom,
+  'source.industryPracticePage34': tom,
+  'source.eurofinsSoil': tom,
+  'source.industryPractice': tom,
+  'source.fodrRules': tom,
+  'source.productDescriptions': tom,
+  'qualityTitle.proteinHigh': tom,
+  'qualityTitle.proteinLow': tom,
+  'qualityTitle.energyHigh': tom,
+  'qualityTitle.energyLow': tom,
+  'qualityTitle.haylageWet': tom,
+  'qualityTitle.haylageDry': tom,
+  'qualityTitle.soil': tom,
+  'qualityTitle.sugarHigh': tom,
+  'qualityTitle.seleniumMissing': tom,
+  // At most one decimal, as quality.ts formatted these before it returned codes.
+  'quality.proteinHigh': (p) => ({
+    ratio: tal(p.ratio, 1),
+    min: tal(p.min, 1),
+    max: tal(p.max, 1),
+    group: tabell32Grupp(p.group),
+  }),
+  'quality.proteinLow': (p) => ({ ratio: tal(p.ratio, 1), min: tal(p.min, 1) }),
+  'quality.energyHigh': (p) => ({
+    mj: tal(p.mj, 1),
+    min: tal(p.min, 1),
+    max: tal(p.max, 1),
+    group: tabell32Grupp(p.group),
+  }),
+  'quality.energyLow': (p) => ({ mj: tal(p.mj, 1), min: tal(p.min, 1), group: tabell32Grupp(p.group) }),
+  'quality.haylageWet': (p) => ({ dmPercent: tal(p.dmPercent, 1) }),
+  'quality.haylageDry': (p) => ({ dmPercent: tal(p.dmPercent, 1) }),
+  'quality.soilAsh': (p) => ({ ashG: tal(p.ashG, 1) }),
+  'quality.soilIron': (p) => ({ ironMg: tal(p.ironMg, 1) }),
+  'quality.soilAshIron': (p) => ({ ashG: tal(p.ashG, 1), ironMg: tal(p.ironMg, 1) }),
+  'quality.sugarHigh': (p) => ({ sugarG: tal(p.sugarG, 1) }),
+  'quality.seleniumMissing': tom,
+  'exclusion.sugarStarch': tom,
+  'exclusion.grainOrStarch': tom,
+  'exclusion.powder': tom,
+  // Ingredients are stored identifiers, shown as they are (#12, decision 3).
+  'exclusion.containsIngredient': (p) => ({ ingredient: p.ingredient }),
+  'exclusion.proteinFeed': tom,
+  'sensitivity.currentFeed': (p) => ({ product: p.product, reasons: lista(p.reasons.map(domainText)) }),
+  // Unformatted, as before (#12, decision 4): a horse over 667 kg shows "1050", not "1 050".
+  'sensitivity.ulcer': (p) => ({ starchPerMealG: String(p.starchPerMealG) }),
+  'sensitivity.pssm': tom,
+  'sensitivity.airways': tom,
+  'sensitivity.teeth': tom,
+  'sensitivity.proteinExcess': (p) => ({ percent: String(p.percent) }),
+  'sensitivity.avoidedIngredients': (p) => ({ ingredients: lista(p.ingredients) }),
+  // Always one decimal ("2,0"), rounded by toFixed(1) as before (#12, decision 4): toFixed rounds the binary value
+  // (4.55 gives 4,5), where Intl alone would round its decimal form up (4,6).
+  'trend.weightLossFast': (p) => ({
+    percentPerWeek: Number(p.percentPerWeek.toFixed(1)).toLocaleString(locale(), {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }),
+  }),
+  'trend.conditionRising': tom,
   'error.adultsOnly': (p) => ({ minAgeYears: tal(p.minAgeYears, 0) }),
 }
 

@@ -2,6 +2,8 @@
 // `domain.<code>` and formats the params for the active locale. Params hold raw numbers and data (product names,
 // ids), never text written for a reader.
 
+import type { Ingrediens } from './types'
+
 /** A message code with its parameters. */
 export interface Message<C extends string, P extends object = Record<string, never>> {
   code: C
@@ -59,7 +61,7 @@ export type Notering =
 /** The row of SLU table 15, or the column of table 17, that a requirement comes from. */
 export type SluNiva = 'underhall' | 'arbete' | 'arbeteUnder30' | 'arbete30to50' | 'arbete50to75' | 'arbete75to130'
 
-/** Where a requirement comes from: SLU Rapport 289, as data. */
+/** Where a requirement or a statement comes from: SLU Rapport 289, or a source marked as not SLU, as data. */
 export type Kallhanvisning =
   | Message<'source.energy'>
   | Message<'source.proteinPerMJ'>
@@ -68,10 +70,81 @@ export type Kallhanvisning =
   | Message<'source.concentrateGuidelines'>
   | Message<'source.microMinerals', { level: SluNiva }>
   | Message<'source.vitamins'>
+  | Message<'source.table32'>
+  | Message<'source.page20'>
+  | Message<'source.page30'>
+  | Message<'source.concentrateGuidelinesPage33'>
+  | Message<'source.industryPracticePage34'>
+  | Message<'source.eurofinsSoil'>
+  | Message<'source.industryPractice'>
+  | Message<'source.fodrRules'>
+  | Message<'source.productDescriptions'>
+
+/** The horse group of SLU table 32 that a roughage is judged for. */
+export type Tabell32Grupp = 'hart' | 'ovriga'
+
+/** The heading of a roughage quality flag (quality.ts). */
+export type QualityTitle =
+  | Message<'qualityTitle.proteinHigh'>
+  | Message<'qualityTitle.proteinLow'>
+  | Message<'qualityTitle.energyHigh'>
+  | Message<'qualityTitle.energyLow'>
+  | Message<'qualityTitle.haylageWet'>
+  | Message<'qualityTitle.haylageDry'>
+  | Message<'qualityTitle.soil'>
+  | Message<'qualityTitle.sugarHigh'>
+  | Message<'qualityTitle.seleniumMissing'>
+
+/** What a roughage quality flag says (quality.ts). Ratios in g digestible protein per MJ, contents per kg DM. */
+export type QualityMessage =
+  | Message<'quality.proteinHigh', { ratio: number; min: number; max: number; group: Tabell32Grupp }>
+  | Message<'quality.proteinLow', { ratio: number; min: number }>
+  | Message<'quality.energyHigh', { mj: number; min: number; max: number; group: Tabell32Grupp }>
+  | Message<'quality.energyLow', { mj: number; min: number; group: Tabell32Grupp }>
+  | Message<'quality.haylageWet', { dmPercent: number }>
+  | Message<'quality.haylageDry', { dmPercent: number }>
+  | Message<'quality.soilAsh', { ashG: number }>
+  | Message<'quality.soilIron', { ironMg: number }>
+  | Message<'quality.soilAshIron', { ashG: number; ironMg: number }>
+  | Message<'quality.sugarHigh', { sugarG: number }>
+  | Message<'quality.seleniumMissing'>
+
+/** Why a product does not suit the horse (sensitivity.ts). Ingredients are the stored identifiers. */
+export type Uteslutningsskal =
+  | Message<'exclusion.sugarStarch'>
+  | Message<'exclusion.grainOrStarch'>
+  | Message<'exclusion.powder'>
+  | Message<'exclusion.containsIngredient', { ingredient: Ingrediens }>
+  | Message<'exclusion.proteinFeed'>
+
+/** Advice from the horse's sensitivities about today's feed and the ration (sensitivity.ts). */
+export type SensitivityMessage =
+  | Message<'sensitivity.currentFeed', { product: string; reasons: Uteslutningsskal[] }>
+  | Message<'sensitivity.ulcer', { starchPerMealG: number }>
+  | Message<'sensitivity.pssm'>
+  | Message<'sensitivity.airways'>
+  | Message<'sensitivity.teeth'>
+  | Message<'sensitivity.proteinExcess', { percent: number }>
+  | Message<'sensitivity.avoidedIngredients', { ingredients: Ingrediens[] }>
+
+/** A warning from the journal's weight and condition trend (journal.ts). The loss is a positive percentage. */
+export type Trendvarning =
+  Message<'trend.weightLossFast', { percentPerWeek: number }> | Message<'trend.conditionRising'>
 
 export type ErrorMessage = Message<'error.adultsOnly', { minAgeYears: number }>
 
-export type DomainMessage = Byteskal | ActionMessage | Varning | Notering | Kallhanvisning | ErrorMessage
+export type DomainMessage =
+  | Byteskal
+  | ActionMessage
+  | Varning
+  | Notering
+  | Kallhanvisning
+  | QualityTitle
+  | QualityMessage
+  | Uteslutningsskal
+  | SensitivityMessage
+  | Trendvarning
+  | ErrorMessage
 
 /** An input the engine cannot calculate for. The message says why, for the web app to render. */
 export class DomainError extends Error {

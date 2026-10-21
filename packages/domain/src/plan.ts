@@ -6,7 +6,7 @@ import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import { filtreraProdukter, granskaKansligheter, type Kanslighetsrad } from './sensitivity'
 import { hittaBilligareLiknande, type Byte } from './swaps'
 import { skapaInjustering, type Injustering } from './transition'
-import type { ActionMessage, Kallhanvisning, Notering, UrvalsSkal, Varning } from './messages'
+import type { ActionMessage, Kallhanvisning, Notering, UrvalsSkal, Uteslutningsskal, Varning } from './messages'
 import type { Grovfoderanalys, Hastprofil, Kalla, Produkt } from './types'
 
 /** 'osaker': uppskattat värde under behovet för ett ämne som inte styr urvalet. */
@@ -68,7 +68,7 @@ export interface Plan {
   /** Råd och varningar utifrån hästens känsligheter. */
   kansligheter: Kanslighetsrad[]
   /** Urvalsprodukter som valdes bort på grund av känsligheter, med skäl. */
-  bortvalda: { namn: string; skal: string[] }[]
+  bortvalda: { namn: string; skal: Uteslutningsskal[] }[]
   /** Dagens foder som byts mot en liknande eller bättre passande produkt, med kostnad före och efter. */
   byten: Byte[]
   /** Hur dagens foder trappas över till planen, i takt med hästens känslighet för foderbyten. */
@@ -360,8 +360,7 @@ export function skapaPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter
     injustering: skapaInjustering({
       halsa: h,
       kanslighet: profil.bytekanslighet,
-      // eslint-disable-next-line no-restricted-syntax -- the transition model's names become codes in #12
-      grovfoderNamn: analys.typ === 'hosilage' ? 'Hösilage' : 'Hö',
+      grovfodertyp: analys.typ,
       grovfoderFranKg: profil.grovfoder.kgPerDag,
       grovfoderTillKg: grovKg,
       fran: nuvarande,

@@ -2,23 +2,32 @@ import { describe, expect, it } from 'vitest'
 import { analysHo, analysKomplett, demoHast, ponny } from '../test/fixtures/examples'
 import { bedomGrovfoder } from './quality'
 
-const rubriker = (f: ReturnType<typeof bedomGrovfoder>) => f.map((x) => x.rubrik)
+const koder = (f: ReturnType<typeof bedomGrovfoder>) => f.map((x) => x.text.code)
 
 describe('bedomGrovfoder', () => {
   it('A01: proteinrikt, energirikt och blött för en fritidshäst', () => {
     // Kvot 104 / 10,2 = 10,2 > 6, energi 10,2 > 8, ts 39,7 < 45 (SLU tabell 32 och sid 30).
-    const f = rubriker(bedomGrovfoder(analysKomplett, demoHast))
-    expect(f).toContain('Mer protein än hästen behöver')
-    expect(f).toContain('Energirikt grovfoder')
-    expect(f).toContain('Blött hösilage')
-    expect(f).not.toContain('Möjlig jordinblandning')
+    const f = koder(bedomGrovfoder(analysKomplett, demoHast))
+    expect(f).toContain('quality.proteinHigh')
+    expect(f).toContain('quality.energyHigh')
+    expect(f).toContain('quality.haylageWet')
+    expect(f.filter((k) => k.startsWith('quality.soil'))).toEqual([])
+  })
+  it('A01: flaggorna bär rubrik, råa tal och källa som koder (ADR 0014)', () => {
+    const [protein] = bedomGrovfoder(analysKomplett, demoHast)
+    expect(protein).toEqual({
+      niva: 'info',
+      rubrik: { code: 'qualityTitle.proteinHigh', params: {} },
+      text: { code: 'quality.proteinHigh', params: { ratio: 104 / 10.2, min: 5, max: 6, group: 'ovriga' } },
+      kalla: { code: 'source.table32', params: {} },
+    })
   })
   it('A07: kvot 5,2 ligger inom SLU:s 5–6, selen saknas', () => {
-    const f = rubriker(bedomGrovfoder(analysHo, ponny))
-    expect(f).not.toContain('Proteinfattigt grovfoder')
-    expect(f).toContain('Selen ej analyserat')
+    const f = koder(bedomGrovfoder(analysHo, ponny))
+    expect(f).not.toContain('quality.proteinLow')
+    expect(f).toContain('quality.seleniumMissing')
     // Pysen har EMS, så sockret varnas i planen i stället för här.
-    expect(f).not.toContain('Högt socker')
+    expect(f).not.toContain('quality.sugarHigh')
   })
   it('B06: hög aska och järn tyder på jordinblandning', () => {
     const b06 = {
@@ -27,10 +36,49 @@ describe('bedomGrovfoder', () => {
       askaGPerKgTs: 94,
       perKgTs: { ...analysKomplett.perKgTs, fe: 279 },
     }
-    expect(rubriker(bedomGrovfoder(b06, demoHast))).toContain('Möjlig jordinblandning')
+    expect(bedomGrovfoder(b06, demoHast).find((x) => x.text.code.startsWith('quality.soil'))).toMatchObject({
+      rubrik: { code: 'qualityTitle.soil' },
+      text: { code: 'quality.soilAshIron', params: { ashG: 94, ironMg: 279 } },
+      kalla: { code: 'source.eurofinsSoil' },
+    })
+  })
+  it('jord: aska eller järn för sig ger var sin kod', () => {
+    const jord = (askaGPerKgTs: number | undefined, fe: number | undefined) =>
+      bedomGrovfoder({ ...analysKomplett, askaGPerKgTs, perKgTs: { ...analysKomplett.perKgTs, fe } }, demoHast).find(
+        (x) => x.rubrik.code === 'qualityTitle.soil',
+      )?.text
+    expect(jord(120, 100)).toEqual({ code: 'quality.soilAsh', params: { ashG: 120 } })
+    expect(jord(50, 320)).toEqual({ code: 'quality.soilIron', params: { ironMg: 320 } })
+    expect(jord(90, 250)).toBeUndefined()
+  })
+  it('hösilage: torrsubstansen följer med som rått tal, med SLU sid 30 som källa', () => {
+    const flagga = (tsProcent: number) =>
+      bedomGrovfoder({ ...analysKomplett, tsProcent }, demoHast).find((x) => x.text.code.startsWith('quality.haylage'))
+    expect(flagga(39.7)).toMatchObject({
+      text: { code: 'quality.haylageWet', params: { dmPercent: 39.7 } },
+      kalla: { code: 'source.page30' },
+    })
+    expect(flagga(70)).toMatchObject({ text: { code: 'quality.haylageDry', params: { dmPercent: 70 } } })
+    expect(flagga(55)).toBeUndefined()
+  })
+  it('energirikt och högt socker bär råa tal', () => {
+    const f = bedomGrovfoder(
+      { ...analysKomplett, perKgTs: { ...analysKomplett.perKgTs, socker: 150 } },
+      { ...demoHast, halsa: { ...demoHast.halsa, fang: false } },
+    )
+    expect(f.find((x) => x.text.code === 'quality.energyHigh')!.text.params).toEqual({
+      mj: analysKomplett.perKgTs.energi,
+      min: 6.5,
+      max: 8,
+      group: 'ovriga',
+    })
+    expect(f.find((x) => x.text.code === 'quality.sugarHigh')).toMatchObject({
+      text: { params: { sugarG: 150 } },
+      kalla: { code: 'source.industryPractice' },
+    })
   })
   it('hårt arbete: energi under 9 MJ är för lite', () => {
-    const f = rubriker(bedomGrovfoder(analysHo, { ...demoHast, prestanda: 'trav_galopp_traning' }))
-    expect(f).toContain('Energifattigt grovfoder')
+    const f = bedomGrovfoder(analysHo, { ...demoHast, prestanda: 'trav_galopp_traning' })
+    expect(f.find((x) => x.text.code === 'quality.energyLow')!.text.params).toMatchObject({ min: 9, group: 'hart' })
   })
 })
