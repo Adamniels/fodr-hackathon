@@ -1,9 +1,10 @@
-// Validates a horse profile and an analysis against LIMITS (#13). The engine refuses input with errors (skapaPlan),
-// and the web shows each error next to its field. A missing optional value is unknown, never an error and never 0.
+// Validates a horse profile and an analysis against LIMITS (#13), and a journal entry before it is saved (#107). The
+// engine refuses input with errors (skapaPlan), and the web shows each error next to its field. A missing optional value is unknown, never an error and never 0.
 
 import { LIMITS, type Limit } from './limits'
 import type { ValidationMessage } from './messages'
 import type { NutrientKey } from './nutrients'
+import type { Journalpost } from './journal'
 import type { Grovfoderanalys, Hastprofil } from './types'
 
 export type ProfileField =
@@ -21,9 +22,17 @@ export type ProfileField =
 
 export type AnalysisField = 'tsProcent' | 'askaGPerKgTs' | `perKgTs.${NutrientKey}`
 
+export type JournalField = 'datum' | 'viktKg' | 'hull'
+
 /** One field the engine cannot calculate with, and why. */
 export interface InputError {
   field: ProfileField | AnalysisField
+  message: ValidationMessage
+}
+
+/** One field of a journal entry that cannot be saved, and why. Kept apart from InputError, which the plan returns. */
+export interface JournalError {
+  field: JournalField
   message: ValidationMessage
 }
 
@@ -89,6 +98,33 @@ export function validateAnalysis(a: Grovfoderanalys): InputError[] {
     if (v !== undefined && !(isNumber(v) && v >= 0)) {
       errors.push({ field: `perKgTs.${k}`, message: { code: 'validation.atLeast', params: { min: 0 } } })
     }
+  }
+  return errors
+}
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/** A stored date that is a real calendar day ("2026-02-30" is not). Checked in UTC, so no time zone is involved. */
+function isCalendarDay(text: string): boolean {
+  const m = ISO_DATE.exec(text)
+  if (!m) return false
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const date = new Date(Date.UTC(y, mo - 1, d))
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d
+}
+
+/**
+ * A journal entry before it is saved (#107): it needs a real date, and a weight or condition within the profile's
+ * limits, since saving it can update the profile.
+ */
+export function validateJournalEntry(post: Pick<Journalpost, 'datum' | 'viktKg' | 'hull'>): JournalError[] {
+  const errors: JournalError[] = []
+  if (!isCalendarDay(post.datum)) errors.push({ field: 'datum', message: { code: 'validation.date', params: {} } })
+  if (post.viktKg !== undefined && !inside(post.viktKg, LIMITS.viktKg)) {
+    errors.push({ field: 'viktKg', message: range(LIMITS.viktKg) })
+  }
+  if (post.hull !== undefined && !(Number.isInteger(post.hull) && inside(post.hull, LIMITS.hull))) {
+    errors.push({ field: 'hull', message: { code: 'validation.wholeRange', params: LIMITS.hull } })
   }
   return errors
 }

@@ -150,6 +150,7 @@ export type ValidationMessage =
   | Message<'validation.positiveUpTo', { min: number; max: number }>
   | Message<'validation.adultsOnly', { minAgeYears: number }>
   | Message<'validation.trotWithinRide'>
+  | Message<'validation.date'>
 
 export type DomainMessage =
   | Byteskal

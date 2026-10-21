@@ -21,6 +21,49 @@ test('just after midnight the journal entry defaults to the local date (C6)', as
   await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
 })
 
+test('a journal entry needs a date and a weight within the limits (#107)', async ({ page }) => {
+  await enterDemo(page)
+  await goToStep(page, 'Journal')
+  const add = page.getByRole('button', { name: 'Lägg till', exact: true })
+  await page.getByLabel('Vad har du sett?').fill('Pigg')
+  await expect(add).toBeEnabled()
+
+  await page.getByLabel('Datum').fill('')
+  await expect(page.getByText('Ange ett datum.')).toBeVisible()
+  await expect(add).toBeDisabled()
+
+  await page.getByLabel('Datum').fill('2026-10-15')
+  await page.getByLabel('Vikt (kg)').fill('0')
+  await expect(page.getByText('Ange ett värde mellan 50 och 1 200.')).toBeVisible()
+  await expect(add).toBeDisabled()
+
+  // A weight that is not a number says so, instead of being dropped silently.
+  await page.getByLabel('Vikt (kg)').fill('abc')
+  await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeVisible()
+  await page.getByLabel('Vikt (kg)').fill('545,5')
+  await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeHidden()
+  await expect(add).toBeEnabled()
+})
+
+test('the entry date follows today past midnight unless one was picked (#107)', async ({ page }) => {
+  await page.clock.setSystemTime(new Date('2026-10-15T23:50:00+02:00'))
+  await enterDemo(page)
+  await goToStep(page, 'Journal')
+  const datum = page.getByLabel('Datum')
+  await expect(datum).toHaveValue('2026-10-15')
+
+  // Headless Chromium cannot hide a tab, so the event the browser sends when the page is shown again is dispatched here.
+  const shownAgain = () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+  await page.clock.setSystemTime(new Date('2026-10-16T00:10:00+02:00'))
+  await shownAgain()
+  await expect(datum).toHaveValue('2026-10-16')
+
+  await datum.fill('2026-10-10')
+  await page.clock.setSystemTime(new Date('2026-10-17T00:10:00+02:00'))
+  await shownAgain()
+  await expect(datum).toHaveValue('2026-10-10')
+})
+
 test('entry with weight updates the profile', async ({ page }) => {
   await enterDemo(page)
   await goToStep(page, 'Journal')

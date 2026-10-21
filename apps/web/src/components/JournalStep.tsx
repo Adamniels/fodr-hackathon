@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { analyseraJournal, type JournalAnalys } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
+import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
 import { HULL_LEVELS, formatDate, hullText, kr, tal } from '../format'
 import { domainText } from '../i18n/domain'
+import { DecimalInput } from './DecimalInput'
 
 interface Props {
   hast: Hastprofil
@@ -137,23 +139,30 @@ function NyAnteckning({
   onLaggTill: (post: Journalpost, uppdateraProfil: boolean) => void
 }) {
   const { t } = useTranslation()
-  const [datum, setDatum] = useState(idag)
-  const [vikt, setVikt] = useState('')
+  // Only a date the owner picks is kept, also after saving (for several back-dated entries in a row); otherwise the
+  // entry follows today, also past midnight (#107).
+  const [pickedDate, setPickedDate] = useState<string | null>(null)
+  const datum = pickedDate ?? idag
+  const dateMessageId = useId()
+  const [vikt, setVikt] = useState<number | undefined>()
   const [hull, setHull] = useState('')
   const [text, setText] = useState('')
   const [uppdatera, setUppdatera] = useState(true)
-  const harMatt = vikt !== '' || hull !== ''
+  const harMatt = vikt !== undefined || hull !== ''
+  const matt = {
+    ...(vikt !== undefined ? { viktKg: vikt } : {}),
+    ...(hull !== '' ? { hull: Number(hull) } : {}),
+  }
+  // Checked before saving: an entry can update the profile, so it never stores an empty date or a 0 kg weight.
+  const errors = validateJournalEntry({ datum, ...matt })
+  const errorFor = (field: JournalField) => {
+    const error = errors.find((e) => e.field === field)
+    return error && domainText(error.message)
+  }
 
   function spara() {
-    onLaggTill(
-      nyPost(datum, {
-        ...(vikt !== '' ? { viktKg: Number(vikt) } : {}),
-        ...(hull !== '' ? { hull: Number(hull) } : {}),
-        text: text.trim(),
-      }),
-      uppdatera && harMatt,
-    )
-    setVikt('')
+    onLaggTill(nyPost(datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
+    setVikt(undefined)
     setHull('')
     setText('')
   }
@@ -164,15 +173,27 @@ function NyAnteckning({
       <div className="grupp">
         <label className="falt">
           <span className="falt-label">{t('journal.newEntry.date')}</span>
-          <input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
+          <input
+            type="date"
+            value={datum}
+            aria-invalid={errorFor('datum') ? true : undefined}
+            aria-describedby={errorFor('datum') ? dateMessageId : undefined}
+            onChange={(e) => setPickedDate(e.target.value)}
+          />
+          {errorFor('datum') && (
+            <span id={dateMessageId} className="falt-fel">
+              {errorFor('datum')}
+            </span>
+          )}
         </label>
         <label className="falt">
           <span className="falt-label">{t('journal.newEntry.weight')}</span>
-          <input
-            type="number"
+          <DecimalInput
             value={vikt}
             placeholder={tal(hast.viktKg, 1)}
-            onChange={(e) => setVikt(e.target.value)}
+            error={errorFor('viktKg')}
+            onChange={setVikt}
+            onClear={() => setVikt(undefined)}
           />
         </label>
         <label className="falt">
@@ -203,7 +224,7 @@ function NyAnteckning({
         </label>
       )}
       <div className="atgardsrad">
-        <button className="knapp" disabled={!harMatt && !text.trim()} onClick={spara}>
+        <button className="knapp" disabled={(!harMatt && !text.trim()) || errors.length > 0} onClick={spara}>
           {t('journal.newEntry.add')}
         </button>
       </div>
