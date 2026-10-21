@@ -64,8 +64,9 @@
     "notVerified": "Bekräfta din e-postadress först. Vi skickade en länk när du skapade kontot.",
     "resend": "Skicka länken igen",
     "resent": "Vi har skickat en ny länk.",
-    "linkFailed": "Länken är ogiltig eller har gått ut. Be om en ny.",
-    "busy": "Skickar …"
+    "linkFailed": "Länken är ogiltig eller har gått ut.",
+    "busy": "Skickar …",
+    "newLink": "Skicka en ny länk"
   },
   "steps": {
     "hast": "Hästen",
@@ -728,6 +729,8 @@
       "PASSWORD_TOO_LONG": "Lösenordet är för långt.",
       "INVALID_TOKEN": "Länken är ogiltig eller har gått ut. Be om en ny.",
       "RATE_LIMITED": "För många försök. Vänta en minut och försök igen.",
+      "NAME_REQUIRED": "Skriv ditt namn.",
+      "NAME_TOO_LONG": "Namnet får vara högst 100 tecken.",
       "UNKNOWN": "Något gick fel. Försök igen."
     }
   },

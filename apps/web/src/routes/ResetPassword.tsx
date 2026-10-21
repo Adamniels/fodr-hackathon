@@ -1,5 +1,6 @@
 // /reset-password: where the mailed link for a new password lands (#23). The API checked the link and sends either a
 // token or ?error=INVALID_TOKEN; the new password goes to the API with the token.
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
@@ -9,6 +10,7 @@ import { authErrorText } from '../i18n/auth'
 
 export function ResetPassword() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [params] = useSearchParams()
   const token = params.get('token')
   const [password, setPassword] = useState('')
@@ -23,6 +25,8 @@ export function ResetPassword() {
     setError(null)
     try {
       await authClient.resetPassword(token, password)
+      // The API ends every session of the account on a reset, this browser's too: read it again.
+      await queryClient.invalidateQueries({ queryKey: ['me'] })
       setDone(true)
     } catch (err) {
       setError(authErrorText(err instanceof AuthError ? err.code : 'UNKNOWN'))

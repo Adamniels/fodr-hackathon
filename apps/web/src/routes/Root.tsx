@@ -20,8 +20,10 @@ export function Root() {
     setDemoOpen(false)
     setDemo(false)
   }
+  const signedIn = me.data ?? null
   const session: Session = {
-    user: demo ? DEMO_USER : (me.data ?? null),
+    // A real session wins over an open demo (a verification link clicked while trying the demo signs in to the account).
+    user: signedIn ?? (demo ? DEMO_USER : null),
     refresh: async () => {
       leaveDemo()
       await queryClient.invalidateQueries({ queryKey: ME })
@@ -31,12 +33,15 @@ export function Root() {
       setDemo(true)
     },
     logOut: async () => {
-      if (demo) {
-        leaveDemo()
-        return
+      leaveDemo()
+      if (!signedIn) return
+      try {
+        await authClient.signOut()
+        queryClient.setQueryData(ME, null)
+      } catch {
+        // Sign-out failed (offline, server error): read the session again rather than pretend it ended.
+        await queryClient.invalidateQueries({ queryKey: ME })
       }
-      await authClient.signOut()
-      queryClient.setQueryData(ME, null)
     },
   }
   return (

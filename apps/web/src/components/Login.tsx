@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AuthError, authClient } from '../auth-client'
 import { authErrorText } from '../i18n/auth'
@@ -22,15 +22,29 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(linkFailed ? t('login.linkFailed') : null)
+  const [error, setError] = useState<string | null>(null)
+  // A mailed link failed: said once, with a way to a new link, until the user does something else.
+  const [linkProblem, setLinkProblem] = useState(linkFailed)
   const [notVerified, setNotVerified] = useState(false)
   const [resent, setResent] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // Focus follows each change of form or state to its heading, so a keyboard or screen reader user is told where they
+  // are; the button they pressed is often gone.
+  const heading = useRef<HTMLHeadingElement>(null)
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    heading.current?.focus()
+  }, [mode, sentTo])
 
   const switchTo = (next: LoginMode) => {
     setMode(next)
     setError(null)
+    setLinkProblem(false)
     setNotVerified(false)
     setResent(false)
     setSentTo(null)
@@ -54,12 +68,17 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
     e.preventDefault()
     setNotVerified(false)
     setResent(false)
+    setLinkProblem(false)
+    if (mode === 'signUp' && name.trim() === '') {
+      setError(authErrorText('NAME_REQUIRED'))
+      return
+    }
     void run(async () => {
       if (mode === 'logIn') {
         await authClient.signIn(email, password)
         onLoggedIn()
       } else if (mode === 'signUp') {
-        await authClient.signUp(name, email, password)
+        await authClient.signUp(name.trim(), email, password)
         setSentTo(email)
       } else if (mode === 'magicLink') {
         await authClient.sendMagicLink(email)
@@ -86,15 +105,25 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
     }[mode]
     return (
       <div className="login">
-        <h2>{t('login.checkEmailTitle')}</h2>
+        <h2 ref={heading} tabIndex={-1}>
+          {t('login.checkEmailTitle')}
+        </h2>
         <p className="ingress">{text}</p>
         {mode === 'signUp' && (
           <button className="knapp sekundar bred" onClick={resend} disabled={busy}>
             {t('login.resend')}
           </button>
         )}
-        {resent && <div className="ruta">{t('login.resent')}</div>}
-        {error && <div className="ruta fel">{error}</div>}
+        {resent && (
+          <div className="ruta" role="status">
+            {t('login.resent')}
+          </div>
+        )}
+        {error && (
+          <div className="ruta fel" role="alert">
+            {error}
+          </div>
+        )}
         <button className="lank login-byt" onClick={() => switchTo('logIn')}>
           {t('login.backToLogIn')}
         </button>
@@ -124,7 +153,9 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
 
   return (
     <div className="login">
-      <h2>{titles[mode]}</h2>
+      <h2 ref={heading} tabIndex={-1}>
+        {titles[mode]}
+      </h2>
       <p className="ingress">{intros[mode]}</p>
 
       {mode === 'logIn' && (
@@ -170,12 +201,20 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
           </label>
         )}
         {notVerified && (
-          <div className="ruta">
+          <div className="ruta" role="alert">
             <p>{t('login.notVerified')}</p>
             <button type="button" className="lank" onClick={resend} disabled={busy}>
               {t('login.resend')}
             </button>
-            {resent && <p>{t('login.resent')}</p>}
+            {resent && <p role="status">{t('login.resent')}</p>}
+          </div>
+        )}
+        {linkProblem && (
+          <div className="ruta fel" role="alert">
+            <p>{t('login.linkFailed')}</p>
+            <button type="button" className="lank" onClick={() => switchTo('magicLink')}>
+              {t('login.newLink')}
+            </button>
           </div>
         )}
         {error && (

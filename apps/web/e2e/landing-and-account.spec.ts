@@ -1,7 +1,7 @@
 // CF1 in the browser against the real API (#23): sign up with verification, log in and out, a wrong password,
 // magic link and password reset, with the mail read from Mailpit.
 import { createAccount, enterDemo, expect, horseList, logIn, PASSWORD, test } from './support/helpers'
-import { linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
+import { E2E_WEB, linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
 
 const landingHeading = (page: import('@playwright/test').Page) =>
   page.getByRole('heading', { level: 1, name: /Rätt foder till din häst/ })
@@ -113,11 +113,16 @@ test('reset a forgotten password from the inbox: the new one works, the old one 
   await dialog.getByRole('button', { name: 'Skicka länk för nytt lösenord' }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
 
-  await page.goto(linkIn(await waitForMail(account.email, /lösenord/)))
+  const resetLink = linkIn(await waitForMail(account.email, /lösenord/))
+  await page.goto(resetLink)
   await expect(page.getByRole('heading', { name: 'Välj ett nytt lösenord' })).toBeVisible()
   await page.getByLabel('Nytt lösenord').fill('nytt-losenord-456')
   await page.getByRole('button', { name: 'Spara lösenordet' }).click()
   await expect(page.getByText('Lösenordet är bytt.')).toBeVisible()
+
+  // A used link does not work twice.
+  await page.goto(resetLink)
+  await expect(page.getByText('Länken är ogiltig eller har gått ut.')).toBeVisible()
 
   await logIn(page, account.email, PASSWORD)
   await expect(page.getByText('Fel e-postadress eller lösenord.')).toBeVisible()
@@ -178,4 +183,80 @@ test('accounts do not share horses', async ({ page }) => {
 
   await createAccount(page, 'Användare B', 'b@example.se')
   await expect(horseList(page).getByRole('button', { name: 'Alfa' })).toHaveCount(0)
+})
+
+test('a real account wins over an open demo: the verification link signs in to the new account (#23 review)', async ({
+  page,
+}) => {
+  const email = uniqueEmail('demofirst')
+  const dialog = await openDialog(page)
+  await dialog.getByRole('button', { name: 'Ny här? Skapa konto' }).click()
+  await dialog.getByLabel('Namn').fill('Egen Användare')
+  await dialog.getByLabel('E-post').fill(email)
+  await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
+  await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
+
+  await enterDemo(page)
+  await page.goto(linkIn(await waitForMail(email, /Bekräfta/)))
+  await expect(horseList(page).getByText('Egen Användare')).toBeVisible()
+  await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toHaveCount(0)
+
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  await page.goto('/horses')
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+})
+
+test('a password reset in a signed-in browser ends that session there too (#23 review)', async ({ page }) => {
+  const account = await createAccount(page, 'Inloggad', 'inloggad@example.se')
+  await page.request.post('/api/auth/request-password-reset', {
+    data: { email: account.email, redirectTo: '/reset-password' },
+    headers: { origin: E2E_WEB },
+  })
+  await page.goto(linkIn(await waitForMail(account.email, /lösenord/)))
+  await page.getByLabel('Nytt lösenord').fill('nytt-losenord-789')
+  await page.getByRole('button', { name: 'Spara lösenordet' }).click()
+  await page.getByRole('link', { name: 'Logga in' }).click()
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+  await expect(horseList(page)).toHaveCount(0)
+})
+
+test('an expired link on the login page says so and offers a new one (#23 review)', async ({ page }) => {
+  await page.goto('/login?error=TOKEN_EXPIRED')
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  await expect(dialog.getByText('Länken är ogiltig eller har gått ut.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Skicka en ny länk' }).click()
+  await expect(dialog.getByRole('button', { name: 'Skicka inloggningslänk' })).toBeVisible()
+})
+
+test('a real account returns to the page it asked for after logging in (#23 review)', async ({ page }) => {
+  const account = await createAccount(page, 'Djuplänk', 'djuplank@example.se')
+  await page.getByRole('button', { name: 'Lägg till din första häst' }).click()
+  await page.getByLabel('Namn').fill('Blixten')
+  await page
+    .getByRole('navigation', { name: 'Steg' })
+    .getByRole('button', { name: /Journal$/ })
+    .click()
+  await expect(page).toHaveURL(/\/journal$/)
+  const link = page.url()
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+
+  await page.goto(link)
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  await dialog.getByLabel('E-post').fill(account.email)
+  await dialog.getByLabel('Lösenord').fill(account.password)
+  await dialog.getByRole('button', { name: 'Logga in', exact: true }).click()
+  await expect(page).toHaveURL(link)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Blixten')
+})
+
+test('a name of only spaces is refused (#23 review)', async ({ page }) => {
+  const dialog = await openDialog(page)
+  await dialog.getByRole('button', { name: 'Ny här? Skapa konto' }).click()
+  await dialog.getByLabel('Namn').fill('   ')
+  await dialog.getByLabel('E-post').fill(uniqueEmail('blank'))
+  await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
+  await expect(dialog.getByText('Skriv ditt namn.')).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toHaveCount(0)
 })

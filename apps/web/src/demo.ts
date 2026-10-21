@@ -7,6 +7,18 @@ export const DEMO_USER: User = { id: 'demo', name: 'Anna Demo', email: 'demo@fod
 
 const DEMO_KEY = 'fodr.demo.v1'
 
+// The accounts and session the localStorage mock kept before the real accounts (#23): names and emails nobody reads
+// any more, removed once at startup.
+const MOCK_ACCOUNT_KEYS = ['krubba.konton.v1', 'krubba.session.v1']
+
+export function forgetMockAccounts(): void {
+  try {
+    for (const key of MOCK_ACCOUNT_KEYS) localStorage.removeItem(key)
+  } catch {
+    // Storage blocked: nothing to remove.
+  }
+}
+
 export function isDemoOpen(): boolean {
   try {
     return localStorage.getItem(DEMO_KEY) === '1'

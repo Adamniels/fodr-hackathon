@@ -10,6 +10,8 @@ const KEYS: Record<string, ParseKeys> = {
   PASSWORD_TOO_LONG: 'auth.errors.PASSWORD_TOO_LONG',
   INVALID_TOKEN: 'auth.errors.INVALID_TOKEN',
   RATE_LIMITED: 'auth.errors.RATE_LIMITED',
+  NAME_REQUIRED: 'auth.errors.NAME_REQUIRED',
+  NAME_TOO_LONG: 'auth.errors.NAME_TOO_LONG',
 }
 
 export function authErrorText(code: string): string {
