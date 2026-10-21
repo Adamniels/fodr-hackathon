@@ -3,15 +3,15 @@ import type { NutrientValues } from './nutrients'
 export type Hasttyp = 'lattfodd' | 'normalfodd' | 'svarfodd'
 export type Kon = 'sto' | 'valack' | 'hingst'
 export type Grovfodertyp = 'hosilage' | 'ho'
-/** Hur hästen brukar reagera på foderbyten. Styr hur långsamt planen trappar in det nya fodret. */
+/** How the horse usually reacts to feed changes. Sets how slowly the plan phases in the new feed. */
 export type Bytekanslighet = 'tal' | 'normal' | 'kanslig'
 
-/** Fast arbetsnivå enligt SLU tabell 9, används när ridpassen inte är beskrivna i detalj. */
+/** A fixed work level per SLU table 9, used when the riding sessions are not described in detail. */
 export type Arbetsniva = 'ingen' | 'latt' | 'medel' | 'hart' | 'mycket_hart'
 
 /**
- * Gren och nivå. Styr arbetstillägget när det är högre än vad ridpassen ger (SLU tabell 9–11),
- * samt vitaminbehovet för hårt arbetande hästar (tabell 18).
+ * Discipline and level. Sets the work supplement when it is higher than the sessions give (SLU tables 9–11),
+ * and the vitamin requirement for horses in hard work (table 18).
  */
 export type Prestanda = 'fritid' | 'tavling_lokal' | 'tavling_hog' | 'trav_galopp_traning' | 'distans'
 
@@ -20,23 +20,24 @@ export interface Miljo {
   timmarUtePerDag: number
   klippt: boolean
   tacke: boolean
-  /** Lägsta dygnsmedeltemperatur under perioden, °C. */
+  /** Lowest daily mean temperature during the period, °C. */
   lagstaTempC: number
 }
 
-/** Ingredienser som kan härledas ur produkternas namn och beskrivning (scripts/import-products.mjs). */
+/** Ingredients that can be derived from the products' names and descriptions (scripts/import-products.mjs). */
+// eslint-disable-next-line no-restricted-syntax -- stored identifiers and AI schema values (ADR 0016 rule 7), not text
 export const INGREDIENSER = ['spannmål', 'lusern', 'soja', 'melass', 'linfrö', 'betfiber'] as const
 export type Ingrediens = (typeof INGREDIENSER)[number]
 
 export interface Halsa {
   fang: boolean
   ems: boolean
-  /** PPID (Cushings) behandlas som EMS: lågt socker och stärkelse. */
+  /** PPID (Cushing's) is treated like EMS: low sugar and starch. */
   ppid?: boolean
   magsar?: boolean
-  /** Korsförlamning, PSSM. */
+  /** Tying-up, PSSM. */
   pssm?: boolean
-  /** Luftvägsbesvär eller dammkänslighet. */
+  /** Respiratory problems or dust sensitivity. */
   luftvagar?: boolean
   tandproblem?: boolean
   proteinkanslig?: boolean
@@ -47,12 +48,12 @@ export interface Halsa {
 export interface Ridning {
   passPerVecka: number
   minuterPerPass: number
-  /** Minuter trav och galopp per pass, resten räknas som skritt. */
+  /** Minutes of trot and canter per session; the rest counts as walk. */
   travGaloppMinPerPass: number
 }
 
 export interface NuvarandeFoder {
-  /** Id i produktdatabasen, eller null för ett foder vi inte känner till. */
+  /** ID in the product database, or null for a feed we don't know. */
   produktId: string | null
   namn: string
   gramPerDag: number
@@ -64,11 +65,11 @@ export interface Hastprofil {
   alderAr: number
   kon: Kon
   typ: Hasttyp
-  /** Uppmätt eller uppskattad vikt i kg. */
+  /** Measured or estimated weight in kg. */
   viktKg: number
-  /** Hullpoäng 1–9 enligt SLU tabell 1. */
+  /** Body condition score 1–9 per SLU table 1. */
   hull: number
-  /** Vikt vid normalt hull, om ägaren vet den. Annars uppskattas den från hullet. */
+  /** Weight at normal condition, if the owner knows it. Otherwise it is estimated from the condition. */
   viktVidNormalHullKg?: number
   /** Id i rasregistret (breeds.ts). */
   ras?: string
@@ -77,7 +78,7 @@ export interface Hastprofil {
   prestanda?: Prestanda
   miljo?: Miljo
   halsa: Halsa
-  /** Känslighet för foderbyten. Saknas den förväljs den utifrån hälsan (domain/transition.ts). */
+  /** Sensitivity to feed changes. When missing, it is preselected from the health (domain/transition.ts). */
   bytekanslighet?: Bytekanslighet
   grovfoder: {
     typ: Grovfodertyp
@@ -88,18 +89,18 @@ export interface Hastprofil {
 
 export type Kalla = 'analys' | 'schablon' | 'okand'
 
-/** Utläst grovfoderanalys. Halter per kg torrsubstans. */
+/** A read roughage analysis. Contents per kg dry matter. */
 export interface Grovfoderanalys {
   typ: Grovfodertyp
   labb?: string
   provdatum?: string
   tsProcent: number
-  /** Råaska, g/kg ts. Används för att upptäcka jordinblandning. */
+  /** Crude ash, g/kg DM. Used to detect soil contamination. */
   askaGPerKgTs?: number
   perKgTs: NutrientValues
 }
 
-/** 'ovrigt' är t.ex. mag-, led- och lugnande tillskott samt slickstenar: räknas med i dagens foder men väljs aldrig. */
+/** 'ovrigt' is e.g. stomach, joint and calming supplements and licks: counted in today's feed but never chosen. */
 export type Produktkategori = 'mineralfoder' | 'tillskott' | 'salt' | 'kraftfoder' | 'proteinfoder' | 'ovrigt'
 
 export interface Produkt {
@@ -111,15 +112,15 @@ export interface Produkt {
   perKg: NutrientValues
   prisKr: number
   forpackningKg: number
-  /** Tillverkarens rekommenderade dos, gram per 100 kg kroppsvikt och dag. Krävs för urvalet. */
+  /** The manufacturer's recommended dose, grams per 100 kg body weight and day. Required by the selection. */
   dosGramPer100kg?: { min: number; max: number }
-  /** Tillverkarens text som dosen är omräknad från. */
+  /** The manufacturer's text the dose is converted from. */
   dosKalla?: string
-  /** Om urvalet får föreslå produkten. Styrs av scripts/produktval.json. */
+  /** Whether the selection may suggest the product. Set by scripts/produktval.json. */
   iUrval: boolean
-  /** False om socker plus stärkelse är högt eller okänt för kraftfoder. */
+  /** False when sugar plus starch is high, or unknown for a concentrate. */
   lampligVidFangEms: boolean
-  /** Härledda ur namn och beskrivning, t.ex. 'melass', 'lusern', 'soja', 'spannmål'. */
+  /** Derived from the name and description, e.g. 'melass', 'lusern', 'soja', 'spannmål'. */
   ingredienser: string[]
   form?: string
   naringsdata: 'komplett' | 'delvis' | 'bara_ravarde' | 'saknas' | 'ej_relevant'

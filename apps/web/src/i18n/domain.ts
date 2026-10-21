@@ -1,7 +1,7 @@
 import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
-import { doseGrams, formatMoney, shortNutrientLabel, formatNumber } from '../format'
+import { breedName, doseGrams, formatMoney, shortNutrientLabel, formatNumber } from '../format'
 import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
@@ -82,8 +82,8 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'note.looseHousing': noParams,
   'note.weightOutsideBreed': (p) => ({
     kg: formatNumber(p.kg, 1),
-    // Breed names are still Swedish data in the engine; they move to the catalogue with the rest of breeds.ts.
-    breed: hittaRas(p.breedId)?.namn.toLowerCase() ?? p.breedId,
+    // The catalogue name, lowercased inside the sentence; an unknown id is shown as it is.
+    breed: hittaRas(p.breedId) ? breedName(p.breedId).toLowerCase() : p.breedId,
     minKg: formatNumber(p.minKg, 0),
     maxKg: formatNumber(p.maxKg, 0),
   }),
@@ -104,6 +104,14 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'source.industryPractice': noParams,
   'source.fodrRules': noParams,
   'source.productDescriptions': noParams,
+  'source.typicalForage': noParams,
+  'source.typicalForageLowSelenium': noParams,
+  'source.table26Timothy': noParams,
+  'source.table29Grass': noParams,
+  'source.table24CaroteneLower': noParams,
+  'source.table24Lower': noParams,
+  'source.table24FieldDriedHay': noParams,
+  'source.table24': noParams,
   'qualityTitle.proteinHigh': noParams,
   'qualityTitle.proteinLow': noParams,
   'qualityTitle.energyHigh': noParams,
@@ -167,6 +175,11 @@ const FORMAT: { [C in Code]: Formatter<C> } = {
   'validation.adultsOnly': (p) => ({ minAgeYears: formatNumber(p.minAgeYears, 0) }),
   'validation.trotWithinRide': noParams,
   'validation.date': noParams,
+  'analysis.notAnAnalysis': noParams,
+  'analysis.missingDryMatter': noParams,
+  // The report's own number, printed as the engine used to print it ("10.5"); #102 formats it for the locale.
+  'conversion.energyFromRuminant': (p) => ({ mj: String(p.mj) }),
+  'conversion.proteinFromCrude': (p) => ({ grams: String(p.grams) }),
 }
 
 /** Every code the engine can return. A unit test checks that each has a catalogue entry. */

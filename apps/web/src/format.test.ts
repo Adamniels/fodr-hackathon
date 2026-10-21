@@ -1,5 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { addDays, formatDate, localIsoDate, parseDecimal, parseIsoDate, formatNumber } from './format'
+import {
+  addDays,
+  breedName,
+  nutrientLabel,
+  shortNutrientLabel,
+  formatDate,
+  localIsoDate,
+  parseDecimal,
+  parseIsoDate,
+  formatNumber,
+} from './format'
+import { RASER } from '@fodr/domain/breeds'
+import { NUTRIENT_KEYS } from '@fodr/domain/nutrients'
 import i18n from './i18n'
 
 describe('parseDecimal', () => {
@@ -142,5 +154,60 @@ describe('addDays', () => {
     expect(localIsoDate(addDays(fore, 2))).toBe('2026-10-26')
     expect(addDays(fore, 2).getHours()).toBe(0)
     expect(localIsoDate(addDays(fore, -24))).toBe('2026-09-30')
+  })
+})
+
+describe('breedName', () => {
+  // The names breeds.ts held before #95. The journal AI receives them as `ras`, so they must not change.
+  it('names every breed exactly as before', () => {
+    expect(Object.fromEntries(RASER.map((r) => [r.id, breedName(r.id)]))).toEqual({
+      shetland: 'Shetlandsponny',
+      russ: 'Gotlandsruss',
+      ponny: 'Ponny, övrig (t.ex. welsh, connemara)',
+      islandshast: 'Islandshäst',
+      fjordhast: 'Fjordhäst',
+      nordsvensk: 'Nordsvensk brukshäst / kallblodstravare',
+      ardenner: 'Ardenner',
+      varmblod_rid: 'Varmblodig ridhäst / halvblod',
+      varmblod_trav: 'Varmblodig travhäst',
+      arab: 'Arabiskt fullblod',
+      fullblod: 'Engelskt fullblod',
+    })
+  })
+})
+
+describe('nutrientLabel', () => {
+  // The labels nutrients.ts held before #95. The plan explanation sends them to the model, so they must not change.
+  it('names every nutrient exactly as before', () => {
+    expect(Object.fromEntries(NUTRIENT_KEYS.map((k) => [k, nutrientLabel(k)]))).toEqual({
+      energi: 'Energi',
+      smbRp: 'Smältbart råprotein',
+      ca: 'Kalcium (Ca)',
+      p: 'Fosfor (P)',
+      mg: 'Magnesium (Mg)',
+      na: 'Natrium (Na)',
+      fe: 'Järn (Fe)',
+      mn: 'Mangan (Mn)',
+      cu: 'Koppar (Cu)',
+      zn: 'Zink (Zn)',
+      co: 'Kobolt (Co)',
+      jod: 'Jod (I)',
+      se: 'Selen (Se)',
+      vitA: 'Vitamin A',
+      vitD: 'Vitamin D',
+      vitE: 'Vitamin E',
+      b1: 'Vitamin B1',
+      b2: 'Vitamin B2',
+      biotin: 'Biotin',
+      socker: 'Socker',
+      starkelse: 'Stärkelse',
+    })
+  })
+  it('the short label inside a sentence drops the symbol and lowercases the first letter of a word', () => {
+    expect([shortNutrientLabel('ca'), shortNutrientLabel('vitE'), shortNutrientLabel('smbRp')]).toEqual([
+      'kalcium',
+      'vitamin E',
+      'smältbart råprotein',
+    ])
   })
 })

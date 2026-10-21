@@ -50,9 +50,13 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNe
     setFilnamn(fil.name)
     try {
       const utlast = await readAnalysis(await fileToBase64(fil))
-      const { analys: a, omrakningar: o } = tillGrovfoderanalys(utlast)
+      const result = tillGrovfoderanalys(utlast)
+      if ('error' in result) {
+        setFel(domainText(result.error))
+        return
+      }
       setAnmarkningar(utlast.anmarkningar)
-      onAnalysisChange(a, o)
+      onAnalysisChange(result.analys, result.omrakningar)
     } catch (e) {
       setFel(e instanceof Error ? e.message : String(e))
     } finally {
@@ -175,9 +179,11 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNe
                     <td className="enhet">{analysisUnit(k)}</td>
                     <td className="kalla">
                       {v !== undefined
-                        ? (omr?.text ?? t('analysis.source.report'))
+                        ? omr
+                          ? domainText(omr.message)
+                          : t('analysis.source.report')
                         : schablon
-                          ? t('analysis.source.estimated', { source: schablon.kalla })
+                          ? t('analysis.source.estimated', { source: domainText(schablon.kalla) })
                           : t('analysis.source.missing')}
                     </td>
                   </tr>

@@ -1,13 +1,14 @@
 import { NUTRIENT_KEYS, type NutrientKey, type NutrientValues } from './nutrients'
 import { hittaSchablon } from './forage'
+import type { Kallhanvisning } from './messages'
 import type { Grovfoderanalys, Kalla, Produkt } from './types'
 
 export interface IntagsVarde {
   varde: number
-  /** Sämsta källan bland bidragen: okänd > schablon > analys. */
+  /** The weakest source among the contributions: unknown > estimate > analysis. */
   kalla: Kalla
-  /** Källtext för grovfoderbidraget när det är en schablon. */
-  schablonKalla?: string
+  /** The source of the roughage contribution when it is an estimate. */
+  schablonKalla?: Kallhanvisning
 }
 
 export type Intag = Record<NutrientKey, IntagsVarde>
@@ -17,7 +18,7 @@ export interface Foderpost {
   gramPerDag: number
 }
 
-/** Grovfodrets bidrag per dag. Saknade värden fylls med schablon, annars blir de okända. */
+/** The roughage's contribution per day. Missing values are filled with an estimate, otherwise they are unknown. */
 export function grovfoderIntag(analys: Grovfoderanalys, kgFoderPerDag: number): Intag {
   const kgTs = kgFoderPerDag * (analys.tsProcent / 100)
   const intag = {} as Intag
@@ -34,8 +35,8 @@ export function grovfoderIntag(analys: Grovfoderanalys, kgFoderPerDag: number): 
 }
 
 /**
- * Lägger till produkter. En produkt som inte deklarerar ett ämne räknas som noll för det ämnet,
- * eftersom en foderdeklaration anger det som är tillsatt.
+ * Adds products. A product that does not declare a nutrient counts as zero for it,
+ * since a feed declaration states what is added.
  */
 export function laggTill(bas: Intag, poster: Foderpost[]): Intag {
   const ut = {} as Intag
@@ -66,7 +67,8 @@ export function monthlyCost(produkt: Produkt, gramPerDag: number): number {
   return ((gramPerDag * 30) / 1000) * krPerKg
 }
 
-/** Produktnamn utan butikens kategoriprefix, t.ex. "Hästfoder Pavo SportsFit 15kg" blir "Pavo SportsFit 15kg". */
+/** The product name without the store's category prefix: "Hästfoder Pavo SportsFit 15kg" is "Pavo SportsFit 15kg". */
 export function displayName(produkt: Produkt): string {
+  // eslint-disable-next-line no-restricted-syntax -- matches the stores' category prefixes in product data, not text
   return produkt.namn.replace(/^(Hästfoder|Mineralfoder|Fodertillskott|Foderråvara|Kompletteringsfoder)\s+/, '')
 }

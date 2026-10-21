@@ -5,7 +5,7 @@ import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonb
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
 import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
-import { HULLSKALA, formatDate, bodyConditionText, formatMoney, formatNumber } from '../format'
+import { HULLSKALA, breedName, formatDate, bodyConditionText, formatMoney, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { newJournalEntryId } from '../storage'
 import { DecimalInput } from './DecimalInput'
@@ -267,7 +267,8 @@ function AiAnalysis({
           hast: {
             namn: hast.namn,
             alderAr: hast.alderAr,
-            ras: hittaRas(hast.ras)?.namn ?? null,
+            // Reaches the model, so it must stay the Swedish name; it follows the UI locale, which is only sv today.
+            ras: hast.ras && hittaRas(hast.ras) ? breedName(hast.ras) : null,
             viktKg: hast.viktKg,
             hull: hast.hull,
             halsa: hast.halsa,

@@ -1,8 +1,9 @@
+import type { AnalysisErrorMessage, ConversionMessage } from './messages'
 import type { NutrientKey, NutrientValues } from './nutrients'
 import { energiHastFranIdisslare, smbRpFranRaprotein } from './slu'
 import type { Grovfoderanalys, Grovfodertyp } from './types'
 
-/** Det som AI:n läser ut ur rapporten, innan SLU-omräkningar. Speglar schemat i server/ai.ts. */
+/** What the AI reads from the report, before SLU conversions. Mirrors the schema in server/ai.ts. */
 export interface UtlastAnalys {
   arAnalys: boolean
   typ: Grovfodertyp
@@ -16,23 +17,29 @@ export interface UtlastAnalys {
 
 export interface Omrakning {
   amne: NutrientKey
-  text: string
+  message: ConversionMessage
 }
 
-export function tillGrovfoderanalys(u: UtlastAnalys): { analys: Grovfoderanalys; omrakningar: Omrakning[] } {
-  if (!u.arAnalys) throw new Error('Dokumentet ser inte ut att vara en foderanalys.')
-  if (!u.tsProcent) throw new Error('Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt.')
+/** The analysis with its conversions, or why the report cannot be used (ADR 0013: expected outcomes are values). */
+export type AnalysisResult = { analys: Grovfoderanalys; omrakningar: Omrakning[] } | { error: AnalysisErrorMessage }
+
+export function tillGrovfoderanalys(u: UtlastAnalys): AnalysisResult {
+  if (!u.arAnalys) return { error: { code: 'analysis.notAnAnalysis', params: {} } }
+  if (!u.tsProcent) return { error: { code: 'analysis.missingDryMatter', params: {} } }
   const { energiIdisslare, raprotein, ...rest } = u.perKgTs
   const perKgTs: NutrientValues = {}
   for (const [k, v] of Object.entries(rest)) if (typeof v === 'number') perKgTs[k as NutrientKey] = v
   const omrakningar: Omrakning[] = []
   if (perKgTs.energi === undefined && energiIdisslare) {
     perKgTs.energi = round(energiHastFranIdisslare(energiIdisslare), 1)
-    omrakningar.push({ amne: 'energi', text: `Räknat från idisslarvärdet ${energiIdisslare} MJ med SLU:s formel` })
+    omrakningar.push({
+      amne: 'energi',
+      message: { code: 'conversion.energyFromRuminant', params: { mj: energiIdisslare } },
+    })
   }
   if (perKgTs.smbRp === undefined && raprotein) {
     perKgTs.smbRp = round(smbRpFranRaprotein(raprotein), 0)
-    omrakningar.push({ amne: 'smbRp', text: `Räknat från råprotein ${raprotein} g med SLU:s formel` })
+    omrakningar.push({ amne: 'smbRp', message: { code: 'conversion.proteinFromCrude', params: { grams: raprotein } } })
   }
   return {
     analys: {

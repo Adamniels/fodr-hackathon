@@ -9,7 +9,7 @@ import { loadHorses, loadJournal, newJournalEntryId, nyHast, saveHorses, saveJou
 import { ogonblickAvPlan, nyPost, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import { DEMO_ACCOUNT, currentUser, logIn, logOut, type User } from './auth'
-import { formatDate, bodyConditionText, localIsoDate, formatNumber } from './format'
+import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from './format'
 import { Login } from './components/Login'
 import { LandingPage } from './components/LandingPage'
 import { HorseStep } from './components/HorseStep'
@@ -226,7 +226,7 @@ function Workspace({ user, onToLanding, onLogOut }: { user: User; onToLanding: (
               </div>
               <div>
                 <dt>{t('app.properties.breed')}</dt>
-                <dd>{ras?.namn ?? t('app.properties.breedUnknown')}</dd>
+                <dd>{ras ? breedName(ras.id) : t('app.properties.breedUnknown')}</dd>
               </div>
               <div>
                 <dt>{t('app.properties.weight')}</dt>

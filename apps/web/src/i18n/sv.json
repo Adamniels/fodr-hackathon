@@ -551,7 +551,15 @@
       "eurofinsSoil": "Eurofins tolkningsstöd (ej SLU)",
       "industryPractice": "Branschpraxis (ej SLU)",
       "fodrRules": "Fodrs känslighetsregler",
-      "productDescriptions": "Härlett ur produktbeskrivningar"
+      "productDescriptions": "Härlett ur produktbeskrivningar",
+      "typicalForage": "Typvärde svenskt vallfoder (ej SLU)",
+      "typicalForageLowSelenium": "Typvärde selenfattigt svenskt vallfoder (ej SLU)",
+      "table26Timothy": "SLU tabell 26 (timotej)",
+      "table29Grass": "SLU tabell 29 (gräs)",
+      "table24CaroteneLower": "SLU tabell 24 (karotin, nedre gräns)",
+      "table24Lower": "SLU tabell 24 (nedre gräns)",
+      "table24FieldDriedHay": "SLU tabell 24 (fälttorkat hö)",
+      "table24": "SLU tabell 24"
     },
     "sluLevel": {
       "underhall": "underhåll",
@@ -625,6 +633,50 @@
     },
     "list": {
       "and": "{{items}} och {{last}}"
+    },
+    "analysis": {
+      "notAnAnalysis": "Dokumentet ser inte ut att vara en foderanalys.",
+      "missingDryMatter": "Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt."
+    },
+    "conversion": {
+      "energyFromRuminant": "Räknat från idisslarvärdet {{mj}} MJ med SLU:s formel",
+      "proteinFromCrude": "Räknat från råprotein {{grams}} g med SLU:s formel"
+    },
+    "breed": {
+      "shetland": "Shetlandsponny",
+      "russ": "Gotlandsruss",
+      "ponny": "Ponny, övrig (t.ex. welsh, connemara)",
+      "islandshast": "Islandshäst",
+      "fjordhast": "Fjordhäst",
+      "nordsvensk": "Nordsvensk brukshäst / kallblodstravare",
+      "ardenner": "Ardenner",
+      "varmblod_rid": "Varmblodig ridhäst / halvblod",
+      "varmblod_trav": "Varmblodig travhäst",
+      "arab": "Arabiskt fullblod",
+      "fullblod": "Engelskt fullblod"
+    },
+    "nutrient": {
+      "energi": "Energi",
+      "smbRp": "Smältbart råprotein",
+      "ca": "Kalcium (Ca)",
+      "p": "Fosfor (P)",
+      "mg": "Magnesium (Mg)",
+      "na": "Natrium (Na)",
+      "fe": "Järn (Fe)",
+      "mn": "Mangan (Mn)",
+      "cu": "Koppar (Cu)",
+      "zn": "Zink (Zn)",
+      "co": "Kobolt (Co)",
+      "jod": "Jod (I)",
+      "se": "Selen (Se)",
+      "vitA": "Vitamin A",
+      "vitD": "Vitamin D",
+      "vitE": "Vitamin E",
+      "b1": "Vitamin B1",
+      "b2": "Vitamin B2",
+      "biotin": "Biotin",
+      "socker": "Socker",
+      "starkelse": "Stärkelse"
     }
   },
   "transitionPace": {
