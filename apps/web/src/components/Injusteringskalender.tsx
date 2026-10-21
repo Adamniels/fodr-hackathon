@@ -27,6 +27,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
   const [start, setStart] = useState(() => localIsoDate(addDays(new Date(), 1)))
   const [valtSteg, setValtSteg] = useState(0)
   const { steg, rader, dagar, kanslighet, forvald } = injustering
+  // Defensive (#109): nothing changes the plan while the calendar is shown (other steps unmount it, and a horse switch
+  // remounts it), but a selection past the last step would crash the render. skapaInjustering always gives a step.
+  const visatSteg = Math.min(valtSteg, steg.length - 1)
   // The date field never stores an empty value (see its onChange), so start is always a real day.
   const startDatum = parseIsoDate(start) ?? addDays(new Date(), 1)
   const takt = BYTESTAKT[kanslighet]
@@ -37,7 +40,9 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
   const celler = useMemo(() => {
     const forsta = addDays(startDatum, -((startDatum.getDay() + 6) % 7))
     const sista = addDays(startDatum, dagar - 1)
-    const antal = Math.ceil(((sista.getTime() - forsta.getTime()) / 864e5 + 1) / 7) * 7
+    // Calendar days, rounded like dag below: a day can have 23 or 25 hours at a clock change (#106).
+    const dagarIRutnatet = Math.round((sista.getTime() - forsta.getTime()) / 864e5) + 1
+    const antal = Math.ceil(dagarIRutnatet / 7) * 7
     return Array.from({ length: antal }, (_, i) => {
       const datum = addDays(forsta, i)
       const dag = Math.round((datum.getTime() - startDatum.getTime()) / 864e5) + 1
@@ -57,7 +62,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
     )
   }
 
-  const s = steg[valtSteg]
+  const s = steg[visatSteg]
   const stegDatum = (i: number) => addDays(startDatum, steg[i].startDag - 1)
 
   function laddaNerKalender() {
@@ -134,7 +139,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
             !c.iPerioden && 'utanfor',
             c.steg && 'andra',
             c.klart && 'klart',
-            i === valtSteg && 'vald',
+            i === visatSteg && 'vald',
           ]
             .filter(Boolean)
             .join(' ')
@@ -150,7 +155,7 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
               key={c.dag}
               type="button"
               className={klass}
-              aria-pressed={i === valtSteg}
+              aria-pressed={i === visatSteg}
               aria-label={t('calendar.stepButton', { date: kortDatum(c.datum), step: tal(c.steg.nr, 0) })}
               onClick={() => setValtSteg(i)}
             >
@@ -168,16 +173,16 @@ export function Injusteringskalender({ injustering, hastNamn }: { injustering: I
         <div className="injustering-steg-rubrik">
           <strong>{t('calendar.stepOf', { step: tal(s.nr, 0), total: tal(steg.length, 0) })}</strong>
           <span className="liten">
-            {kortDatum(stegDatum(valtSteg))}
+            {kortDatum(stegDatum(visatSteg))}
             {s.slutDag ? ` – ${kortDatum(addDays(startDatum, s.slutDag - 1))}` : t('calendar.onwards')}
           </span>
         </div>
         {rader.map((r) => {
-          const a = andring(r, valtSteg)
+          const a = andring(r, visatSteg)
           return (
             <div key={rowName(r)} className="injustering-rad">
               <span>{rowName(r)}</span>
-              <strong>{mangd(r, r.perSteg[valtSteg])}</strong>
+              <strong>{mangd(r, r.perSteg[visatSteg])}</strong>
               <span className={`injustering-andring ${a.klass}`}>{a.text}</span>
             </div>
           )
