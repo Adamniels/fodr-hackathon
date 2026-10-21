@@ -30,7 +30,8 @@
     "perKgDm": "{{unit}}/kg ts",
     "perMonth": "{{amount}}/mån",
     "percent": "{{value}} %",
-    "quantity": "{{value}} {{unit}}"
+    "quantity": "{{value}} {{unit}}",
+    "gPerDay": "{{value}} g/dag"
   },
   "login": {
     "dialogLabel": "Logga in",

@@ -4,7 +4,8 @@ import { forklaraPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { enhet, etikett, kr, tal, shortNutrientLabel } from '../format'
+import { doseGrams, enhet, etikett, kr, tal, shortNutrientLabel } from '../format'
+import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
 import { avtryck, laddaForklaring, sparaForklaring } from '../storage'
 import { Injusteringskalender } from './Injusteringskalender'
@@ -361,6 +362,9 @@ function Balanstabell({ rader }: { rader: Balansrad[] }) {
 }
 
 /** Kompakt underlag till AI-förklaringen. Bara färdiga siffror, inga rådata. */
+/** Grams per day as on the page, for the explanation request (#103). */
+const gPerDay = (g: number) => i18n.t('units.gPerDay', { value: doseGrams(g) })
+
 function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
   const rad = (r: Balansrad) => ({
     amne: etikett(r.amne),
@@ -389,15 +393,15 @@ function underlag(hast: Hastprofil, analys: Grovfoderanalys, plan: Plan) {
     ),
     kostnadIdagKrPerManad: Math.round(plan.nulageKostnadPerManad),
     alternativ: plan.alternativ && {
-      produkter: plan.alternativ.poster.map((p) => `${displayName(p.produkt)} ${p.gramPerDag} g/dag`),
+      produkter: plan.alternativ.poster.map((p) => `${displayName(p.produkt)} ${gPerDay(p.gramPerDag)}`),
       kostnadKrPerManad: Math.round(
         plan.alternativ.kostnadPerManad +
           plan.behallnaFoder.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0),
       ),
     },
     byten: plan.byten.map((b) => ({
-      fran: `${displayName(b.fran.produkt)} ${b.fran.gramPerDag} g/dag`,
-      till: `${displayName(b.till.produkt)} ${b.till.gramPerDag} g/dag`,
+      fran: `${displayName(b.fran.produkt)} ${gPerDay(b.fran.gramPerDag)}`,
+      till: `${displayName(b.till.produkt)} ${gPerDay(b.till.gramPerDag)}`,
       varfor: domainText(b.skal),
       kostnadForeKrPerManad: Math.round(b.kostnadFore),
       kostnadEfterKrPerManad: Math.round(b.kostnadEfter),

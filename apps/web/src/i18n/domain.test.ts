@@ -92,6 +92,15 @@ const FALL: [DomainMessage, string][] = [
     { code: 'action.changeSupplement', params: { product: 'Salt 1,5 kg', fromGrams: 12.4, toGrams: 1250 } },
     'Ändra Salt 1,5 kg från 12 till 1\u00a0250 g/dag.',
   ],
+  // Below 1 g a dose keeps one decimal, so it never shows as 0 g (#103).
+  [
+    { code: 'action.stopSupplement', params: { product: 'Selo-E 900g', grams: 0.3, costKr: 2.5 } },
+    'Sluta med Selo-E 900g (0,3 g/dag, 3\u00a0kr i månaden). Behovet täcks utan den.',
+  ],
+  [
+    { code: 'action.continueSupplement', params: { product: 'Salt 1,5 kg', grams: 0.96 } },
+    'Fortsätt med 1 g/dag Salt 1,5 kg.',
+  ],
   [{ code: 'swapReason.samePackCheaper', params: {} }, 'samma foder i billigare förpackning'],
   [{ code: 'swapReason.sameEnergy', params: {} }, 'samma energi, liknande protein, inte mer stärkelse'],
   [

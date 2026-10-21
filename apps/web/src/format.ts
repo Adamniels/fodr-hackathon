@@ -54,6 +54,8 @@ export function formatDate(iso: string): string {
 
 export const etikett = (k: NutrientKey) => NUTRIENTS[k].label
 export const enhet = (k: NutrientKey) => NUTRIENTS[k].unit
+/** A dose in grams per day: whole grams like the shopping list, one decimal below 1 g so it never shows as 0 (#103). */
+export const doseGrams = (g: number) => tal(g, g > 0 && g < 1 ? 1 : 0)
 /** The nutrient's name inside a sentence: "Kalcium (Ca)" becomes "kalcium", but "Vitamin E" keeps its letter. */
 export const shortNutrientLabel = (k: NutrientKey) =>
   etikett(k)

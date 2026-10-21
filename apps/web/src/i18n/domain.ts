@@ -1,7 +1,7 @@
 import type { ParseKeys } from 'i18next'
 import type { DomainMessage } from '@fodr/domain/messages'
 import { hittaRas } from '@fodr/domain/breeds'
-import { kr, shortNutrientLabel, tal } from '../format'
+import { doseGrams, kr, shortNutrientLabel, tal } from '../format'
 import i18n from '.'
 
 // Renders the engine's message codes (ADR 0014). Each code has its text at domain.<code> in the catalogue and a
@@ -10,9 +10,6 @@ import i18n from '.'
 type Kod = DomainMessage['code']
 type Params<C extends Kod> = Extract<DomainMessage, { code: C }>['params']
 type Formatter<C extends Kod> = (params: Params<C>) => Record<string, string>
-
-/** Grams per day, whole as in the shopping list; a dose typed with a decimal rounds. */
-const gram = (n: number): string => tal(n, 0)
 
 const sluNiva = (level: Params<'source.sodium'>['level']) => i18n.t(`domain.sluLevel.${level}`)
 
@@ -34,12 +31,12 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'swapReason.sameEnergy': tom,
   'swapReason.coversNeedCheaper': (p) => ({ saving: kr(p.savingKr) }),
   'swapReason.coversBetter': tom,
-  'action.removeConcentrate': (p) => ({ product: p.product, grams: gram(p.grams) }),
+  'action.removeConcentrate': (p) => ({ product: p.product, grams: doseGrams(p.grams) }),
   'action.swapCheaper': (p) => ({
     from: p.from,
-    fromGrams: gram(p.fromGrams),
+    fromGrams: doseGrams(p.fromGrams),
     to: p.to,
-    toGrams: gram(p.toGrams),
+    toGrams: doseGrams(p.toGrams),
     reason: domainText(p.reason),
     saving: kr(p.savingKr),
   }),
@@ -47,17 +44,21 @@ const FORMAT: { [C in Kod]: Formatter<C> } = {
   'action.increaseRoughage': (p) => ({ fromKg: tal(p.fromKg, 1), toKg: tal(p.toKg, 1) }),
   'action.roughageLacksEnergy': tom,
   'action.proteinShort': tom,
-  'action.continueSupplement': (p) => ({ product: p.product, grams: gram(p.grams) }),
-  'action.changeSupplement': (p) => ({ product: p.product, fromGrams: gram(p.fromGrams), toGrams: gram(p.toGrams) }),
+  'action.continueSupplement': (p) => ({ product: p.product, grams: doseGrams(p.grams) }),
+  'action.changeSupplement': (p) => ({
+    product: p.product,
+    fromGrams: doseGrams(p.fromGrams),
+    toGrams: doseGrams(p.toGrams),
+  }),
   'action.swapSupplement': (p) => ({
     from: p.from,
-    fromGrams: gram(p.fromGrams),
+    fromGrams: doseGrams(p.fromGrams),
     to: p.to,
-    toGrams: gram(p.toGrams),
+    toGrams: doseGrams(p.toGrams),
     reason: domainText(p.reason),
   }),
-  'action.stopSupplement': (p) => ({ product: p.product, grams: gram(p.grams), cost: kr(p.costKr) }),
-  'action.giveSupplement': (p) => ({ product: p.product, grams: gram(p.grams) }),
+  'action.stopSupplement': (p) => ({ product: p.product, grams: doseGrams(p.grams), cost: kr(p.costKr) }),
+  'action.giveSupplement': (p) => ({ product: p.product, grams: doseGrams(p.grams) }),
   'warning.roughageBelowMinimum': (p) => ({ kgDm: tal(p.kgDm, 1), minimumKgDm: tal(p.minimumKgDm, 1) }),
   'warning.metabolicVet': tom,
   'warning.sugarMissing': tom,

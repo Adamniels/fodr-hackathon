@@ -156,6 +156,21 @@ test('analysis values: text is refused, a cleared value is missing (C2)', async 
   await expect(page.getByRole('row', { name: /^Kalcium/ })).toContainText('Saknas, uppskattas')
 })
 
+test('the plan explanation gets grams as the page shows them (#103)', async ({ page, ai }) => {
+  await enterDemo(page)
+  await page.getByRole('button', { name: '+ Lägg till foder' }).click()
+  const produkt = page.getByPlaceholder('Sök produkt, t.ex. Krafft').last()
+  await produkt.fill('Pellets 15 kg Mineral Röd')
+  // The gram field in a feed row has no accessible name yet, so it is reached through its row.
+  await produkt.locator('xpath=following-sibling::input[1]').fill('100,4')
+  await goToStep(page, 'Analysen')
+  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+  await ai.settled()
+  const [underlag] = ai.calls('forklaring') as { byten: { fran: string }[] }[]
+  expect(underlag.byten.map((b) => b.fran)).toContain('Pellets 15 kg Mineral Röd 100 g/dag')
+})
+
 test('calendar download is a valid ics', async ({ page }) => {
   await loadExamplePlan(page)
   const download = page.waitForEvent('download')
