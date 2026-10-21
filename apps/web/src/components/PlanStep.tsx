@@ -54,7 +54,7 @@ export function PlanStep({
         sparaForklaring(hast.id, nyckel, r.text)
         if (!avbruten) setForklaring(r.text)
       })
-      .catch((e) => !avbruten && setForklaringFel(e instanceof Error ? e.message : String(e)))
+      .catch((e: unknown) => !avbruten && setForklaringFel(e instanceof Error ? e.message : String(e)))
     return () => {
       avbruten = true
     }
@@ -66,8 +66,9 @@ export function PlanStep({
   const totalNy = nyKostnad + behallnaKostnad
   const besparing = plan.nulageKostnadPerManad - totalNy
   const nulageBrister = plan.nulage.filter((r) => r.status === 'brist').map((r) => shortNutrientLabel(r.amne))
-  const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')!
-  const energiProcent = Math.round((nulageEnergi.intag / nulageEnergi.behovMin! - 1) * 100)
+  // The current state lists every nutrient, energy included, against its requirement.
+  const nulageEnergi = plan.nulage.find((r) => r.amne === 'energi')
+  const energiProcent = (intag: number) => Math.round((intag / plan.behov.behov.energi.min - 1) * 100)
   const ersatter = (id: string) => {
     const namn = plan.byten.filter((x) => x.till.produkt.id === id).map((x) => displayName(x.fran.produkt))
     return namn.length ? namn.join(t('plan.shopping.and')) : undefined
@@ -234,18 +235,19 @@ export function PlanStep({
           <h3>{t('plan.basis.title')}</h3>
           <p>
             {t('plan.basis.requirement', {
-              mj: tal(plan.behov.behov.energi!.min, 0),
-              g: tal(plan.behov.behov.smbRp!.min, 0),
+              mj: tal(plan.behov.behov.energi.min, 0),
+              g: tal(plan.behov.behov.smbRp.min, 0),
               kg: tal(plan.behov.berakningsviktKg, 1),
             })}
             {plan.behov.arbetsMJ > 0 && t('plan.basis.work', { mj: tal(plan.behov.arbetsMJ, 1) })}
             {plan.behov.kylaMJ > 0 && t('plan.basis.cold', { mj: tal(plan.behov.kylaMJ, 1) })}.
           </p>
-          {(nulageBrister.length > 0 || nulageEnergi.status === 'overskott') && (
+          {(nulageBrister.length > 0 || nulageEnergi?.status === 'overskott') && (
             <p className="nulage">
               {t('plan.basis.today')}{' '}
               {[
-                nulageEnergi.status === 'overskott' && t('plan.basis.moreEnergy', { percent: tal(energiProcent, 0) }),
+                nulageEnergi?.status === 'overskott' &&
+                  t('plan.basis.moreEnergy', { percent: tal(energiProcent(nulageEnergi.intag), 0) }),
                 nulageBrister.length > 0 && t('plan.basis.tooLittle', { nutrients: nulageBrister.join(', ') }),
               ]
                 .filter(Boolean)

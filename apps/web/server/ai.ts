@@ -77,7 +77,7 @@ export async function lasAnalys(fil: { mediaType: string; base64: string }): Pro
     output_config: { effort: 'low', format: zodOutputFormat(AnalysSchema) },
     messages: [{ role: 'user', content: [dokument, { type: 'text', text: 'Läs ut analysen.' }] }],
   })
-  return kravSvar(svar).parsed_output!
+  return parsedOutput(kravSvar(svar))
 }
 
 const ProfilSchema = z.object({
@@ -153,7 +153,7 @@ export async function tolkaProfil(input: {
     output_config: { effort: 'low', format: zodOutputFormat(ProfilSchema) },
     messages: [{ role: 'user', content: text }],
   })
-  return kravSvar(svar).parsed_output!
+  return parsedOutput(kravSvar(svar))
 }
 
 const FORKLARING_SYSTEM = `Du förklarar en färdigberäknad foderplan för en hästägare på vanlig svenska.
@@ -182,6 +182,15 @@ export async function forklaraPlan(underlag: unknown): Promise<string> {
     .filter((b): b is Anthropic.TextBlock => b.type === 'text')
     .map((b) => b.text)
     .join('\n')
+}
+
+/**
+ * The parsed reply. With structured output the SDK parses it against the schema, and kravSvar has already turned a
+ * refusal or a cut-off reply into an error, so it is present.
+ */
+function parsedOutput<T>(svar: { parsed_output: T | null }): T {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- see the comment above
+  return svar.parsed_output!
 }
 
 function kravSvar<T extends { stop_reason: string | null }>(svar: T): T {
@@ -226,5 +235,5 @@ export async function analyseraJournal(underlag: unknown): Promise<JournalSvar> 
     output_config: { effort: 'medium', format: zodOutputFormat(JournalSchema) },
     messages: [{ role: 'user', content: JSON.stringify(underlag) }],
   })
-  return kravSvar(svar).parsed_output!
+  return parsedOutput(kravSvar(svar))
 }

@@ -35,18 +35,24 @@ const ROUTES: Record<string, (body: unknown) => Promise<unknown>> = {
 
 async function hantera(req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction): Promise<void> {
   const route = req.url ? ROUTES[req.url] : undefined
-  if (!route || req.method !== 'POST') return next()
+  if (!route || req.method !== 'POST') {
+    next()
+    return
+  }
   try {
     skicka(res, 200, await route(await lasJson(req)))
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError) {
-      return skicka(res, 500, { fel: 'API-nyckeln saknas eller är ogiltig. Lägg den i app/.env.' })
+      skicka(res, 500, { fel: 'API-nyckeln saknas eller är ogiltig. Lägg den i app/.env.' })
+      return
     }
     if (e instanceof Anthropic.RateLimitError) {
-      return skicka(res, 429, { fel: 'För många anrop just nu. Vänta en stund och försök igen.' })
+      skicka(res, 429, { fel: 'För många anrop just nu. Vänta en stund och försök igen.' })
+      return
     }
     if (e instanceof Anthropic.APIError) {
-      return skicka(res, 502, { fel: `AI-tjänsten svarade med fel ${e.status}.` })
+      skicka(res, 502, { fel: `AI-tjänsten svarade med fel ${e.status}.` })
+      return
     }
     skicka(res, 500, { fel: e instanceof Error ? e.message : 'Okänt fel' })
   }

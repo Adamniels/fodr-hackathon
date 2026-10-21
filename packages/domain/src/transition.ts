@@ -102,7 +102,9 @@ export function skapaInjustering(args: {
   const fran = summa(args.fran)
   const till = summa(args.till)
   for (const id of new Set([...fran.keys(), ...till.keys()])) {
-    const produkt = (fran.get(id) ?? till.get(id))!.produkt
+    const post = fran.get(id) ?? till.get(id)
+    if (!post) continue
+    const produkt = post.produkt
     const a = fran.get(id)?.gramPerDag ?? 0
     const b = till.get(id)?.gramPerDag ?? 0
     if (a === b) continue

@@ -33,6 +33,9 @@ const MAXAMNEN: NutrientKey[] = [...URVALSAMNEN, 'starkelse']
 const DOSSTEG = 12
 const CA_P_MIN = 1.1 // SLU: kvoten bör aldrig understiga 1,1
 
+/** A product the selection can dose: chosen for the selection and with a manufacturer's dose. */
+type Doserbar = Produkt & { dosGramPer100kg: NonNullable<Produkt['dosGramPer100kg']> }
+
 export interface Urval {
   poster: Foderpost[]
   kostnadPerManad: number
@@ -82,7 +85,9 @@ export function styrandeAmnen(bas: Intag, behov: Behov): NutrientKey[] {
 function utvardera(intag: Intag, behov: Behov, amnen: NutrientKey[]) {
   const brister: { amne: NutrientKey; andel: number }[] = []
   for (const k of amnen) {
-    const min = behov[k]!.min!
+    // Steering nutrients all have a minimum (styrandeAmnen keeps only those).
+    const min = behov[k]?.min
+    if (min === undefined) continue
     if (intag[k].varde < min - 1e-9) brister.push({ amne: k, andel: intag[k].varde / min })
   }
   const overMax = MAXAMNEN.filter((k) => {
@@ -94,8 +99,8 @@ function utvardera(intag: Intag, behov: Behov, amnen: NutrientKey[]) {
   return { brister, overMax, caP, bristpoang }
 }
 
-function doser(produkt: Produkt, viktKg: number): number[] {
-  const dos = produkt.dosGramPer100kg!
+function doser(produkt: Doserbar, viktKg: number): number[] {
+  const dos = produkt.dosGramPer100kg
   const min = dos.min * (viktKg / 100)
   const max = dos.max * (viktKg / 100)
   if (max - min < 1) return [Math.round(min)]
@@ -115,7 +120,7 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
 export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   const { bas, behov, berakningsviktKg: vikt } = input
   // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
-  const valbara = input.produkter.filter((p) => p.iUrval && p.dosGramPer100kg)
+  const valbara = input.produkter.filter((p): p is Doserbar => p.iUrval && p.dosGramPer100kg !== undefined)
   const kandidater = valbara.filter((p) => p.kategori === 'mineralfoder' || p.kategori === 'tillskott')
   const salt = valbara
     .filter((p) => p.kategori === 'salt')
@@ -123,7 +128,7 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   const amnen = styrandeAmnen(bas, behov)
 
   // Kombinationer: ingen produkt, en produkt, eller två produkter med högst ett mineralfoder.
-  const kombinationer: Produkt[][] = [[]]
+  const kombinationer: Doserbar[][] = [[]]
   for (let i = 0; i < kandidater.length; i++) {
     kombinationer.push([kandidater[i]])
     for (let j = i + 1; j < kandidater.length; j++) {
@@ -139,7 +144,8 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
 
   for (const kombo of kombinationer) {
     const dosRutnat = kombo.map((p) => doser(p, vikt))
-    let bastIKombo: Kandidat | null = null
+    // Assigned in the closure below, which narrowing does not follow; without the cast it reads as always null.
+    let bastIKombo = null as Kandidat | null
     const iterera = (idx: number, valda: Foderpost[]) => {
       if (idx < kombo.length) {
         for (const g of dosRutnat[idx]) iterera(idx + 1, [...valda, { produkt: kombo[idx], gramPerDag: g }])
@@ -173,7 +179,7 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   }
 
   basta.sort((a, b) => (battre(a, b) ? -1 : battre(b, a) ? 1 : 0))
-  const [forsta, andra] = basta.map((k): Urval => ({
+  const urvalen = basta.map((k): Urval => ({
     poster: k.poster,
     kostnadPerManad: k.kostnadPerManad,
     intag: k.intag,
@@ -181,9 +187,16 @@ export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
     overMax: k.overMax,
     caP: k.caP,
   }))
+  // basta is empty when nothing fits (C3), so the first selection may be missing.
+  const forsta = urvalen.length > 0 ? urvalen[0] : undefined
+  const andra = urvalen.length > 1 ? urvalen[1] : undefined
   if (forsta) return { urval: forsta, alternativ: andra ?? null, hinder: null }
   const nutrients = overskridnaUtanTillskott
-  const franGrovfodret = nutrients.every((k) => input.grovfoder[k].varde > behov[k]!.max! + 1e-9)
+  const franGrovfodret = nutrients.every((k) => {
+    // These nutrients exceeded a maximum, so they have one.
+    const max = behov[k]?.max
+    return max !== undefined && input.grovfoder[k].varde > max + 1e-9
+  })
   return {
     urval: null,
     alternativ: null,

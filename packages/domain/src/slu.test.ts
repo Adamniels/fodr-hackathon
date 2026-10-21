@@ -10,8 +10,8 @@ describe('kyla (SLU sid 15, regel 1)', () => {
   it('ger kylatillägg för oklippt häst utan täcke under −15 °C', () => {
     expect(r.underhallMJ).toBeCloseTo(34.2, 1)
     expect(r.kylaMJ).toBeCloseTo(4.6, 1)
-    expect(r.behov.energi!.min).toBeCloseTo(47.4, 0)
-    expect(r.behov.smbRp!.min).toBeCloseTo(257, -1)
+    expect(r.behov.energi.min).toBeCloseTo(47.4, 0)
+    expect(r.behov.smbRp.min).toBeCloseTo(257, -1)
   })
   it('ger inget tillägg med täcke', () => {
     const medTacke = beraknaBehov({ ...ponny, miljo: { ...ponny.miljo!, tacke: true } })
@@ -83,8 +83,8 @@ describe('meddelanden (ADR 0014)', () => {
   })
   it('källorna är data: tabell och rad', () => {
     const { behov } = beraknaBehov(demoHast)
-    expect(behov.energi!.kalla).toEqual({ code: 'source.energy', params: {} })
-    expect(behov.smbRp!.kalla).toEqual({ code: 'source.proteinPerMJ', params: {} })
+    expect(behov.energi.kalla).toEqual({ code: 'source.energy', params: {} })
+    expect(behov.smbRp.kalla).toEqual({ code: 'source.proteinPerMJ', params: {} })
     expect(behov.ca!.kalla).toEqual({ code: 'source.macroMinerals', params: { level: 'arbeteUnder30' } })
     expect(behov.na!.kalla).toEqual({ code: 'source.sodium', params: { level: 'arbeteUnder30' } })
     expect(behov.starkelse!.kalla).toEqual({ code: 'source.concentrateGuidelines', params: {} })

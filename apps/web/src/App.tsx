@@ -114,7 +114,8 @@ function Arbetsyta({
     return () => document.removeEventListener('visibilitychange', onShown)
   }, [])
   useEffect(() => sparaJournal(anvandare.id, journal), [anvandare.id, journal])
-  const hast = hastar.find((h) => h.id === valdId) ?? hastar[0]
+  // Undefined for an account with no horses; hastar[0] alone is typed as always present (#17).
+  const hast = hastar.find((h) => h.id === valdId) ?? (hastar.length > 0 ? hastar[0] : undefined)
 
   const plan = useMemo(
     () =>
@@ -317,7 +318,8 @@ function Arbetsyta({
                   analys={analys}
                   plan={plan.plan}
                   onSparaIJournal={() => {
-                    laggTillPost(hast.id, nyPost(localIsoDate(), { text: '', plan: planOgonblick! }))
+                    // The plan is shown, so its snapshot exists.
+                    if (planOgonblick) laggTillPost(hast.id, nyPost(localIsoDate(), { text: '', plan: planOgonblick }))
                     gaTill('journal')
                   }}
                 />

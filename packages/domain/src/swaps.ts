@@ -63,8 +63,8 @@ function likvardig(fran: Produkt, kandidat: Produkt, halsa: Halsa): boolean {
 }
 
 /** Givan av den nya produkten som ger samma energi som dagens giva, avrundad till 10 g. */
-function sammaEnergi(fran: Foderpost, till: Produkt): number {
-  const gram = (fran.gramPerDag * fran.produkt.perKg.energi!) / till.perKg.energi!
+function sammaEnergi(gramPerDag: number, energiFran: number, energiTill: number): number {
+  const gram = (gramPerDag * energiFran) / energiTill
   return Math.max(10, Math.round(gram / 10) * 10)
 }
 
@@ -79,7 +79,11 @@ export function hittaBilligareLiknande(
   let basta: (Byte & { skal: LiknandeSkal }) | null = null
   for (const kandidat of produkter) {
     if (!likvardig(fran.produkt, kandidat, halsa)) continue
-    const till: Foderpost = { produkt: kandidat, gramPerDag: sammaEnergi(fran, kandidat) }
+    // likvardig requires both energy values, so these checks never skip a candidate.
+    const e1 = fran.produkt.perKg.energi
+    const e2 = kandidat.perKg.energi
+    if (!e1 || !e2) continue
+    const till: Foderpost = { produkt: kandidat, gramPerDag: sammaEnergi(fran.gramPerDag, e1, e2) }
     const kostnadEfter = monthlyCost(kandidat, till.gramPerDag)
     const besparing = kostnadFore - kostnadEfter
     if (besparing < MIN_BESPARING_KR || besparing < kostnadFore * MIN_BESPARING_ANDEL) continue

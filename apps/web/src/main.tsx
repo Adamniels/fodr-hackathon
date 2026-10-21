@@ -4,6 +4,7 @@ import './index.css'
 import './i18n'
 import App from './App.tsx'
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- index.html always has #root
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
