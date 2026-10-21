@@ -24,7 +24,8 @@ export interface Miljo {
   lagstaTempC: number
 }
 
-/** Ingredienser som kan härledas ur produkternas namn och beskrivning (scripts/import-products.mjs). */
+/** Ingredients that can be derived from the products' names and descriptions (scripts/import-products.mjs). */
+// eslint-disable-next-line no-restricted-syntax -- stored identifiers and AI schema values (ADR 0016 rule 7), not text
 export const INGREDIENSER = ['spannmål', 'lusern', 'soja', 'melass', 'linfrö', 'betfiber'] as const
 export type Ingrediens = (typeof INGREDIENSER)[number]
 

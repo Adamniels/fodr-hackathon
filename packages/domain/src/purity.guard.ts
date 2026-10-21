@@ -21,3 +21,6 @@ export const now = Date.now() // eslint-disable-line no-restricted-properties --
 export const random = Math.random() // eslint-disable-line no-restricted-properties -- deliberate, guards the purity rule
 export const today = new Date() // eslint-disable-line no-restricted-syntax -- deliberate, guards the purity rule
 export const todayText = Date() // eslint-disable-line no-restricted-syntax -- deliberate, guards the purity rule
+
+// Text for a reader belongs in the web catalogue; the engine returns codes (ADR 0014, #95).
+export const sentence = 'Räkna om' // eslint-disable-line no-restricted-syntax -- deliberate, guards the message-code rule

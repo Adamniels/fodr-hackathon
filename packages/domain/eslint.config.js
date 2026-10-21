@@ -25,11 +25,21 @@ const CLOCK_PROPERTIES = [
   { object: 'Date', property: 'now', message: CLOCK_MESSAGE },
   { object: 'Math', property: 'random', message: CLOCK_MESSAGE },
 ]
-// Shared with every no-restricted-syntax block below: in a flat config, a later block's options replace these.
-// purity.guard.ts checks the base block only; the åäö block spreads the same list, until #95 merges the two blocks.
+// Shared with the module block below: in a flat config, a later block's options replace these, so it spreads the list.
 const CLOCK_SYNTAX = [
   { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: CLOCK_MESSAGE },
   { selector: "CallExpression[callee.name='Date']", message: CLOCK_MESSAGE },
+]
+
+// The engine returns message codes, never sentences (ADR 0014). A string with å, ä or ö is almost always Swedish text
+// for a reader; the stored ingredient values are the exceptions, each with a disable comment naming why. A Swedish
+// string without those letters is not caught, which the unit tests on codes cover instead. Tests and fixtures may hold
+// Swedish data (titles, characterisation inputs, fixture text), so the rule covers modules only (owner, #95).
+const SWEDISH_TEXT = [
+  {
+    selector: 'Literal[value=/[ÅÄÖåäö]/], TemplateElement[value.raw=/[ÅÄÖåäö]/]',
+    message: 'The domain returns message codes with params, not Swedish text (ADR 0014).',
+  },
 ]
 
 export default tseslint.config(
@@ -73,29 +83,10 @@ export default tseslint.config(
     },
   },
   {
-    // The engine returns message codes, never sentences (ADR 0014). A string with å, ä or ö is almost always Swedish
-    // text for a reader. Modules move under this rule as they are converted; #95 extends it to the whole package.
-    // A Swedish string without those letters is not caught, which the unit tests on codes cover instead.
-    files: [
-      'src/plan.ts',
-      'src/slu.ts',
-      'src/optimize.ts',
-      'src/swaps.ts',
-      'src/quality.ts',
-      'src/sensitivity.ts',
-      'src/transition.ts',
-      'src/journal.ts',
-    ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        ...CLOCK_SYNTAX,
-        {
-          selector: 'Literal[value=/[ÅÄÖåäö]/], TemplateElement[value.raw=/[ÅÄÖåäö]/]',
-          message: 'The domain returns message codes with params, not Swedish text (ADR 0014).',
-        },
-      ],
-    },
+    // Every module of the engine; tests and their fixtures may hold Swedish data.
+    files: ['src/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...CLOCK_SYNTAX, ...SWEDISH_TEXT] },
   },
   {
     // In a test, `x!` states what the test expects; if x is missing the test fails anyway (#17).
