@@ -7,7 +7,7 @@ import { authApp, signedInUser } from '../../test/auth-app'
 import { FAKE_USAGE, type FakeAiProvider } from '../../test/fake-ai-provider'
 import { PDF, READING } from '../../test/fixtures/analyses'
 import { SIXTEN } from '../../test/fixtures/horses'
-import { PROFILE_REQUEST } from '../../test/fixtures/ai'
+import { PROFILE_REQUEST, PROFILE_RESPONSE } from '../../test/fixtures/ai'
 import { aiUsage, users } from '../db/schema'
 import { AiProviderError } from './provider'
 
@@ -19,10 +19,9 @@ const { app, database } = harness
 const ai = harness.ai as FakeAiProvider
 afterAll(harness.close)
 
-const PROFILE_ANSWER = { foljdfragor: [] }
 beforeEach(() => {
   ai.reset()
-  ai.answer('interpretProfile', PROFILE_ANSWER)
+  ai.answer('interpretProfile', PROFILE_RESPONSE)
   ai.answer('readAnalysis', READING)
 })
 

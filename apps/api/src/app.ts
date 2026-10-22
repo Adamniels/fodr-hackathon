@@ -95,7 +95,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   app.route('/api/v1/products', productRoutes(catalogue))
-  app.route('/api/v1/ai', aiRoutes({ auth, ai: metered, logger }))
+  app.route('/api/v1/ai', aiRoutes({ auth, ai: metered, logger, catalogue }))
 
   if (config.webDistDir) {
     const root = config.webDistDir

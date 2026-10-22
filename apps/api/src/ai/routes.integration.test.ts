@@ -4,7 +4,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../../test/auth-app'
 import type { FakeAiProvider } from '../../test/fake-ai-provider'
-import { JOURNAL_REQUEST, PROFILE_REQUEST } from '../../test/fixtures/ai'
+import { JOURNAL_REQUEST, PROFILE_REQUEST, PROFILE_RESPONSE } from '../../test/fixtures/ai'
 import { AiProviderError, type AiErrorKind } from './provider'
 
 const harness = authApp()
@@ -12,25 +12,6 @@ const { app, logs } = harness
 const ai = harness.ai as FakeAiProvider
 afterAll(harness.close)
 
-const PROFILE_RESPONSE = {
-  grovfoderKgPerDag: 8,
-  grovfoderTyp: 'ho',
-  nuvarandeFoder: [],
-  ras: null,
-  prestanda: null,
-  miljo: { hallning: null, timmarUtePerDag: null, klippt: null, tacke: null },
-  fang: false,
-  ems: false,
-  ppid: false,
-  magsar: false,
-  pssm: false,
-  luftvagar: false,
-  tandproblem: false,
-  proteinkanslig: false,
-  undvik: [],
-  ovrigt: '',
-  foljdfragor: [],
-}
 const JOURNAL_RESPONSE = {
   sammanfattning: 'Stabil vikt.',
   monster: [],
@@ -84,6 +65,23 @@ describe('the AI routes', () => {
     expect(res.status).toBe(400)
     expect(await res.json()).toMatchObject({ code: 'validation.invalid' })
     expect(ai.calls).toEqual([])
+  })
+
+  it('links only the products the catalogue has: an ID the AI invented is an unknown feed (C8, #33)', async () => {
+    const { browser } = await user()
+    ai.answer('interpretProfile', {
+      ...PROFILE_RESPONSE,
+      nuvarandeFoder: [
+        { produktId: 'gg-1235447', namn: 'Krafft Leisure Pellets', gramPerDag: 1000 },
+        { produktId: 'pa-hittat-123', namn: 'Hemmablandning', gramPerDag: 200 },
+      ],
+    })
+    const res = await browser.post(ROUTES[0].path, PROFILE_REQUEST)
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as typeof PROFILE_RESPONSE).nuvarandeFoder).toEqual([
+      { produktId: 'gg-1235447', namn: 'Krafft Leisure Pellets', gramPerDag: 1000 },
+      { produktId: null, namn: 'Hemmablandning', gramPerDag: 200 },
+    ])
   })
 
   it('refuses a text over its cap, and a body over 64 KB', async () => {

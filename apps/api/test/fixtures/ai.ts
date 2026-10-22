@@ -1,5 +1,5 @@
 // Valid requests to the AI routes (#30), as the web sends them: small, with every required field.
-import type { ExplanationRequest, JournalRequest, ProfileRequest } from '@fodr/contracts/ai'
+import type { ExplanationRequest, JournalRequest, ProfileRequest, ProfileResponse } from '@fodr/contracts/ai'
 
 const halsa = { fang: true, ems: false, ovrigt: '' }
 
@@ -34,4 +34,25 @@ export const JOURNAL_REQUEST: JournalRequest = {
   poster: [{ id: 'e1', datum: '2026-10-01', viktKg: 545, text: 'Pigg' }],
   trend: { uppfoljningForfallen: false, varningar: [] },
   aktuellPlan: null,
+}
+
+/** A complete profile reply, as the provider's output schema guarantees one. */
+export const PROFILE_RESPONSE: ProfileResponse = {
+  grovfoderKgPerDag: 8,
+  grovfoderTyp: 'ho',
+  nuvarandeFoder: [],
+  ras: null,
+  prestanda: null,
+  miljo: { hallning: null, timmarUtePerDag: null, klippt: null, tacke: null },
+  fang: false,
+  ems: false,
+  ppid: false,
+  magsar: false,
+  pssm: false,
+  luftvagar: false,
+  tandproblem: false,
+  proteinkanslig: false,
+  undvik: [],
+  ovrigt: '',
+  foljdfragor: [],
 }
