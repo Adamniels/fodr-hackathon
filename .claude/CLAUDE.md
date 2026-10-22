@@ -1,6 +1,6 @@
 # Fodr (Krubba): project conventions
 
-Fodr turns a horse owner's roughage analysis into a feeding plan following SLU Rapport 289. It is being taken from a hackathon proof of concept to a closed beta.
+Fodr turns a horse owner's roughage analysis into a feeding plan following SLU Rapport 289. It is being taken from a hackathon proof of concept to a foundation for its first real users; how and when it launches is decided later.
 
 Read before changing anything substantial:
 
