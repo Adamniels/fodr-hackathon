@@ -1,4 +1,4 @@
-import { FOLJDFRAGA, profilMedFoljdfraga } from './fixtures/ai'
+import { FOLJDFRAGA, profil, profilMedFoljdfraga } from './fixtures/ai'
 import {
   clientIpHeaders,
   createAccount,
@@ -145,6 +145,27 @@ test('AI fill sets fields and sensitivities', async ({ page, ai }) => {
   expect(calls).toHaveLength(1)
   expect(calls[0].foderText).toContain('hade fång i våras')
   expect(calls[0].produkter.length).toBeGreaterThan(0)
+})
+
+test('a feed the AI names that is not in the catalogue is shown as unknown, and the plan says so (CF3, #33)', async ({
+  page,
+  ai,
+}) => {
+  // As the API answers for a product the model invented: no ID, the name and dose kept (C8).
+  ai.respondWith('profile', {
+    ...profil,
+    nuvarandeFoder: [{ produktId: null, namn: 'Hemmablandning', gramPerDag: 200 }],
+  })
+  await createAccountWithHorses(page)
+  await page.getByLabel('Om hästen och vad den äter i dag').fill('Får 2 hg hemmablandning om dagen')
+  await page.getByRole('button', { name: 'Fyll i med AI' }).click()
+
+  // The field's title, its accessible name here, says the feed is not in the product database.
+  await expect(page.getByRole('combobox', { name: 'Finns inte i produktdatabasen och räknas inte med' })).toHaveValue(
+    'Hemmablandning',
+  )
+  await showExamplePlan(page)
+  await expect(page.getByText('"Hemmablandning" finns inte i produktdatabasen och räknas inte med.')).toBeVisible()
 })
 
 test('AI follow-up question round trip', async ({ page, ai }) => {

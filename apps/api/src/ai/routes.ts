@@ -11,6 +11,7 @@ import type { z } from 'zod'
 import type { AppEnv } from '../app'
 import type { Auth } from '../auth'
 import type { Logger } from '../logger'
+import type { Catalogue } from '../products'
 import { problem } from '../problem'
 import { requireUser, type UserVariables } from '../session'
 import { parseJson } from '../validation'
@@ -52,7 +53,18 @@ const FAILURES: Record<AiErrorKind, { status: 429 | 502 | 503; code: string }> =
   truncated: { status: 502, code: 'ai.truncated' },
 }
 
-export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: MeteredAi; logger: Logger }) {
+export function aiRoutes({
+  auth,
+  ai,
+  logger,
+  catalogue,
+}: {
+  auth: Auth
+  ai: MeteredAi
+  logger: Logger
+  catalogue: Catalogue
+}) {
+  const known = new Set(catalogue.products.map((p) => p.id))
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
   const limit = (maxSize: number) =>
@@ -82,9 +94,17 @@ export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: MeteredAi; logg
     })
   }
 
-  route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, (userId, body) =>
-    ai.run(userId, 'profile', (provider) => provider.interpretProfile(body)),
-  )
+  route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, async (userId, body) => {
+    const profile = await ai.run(userId, 'profile', (provider) => provider.interpretProfile(body))
+    // A product is linked only when the catalogue has it (CF3, C8): an ID the model invented is an unknown feed, kept
+    // with its name and dose for the owner to see and pick from the list.
+    return {
+      ...profile,
+      nuvarandeFoder: profile.nuvarandeFoder.map((f) =>
+        f.produktId !== null && known.has(f.produktId) ? f : { ...f, produktId: null },
+      ),
+    }
+  })
   route('/journal', MAX_JOURNAL_BODY_BYTES, JournalRequestSchema, (userId, body) =>
     ai.run(userId, 'journal', (provider) => provider.analyzeJournal(body)),
   )

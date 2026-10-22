@@ -34,6 +34,7 @@ export const ProfileRequestSchema = z.object({
 export const ProfileResponseSchema = z.object({
   grovfoderKgPerDag: z.number().nullable(),
   grovfoderTyp: z.enum(['hosilage', 'ho']).nullable(),
+  // A catalogue product's ID, or null for a feed the catalogue does not have: the API drops an ID it does not know (#33).
   nuvarandeFoder: z.array(z.object({ produktId: z.string().nullable(), namn: z.string(), gramPerDag: z.number() })),
   ras: z.string().nullable(),
   prestanda: z.enum(['fritid', 'tavling_lokal', 'tavling_hog', 'trav_galopp_traning', 'distans']).nullable(),
