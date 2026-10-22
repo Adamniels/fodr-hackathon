@@ -2,14 +2,13 @@ import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { ANALYSIS_FILE_LIMITS } from '@fodr/contracts/analyses'
-import { analysBas, analysKomplett } from '../data/examples'
 import { reportProblem, type AnalysisStore } from '../analyses'
 import { ApiError } from '../api-v1'
 import type { AnalysisErrorMessage } from '@fodr/domain/messages'
 import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey, NutrientValues } from '@fodr/domain/nutrients'
 import { validateAnalysis, type AnalysisField } from '@fodr/domain/validation'
-import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
+import type { Hastprofil } from '@fodr/domain/types'
 import { analysisUnit, nutrientLabel, formatDate, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
@@ -17,7 +16,7 @@ import { SaveStatus } from './SaveStatus'
 
 interface Props {
   hast: Hastprofil
-  /** The horse's analysis (#26): from the API for an account, in memory for the demo. */
+  /** The horse's analysis on the API (#26). */
   analyses: AnalysisStore
   onNext: () => void
 }
@@ -74,9 +73,8 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
   const anmarkningar = analyses.current?.anmarkningar ?? []
   const onAnalysisChange = analyses.correct
 
-  // An API failure becomes text from its code; the demo's AI route sends its own text (until #29).
-  const errorText = (e: unknown) =>
-    e instanceof ApiError ? uploadErrorText(e.code, t) : e instanceof Error ? e.message : String(e)
+  // An API failure becomes text from its code; anything else (the network) the general failure.
+  const errorText = (e: unknown) => uploadErrorText(e instanceof ApiError ? e.code : undefined, t)
 
   async function laddaUpp(fil: File) {
     setFel(null)
@@ -95,18 +93,6 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
     } finally {
       setLaddar(false)
     }
-  }
-
-  // One request at a time: a double click would otherwise store the example twice.
-  const [exampleLoading, setExampleLoading] = useState(false)
-  const busy = laddar || exampleLoading
-  const loadExample = (example: Grovfoderanalys) => {
-    setFel(null)
-    setExampleLoading(true)
-    analyses
-      .loadExample(example)
-      .catch((e: unknown) => setFel(errorText(e)))
-      .finally(() => setExampleLoading(false))
   }
 
   const errors = useMemo(() => (analys ? validateAnalysis(analys) : []), [analys])
@@ -145,7 +131,7 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
                 const fil = e.target.files?.[0]
                 if (fil) void laddaUpp(fil)
               }}
-              disabled={busy}
+              disabled={laddar}
             />
             {laddar ? (
               <span>{t('analysis.reading', { file: filnamn })}</span>
@@ -155,16 +141,6 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
               </span>
             )}
           </label>
-          <div className="exempel">
-            {t('analysis.noReport')}{' '}
-            <button className="lank" disabled={busy} onClick={() => loadExample(analysKomplett)}>
-              {t('analysis.exampleComplete')}
-            </button>{' '}
-            ·{' '}
-            <button className="lank" disabled={busy} onClick={() => loadExample(analysBas)}>
-              {t('analysis.exampleBasic')}
-            </button>
-          </div>
         </>
       )}
       {fel && (

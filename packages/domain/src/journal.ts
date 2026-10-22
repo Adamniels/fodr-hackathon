@@ -11,7 +11,7 @@ export type PlanensAnalys = Pick<Grovfoderanalys, 'typ' | 'labb' | 'provdatum'>
 export interface PlanOgonblick {
   /** Values from #27 on. A snapshot saved before then holds the text the web composed, kept as it was saved. */
   analys: PlanensAnalys | string
-  /** The plan saved on the server that the snapshot is of; none for the demo or a snapshot from before #27. */
+  /** The plan saved on the server that the snapshot is of (#27). */
   planId?: string
   grovfoderKgPerDag: number
   produkter: { namn: string; gramPerDag: number }[]
@@ -54,7 +54,7 @@ export function sorteradePoster(poster: Journalpost[]): Journalpost[] {
     (a, b) =>
       a.datum.localeCompare(b.datum) ||
       (a.skapad && b.skapad ? a.skapad.localeCompare(b.skapad) : 0) ||
-      // Entries without a creation time (the demo's, in the browser) have IDs that start with it (newJournalEntryId).
+      // Entries without a creation time (none come from the server without one) fall back to their IDs.
       a.id.localeCompare(b.id),
   )
 }

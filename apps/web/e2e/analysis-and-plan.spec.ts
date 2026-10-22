@@ -1,16 +1,17 @@
 import { readFile } from 'node:fs/promises'
 import { analysA01, forklaring } from './fixtures/ai'
 import {
-  FIXED_NOW,
   createAccountWithHorses,
   expect,
   expectGrams,
   expectMoney,
+  FIXED_NOW,
   goToStep,
   horseList,
   showExamplePlan,
   test,
   typeKeyByKey,
+  uploadExample,
 } from './support/helpers'
 import { reportWith } from './support/reports'
 import type { Locator, Page } from '@playwright/test'
@@ -66,7 +67,7 @@ test("switching horse shows that horse's own analysis (C4)", async ({ page }) =>
   await horseList(page).getByRole('button', { name: 'Pysen' }).click()
   await expect(page.getByRole('heading', { name: /Pysen/, level: 2 })).toBeVisible()
   await expect(page.getByLabel('Torrsubstans')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Exempel: basanalys' }).click()
+  await uploadExample(page, 'basic')
   const pysensTs = await page.getByLabel('Torrsubstans').inputValue()
   expect(pysensTs).not.toBe('39.7')
 
@@ -265,7 +266,7 @@ test.describe('dry matter entry (#50)', () => {
   async function openExampleAnalysis(page: Page): Promise<Locator> {
     await createAccountWithHorses(page)
     await goToStep(page, 'Analysen')
-    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await uploadExample(page)
     return page.getByLabel('Torrsubstans')
   }
 
@@ -300,21 +301,22 @@ test.describe('dry matter entry (#50)', () => {
   })
 })
 
-test('a cleared dry matter shows the value it holds again when an example is loaded (#50, #13)', async ({ page }) => {
+test('a cleared dry matter shows the value of a report loaded meanwhile (#50, #13)', async ({ page }) => {
   await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await uploadExample(page)
   const torrsubstans = page.getByLabel('Torrsubstans')
   await torrsubstans.fill('')
   await expect(page.getByText('Fyll i ett värde.')).toBeVisible()
-  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
-  await expect(torrsubstans).toHaveValue('39.7')
+  // A value from outside replaces the draft (DecimalInput): the basic analysis has 46 % dry matter.
+  await uploadExample(page, 'basic')
+  await expect(torrsubstans).toHaveValue('46')
 })
 
 test('analysis values: text is refused, a cleared value is missing (C2)', async ({ page }) => {
   await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await uploadExample(page)
   const energi = page.getByRole('textbox', { name: 'Energi' })
   const varde = await energi.inputValue()
   await energi.fill('mycket')
@@ -336,7 +338,7 @@ test('the plan explanation gets grams as the page shows them (#103)', async ({ p
   // The gram field in a feed row has no accessible name yet, so it is reached through its row.
   await produkt.locator('xpath=following-sibling::input[1]').fill('100,4')
   await goToStep(page, 'Analysen')
-  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await uploadExample(page)
   await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
   await ai.settled()
   const [underlag] = ai.calls('forklaring') as { byten: { fran: string }[] }[]
@@ -352,10 +354,10 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
     // analysis (C4), so Sixten gets the example too.
     await page.getByRole('radio', { name: /Tål byten bra/ }).click()
     await goToStep(page, 'Analysen')
-    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await uploadExample(page)
     await horseList(page).getByRole('button', { name: 'Pysen' }).click()
     await goToStep(page, 'Analysen')
-    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await uploadExample(page)
     await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
     await expect(steps(page)).toHaveCount(5)
     await steps(page).last().click()
@@ -389,7 +391,7 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
     await createAccountWithHorses(page)
     await horseList(page).getByRole('button', { name: 'Pysen' }).click()
     await goToStep(page, 'Analysen')
-    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await uploadExample(page)
     await horseList(page).getByRole('button', { name: 'Sixten' }).click()
     await showExamplePlan(page)
     await page.getByLabel('Första dagen').fill('2026-11-02')
@@ -429,7 +431,7 @@ test('calendar download is a valid ics', async ({ page }) => {
 test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai }) => {
   await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+  await uploadExample(page)
   // The audit's probe: selenium read in µg as mg, far over SLU's maximum before any supplement.
   await page.getByRole('textbox', { name: 'Selen (Se)' }).fill('60')
   await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()

@@ -38,8 +38,6 @@
     "titleLogIn": "Logga in på Fodr",
     "titleCreate": "Skapa konto",
     "intro": "Dina hästar och foderplaner sparas på ditt konto.",
-    "demo": "Fortsätt med demohästen Sixten",
-    "orEmail": "eller med e-post",
     "name": "Namn",
     "email": "E-post",
     "password": "Lösenord",
@@ -128,9 +126,6 @@
     "intro": "PDF eller mobilfoto, från vilket labb som helst. Du ser allt som lästes ut och kan rätta.",
     "reading": "Läser {{file}}…",
     "choose": "<strong>Välj analysrapport</strong> eller dra hit den",
-    "noReport": "Inget underlag till hands?",
-    "exampleComplete": "Exempel: komplett analys",
-    "exampleBasic": "Exempel: basanalys",
     "sampled": "Prov {{date}}",
     "dryMatter": "Torrsubstans",
     "ash": "Aska",
@@ -465,7 +460,6 @@
     },
     "logIn": "Logga in",
     "openApp": "Öppna Fodr",
-    "tryDemo": "Testa med demohästen",
     "continueAs": "Fortsätt som {{name}}",
     "hero": {
       "eyebrow": "För dig som har häst och en grovfoderanalys",
@@ -541,7 +535,7 @@
     },
     "closing": {
       "title": "Se vad ditt grovfoder räcker till",
-      "text": "Testa med demohästen Sixten, eller lägg in din egen häst."
+      "text": "Skapa ett konto och lägg in din häst, så räknar Fodr fram foderplanen."
     },
     "footer": {
       "text": "Prototyp från ett hackathon 2026. Behov enligt SLU Rapport 289. Ersätter inte veterinär eller foderrådgivare.",
@@ -557,7 +551,8 @@
       "horse2": "Pysen",
       "perMonth": "Per månad med förslaget",
       "cheaper": "{{amount}} billigare än i dag"
-    }
+    },
+    "getStarted": "Kom igång"
   },
   "errors": {
     "http": "Fel {{status}}",

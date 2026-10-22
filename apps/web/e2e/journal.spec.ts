@@ -2,11 +2,11 @@ import type { Browser, Page } from '@playwright/test'
 import {
   clientIpHeaders,
   createAccountWithHorses,
-  enterDemo,
   expect,
   goToStep,
   horseList,
   logIn,
+  seededAccount,
   showExamplePlan,
   test,
 } from './support/helpers'
@@ -21,10 +21,10 @@ async function journalElsewhere(browser: Browser, email: string): Promise<Page> 
 }
 
 // The journal on the API (CF7, #28): the flows run on real accounts. The trend, the AI analysis and the time zone test
-// read the demo's journal, which has entries to show, until #29 seeds an account instead.
+// use a seeded account (seededAccount), whose journal has entries to show.
 
 test('demo journal shows trend', async ({ page }) => {
-  await enterDemo(page)
+  await seededAccount(page)
   await goToStep(page, 'Journal')
   await expect(page.getByText('570 → 550 kg')).toBeVisible()
   await expect(page.getByText('8 → 7', { exact: true })).toBeVisible()
@@ -88,7 +88,7 @@ test('the entry date follows today past midnight unless one was picked (#107)', 
 })
 
 test("switching horse leaves the other horse's draft and AI analysis behind (#109)", async ({ page }) => {
-  await enterDemo(page)
+  await seededAccount(page)
   await goToStep(page, 'Journal')
   await page.getByLabel('Datum').fill('2026-10-01')
   await page.getByLabel('Vikt (kg)').fill('540')
@@ -194,7 +194,7 @@ test('saving the plan adds a timeline entry, kept on the server', async ({ page,
 })
 
 test('AI journal analysis shows the vet flag', async ({ page, ai }) => {
-  await enterDemo(page)
+  await seededAccount(page)
   await goToStep(page, 'Journal')
   await page.getByRole('button', { name: 'Analysera journalen' }).click()
 
@@ -209,7 +209,7 @@ test.describe('in a time zone behind UTC', () => {
   test.use({ timezoneId: 'America/New_York' })
 
   test('journal dates show the stored calendar day', async ({ page }) => {
-    await enterDemo(page)
+    await seededAccount(page)
     await goToStep(page, 'Journal')
     const entry = page.getByRole('listitem').filter({ hasText: 'Startar bantning' })
     await expect(entry).toContainText('2026-08-31')

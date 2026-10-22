@@ -66,6 +66,24 @@ export default tseslint.config(
     },
   },
   {
+    // No data in the browser (#29): accounts, horses, analyses, plans and the journal live on the API. Only per-viewer
+    // UI preferences may be stored, in src/preferences.ts; legacy-storage.ts removes what older versions left behind.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/preferences.ts', 'src/legacy-storage.ts'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'localStorage', message: 'Data lives on the API; UI preferences go in src/preferences.ts (#29).' },
+        { name: 'sessionStorage', message: 'Data lives on the API; UI preferences go in src/preferences.ts (#29).' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'window', property: 'localStorage', message: 'Data lives on the API (#29).' },
+        { object: 'window', property: 'sessionStorage', message: 'Data lives on the API (#29).' },
+      ],
+    },
+  },
+  {
     // The product catalogue comes from the API (#27): bundling it again would let the preview plan with another
     // catalogue than the server saves plans with (ADR 0004), and ships 170 KB to every visitor.
     files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts'],

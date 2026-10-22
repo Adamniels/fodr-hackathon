@@ -65,3 +65,18 @@ export const journal = {
   veterinar: { behovs: true, skal: 'Ömma framhovar hos en häst med fånghistorik.' },
   nastaSteg: ['Väg hästen om fyra veckor'],
 } satisfies JournalAnalysis
+
+/** The complete example analysis as the AI would read it (the former "Exempel: komplett analys"; seeded on Sixten). */
+export const completeReading = { ...analysA01, labb: 'Testlabb Alfa' } satisfies UtlastAnalys
+
+/** A basic analysis without minerals (the former "Exempel: basanalys"). */
+export const basicReading = {
+  arAnalys: true,
+  typ: 'hosilage',
+  labb: 'Testlabb Alfa',
+  provdatum: '2026-06-05',
+  tsProcent: 46,
+  askaGPerKgTs: 65,
+  perKgTs: { energi: 9.9, smbRp: 88, socker: 66 },
+  anmarkningar: [],
+} satisfies UtlastAnalys

@@ -43,6 +43,7 @@ export default tseslint.config(
       'src/auth.ts',
       'src/server.ts',
       'src/migrate.ts',
+      'src/seed-cli.ts',
       'src/repositories/**',
       // Imports Drizzle's and pg's error classes to keep query data out of the logs; no data access.
       'src/logger.ts',
@@ -65,9 +66,10 @@ export default tseslint.config(
   },
   {
     // Modules only; tests may hold Swedish data. The prompts and schema descriptions in ai/anthropic.ts are Swedish
-    // model input, not text for a reader; the emails in mail/templates.ts leave by email, not as API responses (#22).
+    // model input, not text for a reader; the emails in mail/templates.ts leave by email, not as API responses (#22);
+    // seed-data.ts is the demo account's Swedish data (horse notes, journal text), stored as the owner would type it (#29).
     files: ['src/**/*.ts'],
-    ignores: ['**/*.test.ts', 'src/ai/anthropic.ts', 'src/mail/templates.ts'],
+    ignores: ['**/*.test.ts', 'src/ai/anthropic.ts', 'src/mail/templates.ts', 'src/seed-data.ts'],
     rules: { 'no-restricted-syntax': ['error', SWEDISH_TEXT] },
   },
   {

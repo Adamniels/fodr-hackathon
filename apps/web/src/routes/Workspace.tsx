@@ -5,13 +5,11 @@ import '../App.css'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { SavedPlan } from '@fodr/contracts/plans'
 import { skapaPlan } from '@fodr/domain/plan'
-import { newJournalEntryId } from '../storage'
 import { UnsavedProfileError, useApiJournal, type JournalStore } from '../journal'
 import { useApiHorses, type HorseStore } from '../horses'
 import { useApiAnalysis, type AnalysisStore } from '../analyses'
 import { SaveStatus } from '../components/SaveStatus'
-import { DEMO_USER, useDemoAnalysis, useDemoHorses, useDemoJournal } from '../demo'
-import { nyPost, ogonblickAvPlan } from '@fodr/domain/journal'
+import { ogonblickAvPlan } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
@@ -28,11 +26,7 @@ export function WorkspaceGate() {
   const session = useSession()
   const location = useLocation()
   if (!session.user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  return session.user.id === DEMO_USER.id ? (
-    <DemoWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
-  ) : (
-    <AccountWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
-  )
+  return <AccountWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
 }
 
 interface WorkspaceProps {
@@ -43,21 +37,8 @@ interface WorkspaceProps {
 /** The horse in the URL, whose analysis the workspace shows. */
 const useHorseIdInUrl = () => useMatch('/horses/:horseId/*')?.params.horseId
 
-/** The browser-only demo's workspace, its horses in localStorage and analyses in memory until #29. */
-function DemoWorkspace(props: WorkspaceProps) {
-  const horseId = useHorseIdInUrl()
-  const horses = useDemoHorses()
-  const analyses = useDemoAnalysis(horseId)
-  const journal = useDemoJournal(horseId, ({ viktKg, hull }) => {
-    const hast = horses.horses.find((h) => h.id === horseId)
-    if (hast) horses.update({ ...hast, viktKg: viktKg ?? hast.viktKg, hull: hull ?? hast.hull })
-  })
-  // The demo has no server: its plans are saved in its browser journal only.
-  return <Workspace {...props} horses={horses} analyses={analyses} savedPlans={null} journal={journal} />
-}
-
-/** Saving plans on the server (#27); null for the demo. */
-type SavedPlans = ReturnType<typeof useSavedPlans> | null
+/** Saving plans on the server (#27). */
+type SavedPlans = ReturnType<typeof useSavedPlans>
 
 /** An account's workspace, its horses (#25) and analyses (#26) on the API. It opens once the horses are read. */
 function AccountWorkspace(props: WorkspaceProps) {
@@ -154,11 +135,7 @@ function Workspace({
   // The horse's latest saved plan, when it was computed from what is on screen: the page then shows the server's plan
   // (ADR 0004), marked as saved.
   const savedPlan: SavedPlan | null =
-    savedPlans &&
-    hast &&
-    analys &&
-    catalogue.data &&
-    isSavedFor(savedPlans.latest, hast, analys, catalogue.data.version)
+    hast && analys && catalogue.data && isSavedFor(savedPlans.latest, hast, analys, catalogue.data.version)
       ? savedPlans.latest
       : null
   const plan = savedPlan ? { plan: savedPlan.result } : preview
@@ -193,25 +170,17 @@ function Workspace({
     }
   }
   // The deleted horse leaves the list, and its URL then sends to /horses (below). Its analyses, plans and journal go
-  // with it on the server (#26 to #28); the demo's journal, in the browser, is removed here.
-  // Focus moves to the page title, as the dialog that held it goes away with the profile.
+  // with it on the server (#26 to #28). Focus moves to the page title, as the dialog that held it goes away with the
+  // profile.
   const removeHorse = async (id: string) => {
     await horses.remove(id)
-    journal.forgetHorse(id)
     requestAnimationFrame(() => title.current?.focus())
   }
   const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, analys) : null
   // Saving: the server computes and stores the plan and its journal entry, whose snapshot is of what it computed
-  // (#27, #28). The demo, without a server, snapshots its preview. Rejects when the server refused, for the plan step
-  // to say so.
+  // (#27, #28). Rejects when the server refused, for the plan step to say so.
   const savePlan = async () => {
     if (!hast || !analys || !plan || !('plan' in plan)) return
-    if (!savedPlans) {
-      journal.addSaved(
-        nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: ogonblickAvPlan(plan.plan, analys) }),
-      )
-      return
-    }
     // The server plans from what it holds: the edits still on their way go first, and an edit it does not have
     // (failed, refused, invalid) stops the save rather than saving another plan than the one on screen.
     await Promise.all([horses.flush(), analyses.flush()])

@@ -1,6 +1,6 @@
 // CF1 in the browser against the real API (#23): sign up with verification, log in and out, a wrong password,
 // magic link and password reset, with the mail read from Mailpit.
-import { createAccount, enterDemo, expect, horseList, logIn, PASSWORD, test } from './support/helpers'
+import { createAccount, expect, horseList, logIn, PASSWORD, seededAccount, test } from './support/helpers'
 import { E2E_WEB, linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
 
 const landingHeading = (page: import('@playwright/test').Page) =>
@@ -14,15 +14,18 @@ async function openDialog(page: import('@playwright/test').Page) {
   return dialog
 }
 
-test('landing page offers the demo and login', async ({ page }) => {
+test('the landing page offers getting started, which opens sign-up, and login (#29)', async ({ page }) => {
   await page.goto('/')
   await expect(landingHeading(page)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Testa med demohästen' }).first()).toBeVisible()
   await expect(page.getByRole('button', { name: 'Logga in', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Kom igång' }).first().click()
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  await expect(dialog.getByRole('heading', { name: 'Skapa konto' })).toBeVisible()
+  await expect(dialog.getByLabel('Namn')).toBeVisible()
 })
 
-test('demo account opens with Sixten and Pysen', async ({ page }) => {
-  await enterDemo(page)
+test('the seeded demo account opens with Sixten and Pysen (#29)', async ({ page }) => {
+  await seededAccount(page)
   await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeVisible()
   await expect(horseList(page).getByRole('button', { name: 'Pysen' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
@@ -137,8 +140,8 @@ test('an invalid or expired reset link says so and offers a new one', async ({ p
   await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
 })
 
-test('new account starts empty after demo use', async ({ page }) => {
-  await enterDemo(page)
+test('a new account starts empty after another one was used in the browser', async ({ page }) => {
+  await seededAccount(page)
   await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
   await createAccount(page, 'Tom Användare', 'tom@example.se')
   await expect(horseList(page).getByRole('listitem')).toHaveCount(1)
@@ -185,10 +188,10 @@ test('accounts do not share horses', async ({ page }) => {
   await expect(horseList(page).getByRole('button', { name: 'Alfa' })).toHaveCount(0)
 })
 
-test('a real account wins over an open demo: the verification link signs in to the new account (#23 review)', async ({
+test('a verification link signs in to the new account, also in a browser signed in to another (#23 review)', async ({
   page,
 }) => {
-  const email = uniqueEmail('demofirst')
+  const email = uniqueEmail('newfirst')
   const dialog = await openDialog(page)
   await dialog.getByRole('button', { name: 'Ny här? Skapa konto' }).click()
   await dialog.getByLabel('Namn').fill('Egen Användare')
@@ -197,7 +200,7 @@ test('a real account wins over an open demo: the verification link signs in to t
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
 
-  await enterDemo(page)
+  await seededAccount(page)
   await page.goto(linkIn(await waitForMail(email, /Bekräfta/)))
   await expect(horseList(page).getByText('Egen Användare')).toBeVisible()
   await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toHaveCount(0)

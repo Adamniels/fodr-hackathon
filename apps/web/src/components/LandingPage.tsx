@@ -18,12 +18,13 @@ interface Props {
   /** The catalogue for the plan preview; null until it has loaded (or when it could not be read). */
   produkter: Produkt[] | null
   loggedInAs: string | null
-  onDemo: () => void
+  /** Signed in: opens the app; otherwise opens the account dialog on sign-up. */
+  onGetStarted: () => void
   onLogIn: () => void
 }
 
 /** The marketing page: Notion's layout (white space, clear headline, product preview) with a Wildlife feel (photos, serif, forest green). */
-export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
+export function LandingPage({ produkter, loggedInAs, onGetStarted, onLogIn }: Props) {
   const { t } = useTranslation()
   return (
     <div className="start">
@@ -41,8 +42,8 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
                 {t('landing.logIn')}
               </button>
             )}
-            <button className="knapp kompakt" onClick={onDemo}>
-              {loggedInAs ? t('landing.openApp') : t('landing.tryDemo')}
+            <button className="knapp kompakt" onClick={onGetStarted}>
+              {loggedInAs ? t('landing.openApp') : t('landing.getStarted')}
             </button>
           </div>
         </div>
@@ -55,8 +56,8 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
         </h1>
         <p className="start-ingress">{t('landing.hero.intro')}</p>
         <div className="start-knappar">
-          <button className="knapp stor" onClick={onDemo}>
-            {loggedInAs ? t('landing.continueAs', { name: loggedInAs }) : t('landing.tryDemo')}
+          <button className="knapp stor" onClick={onGetStarted}>
+            {loggedInAs ? t('landing.continueAs', { name: loggedInAs }) : t('landing.getStarted')}
           </button>
           <a className="knapp stor sekundar" href="#sa-funkar">
             {t('landing.hero.seeHow')}
@@ -231,8 +232,8 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
         <div className="avslut-inre">
           <h2>{t('landing.closing.title')}</h2>
           <p>{t('landing.closing.text')}</p>
-          <button className="knapp stor ljus" onClick={onDemo}>
-            {loggedInAs ? t('landing.openApp') : t('landing.tryDemo')}
+          <button className="knapp stor ljus" onClick={onGetStarted}>
+            {loggedInAs ? t('landing.openApp') : t('landing.getStarted')}
           </button>
         </div>
       </section>
@@ -246,7 +247,7 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
   )
 }
 
-/** A real feed plan for the demo horse, in a browser frame. The figures come from the same engine as the app. */
+/** A real feed plan for an example horse (data/examples.ts), in a browser frame, from the same engine as the app. */
 function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {

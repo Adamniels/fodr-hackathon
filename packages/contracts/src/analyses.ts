@@ -1,6 +1,6 @@
 // The analysis resources (#26, CF4), per horse under /api/v1/horses/:id/analyses:
 //   POST (multipart, field `file`): upload a report; the API reads it with the AI and stores the file and the values.
-//   POST (JSON, CreateAnalysisSchema): an analysis without a file (the examples, the seed script of #29).
+//   POST (JSON, CreateAnalysisSchema): an analysis without a file, for values typed in by hand.
 //   GET  /current: the horse's current analysis, or null.
 //   PUT  /:analysisId/values (ValuesSchema): corrected values, refused when the domain's validateAnalysis refuses them.
 // The newest analysis is the current one. Field names are contract names (ADR 0016 rule 7); the checks at the end make

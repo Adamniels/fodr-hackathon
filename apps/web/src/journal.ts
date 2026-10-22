@@ -23,7 +23,7 @@ export class UnsavedProfileError extends Error {
 /** A new entry as the form makes it: no ID or creation time, which the store gives it. */
 export type EntryDraft = Omit<NewJournalEntry, 'updateProfile'>
 
-/** What the journal step needs of the current horse's journal, from the API for an account or the browser for the demo. */
+/** What the journal step needs of the current horse's journal. */
 export interface JournalStore {
   /** Undefined while it loads. */
   entries: Journalpost[] | undefined
@@ -33,8 +33,6 @@ export interface JournalStore {
   add: (draft: EntryDraft, updateProfile: boolean) => Promise<void>
   /** Puts an entry made elsewhere (by saving a plan) into the journal. */
   addSaved: (entry: Journalpost) => void
-  /** A deleted horse's journal goes with it: on the server by cascade, in the demo's browser here. */
-  forgetHorse: (horseId: string) => void
 }
 
 const base = (horseId: string) => `/horses/${horseId}/journal`
@@ -101,7 +99,5 @@ export function useApiJournal(
     addSaved: (entry) => {
       if (horseId !== undefined) append(horseId, entry)
     },
-    // The server deletes a horse's journal with it; the cached copy goes when the workspace closes.
-    forgetHorse: () => undefined,
   }
 }

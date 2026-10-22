@@ -14,7 +14,7 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration` and `db:migrate` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API, the integration tests and the e2e tests need the Compose services (`docker compose up --wait`); the API also needs the root `.env` (copy `.env.example`), while the tests set their own environment. Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API, the integration tests and the e2e tests need the Compose services (`docker compose up --wait`); the API also needs the root `.env` (copy `.env.example`), while the tests set their own environment. Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
 
 | Command | What |
 |---|---|
@@ -22,6 +22,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`), no services needed |
 | `npm run test:integration` | API integration tests against the Compose Postgres (`src/**/*.integration.test.ts`, own `fodr_test` database) |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
+| `npm run seed` | Creates the demo account from `SEED_EMAIL` and `SEED_PASSWORD` with Sixten and Pysen (idempotent); e2e tests seed one per test with `seededAccount` |
 | `npm run test:e2e` | Playwright e2e tests against the real API (own servers on :3100 and :5174, own `fodr_e2e` database and `fodr-e2e` bucket, mail read from Mailpit), AI mocked, no API key needed |
 | `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
 | `npm run lint` | ESLint, type aware |

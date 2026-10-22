@@ -46,13 +46,13 @@ export function newHorseProfile(): HorseProfile {
   }
 }
 
-/** What the workspace needs of a horse store, the API's for an account or the browser's for the demo (demo.ts). */
+/** What the workspace needs of the account's horses. */
 export interface HorseStore {
   horses: Hastprofil[]
   create: () => Promise<Hastprofil>
   update: (horse: Hastprofil) => void
   remove: (id: string) => Promise<void>
-  /** Undefined for a horse not edited since the page opened, and always for the demo. */
+  /** Undefined for a horse not edited since the page opened. */
   saveState: (id: string) => SaveState | undefined
   retrySave: (id: string) => void
   /** Sends every waiting edit, before logging out or saving a plan. */
