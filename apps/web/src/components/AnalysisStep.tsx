@@ -38,6 +38,8 @@ function uploadErrorText(code: string | undefined, t: TFunction): string {
       })
     case 'ai.rate_limited':
       return t('analysis.upload.aiBusy')
+    case 'ai.quota_exceeded':
+      return t('ai.errors.quotaExceeded')
     case 'ai.unavailable':
       return t('analysis.upload.aiUnavailable')
     default:

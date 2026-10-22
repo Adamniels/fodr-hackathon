@@ -11,6 +11,7 @@ import { createSmtpMailer } from '../src/mail/mailer'
 import type { AiProvider } from '../src/ai/provider'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { usageRepository } from '../src/repositories/ai-usage'
 import { journalRepository } from '../src/repositories/journal'
 import { planRepository } from '../src/repositories/plans'
 import { loadCatalogue } from '../src/products'
@@ -29,6 +30,7 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     webDistDir: undefined,
     appVersion: 'test-build',
     anthropicApiKey: undefined,
+    ai: { model: 'test-model', dailyCallsPerUser: 30, priceSekPerMtokInput: 30, priceSekPerMtokOutput: 150 },
     betterAuthSecret: 'test-secret-that-is-at-least-32-characters',
     betterAuthUrl: BASE_URL,
     smtpHost: '127.0.0.1',
@@ -70,6 +72,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       analyses: analysisRepository(database.db),
       plans: planRepository(database.db),
       journal: journalRepository(database.db),
+      usage: usageRepository(database.db),
     },
   })
   return { app, database, logs, ai, files, close: () => database.close() }

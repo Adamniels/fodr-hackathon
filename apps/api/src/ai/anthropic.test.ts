@@ -89,7 +89,7 @@ const JOURNAL = { sammanfattning: 'Stabil vikt.', monster: [], veterinar: { beho
 describe('the Anthropic provider', () => {
   it('reads an analysis: sends the document to the model and returns the parsed reply', async () => {
     const { ai, requests } = provider(200, message(JSON.stringify(ANALYSIS)))
-    expect(await ai.readAnalysis(PDF)).toEqual(ANALYSIS)
+    expect(await ai.readAnalysis(PDF)).toEqual({ value: ANALYSIS, usage: { inputTokens: 1, outputTokens: 1 } })
     expect(requests[0]).toMatchObject({
       model: 'claude-sonnet-5-5',
       max_tokens: 16000,
@@ -115,7 +115,7 @@ describe('the Anthropic provider', () => {
 
   it('explains a plan with the text of the reply', async () => {
     const { ai, requests } = provider(200, message('Grovfodret räcker.'))
-    expect(await ai.explainPlan(payload({ behov: 1 }))).toBe('Grovfodret räcker.')
+    expect((await ai.explainPlan(payload({ behov: 1 }))).value).toBe('Grovfodret räcker.')
     expect(requests[0]).toMatchObject({ max_tokens: 4000, messages: [{ role: 'user', content: '{"behov":1}' }] })
   })
 
@@ -138,9 +138,21 @@ describe('the Anthropic provider', () => {
     ['analyzeJournal', JOURNAL, (ai: AiProvider) => ai.analyzeJournal(payload({ poster: [] }))],
   ] as const)('%s sends the request it always sent', async (_method, reply, call) => {
     const { ai, requests } = provider(200, message(typeof reply === 'string' ? reply : JSON.stringify(reply)))
-    expect(await call(ai)).toEqual(reply)
+    expect((await call(ai)).value).toEqual(reply)
     expect(requests).toHaveLength(1)
     expect(requests[0]).toMatchSnapshot()
+  })
+
+  it('reports the tokens the reply used, and asks the configured model (#31)', async () => {
+    const requests: Record<string, unknown>[] = []
+    const fetch: ClientOptions['fetch'] = (_url, init) => {
+      requests.push(JSON.parse(init?.body as string) as Record<string, unknown>)
+      const body = { ...message('Text.'), usage: { input_tokens: 1234, output_tokens: 56 } }
+      return Promise.resolve(new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } }))
+    }
+    const ai = createAnthropicProvider({ apiKey: 'test-key', model: 'claude-other', clientOptions: { fetch } })
+    expect((await ai.explainPlan(payload({}))).usage).toEqual({ inputTokens: 1234, outputTokens: 56 })
+    expect(requests[0]).toMatchObject({ model: 'claude-other' })
   })
 
   it('turns a failed connection into upstream without a status', async () => {
@@ -156,7 +168,10 @@ describe('the Anthropic provider', () => {
     ['max_tokens', 'truncated'],
   ])('turns a reply that stopped with %s into %s', async (stopReason, kind) => {
     const { ai } = provider(200, message('Grovfodret', stopReason))
-    await expect(ai.explainPlan(payload({}))).rejects.toEqual(new AiProviderError(kind as 'refusal'))
+    // The reply still used tokens, which the usage log records (#31).
+    await expect(ai.explainPlan(payload({}))).rejects.toEqual(
+      new AiProviderError(kind as 'refusal', undefined, { inputTokens: 1, outputTokens: 1 }),
+    )
   })
 
   it.each([

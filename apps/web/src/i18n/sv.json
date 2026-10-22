@@ -793,7 +793,8 @@
       "refused": "AI:n avböjde att svara på det här.",
       "truncated": "Svaret blev avklippt. Försök igen.",
       "invalid": "Uppgifterna kunde inte skickas till AI:n.",
-      "failed": "Något gick fel. Försök igen."
+      "failed": "Något gick fel. Försök igen.",
+      "quotaExceeded": "Du har använt dagens AI-frågor. De fylls på vid midnatt."
     }
   }
 }

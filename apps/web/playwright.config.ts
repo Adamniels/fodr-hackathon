@@ -51,6 +51,10 @@ export default defineConfig({
         S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? 'fodr',
         S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? 'fodr-dev-secret',
         S3_CREATE_BUCKET: 'true',
+        // A small daily quota, so a test can use it up (#31); no test makes more AI calls to the API than this.
+        AI_DAILY_CALLS_PER_USER: '5',
+        AI_PRICE_SEK_PER_MTOK_INPUT: '30',
+        AI_PRICE_SEK_PER_MTOK_OUTPUT: '150',
       },
     },
     {

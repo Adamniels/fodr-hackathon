@@ -27,3 +27,7 @@ Configuration today is one `ANTHROPIC_API_KEY` read in `vite.config.ts`; the mod
 
 - A missing variable fails at deploy time, not at the first user request.
 - AI cost against the 300 SEK budget is visible from day one of the beta.
+
+## Notes
+
+- 2026-10-22 (#31): `AI_MODEL`, `AI_DAILY_CALLS_PER_USER` and the prices `AI_PRICE_SEK_PER_MTOK_INPUT` and `AI_PRICE_SEK_PER_MTOK_OUTPUT` are configuration; the prices are required, so no environment runs on a made-up price. The quota counts calls per user per calendar day in Sweden, every call that reached the model included (failed ones too), reserved under a per-user lock before the call. The monthly cost query is in `docs/operations.md`. The per-call `max_tokens` stay in code, next to the prompts they belong to.

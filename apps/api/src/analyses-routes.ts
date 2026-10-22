@@ -13,6 +13,7 @@ import type { Grovfoderanalys } from '@fodr/domain/types'
 import { validateAnalysis } from '@fodr/domain/validation'
 import { Hono, type Context } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import { AiQuotaExceeded, type MeteredAi } from './ai/metered'
 import { AiProviderError, type AiProvider } from './ai/provider'
 import type { AppEnv } from './app'
 import type { Auth } from './auth'
@@ -54,7 +55,7 @@ export interface AnalysisRouteDeps {
   /** The app's own origin, the only one an upload may come from. */
   origin: string
   auth: Auth
-  ai: AiProvider
+  ai: MeteredAi
   files: FileStore
   logger: Logger
   horses: HorseRepository
@@ -115,10 +116,13 @@ export function analysisRoutes({ origin, auth, ai, files, logger, horses, analys
     if (!mediaType) return problem(c, 415, 'analysis.unsupported_type')
     if (bytes.length > ANALYSIS_FILE_LIMITS[mediaType]) return problem(c, 413, 'analysis.too_large')
 
-    let reading: Awaited<ReturnType<AiProvider['readAnalysis']>>
+    let reading: Awaited<ReturnType<AiProvider['readAnalysis']>>['value']
     try {
-      reading = await ai.readAnalysis({ mediaType, base64: Buffer.from(bytes).toString('base64') })
+      const file = { mediaType, base64: Buffer.from(bytes).toString('base64') }
+      reading = await ai.run(user.id, 'analysis', (provider) => provider.readAnalysis(file))
     } catch (e) {
+      // Today's calls are used: the report was not read, and nothing is stored (#31).
+      if (e instanceof AiQuotaExceeded) return problem(c, 429, 'ai.quota_exceeded')
       if (!(e instanceof AiProviderError)) throw e
       logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, 'analysis reading failed')
       return e.kind === 'rate_limit' ? problem(c, 429, 'ai.rate_limited') : problem(c, 502, 'ai.unavailable')
