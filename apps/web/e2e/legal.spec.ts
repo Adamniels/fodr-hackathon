@@ -1,5 +1,13 @@
 import type { Page } from '@playwright/test'
-import { createAccountWithHorses, expect, PASSWORD, setTermsVersion, showExamplePlan, test } from './support/helpers'
+import {
+  createAccountWithHorses,
+  expect,
+  grantAdmin,
+  PASSWORD,
+  setTermsVersion,
+  showExamplePlan,
+  test,
+} from './support/helpers'
 import { uniqueEmail } from './support/mailpit'
 
 // The beta terms, the privacy notice and the plan disclaimer (#42).
@@ -58,4 +66,25 @@ test('an account on older terms accepts the new ones before the workspace', asyn
   // Accepted for good: a reload goes straight to the workspace.
   await page.reload()
   await expect(page.getByRole('heading', { level: 1, name: 'Sixten' })).toBeVisible()
+})
+
+test('the new-terms screen still lets a user leave: export, delete or log out', async ({ page }) => {
+  const account = await createAccountWithHorses(page)
+  await setTermsVersion(account, '2020-01-01')
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Nya villkor' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Exportera mina data' })).toHaveAttribute('href', '/api/v1/me/export')
+  await expect(page.getByRole('button', { name: 'Radera mitt konto' })).toBeVisible()
+  await page.getByRole('button', { name: 'Logga ut' }).click()
+  await expect(page.getByRole('heading', { name: 'Nya villkor' })).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+})
+
+test('the product administration waits for the new terms too', async ({ page }) => {
+  const account = await createAccountWithHorses(page)
+  await grantAdmin(page, account)
+  await setTermsVersion(account, '2020-01-01')
+  await page.goto('/admin/products')
+  await expect(page.getByRole('heading', { name: 'Nya villkor' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Produkter' })).toHaveCount(0)
 })

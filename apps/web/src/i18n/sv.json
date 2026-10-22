@@ -103,7 +103,7 @@
       "analysisNone": "Inte uppladdad än"
     },
     "stepsNav": "Steg",
-    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare.",
+    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Fodr är i betaversion och ersätter inte veterinär eller foderrådgivare.",
     "horses": {
       "loading": "Hämtar dina hästar…",
       "loadFailed": "Kunde inte hämta dina hästar.",
@@ -542,7 +542,7 @@
       "text": "Skapa ett konto och lägg in din häst, så räknar Fodr fram foderplanen."
     },
     "footer": {
-      "text": "Prototyp från ett hackathon 2026. Behov enligt SLU Rapport 289. Ersätter inte veterinär eller foderrådgivare.",
+      "text": "Fodr är i betaversion. Behov enligt SLU Rapport 289. Ersätter inte veterinär eller foderrådgivare.",
       "photos": "Foton: Unsplash-fotografer via Wikimedia Commons (CC0)."
     },
     "preview": {
@@ -778,7 +778,7 @@
       "NAME_REQUIRED": "Skriv ditt namn.",
       "NAME_TOO_LONG": "Namnet får vara högst 100 tecken.",
       "UNKNOWN": "Något gick fel. Försök igen.",
-      "TERMS_NOT_ACCEPTED": "Godkänn villkoren för att skapa ett konto."
+      "TERMS_NOT_ACCEPTED": "Villkoren har uppdaterats. Ladda om sidan och godkänn dem igen."
     }
   },
   "resetPassword": {
@@ -909,7 +909,7 @@
   "legal": {
     "updated": "Senast ändrad {{date}}.",
     "toStart": "Till startsidan",
-    "draftNote": "Texten är ett utkast inför betan och ses över innan Fodr öppnar för fler.",
+    "draftNote": "Texten är ett utkast och ses över innan Fodr lanseras.",
     "privacy": {
       "title": "Integritetspolicy",
       "sections": [
@@ -922,29 +922,32 @@
         {
           "heading": "Vad vi sparar",
           "paragraphs": [
-            "Ditt konto: namn, e-postadress, ett krypterat lösenord, din roll och när du godkände villkoren.",
-            "Dina hästar: profilerna med det du skriver om hälsa, foder och miljö, grovfoderanalyserna med de rapporter du laddar upp, sparade foderplaner med förklaringar och journalen.",
-            "Hur tjänsten används: de enheter du är inloggad på (när, IP-adress och webbläsare) och dina frågor till AI:n (vilken funktion, modell, antal tokens och uppskattad kostnad, inte själva texten)."
+            "Ditt konto: namn, e-postadress, ditt lösenord sparat så att ingen kan läsa det, din roll och vilken version av villkoren du godkände och när. E-postadress och lösenord behövs för att ha ett konto; utan dem kan du inte använda Fodr.",
+            "Dina hästar: profilerna med det du skriver om hälsa, foder och miljö, grovfoderanalyserna med de rapporter du laddar upp och AI:ns avläsning av dem, sparade foderplaner med förklaringar och journalen.",
+            "Hur tjänsten används: de enheter du är inloggad på (när, IP-adress och webbläsare), en kort tid IP-adresser för att stoppa för många inloggningsförsök, och dina anrop till AI:n (vilken funktion, modell, antal tokens och uppskattad kostnad, inte det du skickade).",
+            "Vi använder en kaka för att hålla dig inloggad. Den behövs för att tjänsten ska fungera och används inte för att följa dig."
           ]
         },
         {
           "heading": "Varför",
           "paragraphs": [
             "För att ge dig tjänsten du har bett om: räkna fram foderplaner, spara dina hästar och visa din historik. Den rättsliga grunden är vårt avtal med dig, villkoren.",
-            "För att hålla tjänsten säker och kostnaderna under kontroll använder vi inloggningsuppgifterna och AI-loggen. Den grunden är vårt berättigade intresse."
+            "För att hålla tjänsten säker och kostnaderna under kontroll använder vi inloggningsuppgifterna och AI-loggen. Den grunden är vårt berättigade intresse.",
+            "Foderplanerna räknas fram automatiskt, men de är förslag som du själv avgör om du följer. Inga beslut med rättslig verkan fattas automatiskt om dig."
           ]
         },
         {
           "heading": "AI och vilka som hanterar uppgifterna",
           "paragraphs": [
-            "När du låter AI:n läsa en analysrapport, fylla i hästprofilen från fri text, förklara en plan eller sammanfatta journalen skickas det du laddat upp eller skrivit, även det om hästens hälsa, till vår AI-leverantör Anthropic i USA. Anthropic använder det bara för att svara och tränar inte sina modeller på det. Överföringen till USA sker med EU:s standardavtalsklausuler.",
-            "Uppgifterna lagras hos [driftleverantör] inom EU och e-post skickas genom [e-postleverantör]. Vi säljer aldrig dina uppgifter och delar dem inte med butiker eller tillverkare."
+            "När du laddar upp en analysrapport, visar en foderplan, låter AI:n fylla i hästprofilen från fri text eller sammanfatta journalen skickas uppgifterna till vår AI-leverantör Anthropic i USA. Det gäller rapporten du laddat upp, som kan innehålla ditt namn och din adress, och det du skrivit om hästen, även om dess hälsa. Förklaringen av en foderplan hämtas av sig själv när planen visas.",
+            "[Att verifiera mot avtalet med Anthropic: hur länge Anthropic sparar uppgifterna, att de inte används för att träna modeller och vilket skydd som gäller för överföringen till USA, till exempel EU:s standardavtalsklausuler.]",
+            "Uppgifterna lagras hos [driftleverantör] och e-post skickas genom [e-postleverantör]. Typsnitten på sidorna hämtas från Google Fonts, vilket gör att din webbläsare skickar din IP-adress till Google i USA. Vi säljer inte dina uppgifter och delar dem inte med butiker eller tillverkare."
           ]
         },
         {
           "heading": "Hur länge",
           "paragraphs": [
-            "Så länge du har kvar ditt konto. Raderar du kontot tas allt ovan bort direkt. AI-loggen sparas utan koppling till dig, som underlag för våra kostnader."
+            "Så länge du har kvar ditt konto. Raderar du kontot tas allt ovan bort direkt ur tjänsten. AI-loggen sparas utan koppling till dig, som underlag för våra kostnader. [Hur länge säkerhetskopior sparas, enligt driftleverantören.]"
           ]
         },
         {
@@ -962,26 +965,27 @@
         {
           "heading": "Tjänsten",
           "paragraphs": [
-            "Fodr räknar fram foderplaner för hästar utifrån din grovfoderanalys och SLU Rapport 289. Tjänsten drivs av [Personuppgiftsansvarig] och är i betaversion: gratis, under utveckling och utan garanti om att den alltid fungerar."
+            "Fodr räknar fram foderplaner för hästar utifrån din grovfoderanalys och SLU Rapport 289. Tjänsten drivs av [Företagsnamn] och är i betaversion: gratis, under utveckling och utan garanti om att den alltid fungerar."
           ]
         },
         {
           "heading": "Ett beslutsstöd, inte veterinärrådgivning",
           "paragraphs": [
             "Planerna är beräkningar som hjälp när du bestämmer foder. De ersätter inte en veterinär eller en foderrådgivare. Du ansvarar själv för hur du utfodrar din häst. Kontakta veterinär vid sjukdom, viktförändringar eller om hästen inte mår bra.",
+            "AI:n kan läsa fel i en analysrapport. Kontrollera värdena innan du använder planen.",
             "Produktuppgifter och priser kommer från butikernas och tillverkarnas information och kan vara fel eller inaktuella. Kontrollera förpackningen innan du ger ett fodertillskott."
           ]
         },
         {
           "heading": "Ditt konto",
           "paragraphs": [
-            "Du behöver ett konto med en bekräftad e-postadress. Håll ditt lösenord för dig själv. Det du lägger in är ditt: du kan ladda ner det och radera kontot när du vill."
+            "Du behöver ett konto med en bekräftad e-postadress. Håll ditt lösenord för dig själv. Det du lägger in är ditt: du kan ladda ner det och radera kontot när du vill. [Åldersgräns eller målsmans godkännande, att bestämma.]"
           ]
         },
         {
           "heading": "Användning",
           "paragraphs": [
-            "Använd Fodr för dina egna eller de hästar du sköter. Försök inte komma åt andras uppgifter eller störa tjänsten. Vi får stänga av ett konto som bryter mot villkoren."
+            "Använd Fodr för dina egna hästar och hästar du sköter. Försök inte komma åt andras uppgifter eller störa tjänsten. Vi får stänga av ett konto som bryter mot villkoren."
           ]
         },
         {
@@ -993,7 +997,7 @@
         {
           "heading": "Ansvar och lag",
           "paragraphs": [
-            "Fodr ansvarar inte för skador som uppstår av hur planerna används, utöver vad som följer av tvingande lag. Svensk lag gäller.",
+            "[Företagsnamn] ansvarar inte för skador som uppstår till följd av hur planerna används, utöver vad som följer av tvingande lag. Svensk lag gäller.",
             "Frågor om villkoren: [kontakt@exempel.se]."
           ]
         }
@@ -1001,12 +1005,13 @@
     },
     "consent": {
       "label": "Jag godkänner <terms>villkoren</terms> och har läst <privacy>integritetspolicyn</privacy>",
-      "plainLabel": "Jag godkänner villkoren och har läst integritetspolicyn",
       "required": "Godkänn villkoren för att skapa ett konto.",
       "newTitle": "Nya villkor",
-      "newBody": "Villkoren eller integritetspolicyn har ändrats sedan du godkände dem. Läs dem och godkänn för att fortsätta.",
+      "newBody": "Villkoren har ändrats sedan du godkände dem. Läs dem och godkänn för att fortsätta.",
       "accept": "Godkänn och fortsätt",
-      "acceptFailed": "Det gick inte att spara. Försök igen."
+      "acceptFailed": "Det gick inte att spara. Försök igen.",
+      "outdated": "Villkoren har uppdaterats. Ladda om sidan och godkänn dem igen.",
+      "otherwise": "Vill du inte godkänna?"
     },
     "links": {
       "terms": "Villkor",

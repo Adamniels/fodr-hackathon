@@ -1,13 +1,15 @@
-// The beta terms and the privacy notice (#42): public pages, texts in the i18n catalogue (legal.*), the date the
-// version a user accepts (TERMS_VERSION). AcceptTerms asks a signed-in user on an older version to accept the current
-// one before the workspace.
+// The beta terms and the privacy notice (#42): public pages, texts in the i18n catalogue (legal.*), each dated
+// (TERMS_VERSION, which users accept; PRIVACY_UPDATED, which they only read). AcceptTerms asks a signed-in user on an
+// older version to accept the current one before the workspace, and lets them export, delete or log out instead. The
+// API does not refuse an outdated version: the web asks (ADR 0009 note).
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { MeResponseSchema } from '@fodr/contracts/me'
-import { TERMS_VERSION } from '@fodr/contracts/terms'
-import { callApi } from '../api-v1'
+import { PRIVACY_UPDATED, TERMS_VERSION } from '@fodr/contracts/terms'
+import { ApiError } from '../api-v1'
+import { DeleteAccount } from '../components/DeleteAccount'
 import { formatDate } from '../format'
+import { useAcceptTerms } from '../terms'
 import { useSession } from './session'
 
 interface Section {
@@ -24,7 +26,9 @@ function LegalPage({ text }: { text: 'privacy' | 'terms' }) {
         <Link to="/">{t('legal.toStart')}</Link>
       </p>
       <h1>{t(`legal.${text}.title`)}</h1>
-      <p className="liten">{t('legal.updated', { date: formatDate(TERMS_VERSION) })}</p>
+      <p className="liten">
+        {t('legal.updated', { date: formatDate(text === 'terms' ? TERMS_VERSION : PRIVACY_UPDATED) })}
+      </p>
       {sections.map((s) => (
         <section key={s.heading}>
           <h2>{s.heading}</h2>
@@ -47,19 +51,18 @@ export function AcceptTerms({ children }: { children: React.ReactNode }) {
   const session = useSession()
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [error, setError] = useState<'acceptFailed' | 'outdated' | null>(null)
+  const acceptTerms = useAcceptTerms()
   if (!session.user || session.user.termsVersion === TERMS_VERSION) return <>{children}</>
 
   const accept = async () => {
     setBusy(true)
-    setFailed(false)
+    setError(null)
     try {
-      MeResponseSchema.parse(
-        await (await callApi('/me/terms', { method: 'POST', body: JSON.stringify({ version: TERMS_VERSION }) })).json(),
-      )
-      await session.refresh()
-    } catch {
-      setFailed(true)
+      await acceptTerms()
+    } catch (e) {
+      // A 400 means the server's terms are newer than this page's: only a reload shows them.
+      setError(e instanceof ApiError && e.status === 400 ? 'outdated' : 'acceptFailed')
       setBusy(false)
     }
   }
@@ -85,15 +88,26 @@ export function AcceptTerms({ children }: { children: React.ReactNode }) {
             />
           </span>
         </label>
-        {failed && (
+        {error && (
           <p className="ruta fel" role="alert">
-            {t('legal.consent.acceptFailed')}
+            {t(`legal.consent.${error}`)}
           </p>
         )}
         <button className="knapp" type="submit" disabled={!consent || busy}>
           {t('legal.consent.accept')}
         </button>
       </form>
+      {/* Not accepting must not trap anyone: their data and their account stay theirs (GDPR, #42 review). */}
+      <h2>{t('legal.consent.otherwise')}</h2>
+      <div className="atgardsrad">
+        <a className="sidofalt-lank" href="/api/v1/me/export" download>
+          {t('app.sidebar.export')}
+        </a>
+        <DeleteAccount />
+        <button className="sidofalt-lank" onClick={() => void session.logOut()}>
+          {t('app.sidebar.logOut')}
+        </button>
+      </div>
     </main>
   )
 }

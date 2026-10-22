@@ -41,13 +41,19 @@ describe('the beta terms', () => {
 
   it('can be accepted again in the current version by a user on an older one', async () => {
     const { browser, email } = await signedInUser(app, nextIp())
-    await database.db.update(users).set({ termsVersion: '2020-01-01' }).where(eq(users.email, email))
+    const longAgo = new Date('2020-01-01T00:00:00Z')
+    await database.db
+      .update(users)
+      .set({ termsVersion: '2020-01-01', termsAcceptedAt: longAgo })
+      .where(eq(users.email, email))
     expect(await (await browser.request('/api/v1/me')).json()).toMatchObject({ user: { termsVersion: '2020-01-01' } })
     expect((await browser.post('/api/v1/me/terms', { version: '2020-01-01' })).status).toBe(400)
     const res = await browser.post('/api/v1/me/terms', { version: TERMS_VERSION })
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ user: { termsVersion: TERMS_VERSION } })
     expect((await rowOf(email))?.termsVersion).toBe(TERMS_VERSION)
+    // With the time of this acceptance, not the old one.
+    expect((await rowOf(email))?.termsAcceptedAt?.getTime()).toBeGreaterThan(longAgo.getTime())
   })
 
   it('are never changed through the profile update', async () => {

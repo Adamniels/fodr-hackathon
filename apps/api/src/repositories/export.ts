@@ -33,6 +33,8 @@ export interface UserExport {
     email: string
     emailVerified: boolean
     role: string
+    termsVersion: string | null
+    termsAcceptedAt: string | null
     createdAt: string
     updatedAt: string
   }
@@ -67,6 +69,8 @@ export function exportRepository(db: Executor): ExportRepository {
                 email: users.email,
                 emailVerified: users.emailVerified,
                 role: users.role,
+                termsVersion: users.termsVersion,
+                termsAcceptedAt: users.termsAcceptedAt,
                 createdAt: users.createdAt,
                 updatedAt: users.updatedAt,
               })
@@ -142,6 +146,7 @@ export function exportRepository(db: Executor): ExportRepository {
           return {
             account: {
               ...account,
+              termsAcceptedAt: account.termsAcceptedAt?.toISOString() ?? null,
               createdAt: account.createdAt.toISOString(),
               updatedAt: account.updatedAt.toISOString(),
             },

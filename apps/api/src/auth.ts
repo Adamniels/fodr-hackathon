@@ -168,6 +168,10 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
             if (user.name.length > MAX_NAME_LENGTH) {
               throw new APIError('BAD_REQUEST', { code: 'NAME_TOO_LONG', message: 'Name too long' })
             }
+            // Every way an account is made accepts the current terms (#42), not only the sign-up route the hook checks.
+            if ((user as { termsVersion?: unknown }).termsVersion !== TERMS_VERSION) {
+              throw new APIError('BAD_REQUEST', { code: 'TERMS_NOT_ACCEPTED', message: 'Terms not accepted' })
+            }
             return Promise.resolve({ data: { ...user, termsAcceptedAt: new Date() } })
           },
         },
