@@ -33,6 +33,8 @@ export interface NewAnalysis {
 
 export interface AnalysisRepository {
   current(user: Pick<User, 'id'>, horseId: string): Promise<Analysis | null | undefined>
+  /** One analysis of the horse; undefined when it is not the user's or not of this horse. */
+  get(user: Pick<User, 'id'>, horseId: string, analysisId: string): Promise<Analysis | undefined>
   /** Saves the analysis as the horse's current one; undefined when the horse is not the user's (or is gone). */
   create(user: Pick<User, 'id'>, horseId: string, analysis: NewAnalysis): Promise<Analysis | undefined>
   updateValues(
@@ -65,6 +67,15 @@ export function analysisRepository(db: Database['db']): AnalysisRepository {
         .from(analyses)
         .where(and(eq(analyses.horseId, horseId), eq(analyses.isCurrent, true)))
       return rows.map(toAnalysis).at(0) ?? null
+    },
+
+    async get(user, horseId, analysisId) {
+      if (!UUID.test(horseId) || !UUID.test(analysisId)) return undefined
+      const rows = await db
+        .select()
+        .from(analyses)
+        .where(and(eq(analyses.id, analysisId), eq(analyses.horseId, horseId), isMember(user, horseId)))
+      return rows.map(toAnalysis).at(0)
     },
 
     async create(user, horseId, analysis) {

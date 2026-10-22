@@ -1,3 +1,4 @@
 dist
 node_modules
 drizzle/meta
+src/data/products.json

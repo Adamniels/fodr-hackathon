@@ -8,6 +8,8 @@
 // server and the database disagree on it.
 import type { Values } from '@fodr/contracts/analyses'
 import type { HorseProfile } from '@fodr/contracts/horses'
+import type { Plan } from '@fodr/domain/plan'
+import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { sql } from 'drizzle-orm'
 import {
   bigint,
@@ -160,4 +162,26 @@ export const analyses = pgTable(
       .on(table.horseId)
       .where(sql`${table.isCurrent}`),
   ],
+)
+
+// Saved plans (#27, CF5, ADR 0004, ADR 0008), computed by the server and never changed: what they were computed from
+// (`inputs`), the plan (`result`), the build that computed it and the catalogue it chose from. They go with their
+// horse and their analysis.
+export const plans = pgTable(
+  'plans',
+  {
+    id: id(),
+    horseId: uuid('horse_id')
+      .notNull()
+      .references(() => horses.id, { onDelete: 'cascade' }),
+    analysisId: uuid('analysis_id')
+      .notNull()
+      .references(() => analyses.id, { onDelete: 'cascade' }),
+    inputs: jsonb('inputs').$type<{ profil: Hastprofil; analys: Grovfoderanalys }>().notNull(),
+    result: jsonb('result').$type<Plan>().notNull(),
+    engineVersion: text('engine_version').notNull(),
+    productSetVersion: text('product_set_version').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('plans_horse_id_created_at_idx').on(table.horseId, table.createdAt)],
 )

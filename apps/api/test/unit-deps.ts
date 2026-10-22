@@ -6,6 +6,7 @@ import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { planRepository } from '../src/repositories/plans'
 import type { FileStore } from '../src/storage'
 
 export const UNIT_CONFIG: Config = {
@@ -13,6 +14,7 @@ export const UNIT_CONFIG: Config = {
   port: 3000,
   logLevel: 'info',
   webDistDir: undefined,
+  appVersion: 'unit',
   anthropicApiKey: undefined,
   betterAuthSecret: 'unit-test-secret-of-at-least-32-characters',
   betterAuthUrl: 'http://localhost:3000',
@@ -44,7 +46,7 @@ export function unitAuth() {
 /** Repositories over a database that is never reached. */
 export function unitRepositories() {
   const { db } = createDatabase(UNIT_CONFIG.databaseUrl)
-  return { horses: horseRepository(db), analyses: analysisRepository(db) }
+  return { horses: horseRepository(db), analyses: analysisRepository(db), plans: planRepository(db) }
 }
 
 /** A file store unit tests never reach. */

@@ -1,5 +1,5 @@
 # The production image (ADR 0005): one Node process serving the API and the built web app on one origin.
-#   docker build -t fodr .
+#   docker build --build-arg GIT_SHA=$(git rev-parse HEAD) -t fodr .
 #   docker run -p 3000:3000 --env-file production.env fodr   (every variable in .env.example; see apps/api/src/config.ts)
 # Migrations are applied explicitly before a release, with the same image (ADR 0008):
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/migrate.mjs
@@ -16,12 +16,19 @@ COPY packages/contracts/package.json packages/contracts/
 RUN npm ci
 COPY . .
 RUN npm run build
+# The catalogue is served by the API, never bundled with the web app (#27).
+RUN node apps/web/scripts/check-bundle.mjs
 
 FROM node:24.21.0-bookworm-slim
+# The commit the image is built from, recorded with every saved plan as its engine version (CF5, #27). Required: an
+# image that cannot say which code computed its plans is not built.
+ARG GIT_SHA
+RUN test -n "$GIT_SHA" || { echo 'Build with --build-arg GIT_SHA=$(git rev-parse HEAD)' >&2; exit 1; }
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
-    WEB_DIST_DIR=/app/apps/web/dist
+    WEB_DIST_DIR=/app/apps/web/dist \
+    APP_VERSION=$GIT_SHA
 # The API is bundled with its dependencies (apps/api/build.mjs), so no node_modules is needed.
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/drizzle apps/api/drizzle

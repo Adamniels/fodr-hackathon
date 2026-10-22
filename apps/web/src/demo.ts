@@ -82,6 +82,7 @@ export function useDemoHorses(): HorseStore {
     saveState: () => undefined,
     retrySave: () => undefined,
     flush: () => Promise.resolve(),
+    hasUnsaved: () => false,
   }
 }
 
@@ -115,6 +116,8 @@ export function useDemoAnalysis(horseId: string | undefined): AnalysisStore {
     },
     saveState: undefined,
     retrySave: () => undefined,
+    flush: () => Promise.resolve(),
+    hasUnsaved: () => false,
   }
 }
 

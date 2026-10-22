@@ -29,6 +29,7 @@ function setup(config: Partial<Config> = {}) {
     ai: fakeAiProvider(),
     auth: unitAuth(),
     files: unitFiles,
+    catalogue: { version: 'unit', products: [] },
     repositories: unitRepositories(),
   })
   return { app, lines }

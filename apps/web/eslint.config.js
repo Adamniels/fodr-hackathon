@@ -66,6 +66,21 @@ export default tseslint.config(
     },
   },
   {
+    // The product catalogue comes from the API (#27): bundling it again would let the preview plan with another
+    // catalogue than the server saves plans with (ADR 0004), and ships 170 KB to every visitor.
+    files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['**/products.json'], message: 'The catalogue comes from the API (GET /api/v1/products).' },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // In a test, `x!` states what the test expects; if x is missing the test fails anyway (#17).
     files: ['**/*.test.ts'],
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' },

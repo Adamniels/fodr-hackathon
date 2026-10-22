@@ -24,6 +24,7 @@ function setup() {
     ai,
     auth: unitAuth(),
     files: unitFiles,
+    catalogue: { version: 'unit', products: [] },
     repositories: unitRepositories(),
   })
   const post = (path: string, body: unknown) =>

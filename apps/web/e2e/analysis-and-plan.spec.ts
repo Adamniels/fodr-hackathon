@@ -141,6 +141,70 @@ test('example analysis produces the known plan', async ({ page }) => {
   await expect(page.getByRole('listitem').filter({ hasText: 'Ta bort Krafft Leisure Pellets 20kg' })).toBeVisible()
 })
 
+test('saving the plan stores what the server computed, and marks the plan as saved (#27)', async ({ page }) => {
+  await loadExamplePlan(page)
+  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+
+  // The journal entry holds the server's plan, with the analysis it was planned from.
+  const entry = page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })
+  await expect(entry).toContainText('Testlabb Alfa')
+  await expectGrams(entry, 66)
+
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  const shoppingRow = (product: string) => page.getByRole('row').filter({ hasText: product })
+  await expectGrams(shoppingRow('Krafft Miner Original Pellets 20kg'), 66)
+  await expectGrams(shoppingRow('Salt 1,5 kg'), 14)
+  await expectMoney(shoppingRow('Totalt utöver grovfodret'), 88)
+
+  await page.reload()
+  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  // A changed profile is another plan: no longer the saved one.
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Vikt (kg)').fill('540')
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
+  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+})
+
+test('an edit made just before saving is in the saved plan (#27)', async ({ page }) => {
+  await loadExamplePlan(page)
+  // /api/v1 belongs to the real backend and is otherwise never intercepted: the profile's save is only held back, so
+  // the plan is certain to be saved while the edit is still on its way.
+  await page.route('**/api/v1/horses/*', async (route) => {
+    if (route.request().method() === 'PUT') await new Promise((resolve) => setTimeout(resolve, 5000))
+    await route.fallback()
+  })
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Vikt (kg)').fill('540')
+  // Straight to the plan and save, before the edit's autosave would have gone out on its own.
+  await goToStep(page, 'Foderplan')
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+  // The save waits for the held profile save first.
+  await expect(page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })).toBeVisible({ timeout: 15_000 })
+  // The plan on screen (540 kg) is the saved one, so the edit reached the server before the plan was computed.
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByText(/^Sparad /)).toBeVisible()
+})
+
+test('a plan is not saved while an edit has failed to save (#27)', async ({ page }) => {
+  await loadExamplePlan(page)
+  // As above: a stubbed answer, the only way to make the profile's save fail.
+  await page.route('**/api/v1/horses/*', (route) =>
+    route.request().method() === 'PUT'
+      ? route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' })
+      : route.fallback(),
+  )
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Vikt (kg)').fill('540')
+  await expect(page.getByText('Kunde inte spara ändringarna.')).toBeVisible()
+  await goToStep(page, 'Foderplan')
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+  await expect(page.getByText(/^Alla ändringar är inte sparade än/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
+})
+
 test('plan explanation comes from the AI mock', async ({ page, ai }) => {
   await loadExamplePlan(page)
   const paragraphs = page.getByRole('paragraph')

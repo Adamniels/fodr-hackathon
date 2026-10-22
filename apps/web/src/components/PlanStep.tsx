@@ -1,14 +1,24 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trans, useTranslation } from 'react-i18next'
 import { explainPlan } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { doseGrams, nutrientUnit, nutrientLabel, formatMoney, formatNumber, shortNutrientLabel } from '../format'
+import {
+  doseGrams,
+  nutrientUnit,
+  nutrientLabel,
+  formatDate,
+  formatMoney,
+  formatNumber,
+  localIsoDate,
+  shortNutrientLabel,
+} from '../format'
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
 import { fingerprint, loadExplanation, saveExplanation } from '../storage'
+import { PlanSaveError } from '../plans'
 import { TransitionCalendar } from './TransitionCalendar'
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -25,14 +35,29 @@ export function PlanStep({
   hast,
   analys,
   plan,
+  savedAt,
   onSaveToJournal,
 }: {
   hast: Hastprofil
   analys: Grovfoderanalys
   plan: Plan
-  onSaveToJournal: () => void
+  /** When the plan on screen was saved on the server (#27): it is then the server's plan. */
+  savedAt?: string
+  /** Saves the plan and adds it to the journal; rejects when the server refused. */
+  onSaveToJournal: () => Promise<void>
 }) {
   const { t } = useTranslation()
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<'failed' | 'unsaved' | 'differs' | null>(null)
+  const save = () => {
+    setSaving(true)
+    setSaveError(null)
+    // On success the journal step opens, and this step goes away with its state.
+    onSaveToJournal().catch((e: unknown) => {
+      setSaveError(e instanceof PlanSaveError ? e.code : 'failed')
+      setSaving(false)
+    })
+  }
   // The explanation is cached per horse and payload. The same plan shows the cached text instead of
   // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
@@ -161,10 +186,18 @@ export function PlanStep({
       <section className="kort">
         <div className="kort-rubrikrad">
           <h3>{t('plan.shopping.title')}</h3>
-          <button className="knapp sekundar kompakt" onClick={onSaveToJournal}>
+          {savedAt && (
+            <span className="liten">{t('plan.saved', { date: formatDate(localIsoDate(new Date(savedAt))) })}</span>
+          )}
+          <button className="knapp sekundar kompakt" disabled={saving} onClick={save}>
             {t('plan.shopping.saveToJournal')}
           </button>
         </div>
+        {saveError && (
+          <p className="ruta fel" role="alert">
+            {t(`plan.saveError.${saveError}`)}
+          </p>
+        )}
         {inkop.length > 0 ? (
           <table className="tabell lista">
             <thead>

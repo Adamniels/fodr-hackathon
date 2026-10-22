@@ -15,7 +15,8 @@ const FIGURES = { hastar: 355_500, hosilageProcent: 55, analysKostnadKr: { min: 
 const SAMPLE_ANALYSIS = { tsProcent: 39.7, perKgTs: { energi: 10.2, smbRp: 104, socker: 61 } }
 
 interface Props {
-  produkter: Produkt[]
+  /** The catalogue for the plan preview; null until it has loaded (or when it could not be read). */
+  produkter: Produkt[] | null
   loggedInAs: string | null
   onDemo: () => void
   onLogIn: () => void
@@ -62,7 +63,7 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
           </a>
         </div>
         <p className="start-not">{t('landing.hero.note')}</p>
-        <ProductPreview produkter={produkter} />
+        {produkter && <ProductPreview produkter={produkter} />}
       </section>
 
       <p className="kallrad">
@@ -249,11 +250,7 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
 function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {
-    const result = skapaPlan(
-      { ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } },
-      analysKomplett,
-      produkter,
-    )
+    const result = skapaPlan(demoHast, analysKomplett, produkter)
     return 'plan' in result ? result.plan : null
   }, [produkter])
   if (!plan) return null

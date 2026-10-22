@@ -30,6 +30,8 @@ export function reportProblem(file: File): ReportProblem | undefined {
 
 /** An analysis as the steps use it. */
 export interface StoredAnalysis {
+  /** The server's ID, which a saved plan refers to; none for the demo's analyses, which live in the browser. */
+  id?: string
   analys: Grovfoderanalys
   omrakningar: Omrakning[]
   /** The AI's notes on what it was unsure of; empty for an example. */
@@ -51,6 +53,10 @@ export interface AnalysisStore {
   correct: (analys: Grovfoderanalys, omrakningar: Omrakning[]) => void
   saveState: AnalysisSaveState | undefined
   retrySave: () => void
+  /** Sends every waiting correction, before saving a plan. */
+  flush: () => Promise<void>
+  /** Whether a correction is waiting, on its way, failed, or held back as invalid. */
+  hasUnsaved: () => boolean
 }
 
 const base = (horseId: string) => `/horses/${horseId}/analyses`
@@ -169,5 +175,7 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     retrySave: () => {
       if (query.data) saver.retry(query.data.id)
     },
+    flush: () => saver.flush(),
+    hasUnsaved: () => saver.busy() || (query.data ? validateAnalysis(query.data.analys).length > 0 : false),
   }
 }
