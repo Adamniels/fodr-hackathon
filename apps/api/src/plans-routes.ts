@@ -13,7 +13,7 @@ import { aiFailure } from './ai/routes'
 import type { AppEnv } from './app'
 import type { Auth } from './auth'
 import type { Logger } from './logger'
-import type { Catalogue } from './products'
+import type { CatalogueSource } from './products'
 import { problem } from './problem'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { Explanation, ExplanationRepository } from './repositories/explanations'
@@ -24,7 +24,7 @@ import { parseJson } from './validation'
 
 export interface PlanRouteDeps {
   auth: Auth
-  catalogue: Catalogue
+  catalogue: CatalogueSource
   /** The build that computes the plans (its git commit). */
   engineVersion: string
   horses: HorseRepository
@@ -85,7 +85,9 @@ export function planRoutes({
     const analysis = await analyses.get(user, horse.id, body.data.analysisId)
     if (!analysis) return problem(c, 404, 'analysis.not_found')
 
-    const result = skapaPlan(horse, analysis.analys, catalogue.products)
+    // The newest catalogue, which the browser's preview also plans with (a stale tab's is caught as 'differs').
+    const { products, version: productSetVersion } = await catalogue.current()
+    const result = skapaPlan(horse, analysis.analys, products)
     // A profile or analysis saved as a draft (out of range) gets no plan: the fields to fix, as the preview shows them.
     if ('errors' in result) {
       return problem(
@@ -103,7 +105,7 @@ export function planRoutes({
         inputs: { profil: horse, analys: analysis.analys },
         result: result.plan,
         engineVersion,
-        productSetVersion: catalogue.version,
+        productSetVersion,
       },
       body.data.journalDatum,
     )
@@ -155,17 +157,18 @@ export function planRoutes({
 }
 
 /** GET /api/v1/products: the catalogue, public, revalidated by its version (ETag) rather than downloaded again. */
-export function productRoutes(catalogue: Catalogue) {
+export function productRoutes(catalogue: CatalogueSource) {
   const routes = new Hono<AppEnv>()
-  const etag = `"${catalogue.version}"`
-  // Weak comparison (RFC 9110): a proxy may weaken the tag, and a client may send several.
-  const matches = (header: string | undefined) =>
-    header?.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag || tag.trim() === '*') ?? false
-  routes.get('/', (c) => {
+  routes.get('/', async (c) => {
+    const current = await catalogue.current()
+    const etag = `"${current.version}"`
+    // Weak comparison (RFC 9110): a proxy may weaken the tag, and a client may send several.
+    const matches = (header: string | undefined) =>
+      header?.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag || tag.trim() === '*') ?? false
     c.header('ETag', etag)
     c.header('Cache-Control', 'no-cache')
     if (matches(c.req.header('If-None-Match'))) return c.body(null, 304)
-    return c.json(catalogue)
+    return c.json(current)
   })
   return routes
 }

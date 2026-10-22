@@ -3,6 +3,7 @@
 #   docker run -p 3000:3000 --env-file production.env fodr   (every variable in .env.example; see apps/api/src/config.ts)
 # Migrations are applied explicitly before a release, with the same image (ADR 0008):
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/migrate.mjs
+#   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/import-products.mjs   (#35, before the API starts)
 # The tag is the newest Node 24 release at least two weeks old (docs/architecture.md).
 
 FROM node:24.21.0-bookworm-slim AS build

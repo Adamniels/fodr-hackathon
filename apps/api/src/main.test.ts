@@ -27,7 +27,9 @@ describe('the API process', () => {
 
   it('serves health, then stops cleanly on SIGTERM', async () => {
     const api = start({
-      DATABASE_URL: 'postgres://fodr:fodr@localhost:5432/fodr',
+      // Nothing listens there either: the API serves health before its database answers, whatever a local one holds
+      // (its product catalogue is checked once the database answers, #35).
+      DATABASE_URL: 'postgres://fodr:fodr@127.0.0.1:1/fodr',
       PORT: '0',
       BETTER_AUTH_SECRET: 'a-test-secret-of-at-least-32-characters',
       BETTER_AUTH_URL: 'http://localhost:3000',

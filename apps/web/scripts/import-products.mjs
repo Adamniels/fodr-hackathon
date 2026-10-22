@@ -1,4 +1,5 @@
-// Converts the stores' product files to the app's format (apps/api/src/data/products.json, which the API serves, #27).
+// Converts the stores' product files to the app's format (apps/api/src/data/products.json, #27), which
+// `npm run products:import` then loads into the database the API plans from (#35).
 // Usage: node scripts/import-products.mjs [source-dir]
 // The selectable products and their doses come from scripts/produktval.json, which is reviewed by hand.
 

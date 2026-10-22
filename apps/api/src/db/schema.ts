@@ -9,7 +9,7 @@
 import type { Values } from '@fodr/contracts/analyses'
 import type { HorseProfile } from '@fodr/contracts/horses'
 import type { Plan } from '@fodr/domain/plan'
-import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
+import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 import { sql } from 'drizzle-orm'
 import {
   bigint,
@@ -244,4 +244,52 @@ export const aiUsage = pgTable(
     createdAt: createdInOrder(),
   },
   (table) => [index('ai_usage_user_id_created_at_idx').on(table.userId, table.createdAt)],
+)
+
+// The product catalogue (#35, ADR 0008, CF9): a product's identity, its immutable versions, and the sets of versions
+// the optimiser plans with. A product keeps the store's ID, which horse profiles refer to. A set names exactly what a
+// plan chose from (plans.product_set_version), in the catalogue's order, so a product edited later never changes what
+// a saved plan was computed from. Nothing here is updated or deleted, except a product's retirement.
+export const products = pgTable('products', {
+  id: text('id').primaryKey(),
+  retiredAt: instant('retired_at'),
+  createdAt: createdAt(),
+})
+
+export const productVersions = pgTable(
+  'product_versions',
+  {
+    id: id(),
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id),
+    data: jsonb('data').$type<Produkt>().notNull(),
+    /** When the data was last checked against the package (CF9); set by curation (#36, #37). */
+    verifiedOn: date('verified_on', { mode: 'string' }),
+    createdAt: createdInOrder(),
+  },
+  (table) => [index('product_versions_product_id_idx').on(table.productId, table.createdAt)],
+)
+
+export const productSets = pgTable('product_sets', {
+  id: id(),
+  createdAt: createdInOrder(),
+})
+
+export const productSetMembers = pgTable(
+  'product_set_members',
+  {
+    setId: uuid('set_id')
+      .notNull()
+      .references(() => productSets.id),
+    productVersionId: uuid('product_version_id')
+      .notNull()
+      .references(() => productVersions.id),
+    /** The product's place in the catalogue: the optimiser reads the products in this order. */
+    position: integer('position').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.setId, table.productVersionId] }),
+    uniqueIndex('product_set_members_set_id_position_idx').on(table.setId, table.position),
+  ],
 )
