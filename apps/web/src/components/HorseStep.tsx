@@ -1,6 +1,7 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
+import { AI_ANSWER_MAX, AI_ANSWERS_MAX, AI_TEXT_MAX } from '@fodr/contracts/ai'
 import { aiErrorText, useAi } from '../api'
 import { RASER, hittaRas } from '@fodr/domain/breeds'
 import { BYTESTAKT, standardKanslighet } from '@fodr/domain/transition'
@@ -550,7 +551,8 @@ function AiFill({
     if (!produkter) return
     setLaddar(true)
     setFel(null)
-    const allaSvar = [...tidigare, ...extraSvar]
+    // The latest answers, as many as the request takes; older rounds have shaped the fields already.
+    const allaSvar = [...tidigare, ...extraSvar].slice(-AI_ANSWERS_MAX)
     try {
       const t = await ai.interpretProfile({
         foderText,
@@ -612,6 +614,7 @@ function AiFill({
           rows={3}
           placeholder={t('horse.ai.aboutPlaceholder')}
           value={foderText}
+          maxLength={AI_TEXT_MAX}
           onChange={(e) => setFoderText(e.target.value)}
         />
       </Field>
@@ -620,6 +623,7 @@ function AiFill({
           rows={2}
           placeholder={t('horse.ai.healthPlaceholder')}
           value={halsaText}
+          maxLength={AI_TEXT_MAX}
           onChange={(e) => setHalsaText(e.target.value)}
         />
       </Field>
@@ -627,7 +631,11 @@ function AiFill({
         <div className="foljdfragor">
           {fragor.map((f) => (
             <Field key={f} label={f}>
-              <input value={svar[f] ?? ''} onChange={(e) => setSvar({ ...svar, [f]: e.target.value })} />
+              <input
+                value={svar[f] ?? ''}
+                maxLength={AI_ANSWER_MAX}
+                onChange={(e) => setSvar({ ...svar, [f]: e.target.value })}
+              />
             </Field>
           ))}
         </div>

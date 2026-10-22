@@ -96,6 +96,21 @@ describe('the AI routes', () => {
     expect(ai.calls).toEqual([])
   })
 
+  it('takes a journal of the latest 100 full-length entries, and no more entries than that', async () => {
+    const { browser } = await user()
+    const entry = (i: number) => ({
+      id: `e${String(i)}`,
+      datum: '2026-10-01',
+      viktKg: 545,
+      text: 'å'.repeat(2000),
+      plan: { analys: 'Hösilage, Labb, 2026-06-10', grovfoderKgPerDag: 16, produkter: [], kostnadPerManad: 88 },
+    })
+    const full = { ...JOURNAL_REQUEST, poster: Array.from({ length: 100 }, (_, i) => entry(i)) }
+    expect((await browser.post(ROUTES[2].path, full)).status).toBe(200)
+    const tooMany = { ...JOURNAL_REQUEST, poster: Array.from({ length: 101 }, (_, i) => ({ ...entry(i), text: 'x' })) }
+    expect((await browser.post(ROUTES[2].path, tooMany)).status).toBe(400)
+  })
+
   it('no longer has the analysis reading route: reports are read by the upload (#26)', async () => {
     const { browser } = await user()
     for (const path of ['/api/analys', '/api/profil', '/api/forklaring', '/api/journal']) {
@@ -119,6 +134,17 @@ describe('AI errors', () => {
     expect(res.status).toBe(status)
     expect(res.headers.get('content-type')).toBe('application/problem+json')
     expect(await res.json()).toMatchObject({ code })
+  })
+
+  it('answers a reply that could not be read as unavailable, and logs only its type', async () => {
+    const { browser } = await user()
+    ai.fail('interpretProfile', new SyntaxError('Unexpected token in "hemlig-markor ur svaret"'))
+    const res = await browser.post(ROUTES[0].path, PROFILE_REQUEST)
+    expect(res.status).toBe(502)
+    expect(await res.json()).toMatchObject({ code: 'ai.unavailable' })
+    const lines = logs.map((l) => JSON.parse(l) as Record<string, unknown>)
+    expect(lines.findLast((l) => l.msg === 'ai request failed')).toMatchObject({ errorType: 'SyntaxError' })
+    expect(logs.join('\n')).not.toMatch(/hemlig-markor/)
   })
 
   it('logs a provider error with its kind, never the owner text', async () => {

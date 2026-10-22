@@ -4,6 +4,7 @@
 // ADR 0009). Report reading happens inside the API (#26), with a fake AI there (apps/api/test/e2e-server.ts).
 
 import { expect, type BrowserContext } from '@playwright/test'
+import { ExplanationRequestSchema, JournalRequestSchema, ProfileRequestSchema } from '@fodr/contracts/ai'
 import * as fixtures from '../fixtures/ai'
 
 export type AiRoute = 'profile' | 'explanation' | 'journal'
@@ -41,8 +42,19 @@ const DEFAULTS: Record<AiRoute, unknown> = {
   journal: fixtures.journal,
 }
 
+// What the API would accept on each route: a request the contract refuses fails the test, so every e2e flow checks the
+// web's real requests against the API's contracts (#30).
+const REQUESTS: Record<
+  AiRoute,
+  typeof ProfileRequestSchema | typeof ExplanationRequestSchema | typeof JournalRequestSchema
+> = {
+  profile: ProfileRequestSchema,
+  explanation: ExplanationRequestSchema,
+  journal: JournalRequestSchema,
+}
+
 function isAiRoute(name: string): name is AiRoute {
-  return name in DEFAULTS
+  return Object.hasOwn(DEFAULTS, name)
 }
 
 export async function mockAi(context: BrowserContext): Promise<AiMock> {
@@ -66,7 +78,16 @@ export async function mockAi(context: BrowserContext): Promise<AiMock> {
           await route.abort()
           return
         }
-        calls.set(name, [...(calls.get(name) ?? []), request.postDataJSON() as unknown])
+        const body = request.postDataJSON() as unknown
+        const parsed = REQUESTS[name].safeParse(body)
+        if (!parsed.success) {
+          unexpected.push(
+            `${path} refused by the contract: ${parsed.error.issues.map((i) => i.path.join('.')).join(', ')}`,
+          )
+          await route.abort()
+          return
+        }
+        calls.set(name, [...(calls.get(name) ?? []), body])
         const response = responses.get(name) ?? { body: DEFAULTS[name], status: 200 }
         await route.fulfill({ status: response.status, json: response.body })
       } finally {

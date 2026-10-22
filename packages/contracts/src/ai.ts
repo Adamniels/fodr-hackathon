@@ -4,19 +4,29 @@
 //   POST /api/v1/ai/journal (JournalRequestSchema): the journal read for patterns, a vet flag and next steps (CF7).
 // Only what a schema names reaches the model: unknown fields are dropped, and every text and list is capped, so the
 // routes forward no arbitrary JSON (the open-proxy finding). Field names reach the model, so they are contract names
-// (ADR 0016 rule 7) and keep the order the web sends them in. The responses mirror the provider's output schemas in
-// apps/api/src/ai/anthropic.ts, which a compile-time check there keeps equal.
+// (ADR 0016 rule 7). A parsed object takes the schema's key order, which follows what the web builds (the trend as the
+// domain computes it); a nested object edited in the form may be reordered, which the model reads the same. The
+// responses mirror the provider's output schemas in apps/api/src/ai/anthropic.ts, which a compile-time check keeps equal.
 import { z } from 'zod'
 import { INGREDIENSER } from '@fodr/domain/types'
-import { HorseProfileSchema } from './horses'
+import { HORSE_NAME_MAX, HORSE_NOTES_MAX, HorseProfileSchema } from './horses'
+import { JOURNAL_TEXT_MAX } from './journal'
+
+/** The free texts and follow-up answers of the profile fill; the form stops typing at these (#30). */
+export const AI_TEXT_MAX = 4000
+export const AI_ANSWER_MAX = 1000
+/** The follow-up answers sent back with a fill; the web sends the latest ones. */
+export const AI_ANSWERS_MAX = 10
+/** The journal entries an analysis reads: the latest ones, which keeps the request and its cost bounded (#30). */
+export const AI_JOURNAL_ENTRIES_MAX = 100
 
 const text = (max: number) => z.string().max(max)
 const halsa = HorseProfileSchema.shape.halsa
 
 export const ProfileRequestSchema = z.object({
-  foderText: text(4000),
-  halsaText: text(4000),
-  tidigareSvar: z.array(z.object({ fraga: text(500), svar: text(1000) })).max(10),
+  foderText: text(AI_TEXT_MAX),
+  halsaText: text(AI_TEXT_MAX),
+  tidigareSvar: z.array(z.object({ fraga: text(500), svar: text(AI_ANSWER_MAX) })).max(AI_ANSWERS_MAX),
   produkter: z.array(z.object({ id: text(100), namn: text(200) })).max(500),
 })
 
@@ -59,12 +69,12 @@ const lines = (max: number) => z.array(text(1000)).max(max)
 
 export const ExplanationRequestSchema = z.object({
   hast: z.object({
-    namn: text(100),
+    namn: text(HORSE_NAME_MAX),
     alder: z.number(),
     viktKg: z.number(),
     hull: z.number(),
     halsa,
-    ovrigt: text(2000),
+    ovrigt: text(HORSE_NOTES_MAX),
   }),
   grovfoder: z.object({ typ: z.enum(['hosilage', 'ho']), kgPerDag: z.number() }),
   nulageMedDagensFoder: z.array(ExplanationRow).max(40),
@@ -83,7 +93,7 @@ export const ExplanationRequestSchema = z.object({
         kostnadEfterKrPerManad: z.number(),
       }),
     )
-    .max(20),
+    .max(50),
   kvaveOverskottKgPerAr: z.number(),
   omGrovfodret: lines(20),
   kansligheter: lines(20),
@@ -99,13 +109,13 @@ export const ExplanationResponseSchema = z.object({ text: z.string() })
 const JournalPlan = z.object({
   analys: text(300),
   grovfoderKgPerDag: z.number(),
-  produkter: z.array(z.object({ namn: text(200), gramPerDag: z.number() })).max(50),
+  produkter: z.array(z.object({ namn: text(200), gramPerDag: z.number() })).max(100),
   kostnadPerManad: z.number(),
 })
 
 export const JournalRequestSchema = z.object({
   hast: z.object({
-    namn: text(100),
+    namn: text(HORSE_NAME_MAX),
     alderAr: z.number(),
     ras: text(100).nullable(),
     viktKg: z.number(),
@@ -119,20 +129,21 @@ export const JournalRequestSchema = z.object({
         datum: text(10),
         viktKg: z.number().optional(),
         hull: z.number().optional(),
-        text: text(2000),
+        text: text(JOURNAL_TEXT_MAX),
         plan: JournalPlan.optional(),
       }),
     )
-    .max(500),
+    .max(AI_JOURNAL_ENTRIES_MAX),
+  // In the order the domain builds it (beraknaTrend), which the web keeps.
   trend: z.object({
+    uppfoljningForfallen: z.boolean(),
+    varningar: lines(10),
     vikt: z
       .object({ forsta: z.number(), senaste: z.number(), dagar: z.number(), procentPerVecka: z.number() })
       .optional(),
     hull: z.object({ forsta: z.number(), senaste: z.number() }).optional(),
     senastMatt: text(10).optional(),
     nastaUppfoljning: text(10).optional(),
-    uppfoljningForfallen: z.boolean(),
-    varningar: lines(10),
   }),
   aktuellPlan: JournalPlan.nullable(),
 })

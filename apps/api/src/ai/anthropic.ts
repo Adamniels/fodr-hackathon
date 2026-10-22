@@ -216,12 +216,16 @@ const JournalSchema = z.object({
 })
 export type JournalResponse = z.infer<typeof JournalSchema>
 
-// Compile-time only: what the model is asked to answer is what the routes' contracts promise the web (#30). One way,
-// since the model's schema is narrower (a breed is one of the registry's IDs, the contract any string).
+// Compile-time only: what the model is asked to answer is exactly what the routes' contracts promise the web (#30), so
+// a field added or loosened on one side fails to compile. The breed is the one exception: one of the registry's IDs for
+// the model, any string for the contract, which the model's IDs fit.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- the generic T is the identity check
+type Same<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assignable<From, To> = [From] extends [To] ? true : false
 type Assert<T extends true> = T
-export type ProfileAnswerFitsContract = Assert<Assignable<ProfileResponse, ProfileContract>>
-export type JournalAnswerFitsContract = Assert<Assignable<JournalResponse, JournalContract>>
+export type ProfileAnswerIsContract = Assert<Same<Omit<ProfileResponse, 'ras'>, Omit<ProfileContract, 'ras'>>>
+export type ProfileBreedFitsContract = Assert<Assignable<ProfileResponse['ras'], ProfileContract['ras']>>
+export type JournalAnswerIsContract = Assert<Same<JournalResponse, JournalContract>>
 
 const JOURNAL_SYSTEM = `Du läser en hästs foderjournal åt ägaren och letar mönster över tid.
 Du får hästens profil, journalposterna i datumordning, trenden som redan är beräknad och den aktuella foderplanen.

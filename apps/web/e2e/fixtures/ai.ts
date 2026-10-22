@@ -1,6 +1,6 @@
 // Canned AI responses for e2e tests. Typed against the client contracts so they break when a contract changes.
 
-import type { JournalResponse as JournalAnalysis, ProfileResponse as ProfileInterpretation } from '@fodr/contracts/ai'
+import type { JournalResponse, ProfileResponse } from '@fodr/contracts/ai'
 import type { UtlastAnalys } from '@fodr/domain/analysis'
 
 /** Extraction of A01-medel-skord1.pdf, values from testdata/.../krubba-testdata-v2/data/facit.json. */
@@ -51,11 +51,11 @@ export const profil = {
   undvik: [],
   ovrigt: '',
   foljdfragor: [],
-} satisfies ProfileInterpretation
+} satisfies ProfileResponse
 
 export const FOLJDFRAGA = 'Hur mycket väger en liter av pelletsen?'
 
-export const profilMedFoljdfraga = { ...profil, foljdfragor: [FOLJDFRAGA] } satisfies ProfileInterpretation
+export const profilMedFoljdfraga = { ...profil, foljdfragor: [FOLJDFRAGA] } satisfies ProfileResponse
 
 export const forklaring = { text: 'E2E-förklaring: stycke ett.\nStycke två.' }
 
@@ -64,7 +64,7 @@ export const journal = {
   monster: [{ iakttagelse: 'Lös mage efter bytet', mojligKoppling: 'Byte av hösilage', datum: '2026-09-28' }],
   veterinar: { behovs: true, skal: 'Ömma framhovar hos en häst med fånghistorik.' },
   nastaSteg: ['Väg hästen om fyra veckor'],
-} satisfies JournalAnalysis
+} satisfies JournalResponse
 
 /** The complete example analysis as the AI would read it (the former "Exempel: komplett analys"; seeded on Sixten). */
 export const completeReading = { ...analysA01, labb: 'Testlabb Alfa' } satisfies UtlastAnalys

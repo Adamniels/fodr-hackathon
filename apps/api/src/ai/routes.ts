@@ -14,8 +14,10 @@ import { requireUser, type UserVariables } from '../session'
 import { parseJson } from '../validation'
 import { AiProviderError, type AiErrorKind, type AiProvider } from './provider'
 
-// The largest request is a journal of a few hundred entries; the contract caps every field well inside this.
+// The profile and the explanation are a few KB. A journal is up to AI_JOURNAL_ENTRIES_MAX entries of up to
+// JOURNAL_TEXT_MAX characters, each with a plan snapshot: 100 × (about 4 KB of escaped text and 0.5 KB of fields).
 const MAX_BODY_BYTES = 64 * 1024
+const MAX_JOURNAL_BODY_BYTES = 512 * 1024
 
 type C = Context<AppEnv & { Variables: UserVariables }>
 
@@ -33,27 +35,49 @@ const FAILURES: Record<AiErrorKind, { status: 429 | 502 | 503; code: string }> =
 export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: AiProvider; logger: Logger }) {
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
-  routes.use(bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => problem(c, 413, 'request.too_large') }))
+  const limit = (maxSize: number) =>
+    bodyLimit({
+      maxSize,
+      onError: (c) => {
+        logger.warn({ requestId: c.get('requestId'), errorType: 'BodyLimit' }, 'ai request failed')
+        return problem(c, 413, 'request.too_large')
+      },
+    })
 
   /** A route that validates its body with the schema, then answers with what `call` returns for it. */
-  function route<S extends z.ZodType>(path: string, schema: S, call: (body: z.infer<S>) => Promise<unknown>) {
-    routes.post(path, async (c: C) => {
+  function route<S extends z.ZodType>(
+    path: string,
+    maxBytes: number,
+    schema: S,
+    call: (body: z.infer<S>) => Promise<unknown>,
+  ) {
+    routes.post(path, limit(maxBytes), async (c: C) => {
       const body = await parseJson(c, schema)
       if (!body.ok) return body.response
       try {
         return c.json(await call(body.data))
       } catch (e) {
-        if (!(e instanceof AiProviderError)) throw e
-        // The kind only: the request holds the owner's text about the horse.
-        logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, 'ai request failed')
-        const failure = FAILURES[e.kind]
-        return problem(c, failure.status, failure.code)
+        // The kind or the error type only, never a message: the request and the model's reply hold the owner's text.
+        if (e instanceof AiProviderError) {
+          logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, 'ai request failed')
+          const failure = FAILURES[e.kind]
+          return problem(c, failure.status, failure.code)
+        }
+        // A reply that could not be read (not the promised shape): the service failed us, as far as the owner can tell.
+        logger.warn({ requestId: c.get('requestId'), errorType: errorType(e) }, 'ai request failed')
+        return problem(c, 502, 'ai.unavailable')
       }
     })
   }
 
-  route('/profile', ProfileRequestSchema, (body) => ai.interpretProfile(body))
-  route('/explanation', ExplanationRequestSchema, async (body) => ({ text: await ai.explainPlan(body) }))
-  route('/journal', JournalRequestSchema, (body) => ai.analyzeJournal(body))
+  route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, (body) => ai.interpretProfile(body))
+  route('/explanation', MAX_BODY_BYTES, ExplanationRequestSchema, async (body) => ({
+    text: await ai.explainPlan(body),
+  }))
+  route('/journal', MAX_JOURNAL_BODY_BYTES, JournalRequestSchema, (body) => ai.analyzeJournal(body))
   return routes
+}
+
+function errorType(e: unknown): string {
+  return e instanceof Error ? e.constructor.name : typeof e
 }

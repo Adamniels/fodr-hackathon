@@ -264,7 +264,7 @@
     "giveRoughage": "Ge {{kg}} kg {{type}} per dag.",
     "explanation": {
       "title": "Vad betyder det här?",
-      "failed": "Förklaringen kunde inte hämtas ({{error}}). Planen gäller ändå.",
+      "failed": "Förklaringen kunde inte hämtas. {{error}} Planen gäller ändå.",
       "writing": "Skriver förklaring…",
       "rewrite": "Skriv om förklaringen"
     },
@@ -555,7 +555,6 @@
     "getStarted": "Kom igång"
   },
   "errors": {
-    "http": "Fel {{status}}",
     "notFoundTitle": "Sidan finns inte",
     "notFoundText": "Adressen leder inte till någon sida i Fodr.",
     "pageTitle": "Något gick fel",
@@ -793,7 +792,7 @@
       "unavailable": "AI-tjänsten svarar inte just nu. Försök igen om en stund.",
       "refused": "AI:n avböjde att svara på det här.",
       "truncated": "Svaret blev avklippt. Försök igen.",
-      "invalid": "Uppgifterna kunde inte skickas till AI:n. Korta texten och försök igen.",
+      "invalid": "Uppgifterna kunde inte skickas till AI:n.",
       "failed": "Något gick fel. Försök igen."
     }
   }
