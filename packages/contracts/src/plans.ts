@@ -3,14 +3,13 @@
 //   POST /api/v1/horses/:id/plans (SavePlanSchema): the server computes the plan from the horse, the analysis and the
 //        catalogue, stores it immutably with the engine and catalogue versions, and returns it.
 //   GET  /api/v1/horses/:id/plans/latest: the horse's newest saved plan, or null.
-// The envelope is validated field by field. The plan itself and the catalogue's products are typed as the domain's
-// types rather than mirrored in zod: web and API ship from one build, and each stored plan names the engine version
-// that computed it (ADR 0007 note, owner, #27).
+// The envelope is validated field by field. The plan, the inputs it was computed from and the catalogue's products are
+// typed as the domain's types rather than mirrored in zod: web and API ship from one build, and a stored plan is a
+// record of the past. Validating it against today's schemas would refuse or strip an older plan's inputs once the
+// profile changes shape; each plan names the engine version that computed it instead (ADR 0007 note, owner, #27).
 import { z } from 'zod'
 import type { Plan } from '@fodr/domain/plan'
-import type { Produkt } from '@fodr/domain/types'
-import { GrovfoderanalysSchema } from './analyses'
-import { HorseSchema } from './horses'
+import type { Grovfoderanalys, Hastprofil, Produkt } from '@fodr/domain/types'
 
 const record = (value: unknown) => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -26,7 +25,7 @@ export const SavedPlanSchema = z.object({
   horseId: z.uuid(),
   analysisId: z.uuid(),
   /** What the plan was computed from: the profile and the analysis values as they were (CF5). */
-  inputs: z.object({ profil: HorseSchema, analys: GrovfoderanalysSchema }),
+  inputs: z.object({ profil: z.custom<Hastprofil>(record), analys: z.custom<Grovfoderanalys>(record) }),
   result: z.custom<Plan>(record),
   /** The build that computed it (its git commit), and the catalogue it chose from. */
   engineVersion: z.string().min(1),

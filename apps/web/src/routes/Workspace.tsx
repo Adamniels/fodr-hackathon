@@ -16,7 +16,7 @@ import type { User } from '@fodr/contracts/me'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
 import { Wordmark } from '../components/Brand'
 import { useCatalogue } from '../products'
-import { isSavedFor, useSavedPlans } from '../plans'
+import { isSavedFor, PlanSaveError, useSavedPlans } from '../plans'
 import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
 import { useSession } from './session'
 
@@ -189,14 +189,30 @@ function Workspace({
   // to say so.
   const savePlan = async () => {
     if (!hast || !analys || !plan || !('plan' in plan)) return
+    if (!savedPlans) {
+      addEntry(
+        hast.id,
+        nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: ogonblickAvPlan(plan.plan, analys) }),
+      )
+      return
+    }
+    // The server plans from what it holds: the edits still on their way go first, and an edit it does not have
+    // (failed, refused, invalid) stops the save rather than saving another plan than the one on screen.
+    await Promise.all([horses.flush(), analyses.flush()])
+    if (horses.hasUnsaved() || analyses.hasUnsaved()) throw new PlanSaveError('unsaved')
     const analysisId = analyses.current?.id
-    const snapshot =
-      savedPlans && analysisId
-        ? await savedPlans
-            .save(analysisId)
-            .then((saved) => ogonblickAvPlan(saved.result, saved.inputs.analys, saved.id))
-        : ogonblickAvPlan(plan.plan, analys)
-    addEntry(hast.id, nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: snapshot }))
+    if (!analysisId) throw new Error('An account analysis has no ID')
+    // A catalogue changed by a deploy since the page loaded: revalidated by its version, so the server's is used.
+    const { data: current } = await catalogue.refetch()
+    const saved = await savedPlans.save(analysisId)
+    addEntry(
+      hast.id,
+      nyPost(newJournalEntryId(), localIsoDate(), {
+        text: '',
+        plan: ogonblickAvPlan(saved.result, saved.inputs.analys, saved.id),
+      }),
+    )
+    if (!current || !isSavedFor(saved, hast, analys, current.version)) throw new PlanSaveError('differs')
   }
 
   const tillganglig = (s: Step) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
@@ -209,22 +225,6 @@ function Workspace({
 
   // A link to a horse this account does not have lands on the first horse.
   if (horseId !== undefined && !hast) return <Navigate to="/horses" replace />
-  if (!produkter) {
-    return catalogue.isError ? (
-      <div className="arbetsyta-laddar">
-        <p className="ruta fel" role="alert">
-          {t('app.catalogue.loadFailed')}
-        </p>
-        <button className="knapp" onClick={() => void catalogue.refetch()}>
-          {t('app.horses.retry')}
-        </button>
-      </div>
-    ) : (
-      <p className="arbetsyta-laddar" role="status">
-        {t('app.catalogue.loading')}
-      </p>
-    )
-  }
 
   const context: WorkspaceContext = {
     hastar,
@@ -236,6 +236,8 @@ function Workspace({
     savePlan,
     planOgonblick,
     produkter,
+    catalogueFailed: catalogue.isError,
+    reloadCatalogue: () => void catalogue.refetch(),
     journal,
     today,
     goTo,

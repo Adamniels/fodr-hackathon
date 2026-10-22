@@ -18,6 +18,7 @@ import {
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
 import { fingerprint, loadExplanation, saveExplanation } from '../storage'
+import { PlanSaveError } from '../plans'
 import { TransitionCalendar } from './TransitionCalendar'
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -47,13 +48,13 @@ export function PlanStep({
 }) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
-  const [saveFailed, setSaveFailed] = useState(false)
+  const [saveError, setSaveError] = useState<'failed' | 'unsaved' | 'differs' | null>(null)
   const save = () => {
     setSaving(true)
-    setSaveFailed(false)
+    setSaveError(null)
     // On success the journal step opens, and this step goes away with its state.
-    onSaveToJournal().catch(() => {
-      setSaveFailed(true)
+    onSaveToJournal().catch((e: unknown) => {
+      setSaveError(e instanceof PlanSaveError ? e.code : 'failed')
       setSaving(false)
     })
   }
@@ -192,9 +193,9 @@ export function PlanStep({
             {t('plan.shopping.saveToJournal')}
           </button>
         </div>
-        {saveFailed && (
+        {saveError && (
           <p className="ruta fel" role="alert">
-            {t('plan.saveFailed')}
+            {t(`plan.saveError.${saveError}`)}
           </p>
         )}
         {inkop.length > 0 ? (

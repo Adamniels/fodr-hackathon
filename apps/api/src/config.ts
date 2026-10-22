@@ -21,7 +21,8 @@ const EnvSchema = z.object({
   // The built web app (apps/web/dist). When set, the API serves it on the same origin; unset in development, where
   // Vite serves the web app and proxies /api here.
   WEB_DIST_DIR: z.string().optional(),
-  // The build the API runs (its git commit, set by the image), recorded with every saved plan (CF5, #27).
+  // The build the API runs (its git commit), recorded with every saved plan (CF5, #27). Set by the image from its build
+  // argument, never by hand; `dev` when the API runs from source.
   APP_VERSION: z.string().default('dev'),
   // Optional: without it the AI routes answer with the missing-key error and everything else works.
   ANTHROPIC_API_KEY: z.string().optional(),

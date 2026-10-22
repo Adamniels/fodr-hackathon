@@ -24,7 +24,8 @@ import { DecimalInput } from './DecimalInput'
 
 interface Props {
   selected: Hastprofil | undefined
-  produkter: Produkt[]
+  /** The catalogue from the API (#27); undefined while it loads, when the feed list and the AI fill wait. */
+  produkter: Produkt[] | undefined
   onChange: (h: Hastprofil) => void
   onNew: () => void
   onDelete: (id: string) => Promise<void>
@@ -74,7 +75,7 @@ function ProfileForm({
   onNext,
 }: {
   hast: Hastprofil
-  produkter: Produkt[]
+  produkter: Produkt[] | undefined
   onChange: (h: Hastprofil) => void
   onDelete: () => Promise<void>
   onNext: () => void
@@ -240,7 +241,11 @@ function ProfileForm({
           />
         </Field>
       </div>
-      <FeedList hast={hast} produkter={produkter} errorFor={errorFor} onChange={onChange} />
+      {produkter ? (
+        <FeedList hast={hast} produkter={produkter} errorFor={errorFor} onChange={onChange} />
+      ) : (
+        <p role="status">{t('app.catalogue.loading')}</p>
+      )}
 
       <HealthSection halsa={hast.halsa} onChange={(halsa) => set({ halsa })} />
       <FeedChangeSensitivitySection hast={hast} onChange={(bytekanslighet) => set({ bytekanslighet })} />
@@ -527,7 +532,7 @@ function AiFill({
   onChange,
 }: {
   hast: Hastprofil
-  produkter: Produkt[]
+  produkter: Produkt[] | undefined
   onChange: (h: Hastprofil) => void
 }) {
   const { t } = useTranslation()
@@ -540,6 +545,8 @@ function AiFill({
   const [fel, setFel] = useState<string | null>(null)
 
   async function kor(extraSvar: { fraga: string; svar: string }[] = []) {
+    // The button waits for the catalogue.
+    if (!produkter) return
     setLaddar(true)
     setFel(null)
     const allaSvar = [...tidigare, ...extraSvar]
@@ -627,7 +634,8 @@ function AiFill({
       {fel && <div className="ruta fel">{fel}</div>}
       <button
         className="knapp sekundar"
-        disabled={laddar || (!foderText && !halsaText)}
+        // The AI matches the feeds against the catalogue, so it waits for it.
+        disabled={laddar || !produkter || (!foderText && !halsaText)}
         onClick={() => void kor(fragor.filter((f) => svar[f]).map((f) => ({ fraga: f, svar: svar[f] })))}
       >
         {laddar ? t('horse.ai.interpreting') : fragor.length ? t('horse.ai.answer') : t('horse.ai.fill')}

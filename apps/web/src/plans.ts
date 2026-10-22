@@ -3,7 +3,7 @@
 // whether the plan on screen is the saved one: it is when it was computed from the same profile, analysis and
 // catalogue.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { LatestPlanSchema, SavedPlanSchema, type SavedPlan } from '@fodr/contracts/plans'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { callApi, sessionGuard } from './api-v1'
@@ -19,7 +19,25 @@ export const plansApi = {
     LatestPlanSchema.parse(await (await callApi(`${base(horseId)}/latest`)).json()).plan,
 }
 
-/** Whether the saved plan was computed from exactly these inputs and this catalogue, so it is the plan on screen. */
+/**
+ * Why a plan was not saved as shown: an edit the server does not have (failed, refused or invalid), or a saved plan
+ * that came out different from the one on screen.
+ */
+export class PlanSaveError extends Error {
+  readonly code: 'unsaved' | 'differs'
+
+  constructor(code: 'unsaved' | 'differs') {
+    super(code)
+    this.name = 'PlanSaveError'
+    this.code = code
+  }
+}
+
+/**
+ * Whether the saved plan was computed from exactly these inputs and this catalogue, so it is the plan on screen. On
+ * purpose the whole profile counts, the name and the free-text note too, though the engine reads neither: a profile
+ * that changed in any way is not called saved.
+ */
 export function isSavedFor(
   saved: SavedPlan | null | undefined,
   hast: Hastprofil,
@@ -55,18 +73,21 @@ export function useSavedPlans(userId: string, horseId: string | undefined) {
     staleTime: Infinity,
     retry: false,
   })
-  useEffect(
-    () => () => {
+  // Closing the workspace drops the cached plans; a save answered after that is not put back.
+  const closed = useRef(false)
+  useEffect(() => {
+    closed.current = false
+    return () => {
+      closed.current = true
       queryClient.removeQueries({ queryKey: [...PLANS_QUERY_KEY, userId] })
-    },
-    [queryClient, userId],
-  )
+    }
+  }, [queryClient, userId])
   return {
     latest: horseId === undefined ? null : query.data,
     save: async (analysisId: string): Promise<SavedPlan> => {
       if (horseId === undefined) throw new Error('No horse to save a plan for')
       const saved = await guard(plansApi.save(horseId, analysisId))
-      queryClient.setQueryData(latestKey(userId, horseId), saved)
+      if (!closed.current) queryClient.setQueryData(latestKey(userId, horseId), saved)
       return saved
     },
   }

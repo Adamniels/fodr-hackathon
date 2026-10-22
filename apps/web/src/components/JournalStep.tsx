@@ -22,9 +22,16 @@ function planAnalysisText(analys: PlanOgonblick['analys'], t: TFunction): string
     .join(', ')
 }
 
-/** A snapshot as the model has always read it: these fields, the analysis as that line (no plan ID, #27). */
+/**
+ * A snapshot as the model has always read it: these fields (no plan ID, #27), the analysis as one line with the date
+ * as stored, so the model's input never follows the display format. The roughage name reaches the model, so it must
+ * stay Swedish; it follows the UI locale, which is only sv today (as the breed name does below).
+ */
 const forModel = (plan: PlanOgonblick, t: TFunction) => ({
-  analys: planAnalysisText(plan.analys, t),
+  analys:
+    typeof plan.analys === 'string'
+      ? plan.analys
+      : [t(`roughageTitle.${plan.analys.typ}`), plan.analys.labb, plan.analys.provdatum].filter(Boolean).join(', '),
   grovfoderKgPerDag: plan.grovfoderKgPerDag,
   produkter: plan.produkter,
   kostnadPerManad: plan.kostnadPerManad,

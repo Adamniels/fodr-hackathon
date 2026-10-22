@@ -75,10 +75,13 @@ export function planRoutes({ auth, catalogue, engineVersion, horses, analyses, p
 export function productRoutes(catalogue: Catalogue) {
   const routes = new Hono<AppEnv>()
   const etag = `"${catalogue.version}"`
+  // Weak comparison (RFC 9110): a proxy may weaken the tag, and a client may send several.
+  const matches = (header: string | undefined) =>
+    header?.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag || tag.trim() === '*') ?? false
   routes.get('/', (c) => {
     c.header('ETag', etag)
     c.header('Cache-Control', 'no-cache')
-    if (c.req.header('If-None-Match') === etag) return c.body(null, 304)
+    if (matches(c.req.header('If-None-Match'))) return c.body(null, 304)
     return c.json(catalogue)
   })
   return routes

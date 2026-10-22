@@ -250,11 +250,7 @@ export function LandingPage({ produkter, loggedInAs, onDemo, onLogIn }: Props) {
 function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const { t } = useTranslation()
   const plan = useMemo(() => {
-    const result = skapaPlan(
-      { ...demoHast, grovfoder: { ...demoHast.grovfoder, typ: analysKomplett.typ } },
-      analysKomplett,
-      produkter,
-    )
+    const result = skapaPlan(demoHast, analysKomplett, produkter)
     return 'plan' in result ? result.plan : null
   }, [produkter])
   if (!plan) return null

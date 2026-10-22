@@ -50,8 +50,12 @@ describe('the product catalogue', () => {
 
   it('answers 304 to a browser that has this version', async () => {
     const { body } = await catalogue()
-    const res = await app.request(`${BASE_URL}/api/v1/products`, { headers: { 'if-none-match': `"${body.version}"` } })
-    expect(res.status).toBe(304)
+    for (const tags of [`"${body.version}"`, `W/"${body.version}"`, `"other", "${body.version}"`]) {
+      const res = await app.request(`${BASE_URL}/api/v1/products`, { headers: { 'if-none-match': tags } })
+      expect(res.status).toBe(304)
+    }
+    const other = await app.request(`${BASE_URL}/api/v1/products`, { headers: { 'if-none-match': '"other"' } })
+    expect(other.status).toBe(200)
   })
 })
 

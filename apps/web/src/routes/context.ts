@@ -28,8 +28,10 @@ export interface WorkspaceContext {
   /** Saves the plan on screen (on the server for an account) and adds its snapshot to the journal. */
   savePlan: () => Promise<void>
   planOgonblick: PlanOgonblick | null
-  /** The catalogue from the API (#27). */
-  produkter: Produkt[]
+  /** The catalogue from the API (#27); undefined while it loads, which only the plan and the feed list wait for. */
+  produkter: Produkt[] | undefined
+  catalogueFailed: boolean
+  reloadCatalogue: () => void
   journal: Record<string, Journalpost[]>
   today: string
   goTo: (step: Step) => void

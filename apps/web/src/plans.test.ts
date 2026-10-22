@@ -17,6 +17,10 @@ describe('isSavedFor (#27)', () => {
     expect(isSavedFor(saved, reordered, analys, 'v1')).toBe(true)
   })
 
+  it('leaves out a field set to undefined, as the server never sends one', () => {
+    expect(isSavedFor(saved, { ...hast, ras: undefined }, analys, 'v1')).toBe(true)
+  })
+
   it('is not, once a value changed', () => {
     expect(isSavedFor(saved, { ...hast, viktKg: 540 }, analys, 'v1')).toBe(false)
     expect(isSavedFor(saved, hast, { ...analys, tsProcent: 84 }, 'v1')).toBe(false)

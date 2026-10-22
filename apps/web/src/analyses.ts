@@ -53,6 +53,10 @@ export interface AnalysisStore {
   correct: (analys: Grovfoderanalys, omrakningar: Omrakning[]) => void
   saveState: AnalysisSaveState | undefined
   retrySave: () => void
+  /** Sends every waiting correction, before saving a plan. */
+  flush: () => Promise<void>
+  /** Whether a correction is waiting, on its way, failed, or held back as invalid. */
+  hasUnsaved: () => boolean
 }
 
 const base = (horseId: string) => `/horses/${horseId}/analyses`
@@ -171,5 +175,7 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     retrySave: () => {
       if (query.data) saver.retry(query.data.id)
     },
+    flush: () => saver.flush(),
+    hasUnsaved: () => saver.busy() || (query.data ? validateAnalysis(query.data.analys).length > 0 : false),
   }
 }

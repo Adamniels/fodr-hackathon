@@ -119,7 +119,8 @@
     },
     "catalogue": {
       "loading": "Hämtar produkterna…",
-      "loadFailed": "Kunde inte hämta produkterna."
+      "loadFailed": "Kunde inte hämta produkterna.",
+      "retry": "Försök igen"
     }
   },
   "analysis": {
@@ -324,7 +325,11 @@
       "feedRow": "Nuvarande foder, rad {{row}}"
     },
     "saved": "Sparad {{date}}",
-    "saveFailed": "Planen kunde inte sparas. Försök igen."
+    "saveError": {
+      "failed": "Planen kunde inte sparas. Försök igen.",
+      "unsaved": "Alla ändringar är inte sparade än. Rätta eller spara om hästen och analysen, och spara sedan planen.",
+      "differs": "Planen sparades, men den skiljer sig från den som visas. Kontrollera den sparade planen i journalen."
+    }
   },
   "horse": {
     "performance": {

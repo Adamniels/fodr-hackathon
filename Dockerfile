@@ -16,10 +16,14 @@ COPY packages/contracts/package.json packages/contracts/
 RUN npm ci
 COPY . .
 RUN npm run build
+# The catalogue is served by the API, never bundled with the web app (#27).
+RUN node apps/web/scripts/check-bundle.mjs
 
 FROM node:24.21.0-bookworm-slim
-# The commit the image is built from, recorded with every saved plan as its engine version (CF5, #27).
-ARG GIT_SHA=unknown
+# The commit the image is built from, recorded with every saved plan as its engine version (CF5, #27). Required: an
+# image that cannot say which code computed its plans is not built.
+ARG GIT_SHA
+RUN test -n "$GIT_SHA" || { echo 'Build with --build-arg GIT_SHA=$(git rev-parse HEAD)' >&2; exit 1; }
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \

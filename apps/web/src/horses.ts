@@ -55,8 +55,10 @@ export interface HorseStore {
   /** Undefined for a horse not edited since the page opened, and always for the demo. */
   saveState: (id: string) => SaveState | undefined
   retrySave: (id: string) => void
-  /** Sends every waiting edit, before logging out. */
+  /** Sends every waiting edit, before logging out or saving a plan. */
   flush: () => Promise<void>
+  /** Whether an edit is waiting, on its way or failed: the server may not hold what the page shows. */
+  hasUnsaved: () => boolean
 }
 
 /** The query key of every account's horses, removed when the workspace closes or the user logs out. */
@@ -144,6 +146,7 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
       saveState: (id) => states[id],
       retrySave: (id) => saver.retry(id),
       flush: () => saver.flush(),
+      hasUnsaved: () => saver.busy(),
     },
   }
 }

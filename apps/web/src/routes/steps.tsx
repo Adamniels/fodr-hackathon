@@ -39,8 +39,21 @@ export function AnalysisRoute() {
 
 export function PlanRoute() {
   const { t } = useTranslation()
-  const { hast, analys, analyses, plan, savedPlan, savePlan, goTo } = useWorkspace()
+  const { hast, analys, analyses, plan, savedPlan, savePlan, produkter, catalogueFailed, reloadCatalogue, goTo } =
+    useWorkspace()
   if (!hast) return null
+  if (!produkter) {
+    return catalogueFailed ? (
+      <div className="ruta fel" role="alert">
+        {t('app.catalogue.loadFailed')}{' '}
+        <button className="lank" onClick={reloadCatalogue}>
+          {t('app.catalogue.retry')}
+        </button>
+      </div>
+    ) : (
+      <p role="status">{t('app.catalogue.loading')}</p>
+    )
+  }
   // Wait for the horse's analysis; without one, the plan has nothing to plan from: back to the analysis.
   if (analyses.current === undefined) return <p role="status">{t('analysis.loading')}</p>
   if (!analys || !plan) return <Navigate to={`/horses/${hast.id}/${STEP_PATH.analys}`} replace />
