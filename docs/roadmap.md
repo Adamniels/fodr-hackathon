@@ -81,7 +81,7 @@ Deployed in the EU, observable, accessible, GDPR-ready, and the first beta users
 
 | Slice | Issue | Type | Title | Depends on |
 |---|---|---|---|---|
-| M5-01 | [#39](https://github.com/Adamniels/fodr-hackathon/issues/39) | feature | invite-only sign up | M2-06 ([#23](https://github.com/Adamniels/fodr-hackathon/issues/23)) |
+| M5-01 | [#39](https://github.com/Adamniels/fodr-hackathon/issues/39) | dropped | ~~invite-only sign up~~: sign-up stays open (owner, 2026-10-22; spec decision log) | |
 | M5-02 | [#40](https://github.com/Adamniels/fodr-hackathon/issues/40) | feature | export my data (CF8) | M2-11 ([#28](https://github.com/Adamniels/fodr-hackathon/issues/28)) |
 | M5-03 | [#41](https://github.com/Adamniels/fodr-hackathon/issues/41) | feature | delete my account (CF8) | M2-11 ([#28](https://github.com/Adamniels/fodr-hackathon/issues/28)) |
 | M5-04 | [#42](https://github.com/Adamniels/fodr-hackathon/issues/42) | feature | privacy notice, beta terms and plan disclaimers | M2-04 ([#21](https://github.com/Adamniels/fodr-hackathon/issues/21)) |

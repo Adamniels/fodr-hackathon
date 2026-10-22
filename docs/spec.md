@@ -17,7 +17,7 @@ There is no deadline. Progress is measured against the milestones in section 8.
 
 | Decision | Consequence |
 |---|---|
-| Closed beta, invite only, free | Real accounts and data, no billing, no public sign-up flood. |
+| Open sign-up, free | Anyone can sign up: real accounts and data, no billing. How and when the product launches, who it is for and how it earns money are decided later (owner, 2026-10-22). |
 | Business model undecided | Recommendations stay store neutral. Nothing in the data model or optimiser may favour a store. |
 | Decision support, not authority | Concrete doses stay, with visible sources, disclaimers and vet referrals. A plan must never be confidently wrong: invalid input is rejected and infeasible plans are shown as infeasible. |
 
@@ -175,7 +175,7 @@ All AI endpoints require auth, validate requests with shared schemas, and are li
 | **M2 Backend foundation** | Server, Postgres, auth (CF1), persistence for horses, analyses with stored reports, plans and journal (CF2, CF4, CF7), fix for C4, frontend off localStorage, routing, demo removed, seed script | Rebuild | CF1, CF2, CF4, CF7 e2e green against the real backend; no localStorage or demo account left |
 | **M3 AI hardening** | Shared AI contracts, auth and request validation on AI routes, usage logging and quotas, server side explanations, fix for C8, eval gate in CI (CF3, CF6) | Refactor and feature | CF3, CF6 green; eval gate blocks a deliberately broken prompt |
 | **M4 Product data** | Product table, curation of the selectable set, admin view (CF9), plan reproducibility (CF5) | Rebuild of the process | CF5, CF9 green; optimiser reads only from the table |
-| **M5 Beta readiness** | Invite only sign up, observability, AA pass, CF8, privacy notice and terms, hosting decision, deployment pipeline, beta invites | Feature | All core flows green in a deployed environment; first beta users invited |
+| **M5 Beta readiness** | Observability, AA pass, CF8, privacy notice and terms, hosting decision, deployment pipeline, beta invites | Feature | All core flows green in a deployed environment; first beta users invited |
 
 The slices for M1 to M5 are issues on the GitHub Project "Fodr"; `docs/roadmap.md` gives the overview.
 
@@ -211,3 +211,4 @@ After the beta: English translation, sharing, stable views, social login, paymen
 | 2026-10-15 | Spec, ADRs and conventions in the repo; slices in the GitHub Project | Everything in a roadmap file |
 | 2026-10-15 | Delete `app/scratchverify/`, tracked `.DS_Store`, move pitch PDF out of the repo | Keep them |
 | 2026-10-16 | Milestones aligned with the roadmap: C4, report storage and the seed script move to M2 (needed for M2's CF4 criterion and demo removal), C8 to M3, invite only sign up added to M5 | Keep the original milestone table |
+| 2026-10-22 | Open sign-up for everyone instead of an invite-only closed beta; #39 dropped. The current work is the foundation: launch, access and payment are decided later (owner) | Invite-only sign up (2026-10-16) |
