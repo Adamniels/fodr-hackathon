@@ -21,8 +21,13 @@ export interface Database {
 export type Executor =
   NodePgDatabase<typeof schema> | Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0]
 
-export function createDatabase(url: string): Database {
+/**
+ * `onPoolError` hears an error on an idle connection (the server dropped it); without a listener pg throws it and the
+ * process ends. The pool replaces the connection on its own.
+ */
+export function createDatabase(url: string, onPoolError: (err: Error) => void = () => undefined): Database {
   const pool = new pg.Pool({ connectionString: url })
+  pool.on('error', onPoolError)
   return { db: drizzle(pool, { schema }), close: () => pool.end() }
 }
 

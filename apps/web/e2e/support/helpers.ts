@@ -9,6 +9,8 @@ import { test as base, expect, type Locator, type Page, type TestInfo } from '@p
 import type { HorseProfile } from '@fodr/contracts/horses'
 import { basicReading, completeReading } from '../fixtures/ai'
 import { PYSEN, SIXTEN } from '../fixtures/horses'
+import { createDatabase, type Database } from '../../../api/src/db'
+import { seedDemo } from '../../../api/src/seed'
 import { reportWith } from './reports'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
 import { mockAi, type AiMock } from './mock-ai'
@@ -18,6 +20,13 @@ const E2E_DATABASE_URL = `postgres://fodr:fodr@127.0.0.1:${process.env.POSTGRES_
 /** The API package and its seed script, found from this file so the tests can run from any directory. */
 const API_DIR = fileURLToPath(new URL('../../../api/', import.meta.url))
 const SEED_CLI = fileURLToPath(new URL('../../../api/src/seed-cli.ts', import.meta.url))
+
+// One database pool per test worker for the seed, opened when a test first seeds and closed when the worker ends
+// (the seedDatabase fixture below).
+let seedDatabase: Database | undefined
+// An idle connection the server drops is replaced by the pool; createDatabase's default listener keeps it from ending
+// the worker.
+const seedDb = () => (seedDatabase ??= createDatabase(E2E_DATABASE_URL)).db
 
 /** The password every e2e account gets. */
 export const PASSWORD = 'e2e-losenord-123'
@@ -36,10 +45,23 @@ function clientIpFor(testInfo: TestInfo): string {
 /** Start of "now" for every test: dates in the journal and calendar are deterministic. */
 export const FIXED_NOW = new Date('2026-10-15T10:00:00+02:00')
 
+/** The seed's "today" in the tests: the calendar day of FIXED_NOW in Sweden. */
+const SEED_TODAY = FIXED_NOW.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' })
+
 /** The client IP header of the running test, for a browser context the test opens itself. */
 export const clientIpHeaders = (): Record<string, string> => ({ 'x-e2e-client-ip': clientIpFor(base.info()) })
 
-export const test = base.extend<{ ai: AiMock }>({
+export const test = base.extend<{ ai: AiMock }, { seedDatabase: null }>({
+  // Closes the seed's database pool, if a test of this worker opened it, when the worker ends.
+  seedDatabase: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this destructuring
+    async ({}, provide) => {
+      await provide(null)
+      await seedDatabase?.close()
+      seedDatabase = undefined
+    },
+    { scope: 'worker', auto: true },
+  ],
   // `provide` rather than Playwright's usual `use`, which the React hooks lint rule takes for React's use().
   // eslint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this destructuring
   extraHTTPHeaders: async ({}, provide, testInfo) => {
@@ -118,8 +140,19 @@ export async function createAccountWithHorses(
  */
 export async function seededAccount(page: Page, email = 'demo@example.se'): Promise<Account> {
   const account = { email: uniqueEmail(email.split('@')[0]), password: PASSWORD }
+  // The seed itself, in this process: a run of the CLI per test would start node and compile TypeScript each time
+  // (#146). The CLI is tested on its own (seedWithCli).
+  await seedDemo(seedDb(), { ...account, name: 'Demo', today: SEED_TODAY })
+  await logIn(page, account.email)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
+  return account
+}
+
+/** Runs `npm run seed`'s script for a new account, as an operator would, and returns the account (#29). */
+export async function seedWithCli(email: string): Promise<Account & { output: string }> {
+  const account = { email: uniqueEmail(email.split('@')[0]), password: PASSWORD }
   // Only what the seed needs, so nothing from the shell (a SEED_NAME, NODE_OPTIONS) changes what a test sees.
-  await promisify(execFile)(process.execPath, ['--import', 'tsx', SEED_CLI], {
+  const { stdout } = await promisify(execFile)(process.execPath, ['--import', 'tsx', SEED_CLI], {
     cwd: API_DIR,
     env: {
       PATH: process.env.PATH,
@@ -127,12 +160,10 @@ export async function seededAccount(page: Page, email = 'demo@example.se'): Prom
       SEED_EMAIL: account.email,
       SEED_PASSWORD: account.password,
       SEED_NAME: 'Demo',
-      SEED_TODAY: FIXED_NOW.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' }),
+      SEED_TODAY,
     },
   })
-  await logIn(page, account.email)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
-  return account
+  return { ...account, output: stdout }
 }
 
 /** Submits the login form with a password. Does not wait for the workspace, so failed logins can be asserted. */

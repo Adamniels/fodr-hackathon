@@ -1,6 +1,6 @@
 // CF1 in the browser against the real API (#23): sign up with verification, log in and out, a wrong password,
 // magic link and password reset, with the mail read from Mailpit.
-import { createAccount, expect, horseList, logIn, PASSWORD, seededAccount, test } from './support/helpers'
+import { createAccount, expect, horseList, logIn, PASSWORD, seededAccount, seedWithCli, test } from './support/helpers'
 import { E2E_WEB, linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
 
 const landingHeading = (page: import('@playwright/test').Page) =>
@@ -138,6 +138,14 @@ test('an invalid or expired reset link says so and offers a new one', async ({ p
   await expect(page.getByText('Länken är ogiltig eller har gått ut.')).toBeVisible()
   await page.getByRole('link', { name: 'Be om en ny länk' }).click()
   await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+})
+
+test('the seed script makes an account that logs in with Sixten and Pysen (npm run seed, #29)', async ({ page }) => {
+  const account = await seedWithCli('operator@example.se')
+  expect(account.output).toMatch(/created; horses created: Sixten, Pysen\./)
+  await logIn(page, account.email)
+  await expect(horseList(page).getByRole('button', { name: 'Pysen' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
 })
 
 test('a new account starts empty after another one was used in the browser', async ({ page }) => {
