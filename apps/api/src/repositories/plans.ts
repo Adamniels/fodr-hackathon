@@ -5,7 +5,9 @@ import type { User } from '@fodr/contracts/me'
 import { SavedPlanSchema, type SavedPlan } from '@fodr/contracts/plans'
 import { and, desc, eq, exists } from 'drizzle-orm'
 import type { Database } from '../db'
-import { horseMembers, horses, plans } from '../db/schema'
+import type { JournalEntry } from '@fodr/contracts/journal'
+import { horseMembers, horses, journalEntries, plans } from '../db/schema'
+import { toEntry } from './journal'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -27,8 +29,16 @@ const toPlan = (row: Row): SavedPlan =>
 export type NewPlan = Omit<SavedPlan, 'id' | 'horseId' | 'createdAt'>
 
 export interface PlanRepository {
-  /** Stores the plan; undefined when the horse is not the user's (or is gone). */
-  create(user: Pick<User, 'id'>, horseId: string, plan: NewPlan): Promise<SavedPlan | undefined>
+  /**
+   * Stores the plan, and with a journal date its journal entry in the same transaction (#28); undefined when the horse
+   * is not the user's (or is gone).
+   */
+  create(
+    user: Pick<User, 'id'>,
+    horseId: string,
+    plan: NewPlan,
+    journalDatum?: string,
+  ): Promise<{ plan: SavedPlan; entry: JournalEntry | null } | undefined>
   /** The newest saved plan, null without one, undefined when the horse is not the user's. */
   latest(user: Pick<User, 'id'>, horseId: string): Promise<SavedPlan | null | undefined>
 }
@@ -43,7 +53,7 @@ export function planRepository(db: Database['db']): PlanRepository {
     )
 
   return {
-    async create(user, horseId, plan) {
+    async create(user, horseId, plan, journalDatum) {
       if (!UUID.test(horseId)) return undefined
       return db.transaction(async (tx) => {
         // A share lock: a delete of the horse (which locks it for update) waits for this insert or runs first.
@@ -57,7 +67,12 @@ export function planRepository(db: Database['db']): PlanRepository {
           .insert(plans)
           .values({ horseId, ...plan })
           .returning()
-        return toPlan(row)
+        if (journalDatum === undefined) return { plan: toPlan(row), entry: null }
+        const [entry] = await tx
+          .insert(journalEntries)
+          .values({ horseId, date: journalDatum, text: '', planId: row.id })
+          .returning()
+        return { plan: toPlan(row), entry: toEntry(entry, row) }
       })
     },
 

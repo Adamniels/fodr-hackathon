@@ -1,4 +1,27 @@
-import { enterDemo, expect, goToStep, horseList, loadExamplePlan, test } from './support/helpers'
+import type { Browser, Page } from '@playwright/test'
+import {
+  clientIpHeaders,
+  createAccountWithHorses,
+  enterDemo,
+  expect,
+  goToStep,
+  horseList,
+  logIn,
+  showExamplePlan,
+  test,
+} from './support/helpers'
+
+/** The account's journal in a browser context of its own, with nothing of the first one's: what the server holds. */
+async function journalElsewhere(browser: Browser, email: string): Promise<Page> {
+  const other = await browser.newContext({ extraHTTPHeaders: clientIpHeaders() })
+  const page = await other.newPage()
+  await logIn(page, email)
+  await goToStep(page, 'Journal')
+  return page
+}
+
+// The journal on the API (CF7, #28): the flows run on real accounts. The trend, the AI analysis and the time zone test
+// read the demo's journal, which has entries to show, until #29 seeds an account instead.
 
 test('demo journal shows trend', async ({ page }) => {
   await enterDemo(page)
@@ -8,7 +31,7 @@ test('demo journal shows trend', async ({ page }) => {
 })
 
 test('journal entry defaults to the fixed date', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
   await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
 })
@@ -16,13 +39,13 @@ test('journal entry defaults to the fixed date', async ({ page }) => {
 test('just after midnight the journal entry defaults to the local date (C6)', async ({ page }) => {
   // 00:30 in Stockholm is 22:30 UTC the day before.
   await page.clock.setSystemTime(new Date('2026-10-15T00:30:00+02:00'))
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
   await expect(page.getByLabel('Datum')).toHaveValue('2026-10-15')
 })
 
 test('a journal entry needs a date and a weight within the limits (#107)', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
   const add = page.getByRole('button', { name: 'Lägg till', exact: true })
   await page.getByLabel('Vad har du sett?').fill('Pigg')
@@ -47,7 +70,7 @@ test('a journal entry needs a date and a weight within the limits (#107)', async
 
 test('the entry date follows today past midnight unless one was picked (#107)', async ({ page }) => {
   await page.clock.setSystemTime(new Date('2026-10-15T23:50:00+02:00'))
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
   const datum = page.getByLabel('Datum')
   await expect(datum).toHaveValue('2026-10-15')
@@ -84,22 +107,32 @@ test("switching horse leaves the other horse's draft and AI analysis behind (#10
   await expect(page.getByLabel('Uppdatera profilen och räkna om foderplanen')).toBeChecked()
 })
 
-test('entries on the same date are listed in the order they were added (#80)', async ({ page }) => {
-  await enterDemo(page)
+test('entries on the same date are listed in the order they were added, also elsewhere (#80, #28)', async ({
+  page,
+  browser,
+}) => {
+  const account = await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
-  for (const text of ['Första anteckningen', 'Andra anteckningen']) {
+  const texts = ['Första anteckningen', 'Andra anteckningen', 'Tredje anteckningen']
+  for (const text of texts) {
     await page.getByLabel('Vad har du sett?').fill(text)
     await page.getByRole('button', { name: 'Lägg till', exact: true }).click()
+    await expect(page.getByRole('listitem').filter({ hasText: text })).toBeVisible()
   }
   // The timeline shows the newest first.
   const items = page.getByRole('listitem').filter({ hasText: /anteckningen/ })
-  await expect(items).toHaveCount(2)
-  await expect(items.nth(0)).toContainText('Andra anteckningen')
-  await expect(items.nth(1)).toContainText('Första anteckningen')
+  const newestFirst = [...texts].reverse()
+  for (const [i, text] of newestFirst.entries()) await expect(items.nth(i)).toContainText(text)
+
+  const elsewhere = await journalElsewhere(browser, account.email)
+  const there = elsewhere.getByRole('listitem').filter({ hasText: /anteckningen/ })
+  await expect(there).toHaveCount(3)
+  for (const [i, text] of newestFirst.entries()) await expect(there.nth(i)).toContainText(text)
+  await elsewhere.context().close()
 })
 
-test('entry with weight updates the profile', async ({ page }) => {
-  await enterDemo(page)
+test('entry with weight updates the profile, on the server', async ({ page, browser }) => {
+  const account = await createAccountWithHorses(page)
   await goToStep(page, 'Journal')
   await page.getByLabel('Vikt (kg)').fill('545')
   await page.getByLabel('Vad har du sett?').fill('Pigg')
@@ -109,13 +142,23 @@ test('entry with weight updates the profile', async ({ page }) => {
   const newEntry = page.getByRole('listitem').filter({ hasText: 'Pigg' }).filter({ hasText: '2026-10-15' })
   await expect(newEntry).toContainText('545 kg')
   await expect(page.getByRole('definition').filter({ hasText: '545 kg' })).toBeVisible()
+
+  const elsewhere = await journalElsewhere(browser, account.email)
+  await expect(elsewhere.getByRole('listitem').filter({ hasText: 'Pigg' })).toContainText('545 kg')
+  await expect(elsewhere.getByRole('definition').filter({ hasText: '545 kg' })).toBeVisible()
+  await elsewhere.context().close()
 })
 
-test('saving the plan adds a timeline entry', async ({ page }) => {
-  await loadExamplePlan(page)
+test('saving the plan adds a timeline entry, kept on the server', async ({ page, browser }) => {
+  const account = await createAccountWithHorses(page)
+  await showExamplePlan(page)
   await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
   await expect(page.getByRole('heading', { name: 'Journal för Sixten' })).toBeVisible()
-  await expect(page.getByText('Foderplan sparad')).toBeVisible()
+  const entry = page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })
+  await expect(entry).toContainText('Testlabb Alfa')
+  const elsewhere = await journalElsewhere(browser, account.email)
+  await expect(elsewhere.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })).toContainText('Testlabb Alfa')
+  await elsewhere.context().close()
 })
 
 test('AI journal analysis shows the vet flag', async ({ page, ai }) => {

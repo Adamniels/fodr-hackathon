@@ -6,6 +6,7 @@ import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { journalRepository } from '../src/repositories/journal'
 import { planRepository } from '../src/repositories/plans'
 import type { FileStore } from '../src/storage'
 
@@ -46,7 +47,12 @@ export function unitAuth() {
 /** Repositories over a database that is never reached. */
 export function unitRepositories() {
   const { db } = createDatabase(UNIT_CONFIG.databaseUrl)
-  return { horses: horseRepository(db), analyses: analysisRepository(db), plans: planRepository(db) }
+  return {
+    horses: horseRepository(db),
+    analyses: analysisRepository(db),
+    plans: planRepository(db),
+    journal: journalRepository(db),
+  }
 }
 
 /** A file store unit tests never reach. */

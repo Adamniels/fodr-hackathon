@@ -11,6 +11,8 @@ import type { Logger } from './logger'
 import { CLIENT_IP_HEADER, type Auth } from './auth'
 import { analysisRoutes } from './analyses-routes'
 import { horseRoutes } from './horses-routes'
+import { journalRoutes } from './journal-routes'
+import type { JournalRepository } from './repositories/journal'
 import { planRoutes, productRoutes } from './plans-routes'
 import type { Catalogue } from './products'
 import type { PlanRepository } from './repositories/plans'
@@ -28,7 +30,12 @@ export interface AppDeps {
   auth: Auth
   files: FileStore
   catalogue: Catalogue
-  repositories: { horses: HorseRepository; analyses: AnalysisRepository; plans: PlanRepository }
+  repositories: {
+    horses: HorseRepository
+    analyses: AnalysisRepository
+    plans: PlanRepository
+    journal: JournalRepository
+  }
 }
 
 export type AppEnv = { Variables: RequestIdVariables }
@@ -75,6 +82,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
     '/api/v1/horses/:horseId/plans',
     planRoutes({ auth, catalogue, engineVersion: config.appVersion, ...repositories }),
   )
+  app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   app.route('/api/v1/products', productRoutes(catalogue))
   // The AI routes keep their paths outside /api/v1 until #30 versions them.

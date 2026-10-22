@@ -66,7 +66,8 @@ describe('saving a plan', () => {
 
     const res = await browser.post(path, { analysisId: analysis.id })
     expect(res.status).toBe(201)
-    const saved = (await res.json()) as SavedPlanBody
+    const { plan: saved, entry } = (await res.json()) as { plan: SavedPlanBody; entry: unknown }
+    expect(entry).toBeNull()
     const { body: served } = await catalogue()
 
     // The browser previews with the same engine over the catalogue it was served (ADR 0004).
@@ -86,7 +87,8 @@ describe('saving a plan', () => {
   it('returns the newest as the latest', async () => {
     const { browser, analysis, plans: path } = await horseWithAnalysis()
     await browser.post(path, { analysisId: analysis.id })
-    const second = (await (await browser.post(path, { analysisId: analysis.id })).json()) as SavedPlanBody
+    const second = ((await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody })
+      .plan
     const latest = (await (await browser.request(`${path}/latest`)).json()) as { plan: SavedPlanBody }
     expect(latest.plan.id).toBe(second.id)
   })
@@ -121,7 +123,8 @@ describe('saving a plan', () => {
 
   it('cannot be changed once saved', async () => {
     const { browser, analysis, plans: path } = await horseWithAnalysis()
-    const saved = (await (await browser.post(path, { analysisId: analysis.id })).json()) as SavedPlanBody
+    const saved = ((await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody })
+      .plan
     for (const method of ['PUT', 'PATCH', 'DELETE']) {
       expect((await browser.request(`${path}/${saved.id}`, { method, body: {} })).status).toBe(404)
     }

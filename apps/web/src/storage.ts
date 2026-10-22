@@ -1,5 +1,5 @@
-// The journal and the plan explanations, saved locally in the browser until they move to the API (#27, #28). The
-// horses are on the API since #25 (horses.ts).
+// What is still kept in the browser: the demo's journal until #29 (an account's journal is on the API since #28,
+// journal.ts), and the cached plan explanations.
 
 import { DEMO_USER } from './demo'
 import { demoJournal } from './data/examples'

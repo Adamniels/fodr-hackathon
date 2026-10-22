@@ -2,7 +2,8 @@
 import { useOutletContext } from 'react-router'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { skapaPlan } from '@fodr/domain/plan'
-import type { Journalpost, PlanOgonblick } from '@fodr/domain/journal'
+import type { PlanOgonblick } from '@fodr/domain/journal'
+import type { JournalStore } from '../journal'
 import type { AnalysisStore } from '../analyses'
 import type { SavedPlan } from '@fodr/contracts/plans'
 import type { Produkt } from '@fodr/domain/types'
@@ -32,7 +33,8 @@ export interface WorkspaceContext {
   produkter: Produkt[] | undefined
   catalogueFailed: boolean
   reloadCatalogue: () => void
-  journal: Record<string, Journalpost[]>
+  /** The current horse's journal (#28). */
+  journal: JournalStore
   today: string
   goTo: (step: Step) => void
   updateHorse: (horse: Hastprofil) => void
@@ -40,7 +42,6 @@ export interface WorkspaceContext {
   addHorse: () => void
   /** Deletes the horse; rejects when the server refused, so the confirmation can say so. */
   removeHorse: (id: string) => Promise<void>
-  addEntry: (horseId: string, entry: Journalpost) => void
 }
 
 export const useWorkspace = () => useOutletContext<WorkspaceContext>()

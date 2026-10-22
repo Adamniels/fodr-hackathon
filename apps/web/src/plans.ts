@@ -4,16 +4,19 @@
 // catalogue.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
-import { LatestPlanSchema, SavedPlanSchema, type SavedPlan } from '@fodr/contracts/plans'
+import { LatestPlanSchema, SavedPlanResponseSchema, type SavedPlan } from '@fodr/contracts/plans'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import { callApi, sessionGuard } from './api-v1'
 
 const base = (horseId: string) => `/horses/${horseId}/plans`
 
 export const plansApi = {
-  save: async (horseId: string, analysisId: string): Promise<SavedPlan> =>
-    SavedPlanSchema.parse(
-      await (await callApi(base(horseId), { method: 'POST', body: JSON.stringify({ analysisId }) })).json(),
+  // With a journal date the server makes the plan's journal entry in the same transaction (#28).
+  save: async (horseId: string, analysisId: string, journalDatum: string) =>
+    SavedPlanResponseSchema.parse(
+      await (
+        await callApi(base(horseId), { method: 'POST', body: JSON.stringify({ analysisId, journalDatum }) })
+      ).json(),
     ),
   latest: async (horseId: string): Promise<SavedPlan | null> =>
     LatestPlanSchema.parse(await (await callApi(`${base(horseId)}/latest`)).json()).plan,
@@ -84,10 +87,10 @@ export function useSavedPlans(userId: string, horseId: string | undefined) {
   }, [queryClient, userId])
   return {
     latest: horseId === undefined ? null : query.data,
-    save: async (analysisId: string): Promise<SavedPlan> => {
+    save: async (analysisId: string, journalDatum: string) => {
       if (horseId === undefined) throw new Error('No horse to save a plan for')
-      const saved = await guard(plansApi.save(horseId, analysisId))
-      if (!closed.current) queryClient.setQueryData(latestKey(userId, horseId), saved)
+      const saved = await guard(plansApi.save(horseId, analysisId, journalDatum))
+      if (!closed.current) queryClient.setQueryData(latestKey(userId, horseId), saved.plan)
       return saved
     },
   }

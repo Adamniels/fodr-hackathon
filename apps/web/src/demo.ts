@@ -7,6 +7,9 @@ import type { Hastprofil } from '@fodr/domain/types'
 import type { AnalysisStore, StoredAnalysis } from './analyses'
 import { ApiError } from './api-v1'
 import { fileToBase64, readAnalysis } from './api'
+import { nyPost, type Journalpost } from '@fodr/domain/journal'
+import type { JournalStore } from './journal'
+import { loadJournal, newJournalEntryId, saveJournal } from './storage'
 import { demoHast, ponny } from './data/examples'
 import { newHorseProfile, type HorseStore } from './horses'
 
@@ -83,6 +86,7 @@ export function useDemoHorses(): HorseStore {
     retrySave: () => undefined,
     flush: () => Promise.resolve(),
     hasUnsaved: () => false,
+    apply: (horse) => setHorses((all) => all.map((h) => (h.id === horse.id ? horse : h))),
   }
 }
 
@@ -118,6 +122,50 @@ export function useDemoAnalysis(horseId: string | undefined): AnalysisStore {
     retrySave: () => undefined,
     flush: () => Promise.resolve(),
     hasUnsaved: () => false,
+  }
+}
+
+// An account's journal was kept under this prefix before the API (#28): removed once at startup like the horses above.
+const JOURNAL_PREFIX = 'krubba.journal.v1.'
+
+export function forgetLocalJournals(): void {
+  try {
+    const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i))
+    for (const key of keys) {
+      if (key?.startsWith(JOURNAL_PREFIX) && key !== JOURNAL_PREFIX + DEMO_USER.id) localStorage.removeItem(key)
+    }
+  } catch {
+    // Storage blocked: nothing to remove.
+  }
+}
+
+/** The demo's journal, kept in the browser as before the API (storage.ts); `onProfile` takes an entry's measurements. */
+export function useDemoJournal(
+  horseId: string | undefined,
+  onProfile: (patch: { viktKg?: number; hull?: number }) => void,
+): JournalStore {
+  const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => loadJournal(DEMO_USER.id))
+  useEffect(() => saveJournal(DEMO_USER.id, journal), [journal])
+  const append = (entry: Journalpost) => {
+    if (horseId !== undefined) setJournal((j) => ({ ...j, [horseId]: [...(j[horseId] ?? []), entry] }))
+  }
+  return {
+    entries: horseId === undefined ? [] : (journal[horseId] ?? []),
+    loadFailed: false,
+    reload: () => undefined,
+    add: ({ datum, text, viktKg, hull }, updateProfile) => {
+      append(
+        nyPost(newJournalEntryId(), datum, {
+          text,
+          ...(viktKg !== undefined && { viktKg }),
+          ...(hull !== undefined && { hull }),
+        }),
+      )
+      if (updateProfile && (viktKg !== undefined || hull !== undefined)) onProfile({ viktKg, hull })
+      return Promise.resolve()
+    },
+    addSaved: append,
+    forgetHorse: (id) => setJournal((j) => Object.fromEntries(Object.entries(j).filter(([key]) => key !== id))),
   }
 }
 

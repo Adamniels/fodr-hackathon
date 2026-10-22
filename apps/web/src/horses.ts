@@ -59,6 +59,8 @@ export interface HorseStore {
   flush: () => Promise<void>
   /** Whether an edit is waiting, on its way or failed: the server may not hold what the page shows. */
   hasUnsaved: () => boolean
+  /** Takes a horse the server changed itself (a journal entry's profile update, #28), without saving it again. */
+  apply: (horse: Hastprofil) => void
 }
 
 /** The query key of every account's horses, removed when the workspace closes or the user logs out. */
@@ -147,6 +149,7 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
       retrySave: (id) => saver.retry(id),
       flush: () => saver.flush(),
       hasUnsaved: () => saver.busy(),
+      apply: (horse) => setHorses((horses) => horses.map((h) => (h.id === horse.id ? horse : h))),
     },
   }
 }
