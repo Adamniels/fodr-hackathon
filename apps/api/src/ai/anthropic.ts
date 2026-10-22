@@ -15,10 +15,9 @@ import type {
   ProfileRequest,
   ProfileResponse as ProfileContract,
 } from '@fodr/contracts/ai'
+import { DEFAULT_AI_MODEL } from '../config'
 import { AiProviderError, type AiProvider, type AiReply, type AnalysisFile, type TokenUsage } from './provider'
 
-/** The model when the config names none (AI_MODEL, #31). */
-export const DEFAULT_MODEL = 'claude-sonnet-5-5'
 const BREED_IDS = RASER.map((r) => r.id) as [string, ...string[]]
 
 const nullableNumber = z.number().nullable()
@@ -266,7 +265,7 @@ async function analyzeJournal(
 export interface AnthropicProviderOptions {
   /** ANTHROPIC_API_KEY. Without it every call fails with `missing_key` and the rest of the API works. */
   apiKey: string | undefined
-  /** AI_MODEL (#31); DEFAULT_MODEL when not given. */
+  /** AI_MODEL (#31); the config's default when not given. */
   model?: string
   /** Passed to the SDK client; tests give it a fake fetch. */
   clientOptions?: ClientOptions
@@ -274,7 +273,7 @@ export interface AnthropicProviderOptions {
 
 export function createAnthropicProvider({
   apiKey,
-  model = DEFAULT_MODEL,
+  model = DEFAULT_AI_MODEL,
   clientOptions,
 }: AnthropicProviderOptions): AiProvider {
   let client: Anthropic | undefined

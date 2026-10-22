@@ -2,6 +2,9 @@
 // stops the process with a message naming every bad variable; values are never echoed, since some are secrets.
 import { z } from 'zod'
 
+/** The model when AI_MODEL names none (#31): the one place it is set, so the extraction eval tests it too (#34). */
+export const DEFAULT_AI_MODEL = 'claude-sonnet-5-5'
+
 const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const
 
 const required = (rule: string) => (issue: { input: unknown }) =>
@@ -35,7 +38,7 @@ const EnvSchema = z.object({
   // The model, the daily AI calls per user and the prices that estimate each call's cost (#31, ADR 0015). The prices are
   // SEK per million tokens, from the provider's price list at the current exchange rate; no default, so nobody runs on
   // a made-up price.
-  AI_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+  AI_MODEL: z.string().min(1).default(DEFAULT_AI_MODEL),
   AI_DAILY_CALLS_PER_USER: z.coerce
     .number({ error: required('a whole number') })
     .int({ error: required('a whole number') })
