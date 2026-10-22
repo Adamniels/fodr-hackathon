@@ -14,6 +14,8 @@ export default defineConfig({
   testDir: 'e2e',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // A broad breakage stops early in CI, so the run ends within its step's limit and the report is written (#146).
+  maxFailures: process.env.CI ? 10 : undefined,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: WEB,

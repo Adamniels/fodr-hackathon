@@ -21,12 +21,11 @@ const E2E_DATABASE_URL = `postgres://fodr:fodr@127.0.0.1:${process.env.POSTGRES_
 const API_DIR = fileURLToPath(new URL('../../../api/', import.meta.url))
 const SEED_CLI = fileURLToPath(new URL('../../../api/src/seed-cli.ts', import.meta.url))
 
-/** The seed's "today" in the tests: the calendar day of FIXED_NOW in Sweden. */
-const SEED_TODAY = '2026-10-15'
-
 // One database pool per test worker for the seed, opened when a test first seeds and closed when the worker ends
 // (the seedDatabase fixture below).
 let seedDatabase: Database | undefined
+// An idle connection the server drops is replaced by the pool; createDatabase's default listener keeps it from ending
+// the worker.
 const seedDb = () => (seedDatabase ??= createDatabase(E2E_DATABASE_URL)).db
 
 /** The password every e2e account gets. */
@@ -45,6 +44,9 @@ function clientIpFor(testInfo: TestInfo): string {
 
 /** Start of "now" for every test: dates in the journal and calendar are deterministic. */
 export const FIXED_NOW = new Date('2026-10-15T10:00:00+02:00')
+
+/** The seed's "today" in the tests: the calendar day of FIXED_NOW in Sweden. */
+const SEED_TODAY = FIXED_NOW.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' })
 
 /** The client IP header of the running test, for a browser context the test opens itself. */
 export const clientIpHeaders = (): Record<string, string> => ({ 'x-e2e-client-ip': clientIpFor(base.info()) })

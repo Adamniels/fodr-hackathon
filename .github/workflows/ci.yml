@@ -35,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     # A normal run takes about 10 minutes, most of it the tests. The job's limit leaves room for a slow package
     # mirror (#146: the browser's system packages once took 8 minutes), so slowness makes a slow job, not a cancelled
-    # one; each step below has its own limit, so a hang fails at the step that hangs.
-    timeout-minutes: 30
+    # one; the steps that wait on the network or run long have limits of their own, so a hang fails at that step.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -47,11 +47,16 @@ jobs:
       # runs against them. Compose rather than service containers, which cannot pass the S3 store's start command.
       # Started first so the image pulls overlap the installs, then waited for.
       - run: docker compose up -d
+        timeout-minutes: 5
       - run: npm ci
+        timeout-minutes: 10
       # The browser itself is cached by the Playwright version it belongs to; its system packages still come from apt,
       # whose mirror is the step's slow part when it is slow (#146).
       - id: playwright
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+        # Fails the step rather than leaving an empty key, which would never change with an upgrade.
+        run: |
+          version=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
