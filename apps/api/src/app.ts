@@ -87,7 +87,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
     if (ip) headers.set(CLIENT_IP_HEADER, ip)
     return auth.handler(new Request(c.req.raw, { headers }))
   })
-  app.route('/api/v1/me/export', exportRoutes({ auth, files, ...repositories }))
+  app.route('/api/v1/me/export', exportRoutes({ auth, files, logger, ...repositories }))
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
   // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
   const origin = new URL(config.betterAuthUrl).origin

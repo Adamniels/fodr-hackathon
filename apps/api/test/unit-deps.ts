@@ -68,5 +68,5 @@ export function unitRepositories() {
 export const unitFiles: FileStore = {
   put: () => Promise.reject(new Error('no file store in unit tests')),
   remove: () => Promise.reject(new Error('no file store in unit tests')),
-  get: () => Promise.reject(new Error('no file store in unit tests')),
+  open: () => Promise.reject(new Error('no file store in unit tests')),
 }

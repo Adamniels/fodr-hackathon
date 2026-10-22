@@ -205,7 +205,7 @@ describe('uploading a report', () => {
     }
     const recording: FileStore = {
       put: (bytes, type) => files.put(bytes, type),
-      get: (key) => files.get(key),
+      open: (key) => files.open(key),
       // The horse's own delete removes its (no) files too; only the upload's cleanup is of interest.
       remove: async (keys) => {
         if (keys.length > 0) removed.push(keys)
@@ -231,7 +231,7 @@ describe('uploading a report', () => {
     const broken: FileStore = {
       put: () => Promise.reject(new Error('store down')),
       remove: () => Promise.resolve(),
-      get: () => Promise.reject(new Error('store down')),
+      open: () => Promise.reject(new Error('store down')),
     }
     const other = authApp({}, { files: broken })
     try {

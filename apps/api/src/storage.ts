@@ -17,8 +17,8 @@ export interface FileStore {
   put(bytes: Uint8Array, mediaType: string): Promise<string>
   /** Deletes the objects; a key with no object is no error. */
   remove(keys: string[]): Promise<void>
-  /** The object's bytes, for the user's export (#40). */
-  get(key: string): Promise<Uint8Array>
+  /** The object as a stream, for the user's export (#40); rejects when there is no such object. */
+  open(key: string): Promise<ReadableStream<Uint8Array>>
 }
 
 export interface S3FileStore extends FileStore {
@@ -59,10 +59,10 @@ export function createFileStore(config: Config['s3']): S3FileStore {
       }
     },
 
-    async get(key) {
+    async open(key) {
       const result = await client.send(new GetObjectCommand({ Bucket, Key: key }))
       if (!result.Body) throw new Error('The object has no body')
-      return result.Body.transformToByteArray()
+      return result.Body.transformToWebStream()
     },
 
     async ensureBucket() {
