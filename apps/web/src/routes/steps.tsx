@@ -20,13 +20,14 @@ export function HorsesIndex() {
 }
 
 export function ProfileRoute() {
-  const { hast, updateHorse, addHorse, goTo } = useWorkspace()
+  const { hast, updateHorse, addHorse, removeHorse, goTo } = useWorkspace()
   return (
     <HorseStep
       selected={hast}
       produkter={produkter}
       onChange={updateHorse}
       onNew={addHorse}
+      onDelete={removeHorse}
       onNext={() => goTo('analys')}
     />
   )

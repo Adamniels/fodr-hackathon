@@ -3,6 +3,8 @@
 
 import { createHash } from 'node:crypto'
 import { test as base, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
+import type { HorseProfile } from '@fodr/contracts/horses'
+import { PYSEN, SIXTEN } from '../fixtures/horses'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
 import { mockAi, type AiMock } from './mock-ai'
 
@@ -22,6 +24,9 @@ function clientIpFor(testInfo: TestInfo): string {
 
 /** Start of "now" for every test: dates in the journal and calendar are deterministic. */
 export const FIXED_NOW = new Date('2026-10-15T10:00:00+02:00')
+
+/** The client IP header of the running test, for a browser context the test opens itself. */
+export const clientIpHeaders = (): Record<string, string> => ({ 'x-e2e-client-ip': clientIpFor(base.info()) })
 
 export const test = base.extend<{ ai: AiMock }>({
   // `provide` rather than Playwright's usual `use`, which the React hooks lint rule takes for React's use().
@@ -81,6 +86,26 @@ export async function createAccount(page: Page, name: string, email: string): Pr
   return account
 }
 
+/**
+ * A verified, signed-in account with horses, Sixten and Pysen by default, ending on the first horse's profile. The
+ * horses are created through the API (POST /api/v1/horses with the page's session cookie); adding a horse through the
+ * UI is tested on its own in horse-profile.spec.ts.
+ */
+export async function createAccountWithHorses(
+  page: Page,
+  horses: HorseProfile[] = [SIXTEN, PYSEN],
+  email = 'agare@example.se',
+): Promise<Account> {
+  const account = await createAccount(page, 'Hästägare', email)
+  for (const horse of horses) {
+    const res = await page.request.post('/api/v1/horses', { data: horse })
+    expect(res.status(), await res.text()).toBe(201)
+  }
+  await page.goto('/horses')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(horses[0].namn)
+  return account
+}
+
 /** Submits the login form with a password. Does not wait for the workspace, so failed logins can be asserted. */
 export async function logIn(page: Page, email: string, password = PASSWORD): Promise<void> {
   const dialog = await openLoginDialog(page)
@@ -99,6 +124,11 @@ export async function goToStep(page: Page, step: Step): Promise<void> {
 /** Demo account, Sixten, with the built-in complete example analysis, ending on the plan step. */
 export async function loadExamplePlan(page: Page): Promise<void> {
   await enterDemo(page)
+  await showExamplePlan(page)
+}
+
+/** From the selected horse, loads the built-in complete example analysis and ends on the plan step. */
+export async function showExamplePlan(page: Page): Promise<void> {
   await goToStep(page, 'Analysen')
   await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
   await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()

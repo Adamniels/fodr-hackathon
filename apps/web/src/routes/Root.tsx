@@ -3,11 +3,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Outlet } from 'react-router'
-import { authClient, fetchMe } from '../auth-client'
+import { authClient, fetchMe, ME_QUERY_KEY as ME } from '../auth-client'
 import { DEMO_USER, isDemoOpen, setDemoOpen } from '../demo'
+import { HORSES_QUERY_KEY } from '../horses'
 import { SessionContext, type Session } from './session'
-
-const ME = ['me']
 
 export function Root() {
   const queryClient = useQueryClient()
@@ -37,6 +36,8 @@ export function Root() {
       if (!signedIn) return
       try {
         await authClient.signOut()
+        // Nothing of the account stays in memory for whoever uses the browser next.
+        queryClient.removeQueries({ queryKey: HORSES_QUERY_KEY })
         queryClient.setQueryData(ME, null)
       } catch {
         // Sign-out failed (offline, server error): read the session again rather than pretend it ended.

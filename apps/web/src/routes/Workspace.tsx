@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { Omrakning } from '@fodr/domain/analysis'
 import { skapaPlan } from '@fodr/domain/plan'
-import { loadHorses, loadJournal, nyHast, saveHorses, saveJournal } from '../storage'
+import { loadJournal, saveJournal } from '../storage'
+import { useApiHorses, type HorseStore, type SaveState } from '../horses'
+import { DEMO_USER, useDemoHorses } from '../demo'
 import { ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
@@ -22,26 +24,68 @@ export function WorkspaceGate() {
   const session = useSession()
   const location = useLocation()
   if (!session.user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  return <Workspace key={session.user.id} user={session.user} logOut={session.logOut} />
+  return session.user.id === DEMO_USER.id ? (
+    <DemoWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
+  ) : (
+    <AccountWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
+  )
+}
+
+interface WorkspaceProps {
+  user: User
+  logOut: () => Promise<void>
+}
+
+/** The browser-only demo's workspace, its horses in localStorage until #29. */
+function DemoWorkspace(props: WorkspaceProps) {
+  return <Workspace {...props} horses={useDemoHorses()} />
+}
+
+/** An account's workspace, its horses on the API (#25). It opens once they are read. */
+function AccountWorkspace(props: WorkspaceProps) {
+  const { t } = useTranslation()
+  const { store, reload } = useApiHorses(props.user.id)
+  if (store === undefined) {
+    return (
+      <p className="arbetsyta-laddar" role="status">
+        {t('app.horses.loading')}
+      </p>
+    )
+  }
+  if (store === null) {
+    return (
+      <div className="arbetsyta-laddar">
+        <p className="ruta fel" role="alert">
+          {t('app.horses.loadFailed')}
+        </p>
+        <button className="knapp" onClick={reload}>
+          {t('app.horses.retry')}
+        </button>
+      </div>
+    )
+  }
+  return <Workspace {...props} horses={store} />
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
 // The horse and step come from the URL, /horses/:horseId/<step>; the steps render in the Outlet (steps.tsx).
-function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }) {
+function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseStore }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const horseMatch = useMatch('/horses/:horseId/*')
   const stepMatch = useMatch('/horses/:horseId/:step')
-  const [hastar, setHastar] = useState<Hastprofil[]>(() => loadHorses(user.id))
+  const hastar = horses.horses
   const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
   const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
   const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => loadJournal(user.id))
   const [menyOppen, setMenyOppen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [addFailed, setAddFailed] = useState(false)
+  const title = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [])
-  useEffect(() => saveHorses(user.id, hastar), [user.id, hastar])
   // Read again when the page is shown (a laptop opened the next morning), so the journal's default date and the
   // follow-up check move to the new day (#107). A page left visible across midnight keeps the old day until then.
   const [today, setToday] = useState(localIsoDate)
@@ -79,12 +123,29 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
     open(id, step)
     setMenyOppen(false)
   }
-  const updateHorse = (h: Hastprofil) => setHastar((alla) => alla.map((x) => (x.id === h.id ? h : x)))
-  const addHorse = (h: Hastprofil) => {
-    setHastar((alla) => [...alla, h])
-    // The first horse replaces /horses, which would only send back to it.
-    open(h.id, 'hast', horseId === undefined)
-    setMenyOppen(false)
+  const updateHorse = horses.update
+  const addHorse = async () => {
+    if (adding) return
+    setAdding(true)
+    setAddFailed(false)
+    try {
+      const h = await horses.create()
+      // The first horse replaces /horses, which would only send back to it.
+      open(h.id, 'hast', horseId === undefined)
+      setMenyOppen(false)
+    } catch {
+      setAddFailed(true)
+    } finally {
+      setAdding(false)
+    }
+  }
+  // The deleted horse leaves the list, and its URL then sends to /horses (below). Its journal is kept in the browser
+  // until #28, so it is removed here; its analysis and plan are not stored yet (#26, #27).
+  // Focus moves to the page title, as the dialog that held it goes away with the profile.
+  const removeHorse = async (id: string) => {
+    await horses.remove(id)
+    setJournal((j) => Object.fromEntries(Object.entries(j).filter(([hastId]) => hastId !== id)))
+    requestAnimationFrame(() => title.current?.focus())
   }
   const addEntry = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
@@ -120,7 +181,8 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
       setOmrakningar(o)
     },
     updateHorse,
-    addHorse,
+    addHorse: () => void addHorse(),
+    removeHorse,
     addEntry,
   }
 
@@ -152,7 +214,7 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
             </li>
           ))}
           <li>
-            <button className="hastrad ny" onClick={() => addHorse(nyHast())}>
+            <button className="hastrad ny" disabled={adding} onClick={() => void addHorse()}>
               <span className="hast-ikon">+</span>
               <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
@@ -173,9 +235,11 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
           <button
             className="sidofalt-lank"
             onClick={() => {
+              // Edits still waiting are sent before the session ends, which would refuse them.
+              const saved = horses.flush()
               // The landing page renders first, so the gate never sees the session end and sends to /login.
               void navigate('/', { flushSync: true })
-              void logOut()
+              void saved.then(logOut)
             }}
           >
             {t('app.sidebar.logOut')}
@@ -200,7 +264,16 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
           <div className="sid-ikon" aria-hidden>
             {initial(hast)}
           </div>
-          <h1 className="sid-titel">{hast?.namn || t('app.newHorse')}</h1>
+          <h1 className="sid-titel" ref={title} tabIndex={-1}>
+            {hast?.namn || t('app.newHorse')}
+          </h1>
+          {/* In the page rather than the sidebar, which is closed on a phone when the welcome card adds the horse. */}
+          {addFailed && (
+            <p className="ruta fel" role="alert">
+              {t('app.horses.addFailed')}
+            </p>
+          )}
+          {hast && <SaveStatus state={horses.saveState(hast.id)} onRetry={() => horses.retrySave(hast.id)} />}
 
           {hast && (
             <dl className="egenskaper">
@@ -262,6 +335,21 @@ function Workspace({ user, logOut }: { user: User; logOut: () => Promise<void> }
           <p className="fotnot">{t('app.footnote')}</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Where the horse's edits are. The status is read out when it changes; a failed save keeps the edits for a retry. */
+function SaveStatus({ state, onRetry }: { state: SaveState | undefined; onRetry: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="sparstatus">
+      <span role="status">{state && t(`app.save.${state}`)}</span>
+      {state === 'failed' && (
+        <button className="knapp text kompakt" onClick={onRetry}>
+          {t('app.save.retry')}
+        </button>
+      )}
     </div>
   )
 }

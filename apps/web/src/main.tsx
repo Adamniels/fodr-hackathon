@@ -4,12 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router/dom'
 import './index.css'
 import './i18n'
-import { forgetMockAccounts } from './demo'
+import { forgetLocalHorses, forgetMockAccounts } from './demo'
 import { router } from './router'
 
 forgetMockAccounts()
+forgetLocalHorses()
 
-// Server state (ADR 0012). Each query sets its own caching and retries; today only the plan explanation is one.
+// Server state (ADR 0012). Each query sets its own caching and retries; the horses (horses.ts) and the plan explanation.
 const queryClient = new QueryClient()
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- index.html always has #root

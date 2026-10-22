@@ -41,6 +41,9 @@ export const authClient = {
   resetPassword: (token: string, newPassword: string) => post('/reset-password', { token, newPassword }),
 }
 
+/** The query key of the signed-in user (fetchMe); invalidating it reads the session again. */
+export const ME_QUERY_KEY = ['me']
+
 /** The signed-in user, or null without a session. */
 export async function fetchMe(): Promise<User | null> {
   const res = await fetch('/api/v1/me')

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { interpretProfile } from '../api'
@@ -17,16 +17,17 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
+import { HORSE_NAME_MAX, HORSE_NOTES_MAX } from '@fodr/contracts/horses'
 import { bodyConditionText, breedName, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
-import { nyHast } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
 interface Props {
   selected: Hastprofil | undefined
   produkter: Produkt[]
   onChange: (h: Hastprofil) => void
-  onNew: (h: Hastprofil) => void
+  onNew: () => void
+  onDelete: (id: string) => Promise<void>
   onNext: () => void
 }
 
@@ -42,16 +43,23 @@ const STANDARD_MILJO: Miljo = { hallning: 'box', timmarUtePerDag: 8, klippt: fal
 
 const TYPER = ['lattfodd', 'normalfodd', 'svarfodd'] as const satisfies readonly Hasttyp[]
 
-export function HorseStep({ selected, produkter, onChange, onNew, onNext }: Props) {
+export function HorseStep({ selected, produkter, onChange, onNew, onDelete, onNext }: Props) {
   const { t } = useTranslation()
   // The horse list lives in the app's sidebar; this shows only the selected horse's profile.
   return selected ? (
-    <ProfileForm key={selected.id} hast={selected} produkter={produkter} onChange={onChange} onNext={onNext} />
+    <ProfileForm
+      key={selected.id}
+      hast={selected}
+      produkter={produkter}
+      onChange={onChange}
+      onDelete={() => onDelete(selected.id)}
+      onNext={onNext}
+    />
   ) : (
     <section className="kort tomt">
       <h2>{t('horse.welcome.title')}</h2>
       <p className="ingress">{t('horse.welcome.intro')}</p>
-      <button className="knapp" onClick={() => onNew(nyHast())}>
+      <button className="knapp" onClick={onNew}>
         {t('horse.welcome.add')}
       </button>
     </section>
@@ -62,11 +70,13 @@ function ProfileForm({
   hast,
   produkter,
   onChange,
+  onDelete,
   onNext,
 }: {
   hast: Hastprofil
   produkter: Produkt[]
   onChange: (h: Hastprofil) => void
+  onDelete: () => Promise<void>
   onNext: () => void
 }) {
   const { t } = useTranslation()
@@ -89,7 +99,7 @@ function ProfileForm({
 
       <div className="grupp">
         <Field label={t('horse.name')}>
-          <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
+          <input value={hast.namn} maxLength={HORSE_NAME_MAX} onChange={(e) => set({ namn: e.target.value })} />
         </Field>
         <Field label={t('horse.age')}>
           <NumberField value={hast.alderAr} error={errorFor('alderAr')} onChange={(v) => set({ alderAr: v })} />
@@ -235,15 +245,64 @@ function ProfileForm({
       <HealthSection halsa={hast.halsa} onChange={(halsa) => set({ halsa })} />
       <FeedChangeSensitivitySection hast={hast} onChange={(bytekanslighet) => set({ bytekanslighet })} />
       <Field label={t('horse.other')}>
-        <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
+        <input
+          value={hast.halsa.ovrigt}
+          maxLength={HORSE_NOTES_MAX}
+          onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })}
+        />
       </Field>
 
       <div className="atgardsrad">
+        <DeleteHorse name={hast.namn || t('common.theHorse')} onDelete={onDelete} />
         <button className="knapp" disabled={!hast.namn} onClick={onNext}>
           {t('horse.toAnalysis')}
         </button>
       </div>
     </section>
+  )
+}
+
+/** Deleting asks first (CF2), in a modal dialog that keeps focus until it is answered. */
+function DeleteHorse({ name, onDelete }: { name: string; onDelete: () => Promise<void> }) {
+  const { t } = useTranslation()
+  const dialog = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const confirm = async () => {
+    setBusy(true)
+    setFailed(false)
+    try {
+      // On success the horse's profile, and this dialog with it, goes away.
+      await onDelete()
+    } catch {
+      setFailed(true)
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <button className="knapp sekundar ta-bort" onClick={() => dialog.current?.showModal()}>
+        {t('horse.delete.button')}
+      </button>
+      <dialog ref={dialog} className="bekrafta" aria-labelledby={titleId} onClose={() => setFailed(false)}>
+        <h2 id={titleId}>{t('horse.delete.title', { name })}</h2>
+        <p>{t('horse.delete.body')}</p>
+        {failed && (
+          <p className="ruta fel" role="alert">
+            {t('horse.delete.failed')}
+          </p>
+        )}
+        <div className="atgardsrad">
+          <button className="knapp sekundar" onClick={() => dialog.current?.close()}>
+            {t('horse.delete.cancel')}
+          </button>
+          <button className="knapp" disabled={busy} onClick={() => void confirm()}>
+            {t('horse.delete.confirm')}
+          </button>
+        </div>
+      </dialog>
+    </>
   )
 }
 
@@ -521,7 +580,8 @@ function AiFill({
           tandproblem: hast.halsa.tandproblem || t.tandproblem,
           proteinkanslig: hast.halsa.proteinkanslig || t.proteinkanslig,
           undvik: [...new Set([...(hast.halsa.undvik ?? []), ...t.undvik])],
-          ovrigt: t.ovrigt || hast.halsa.ovrigt,
+          // Cut to what the server stores, as the field's own limit does for typed text.
+          ovrigt: (t.ovrigt || hast.halsa.ovrigt).slice(0, HORSE_NOTES_MAX),
         },
       })
       setTidigare(allaSvar)
