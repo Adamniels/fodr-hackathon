@@ -18,9 +18,22 @@ describe('requireCatalogue', () => {
     const exits: number[] = []
     let calls = 0
     const currentSetId = () =>
-      ++calls === 1 ? Promise.reject(new Error('connect ECONNREFUSED')) : Promise.resolve('set')
+      ++calls === 1
+        ? Promise.reject(Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' }))
+        : Promise.resolve('set')
     await requireCatalogue({ currentSetId }, logger, { exit: (c) => void exits.push(c), retryMs: 1 })
     expect(calls).toBe(2)
     expect(exits).toEqual([])
+  })
+
+  it('exits on a database error that retrying will not clear, such as a missing table', async () => {
+    const exits: number[] = []
+    // As Drizzle wraps it: the driver's error, with its Postgres code, as the cause.
+    const missing = Object.assign(new Error('Failed query'), { cause: { code: '42P01' } })
+    await requireCatalogue({ currentSetId: () => Promise.reject(missing) }, logger, {
+      exit: (c) => void exits.push(c),
+      retryMs: 1,
+    })
+    expect(exits).toEqual([1])
   })
 })

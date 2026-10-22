@@ -288,5 +288,8 @@ export const productSetMembers = pgTable(
     /** The product's place in the catalogue: the optimiser reads the products in this order. */
     position: integer('position').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.setId, table.productVersionId] })],
+  (table) => [
+    primaryKey({ columns: [table.setId, table.productVersionId] }),
+    uniqueIndex('product_set_members_set_id_position_idx').on(table.setId, table.position),
+  ],
 )

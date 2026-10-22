@@ -106,6 +106,19 @@ describe('importing the catalogue', () => {
     expect(await repository.products(setId ?? '')).toEqual(FILE)
   })
 
+  it('refuses an empty catalogue, and changes nothing', async () => {
+    const first = await repository.importCatalogue(FILE)
+    await expect(repository.importCatalogue([])).rejects.toThrow('The catalogue file has no products')
+    expect(await repository.currentSetId()).toBe(first.setId)
+    expect(await repository.products(first.setId ?? '')).toEqual(FILE)
+  })
+
+  it('refuses a catalogue with a product twice, naming it, and changes nothing', async () => {
+    const [head] = FILE
+    await expect(repository.importCatalogue([...FILE, head])).rejects.toThrow(`twice: ${head.id}`)
+    expect(await repository.currentSetId()).toBeNull()
+  })
+
   it('stores one set when imported twice at once', async () => {
     await Promise.all([repository.importCatalogue(FILE), repository.importCatalogue(FILE)])
     expect(await database.db.select().from(productSets)).toHaveLength(1)

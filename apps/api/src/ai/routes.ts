@@ -94,9 +94,10 @@ export function aiRoutes({
   }
 
   route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, async (userId, body) => {
-    const profile = await ai.run(userId, 'profile', (provider) => provider.interpretProfile(body))
-    // The catalogue as it is now (#35), which the profile's feeds will be planned with.
+    // The catalogue as it is now (#35), which the profile's feeds will be planned with; read first, so a database that
+    // cannot answer costs no paid call.
     const known = new Set((await catalogue.current()).products.map((p) => p.id))
+    const profile = await ai.run(userId, 'profile', (provider) => provider.interpretProfile(body))
     // A product is linked only when the catalogue has it (CF3, C8): an ID the model invented is an unknown feed, kept
     // with its name and dose for the owner to see and pick from the list.
     return {

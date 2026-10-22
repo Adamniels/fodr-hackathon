@@ -36,6 +36,14 @@ const canonical = (value: unknown): string =>
 export function productRepository(db: Executor): ProductRepository {
   return {
     importCatalogue(catalogue) {
+      // An empty file would retire every product and still leave a set, so the API would start and plan with nothing;
+      // a product twice would be stored once and listed twice. Both are a broken file, refused before anything changes.
+      if (catalogue.length === 0) return Promise.reject(new Error('The catalogue file has no products'))
+      const seen = new Set<string>()
+      const twice = [...new Set(catalogue.map((p) => p.id).filter((id) => seen.size === seen.add(id).size))]
+      if (twice.length > 0) {
+        return Promise.reject(new Error(`The catalogue file lists a product twice: ${twice.join(', ')}`))
+      }
       return db.transaction(async (tx) => {
         // One import at a time: two at once would each find the other's products missing.
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext('products:import'))`)
@@ -77,8 +85,8 @@ export function productRepository(db: Executor): ProductRepository {
         const inFile = catalogue.map((p) => p.id)
         const retired = await tx
           .update(products)
-          .set({ retiredAt: new Date() })
-          .where(and(isNull(products.retiredAt), inFile.length > 0 ? notInArray(products.id, inFile) : undefined))
+          .set({ retiredAt: sql`clock_timestamp()` })
+          .where(and(isNull(products.retiredAt), notInArray(products.id, inFile)))
           .returning({ id: products.id })
         result.retired = retired.length
 
@@ -87,11 +95,9 @@ export function productRepository(db: Executor): ProductRepository {
         const currentMembers = currentSet ? await memberIds(tx, currentSet) : []
         if (currentMembers.join() !== members.join()) {
           const [set] = await tx.insert(productSets).values({}).returning({ id: productSets.id })
-          if (members.length > 0) {
-            await tx
-              .insert(productSetMembers)
-              .values(members.map((productVersionId, position) => ({ setId: set.id, productVersionId, position })))
-          }
+          await tx
+            .insert(productSetMembers)
+            .values(members.map((productVersionId, position) => ({ setId: set.id, productVersionId, position })))
           result.setId = set.id
         }
         return result

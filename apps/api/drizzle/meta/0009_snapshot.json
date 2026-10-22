@@ -1,5 +1,5 @@
 {
-  "id": "8c0b3d6c-ed24-4993-be5e-090e93cef136",
+  "id": "0491c939-35cb-462c-8738-0e40d29bb1dc",
   "prevId": "d943cab1-67b4-471e-a492-9321398092a5",
   "version": "7",
   "dialect": "postgresql",
@@ -791,7 +791,29 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "product_set_members_set_id_position_idx": {
+          "name": "product_set_members_set_id_position_idx",
+          "columns": [
+            {
+              "expression": "set_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "product_set_members_set_id_product_sets_id_fk": {
           "name": "product_set_members_set_id_product_sets_id_fk",
