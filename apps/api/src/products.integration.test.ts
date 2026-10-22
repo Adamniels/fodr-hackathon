@@ -119,6 +119,14 @@ describe('importing the catalogue', () => {
     expect(await repository.currentSetId()).toBeNull()
   })
 
+  it('refuses a catalogue with a product the admin view could not show, naming it, and changes nothing', async () => {
+    const [head, ...rest] = FILE
+    await expect(repository.importCatalogue([{ ...head, url: 'javascript:alert(1)' }, ...rest])).rejects.toThrow(
+      head.id,
+    )
+    expect(await repository.currentSetId()).toBeNull()
+  })
+
   it('stores one set when imported twice at once', async () => {
     await Promise.all([repository.importCatalogue(FILE), repository.importCatalogue(FILE)])
     expect(await database.db.select().from(productSets)).toHaveLength(1)

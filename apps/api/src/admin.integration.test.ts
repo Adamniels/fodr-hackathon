@@ -150,6 +150,49 @@ describe('the admin routes', () => {
     expect((await products.products((await products.currentSetId()) ?? '')).map((p) => p.id)).toContain(target.id)
   })
 
+  it('keep a retired product out of the catalogue when it is edited, until it is restored', async () => {
+    const { browser } = await admin()
+    const target = FILE[6]
+    await browser.post(`/api/v1/admin/products/${target.id}/retire`, {})
+    await browser.request(`/api/v1/admin/products/${target.id}`, {
+      method: 'PUT',
+      body: { data: { ...dataOf(target), prisKr: 7 }, verifiedOn: null },
+    })
+    const ids = async () => (await products.products((await products.currentSetId()) ?? '')).map((p) => p.id)
+    expect(await ids()).not.toContain(target.id)
+    await browser.post(`/api/v1/admin/products/${target.id}/restore`, {})
+    const current = await products.products((await products.currentSetId()) ?? '')
+    expect(current.find((p) => p.id === target.id)?.prisKr).toBe(7)
+  })
+
+  it('make no new set for a retirement that changes nothing', async () => {
+    const { browser } = await admin()
+    const target = FILE[7]
+    await browser.post(`/api/v1/admin/products/${target.id}/retire`, {})
+    const before = await products.currentSetId()
+    await browser.post(`/api/v1/admin/products/${target.id}/retire`, {})
+    expect(await products.currentSetId()).toBe(before)
+  })
+
+  it('take retire and restore only as JSON, as every write (CSRF, ADR 0013)', async () => {
+    // A form post, as another site's page could send with the cookie: refused before anything changes.
+    const signedIn = await admin()
+    const form = new FormData()
+    form.set('x', '1')
+    const res = await signedIn.browser.upload(`/api/v1/admin/products/${FILE[8].id}/retire`, form)
+    expect(res.status).toBe(415)
+    expect((await products.get(FILE[8].id))?.retired).toBe(false)
+  })
+
+  it('refuse a link that is not http or https', async () => {
+    const { browser } = await admin()
+    for (const url of ['javascript:alert(1)', 'data:text/html,x', 'mailto:a@b.se']) {
+      expect((await browser.post('/api/v1/admin/products', { data: { ...NEW, url }, verifiedOn: null })).status).toBe(
+        400,
+      )
+    }
+  })
+
   it('refuse data the contract does not allow, and an unknown product', async () => {
     const { browser } = await admin()
     const bad = await browser.post('/api/v1/admin/products', { data: { ...NEW, prisKr: -1 }, verifiedOn: null })

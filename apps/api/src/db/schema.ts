@@ -14,6 +14,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  check,
   date,
   doublePrecision,
   index,
@@ -43,19 +44,23 @@ const updatedAt = () =>
     .$onUpdate(() => new Date())
     .notNull()
 
-export const users = pgTable('users', {
-  id: id(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').default(false).notNull(),
-  image: text('image'),
-  /** 'admin' may administer products (#36, CF9); a Better Auth field no client can set (auth.ts). */
-  role: text('role', { enum: ['user', 'admin'] })
-    .notNull()
-    .default('user'),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-})
+export const users = pgTable(
+  'users',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: text('image'),
+    /** 'admin' may administer products (#36, CF9); a Better Auth field no client can set (auth.ts). */
+    role: text('role', { enum: ['user', 'admin'] })
+      .notNull()
+      .default('user'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [check('users_role_check', sql`${table.role} in ('user', 'admin')`)],
+)
 
 export const sessions = pgTable(
   'sessions',

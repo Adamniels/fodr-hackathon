@@ -1,6 +1,7 @@
 // `npm run admin:grant -- <email>` and `npm run admin:revoke -- <email>` (and `node apps/api/dist/admin.mjs grant
 // <email>` in the image): gives an account the admin role, or takes it back (#36, CF9). Only an existing account whose
-// email is verified. Takes effect on the account's next request, no restart: the role is read with the session.
+// email is verified. The API applies it to the account's next request, no restart: the role is read with the session;
+// the web app shows it on its next page load.
 import { z } from 'zod'
 import { createDatabase } from './db'
 import { accountRepository } from './repositories/accounts'

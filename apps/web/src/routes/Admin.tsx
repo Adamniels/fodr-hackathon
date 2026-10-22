@@ -1,26 +1,31 @@
 // Product administration (#36, CF9): /admin/products, a list of every product, and /admin/products/new and /:productId,
 // a form for one. Admins only: anyone else gets the not-found page, as the API answers them 404. Every save is a new
 // version on the server and a new product set, so the workspace plans with it at once and saved plans keep theirs.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router'
 import { ProductDataSchema, type AdminProduct, type ProductData } from '@fodr/contracts/admin'
 import { NUTRIENTS, NUTRIENT_KEYS, type NutrientKey } from '@fodr/domain/nutrients'
 import { useAdminProduct, useAdminProducts, useAdminWrites } from '../admin'
+import { ApiError } from '../api-v1'
 import { DecimalInput } from '../components/DecimalInput'
-import { formatDate, formatMoney, localIsoDate, nutrientLabel } from '../format'
+import { formatDate, formatMoney, formatNumber, localIsoDate, nutrientLabel } from '../format'
 import { PageNotFound } from './RouteError'
 import { useSession } from './session'
 
-const CATEGORIES = ['mineralfoder', 'tillskott', 'salt', 'kraftfoder', 'proteinfoder', 'ovrigt'] as const
-const DECLARATIONS = ['komplett', 'delvis', 'bara_ravarde', 'saknas', 'ej_relevant'] as const
+const CATEGORIES = ProductDataSchema.shape.kategori.options
+const DECLARATIONS = ProductDataSchema.shape.naringsdata.options
 
 /** /admin: the admin's pages, or the not-found page for anyone else. */
 export function AdminGate() {
   const { user } = useSession()
+  const { t } = useTranslation()
   if (user?.role !== 'admin') return <PageNotFound />
   return (
     <main className="admin">
+      <nav className="admin-nav">
+        <Link to="/horses">{t('admin.toHorses')}</Link>
+      </nav>
       <Outlet />
     </main>
   )
@@ -59,7 +64,9 @@ export function AdminProductList() {
         </p>
       ) : (
         <table className="tabell lista">
-          <caption className="liten">{t('admin.count', { count: shown.length })}</caption>
+          <caption className="liten">
+            {t('admin.count', { count: shown.length, formatted: formatNumber(shown.length) })}
+          </caption>
           <thead>
             <tr>
               <th>{t('admin.columns.name')}</th>
@@ -95,8 +102,15 @@ export function AdminProductList() {
   )
 }
 
-/** The form's draft: a product's data, with the numbers a new product has not been given yet. */
-type Draft = Omit<ProductData, 'prisKr' | 'forpackningKg'> & { prisKr?: number; forpackningKg?: number }
+/**
+ * The form's draft: a product's data, with the numbers not given yet. A dose bound not given is unknown, never 0: a
+ * dose with one bound only is refused when saved.
+ */
+type Draft = Omit<ProductData, 'prisKr' | 'forpackningKg' | 'dosGramPer100kg'> & {
+  prisKr?: number
+  forpackningKg?: number
+  dosGramPer100kg?: { min?: number; max?: number }
+}
 
 const emptyDraft = (): Draft => ({
   namn: '',
@@ -119,15 +133,17 @@ export function AdminProductEdit() {
   const { productId } = useParams()
   const { user } = useSession()
   const query = useAdminProduct(user?.id ?? '', productId)
-  // A product just created opens here, saved.
+  // A product just created opens here, saved (its form drops the mark, so a reload does not show it again). Read on
+  // every render: the new product's page reuses this component, and its form mounts afresh, keyed on the ID.
   const justCreated = (useLocation().state as { saved?: boolean } | null)?.saved === true
   if (productId === undefined) return <ProductForm key="new" />
   if (query.isPending) return <p role="status">{t('admin.loading')}</p>
   if (query.isError) {
+    const missing = query.error instanceof ApiError && query.error.status === 404
     return (
       <>
         <p className="ruta fel" role="alert">
-          {t('admin.notFound')}
+          {t(missing ? 'admin.notFound' : 'admin.productLoadFailed')}
         </p>
         <Link to="/admin/products">{t('admin.back')}</Link>
       </>
@@ -145,14 +161,25 @@ function ProductForm({ product, saved = false }: { product?: AdminProduct; saved
   const [verifiedOn, setVerifiedOn] = useState(product?.verifiedOn ?? '')
   const [ingredients, setIngredients] = useState(() => draft.ingredienser.join(', '))
   const [assumptions, setAssumptions] = useState(() => draft.antaganden.join('\n'))
-  const [errors, setErrors] = useState<Set<string>>(new Set())
+  const [errors, setErrors] = useState<Map<string, string>>(new Map())
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'failed' | 'invalid'>(saved ? 'saved' : 'idle')
-  const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
-  const error = (field: string) => (errors.has(field) ? t('admin.fieldInvalid') : undefined)
+  // An edit after a save makes the form unsaved again.
+  // Once shown, the mark that the product was just created is dropped from the history entry.
+  useEffect(() => {
+    if (saved) void navigate('.', { replace: true, state: null })
+  }, [saved, navigate])
+  const set = (patch: Partial<Draft>) => {
+    setDraft((d) => ({ ...d, ...patch }))
+    setState((s) => (s === 'saved' ? 'idle' : s))
+  }
+  const error = (field: string) => errors.get(field)
 
   const save = async () => {
+    const dose = draft.dosGramPer100kg
     const parsed = ProductDataSchema.safeParse({
       ...draft,
+      // No bound given is no dose; one bound only is refused below, at the dose fields.
+      dosGramPer100kg: dose?.min === undefined && dose?.max === undefined ? undefined : dose,
       ingredienser: ingredients
         .split(',')
         .map((s) => s.trim())
@@ -166,11 +193,18 @@ function ProductForm({ product, saved = false }: { product?: AdminProduct; saved
       dosKalla: draft.dosKalla?.trim() || undefined,
     })
     if (!parsed.success) {
-      setErrors(new Set(parsed.error.issues.map((i) => i.path.join('.'))))
+      setErrors(
+        new Map(
+          parsed.error.issues.map((i) => {
+            const [field, message] = fieldError(i.path.map(String), i.code)
+            return [field, t(message)]
+          }),
+        ),
+      )
       setState('invalid')
       return
     }
-    setErrors(new Set())
+    setErrors(new Map())
     setState('saving')
     try {
       const input = { data: parsed.data, verifiedOn: verifiedOn || null }
@@ -210,7 +244,12 @@ function ProductForm({ product, saved = false }: { product?: AdminProduct; saved
   const number = (field: 'prisKr' | 'forpackningKg') => (
     <label className="falt">
       <span className="falt-label">{t(`admin.fields.${field}`)}</span>
-      <DecimalInput value={draft[field]} error={error(field)} onChange={(v) => set({ [field]: v })} />
+      <DecimalInput
+        value={draft[field]}
+        error={error(field)}
+        onChange={(v) => set({ [field]: v })}
+        onClear={() => set({ [field]: undefined })}
+      />
     </label>
   )
   const check = (field: 'iUrval' | 'deklarationKontrollerad' | 'lampligVidFangEms') => (
@@ -224,9 +263,9 @@ function ProductForm({ product, saved = false }: { product?: AdminProduct; saved
       <span className="falt-label">{t(bound === 'min' ? 'admin.fields.dosMin' : 'admin.fields.dosMax')}</span>
       <DecimalInput
         value={draft.dosGramPer100kg?.[bound]}
-        error={error(`dosGramPer100kg.${bound}`) ?? error('dosGramPer100kg')}
-        onChange={(v) => set({ dosGramPer100kg: { min: 0, max: 0, ...draft.dosGramPer100kg, [bound]: v } })}
-        onClear={() => set({ dosGramPer100kg: undefined })}
+        error={error(`dosGramPer100kg.${bound}`)}
+        onChange={(v) => set({ dosGramPer100kg: { ...draft.dosGramPer100kg, [bound]: v } })}
+        onClear={() => set({ dosGramPer100kg: { ...draft.dosGramPer100kg, [bound]: undefined } })}
       />
     </label>
   )
@@ -363,4 +402,28 @@ function SaveState({ state }: { state: 'idle' | 'saving' | 'saved' | 'failed' | 
     )
   }
   return <span role="status">{state === 'saved' ? t('admin.saved') : ''}</span>
+}
+
+type FieldMessage =
+  | 'admin.errors.name'
+  | 'admin.errors.required'
+  | 'admin.errors.doseBoth'
+  | 'admin.errors.doseOrder'
+  | 'admin.errors.url'
+  | 'admin.fieldInvalid'
+
+/** The field and its message for a refused value, by what is wrong with it: the field is the issue's path. */
+function fieldError(path: string[], code: string): [string, FieldMessage] {
+  const [field] = path
+  if (field === 'dosGramPer100kg') {
+    // The schema's own check of the order is on max; a bound not given is a missing value.
+    return [
+      `dosGramPer100kg.${path[1] ?? 'max'}`,
+      code === 'custom' ? 'admin.errors.doseOrder' : 'admin.errors.doseBoth',
+    ]
+  }
+  if (field === 'namn') return [field, 'admin.errors.name']
+  if (field === 'url') return [field, 'admin.errors.url']
+  if (code === 'invalid_type') return [path.join('.'), 'admin.errors.required']
+  return [path.join('.'), 'admin.fieldInvalid']
 }

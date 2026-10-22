@@ -44,7 +44,11 @@ export const ProductDataSchema = z.object({
   kontrollera: z.array(text(300)).max(30).optional(),
   antaganden: z.array(text(1000)).max(30),
   butik: text(100),
-  url: z.url().max(500).optional(),
+  // A web page only: it becomes a link on every plan's shopping list.
+  url: z
+    .url({ protocol: /^https?$/ })
+    .max(500)
+    .optional(),
   kalla: text(500),
   insamlad: z.iso.date(),
 })

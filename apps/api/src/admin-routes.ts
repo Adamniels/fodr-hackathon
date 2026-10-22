@@ -3,6 +3,7 @@
 // write goes through the product repository, which makes a new product set, so the catalogue the API serves and plans
 // with changes on the next request (products.ts).
 import { AdminProductSchema, ProductInputSchema, type AdminProduct } from '@fodr/contracts/admin'
+import { z } from 'zod'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
@@ -63,6 +64,9 @@ export function adminRoutes({ auth, products }: { auth: Auth; products: ProductR
     ['restore', false],
   ] as const) {
     routes.post(`/products/:id/${action}`, async (c) => {
+      // An empty JSON body, as every write takes JSON: a form another site's page posts is refused (415, ADR 0013).
+      const body = await parseJson(c, z.object({}).strict())
+      if (!body.ok) return body.response
       const product = await products.setRetired(c.req.param('id'), retired)
       return product ? c.json({ product: toAdminProduct(product) }) : productNotFound(c)
     })

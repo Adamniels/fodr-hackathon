@@ -101,6 +101,6 @@ npm run admin:grant -- anna@example.se      # in the image: node apps/api/dist/a
 npm run admin:revoke -- anna@example.se
 ```
 
-It takes effect on the account's next request. Every save is a new product version and a new product set, so new
+The API applies it to the account's next request; the web app shows the admin link, or hides it, once the page is reloaded. Every save is a new product version and a new product set, so new
 plans use it at once and saved plans keep the set they were computed from. A product an admin has written is never
 changed by `products:import` again.

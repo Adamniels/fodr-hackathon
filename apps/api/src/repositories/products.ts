@@ -6,6 +6,7 @@
 // edited, retired or restored is theirs from then on, and the import leaves it as it is. Every write, the import's or
 // an admin's, takes the same lock, so they never interleave. Admin routes check the role (admin-routes.ts); the
 // catalogue is the same for everyone, so nothing here is scoped to a user.
+import { ProductDataSchema } from '@fodr/contracts/admin'
 import type { Produkt } from '@fodr/domain/types'
 import { asc, desc, eq, sql } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
@@ -119,6 +120,16 @@ export function productRepository(db: Executor): ProductRepository {
       if (twice.length > 0) {
         return Promise.reject(new Error(`The catalogue file lists a product twice: ${twice.join(', ')}`))
       }
+      // Every product as an admin could save it (#36): the admin view shows and edits only what its contract allows.
+      const invalid = catalogue.flatMap((p) => {
+        const parsed = ProductDataSchema.safeParse(p)
+        return parsed.success ? [] : [`${p.id} (${parsed.error.issues.map((i) => i.path.join('.')).join(', ')})`]
+      })
+      if (invalid.length > 0) {
+        return Promise.reject(
+          new Error(`The catalogue file has products the admin view cannot hold: ${invalid.join('; ')}`),
+        )
+      }
       return db.transaction(async (tx) => {
         await lockCatalogue(tx)
         const known = await tx.select().from(products)
@@ -220,7 +231,7 @@ export function productRepository(db: Executor): ProductRepository {
       return db.transaction(async (tx) => {
         await lockCatalogue(tx)
         // Not a store's ID, so it never meets one the import brings.
-        const id = `adm-${randomUUID().slice(0, 8)}`
+        const id = `adm-${randomUUID()}`
         await tx.insert(products).values({ id, adminManagedAt: sql`clock_timestamp()` })
         const [version] = await tx
           .insert(productVersions)
@@ -255,6 +266,8 @@ export function productRepository(db: Executor): ProductRepository {
         await lockCatalogue(tx)
         const product = (await tx.select().from(products).where(eq(products.id, id))).at(0)
         if (!product) return undefined
+        // Already so: nothing to write, and no set that only moves the product.
+        if ((product.retiredAt !== null) === retired) return row(tx, id)
         await tx
           .update(products)
           .set({

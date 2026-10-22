@@ -805,10 +805,13 @@
     "search": "Sök produkt",
     "new": "Ny produkt",
     "back": "Alla produkter",
+    "toHorses": "Till hästarna",
     "loading": "Läser produkterna…",
     "loadFailed": "Produkterna kunde inte läsas.",
+    "productLoadFailed": "Produkten kunde inte läsas.",
     "notFound": "Produkten finns inte.",
-    "count": "{{count}} produkter",
+    "count_one": "{{formatted}} produkt",
+    "count_other": "{{formatted}} produkter",
     "columns": {
       "name": "Produkt",
       "store": "Butik",
@@ -877,6 +880,13 @@
     "saveFailed": "Produkten kunde inte sparas. Försök igen.",
     "invalid": "Rätta de markerade fälten.",
     "fieldInvalid": "Värdet är inte giltigt.",
+    "errors": {
+      "name": "Ange ett namn.",
+      "required": "Fyll i fältet.",
+      "doseBoth": "Ange både minsta och högsta dos.",
+      "doseOrder": "Minsta dos är högre än högsta.",
+      "url": "Ange en webbadress som börjar med https://."
+    },
     "retire": "Ta ur sortimentet",
     "restore": "Ta tillbaka i sortimentet"
   }

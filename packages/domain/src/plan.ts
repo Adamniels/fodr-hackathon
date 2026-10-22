@@ -1,7 +1,7 @@
 import { NUTRIENT_KEYS, type NutrientKey } from './nutrients'
 import { beraknaBehov, type Behov, type Behovsresultat } from './slu'
 import { grovfoderIntag, monthlyCost, laggTill, displayName, roundDose, type Foderpost, type Intag } from './intake'
-import { styrandeAmnen, valjProdukter, type Urval } from './optimize'
+import { arValbar, styrandeAmnen, valjProdukter, type Urval } from './optimize'
 import { bedomGrovfoder, type Kvalitetsflagga } from './quality'
 import {
   SOCKER_GRANS_G_PER_KG_TS,
@@ -395,7 +395,8 @@ function byggPlan(profil: Hastprofil, analys: Grovfoderanalys, produkter: Produk
       { intag: slutIntag.smbRp.varde, behov: behov.smbRp.min },
       behovsres.berakningsviktKg,
     ),
-    bortvalda: uteslutna.filter((u) => u.produkt.iUrval).map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
+    // Bara det urvalet annars hade fått välja (CF9): en okontrollerad produkt är inte bortvald för hästens skull.
+    bortvalda: uteslutna.filter((u) => arValbar(u.produkt)).map((u) => ({ namn: u.produkt.namn, skal: u.skal })),
     byten,
     injustering: skapaInjustering({
       halsa: h,

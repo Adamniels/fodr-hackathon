@@ -1,5 +1,5 @@
 {
-  "id": "efe6d368-4aa4-497d-b93c-4bf48a32af9a",
+  "id": "56cc2567-a5dc-4a36-8df7-0299b423d542",
   "prevId": "0491c939-35cb-462c-8738-0e40d29bb1dc",
   "version": "7",
   "dialect": "postgresql",
@@ -1240,7 +1240,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "users_role_check": {
+          "name": "users_role_check",
+          "value": "\"users\".\"role\" in ('user', 'admin')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.verifications": {

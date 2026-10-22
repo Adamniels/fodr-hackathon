@@ -36,6 +36,13 @@ const CA_P_MIN = 1.1 // SLU: kvoten bör aldrig understiga 1,1
 /** A product the selection can dose: chosen for the selection and with a manufacturer's dose. */
 type Doserbar = Produkt & { dosGramPer100kg: NonNullable<Produkt['dosGramPer100kg']> }
 
+/**
+ * Om urvalet får välja produkten (CF9, #36): markerad för urvalet, med dos, och med en deklaration som en admin har
+ * kontrollerat mot förpackningen.
+ */
+export const arValbar = (p: Produkt): p is Doserbar =>
+  p.iUrval && p.dosGramPer100kg !== undefined && p.deklarationKontrollerad === true
+
 export interface Urval {
   poster: Foderpost[]
   kostnadPerManad: number
@@ -120,10 +127,7 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
 export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   const { bas, behov, berakningsviktKg: vikt } = input
   // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
-  // Valbara: markerade för urvalet, med dos, och med en deklaration som en admin har kontrollerat (CF9, #36).
-  const valbara = input.produkter.filter(
-    (p): p is Doserbar => p.iUrval && p.dosGramPer100kg !== undefined && p.deklarationKontrollerad === true,
-  )
+  const valbara = input.produkter.filter(arValbar)
   const kandidater = valbara.filter((p) => p.kategori === 'mineralfoder' || p.kategori === 'tillskott')
   const salt = valbara
     .filter((p) => p.kategori === 'salt')

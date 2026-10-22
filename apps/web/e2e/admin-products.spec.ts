@@ -48,14 +48,18 @@ test('an admin creates a product, edits it, finds it in a feed list, and retires
   await expect(page.getByRole('combobox', { name: UNKNOWN })).toHaveValue(name)
 })
 
-test('a check of the form stops a product without a name, and says why', async ({ page }) => {
+test('the form stops a product without a name, or with half a dose, and says why', async ({ page }) => {
   const account = await createAccountWithHorses(page)
   await grantAdmin(page, account)
   await page.goto('/admin/products/new')
+  // Only a maximum: a missing minimum is unknown, never 0.
+  await page.getByLabel('Dos högst (g per 100 kg och dag)').fill('30')
+  await expect(page.getByLabel('Dos minst (g per 100 kg och dag)')).toHaveValue('')
   await page.getByRole('button', { name: 'Spara produkt' }).click()
   await expect(page.getByRole('alert').filter({ hasText: 'Rätta de markerade fälten.' })).toBeVisible()
-  // The name says what is wrong with it; nothing was sent.
-  await expect(page.getByText('Värdet är inte giltigt.').first()).toBeVisible()
+  await expect(page.getByText('Ange ett namn.')).toBeVisible()
+  await expect(page.getByText('Ange både minsta och högsta dos.')).toBeVisible()
+  // Nothing was sent: still the new product's form.
   await expect(page).toHaveURL(/\/admin\/products\/new$/)
 })
 
