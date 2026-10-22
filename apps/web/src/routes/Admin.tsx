@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router'
 import { ProductDataSchema, type AdminProduct, type ProductData } from '@fodr/contracts/admin'
 import { NUTRIENTS, NUTRIENT_KEYS, type NutrientKey } from '@fodr/domain/nutrients'
-import { useAdminProduct, useAdminProducts, useAdminWrites } from '../admin'
+import { adminApi, useAdminProduct, useAdminProducts, useAdminWrites } from '../admin'
 import { ApiError } from '../api-v1'
 import { DecimalInput } from '../components/DecimalInput'
 import { formatDate, formatMoney, formatNumber, localIsoDate, nutrientLabel } from '../format'
@@ -101,7 +101,39 @@ export function AdminProductList() {
           </tbody>
         </table>
       )}
+      <ErrorTrackingCheck />
     </>
+  )
+}
+
+/** Whether errors reach Sentry where the app runs (#43): one test error from the API and one from the browser. */
+function ErrorTrackingCheck() {
+  const { t } = useTranslation()
+  const [state, setState] = useState<{ sent: string } | 'sending' | 'failed' | null>(null)
+  const send = async () => {
+    setState('sending')
+    try {
+      setState({ sent: await adminApi.sendTestError() })
+    } catch {
+      setState('failed')
+    }
+  }
+  return (
+    <section className="kort">
+      <h2>{t('admin.errorTracking.title')}</h2>
+      <p className="liten">{t('admin.errorTracking.intro')}</p>
+      <button className="knapp sekundar" onClick={() => void send()} disabled={state === 'sending'}>
+        {t('admin.errorTracking.send')}
+      </button>
+      {typeof state === 'object' && state !== null && (
+        <p role="status">{t('admin.errorTracking.sent', { requestId: state.sent })}</p>
+      )}
+      {state === 'failed' && (
+        <p className="ruta fel" role="alert">
+          {t('admin.errorTracking.failed')}
+        </p>
+      )}
+    </section>
   )
 }
 

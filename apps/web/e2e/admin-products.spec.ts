@@ -69,3 +69,15 @@ test('someone who is not an admin finds no product administration', async ({ pag
   await page.goto('/admin/products')
   await expect(page.getByRole('heading', { name: 'Sidan finns inte' })).toBeVisible()
 })
+
+// The admin's check that error tracking reaches Sentry (#43). Sentry is off in the tests; what the admin sees is the
+// request ID both reports carry, from the API's real answer.
+test('an admin sends a test error and is told which request ID to look for in Sentry', async ({ page }) => {
+  const account = await createAccountWithHorses(page)
+  await grantAdmin(page, account)
+  await page.goto('/admin/products')
+  await page.getByRole('button', { name: 'Skicka testfel' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Testfelet är skickat' })).toContainText(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/,
+  )
+})

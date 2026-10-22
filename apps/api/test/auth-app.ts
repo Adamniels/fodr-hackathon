@@ -22,6 +22,7 @@ import { exportRepository } from '../src/repositories/export'
 import { accountRepository } from '../src/repositories/accounts'
 import { createFileStore, type FileStore } from '../src/storage'
 import { fakeAiProvider } from './fake-ai-provider'
+import { recordingErrorReporter } from './fake-error-reporter'
 import { linkIn, waitForMail } from './mailpit'
 import { testS3Config } from './s3'
 
@@ -46,6 +47,7 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     // The tests stand in for a trusted proxy that sets x-forwarded-for, so each test client can have its own IP.
     clientIpHeader: 'x-forwarded-for',
     s3: testS3Config(),
+    errorTracking: { dsn: undefined, environment: 'test' },
     ...overrides,
   }
 }
@@ -64,10 +66,12 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
     },
   })
   const logger = createLogger('debug', stream)
+  const errors = recordingErrorReporter()
   const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger, files: deps.files ?? files })
   const app = createApp({
     config,
     logger,
+    errors,
     ai,
     auth,
     files: deps.files ?? files,
@@ -85,7 +89,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       accounts: accountRepository(database.db),
     },
   })
-  return { app, database, logs, ai, files, close: () => database.close() }
+  return { app, database, logs, errors, ai, files, close: () => database.close() }
 }
 
 /** A browser-like client: one IP (rate limits key on it), and the cookies the API set. */

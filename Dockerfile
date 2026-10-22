@@ -1,6 +1,7 @@
 # The production image (ADR 0005): one Node process serving the API and the built web app on one origin.
 #   docker build --build-arg GIT_SHA=$(git rev-parse HEAD) -t fodr .
 #   docker run -p 3000:3000 --env-file production.env fodr   (every variable in .env.example; see apps/api/src/config.ts)
+# The web app's error tracking is a build argument instead (SENTRY_DSN_WEB, #43), since the browser bundle carries it.
 # Migrations are applied explicitly before a release, with the same image (ADR 0008):
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/migrate.mjs
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/import-products.mjs   (#35, before the API starts)
@@ -16,7 +17,14 @@ COPY packages/domain/package.json packages/domain/
 COPY packages/contracts/package.json packages/contracts/
 RUN npm ci
 COPY . .
-RUN npm run build
+# Error tracking in the browser (#43): the web app's Sentry DSN (public by design) and environment are built into the
+# bundle, with the commit as its release. Without SENTRY_DSN_WEB the image still builds, with no reports from browsers.
+#   docker build --build-arg GIT_SHA=... --build-arg SENTRY_DSN_WEB=https://...ingest.de.sentry.io/... -t fodr .
+ARG GIT_SHA
+ARG SENTRY_DSN_WEB=
+ARG SENTRY_ENVIRONMENT=production
+RUN VITE_SENTRY_DSN="$SENTRY_DSN_WEB" VITE_SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" VITE_APP_VERSION="$GIT_SHA" \
+    npm run build
 # The catalogue is served by the API, never bundled with the web app (#27).
 RUN node apps/web/scripts/check-bundle.mjs
 
@@ -29,7 +37,8 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3000 \
     WEB_DIST_DIR=/app/apps/web/dist \
-    APP_VERSION=$GIT_SHA
+    APP_VERSION=$GIT_SHA \
+    SENTRY_ENVIRONMENT=production
 # The API is bundled with its dependencies (apps/api/build.mjs), so no node_modules is needed.
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/drizzle apps/api/drizzle

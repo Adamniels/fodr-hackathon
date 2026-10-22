@@ -39,6 +39,7 @@ export const UNIT_CONFIG: Config = {
     secretAccessKey: 'fodr-dev-secret',
     createBucket: false,
   },
+  errorTracking: { dsn: undefined, environment: 'unit' },
 }
 
 export function unitAuth() {

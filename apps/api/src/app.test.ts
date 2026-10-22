@@ -6,6 +6,7 @@ import { DrizzleQueryError } from 'drizzle-orm'
 import { DatabaseError } from 'pg'
 import { describe, expect, it } from 'vitest'
 import { fakeAiProvider } from '../test/fake-ai-provider'
+import { recordingErrorReporter } from '../test/fake-error-reporter'
 import { UNIT_CONFIG, unitAuth, unitFiles, unitRepositories } from '../test/unit-deps'
 import { createApp } from './app'
 import type { Config } from './config'
@@ -24,16 +25,18 @@ function setup(config: Partial<Config> = {}) {
       done()
     },
   })
+  const errors = recordingErrorReporter()
   const app = createApp({
     config: { ...CONFIG, ...config },
     logger: createLogger('info', stream),
+    errors,
     ai: fakeAiProvider(),
     auth: unitAuth(),
     files: unitFiles,
     catalogue: staticCatalogue({ version: 'unit', products: [] }),
     repositories: unitRepositories(),
   })
-  return { app, lines }
+  return { app, lines, errors }
 }
 
 describe('GET /api/v1/health', () => {
@@ -121,6 +124,23 @@ describe('problem+json errors', () => {
     const errorLine = lines.find((l) => l.level === 50)
     expect(errorLine).toMatchObject({ requestId, err: { message: 'connection to db-internal.example failed' } })
     expect(lines.find((l) => l.msg === 'request')).toMatchObject({ requestId, status: 500 })
+  })
+
+  it('reports an unexpected error with its request ID (#43)', async () => {
+    const { app, errors } = setup()
+    const error = new Error('connection to db-internal.example failed')
+    app.get('/api/v1/boom', () => {
+      throw error
+    })
+    const res = await app.request('/api/v1/boom')
+    expect(errors.reports).toEqual([{ error, context: { requestId: res.headers.get('X-Request-Id') } }])
+  })
+
+  it('reports no expected answer: a 404, a refused request (#43)', async () => {
+    const { app, errors } = setup()
+    expect((await app.request('/api/v1/nothing-here')).status).toBe(404)
+    expect((await app.request('/api/v1/horses')).status).toBe(401)
+    expect(errors.reports).toEqual([])
   })
 
   // A failed query carries its SQL and parameters, and Postgres puts row values in `detail`: personal data and health

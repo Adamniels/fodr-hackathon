@@ -6,6 +6,7 @@ import { createApp } from './app'
 import { createAuth } from './auth'
 import { parseConfig, type Config } from './config'
 import { createDatabase } from './db'
+import { createErrorReporter } from './error-reporting'
 import { createLogger, type Logger } from './logger'
 import { createSmtpMailer } from './mail/mailer'
 import { databaseCatalogue, NoCatalogue } from './products'
@@ -28,6 +29,8 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   }
   const { config } = result
   const logger = createLogger(config.logLevel)
+  // First, so an error while starting is reported too (#43).
+  const errors = createErrorReporter(config)
   // The pool connects on the first query, so the API starts (and serves health) while the database is still coming up.
   const database = createDatabase(config.databaseUrl, (err) => logger.warn({ err }, 'idle database connection lost'))
   const files = createFileStore(config.s3)
@@ -42,6 +45,7 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   const app = createApp({
     config,
     logger,
+    errors,
     ai: createAi(config),
     auth,
     files,
@@ -66,7 +70,7 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   function shutdown(signal: NodeJS.Signals) {
     logger.info({ signal }, 'shutting down')
     server.close(() => {
-      void database.close().finally(() => process.exit(0))
+      void Promise.allSettled([database.close(), errors.close?.()]).finally(() => process.exit(0))
     })
   }
   process.once('SIGTERM', shutdown)

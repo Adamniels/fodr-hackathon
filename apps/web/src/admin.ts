@@ -1,4 +1,4 @@
-// Product administration on the API (#36, CF9): /api/v1/admin/products, admins only (the contract is in
+// Product administration on the API (#36, CF9): /api/v1/admin/products, and the test error (#43), admins only (the contract is in
 // @fodr/contracts/admin). A write changes the catalogue every plan uses, so it drops the cached catalogue too: the
 // workspace's previews then plan with the new product set.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,7 +8,7 @@ import {
   type AdminProduct,
   type ProductInput,
 } from '@fodr/contracts/admin'
-import { callApi, sessionGuard } from './api-v1'
+import { ApiError, callApi, sessionGuard } from './api-v1'
 
 /** Every account's admin queries, removed on logout. */
 export const ADMIN_QUERY_KEY = ['admin']
@@ -25,6 +25,19 @@ export const adminApi = {
   create: (input: ProductInput) => send(base, 'POST', input),
   update: (id: string, input: ProductInput) => send(`${base}/${id}`, 'PUT', input),
   setRetired: (id: string, retired: boolean) => send(`${base}/${id}/${retired ? 'retire' : 'restore'}`, 'POST', {}),
+  /**
+   * The check that error tracking reaches Sentry (#43): the API fails on purpose and reports it, and callApi reports
+   * the failed call from the browser, both with this request ID. Anything but the API's 500 is a real failure.
+   */
+  sendTestError: async (): Promise<string> => {
+    try {
+      await callApi('/admin/test-error', { method: 'POST', body: '{}' })
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 500 && e.requestId) return e.requestId
+      throw e
+    }
+    throw new Error('The test error did not fail')
+  },
 }
 
 export function useAdminProducts(userId: string) {

@@ -46,3 +46,23 @@ function stackFrames(stack: string | undefined): string | undefined {
     .filter((line) => line.startsWith('    at '))
     .join('\n')
 }
+
+// The error as an error report may carry it (error-reporting.ts, #43), by the rules above: a failed query keeps its
+// type and stack frames, not its SQL or parameters; a Postgres error keeps its message and code, not the row values in
+// `detail`. The cause chain is copied the same way, so Sentry shows it as linked errors.
+export function reportableError(error: unknown): unknown {
+  if (!(error instanceof Error)) return error
+  const name = error.constructor.name
+  const cause = error.cause === undefined ? undefined : { cause: reportableError(error.cause) }
+  if (error instanceof DrizzleQueryError) {
+    const copy = new Error('Failed query', cause)
+    copy.name = name
+    copy.stack = `${name}: Failed query\n${stackFrames(error.stack) ?? ''}`
+    return copy
+  }
+  const message = error instanceof DatabaseError && error.code ? `${error.message} (${error.code})` : error.message
+  const copy = new Error(message, cause)
+  copy.name = name
+  copy.stack = error.stack
+  return copy
+}
