@@ -3,6 +3,7 @@
 import { createAuth } from '../src/auth'
 import type { Config } from '../src/config'
 import { createDatabase } from '../src/db'
+import { noErrorReporter, type ErrorReporter } from '../src/error-reporting'
 import { createLogger } from '../src/logger'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
@@ -42,12 +43,13 @@ export const UNIT_CONFIG: Config = {
   errorTracking: { dsn: undefined, environment: 'unit' },
 }
 
-export function unitAuth() {
+export function unitAuth(errors: ErrorReporter = noErrorReporter) {
   return createAuth({
     config: UNIT_CONFIG,
     database: createDatabase(UNIT_CONFIG.databaseUrl),
     mailer: { send: () => Promise.resolve() },
     logger: createLogger('silent'),
+    errors,
     files: unitFiles,
   })
 }

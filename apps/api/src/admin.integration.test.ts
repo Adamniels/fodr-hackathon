@@ -345,7 +345,11 @@ describe('the test error', () => {
     expect(res.status).toBe(500)
     const me = (await (await signedIn.browser.request('/api/v1/me')).json()) as { user: { id: string } }
     expect(errors.reports).toHaveLength(1)
-    expect(errors.reports[0]?.context).toEqual({ requestId: res.headers.get('X-Request-Id'), userId: me.user.id })
+    expect(errors.reports[0]?.context).toEqual({
+      requestId: res.headers.get('X-Request-Id'),
+      userId: me.user.id,
+      route: path,
+    })
     expect(String(errors.reports[0]?.error)).toMatch(/test error/i)
   })
 

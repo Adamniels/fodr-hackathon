@@ -36,11 +36,11 @@ describe('callApi reporting failures (#43)', () => {
 
   it('reports an internal error with the request ID the API answered with, so both reports link', async () => {
     answer(500, problem(500, 'http.internal_error'), 'req-42')
-    await expect(callApi('/horses')).rejects.toBeInstanceOf(ApiError)
+    await expect(callApi('/horses?name=Sixten')).rejects.toBeInstanceOf(ApiError)
     expect(reportError).toHaveBeenCalledTimes(1)
-    const [error, requestId] = vi.mocked(reportError).mock.calls[0] ?? []
+    const [error, context] = vi.mocked(reportError).mock.calls[0] ?? []
     expect(error).toMatchObject({ name: 'ApiError', status: 500, code: 'http.internal_error' })
-    expect(requestId).toBe('req-42')
+    expect(context).toEqual({ requestId: 'req-42', path: '/api/v1/horses' })
   })
 
   it('reports a 5xx without a problem, as a proxy in front of the API sends', async () => {

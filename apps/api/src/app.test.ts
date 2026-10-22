@@ -126,14 +126,16 @@ describe('problem+json errors', () => {
     expect(lines.find((l) => l.msg === 'request')).toMatchObject({ requestId, status: 500 })
   })
 
-  it('reports an unexpected error with its request ID (#43)', async () => {
+  it('reports an unexpected error with its request ID and route (#43)', async () => {
     const { app, errors } = setup()
     const error = new Error('connection to db-internal.example failed')
     app.get('/api/v1/boom', () => {
       throw error
     })
     const res = await app.request('/api/v1/boom')
-    expect(errors.reports).toEqual([{ error, context: { requestId: res.headers.get('X-Request-Id') } }])
+    expect(errors.reports).toEqual([
+      { error, context: { requestId: res.headers.get('X-Request-Id'), route: '/api/v1/boom' } },
+    ])
   })
 
   it('reports no expected answer: a 404, a refused request (#43)', async () => {

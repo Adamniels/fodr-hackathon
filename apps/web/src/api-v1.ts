@@ -37,7 +37,7 @@ export async function callApi(path: string, init: RequestInit = {}): Promise<Res
   // The API failed unexpectedly, or something in front of it did (#43). A 5xx with its own code (the AI unavailable)
   // is an answer the API gives on purpose, and is not reported.
   if (res.status >= 500 && (error.code === undefined || error.code === 'http.internal_error')) {
-    reportError(error, error.requestId)
+    reportError(error, { requestId: error.requestId, path: `/api/v1${path.split('?', 1)[0] ?? ''}` })
   }
   throw error
 }

@@ -3,6 +3,7 @@ import { getConnInfo } from '@hono/node-server/conninfo'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono, type Context } from 'hono'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
+import { routePath } from 'hono/route'
 import { MeResponseSchema } from '@fodr/contracts/me'
 import { AcceptTermsSchema } from '@fodr/contracts/terms'
 import { aiRoutes } from './ai/routes'
@@ -152,7 +153,7 @@ export function createApp({ config, logger, errors, ai, auth, files, catalogue, 
     logger.error({ requestId, err }, 'unexpected error')
     // The user, when the route had read the session before it failed: an ID, never more (#43).
     const userId = (c.var as Partial<UserVariables>).user?.id
-    errors.report(err, { requestId, ...(userId && { userId }) })
+    errors.report(err, { requestId, ...(userId && { userId }), route: routePath(c) })
     return problem(c, 500, 'http.internal_error')
   })
   return app

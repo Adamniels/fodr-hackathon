@@ -1,6 +1,6 @@
-// Product administration on the API (#36, CF9): /api/v1/admin/products, and the test error (#43), admins only (the contract is in
-// @fodr/contracts/admin). A write changes the catalogue every plan uses, so it drops the cached catalogue too: the
-// workspace's previews then plan with the new product set.
+// Product administration on the API (#36, CF9): /api/v1/admin/products, and the test error (#43), admins only (the
+// contract is in @fodr/contracts/admin). A write changes the catalogue every plan uses, so it drops the cached catalogue
+// too: the workspace's previews then plan with the new product set.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AdminProductListSchema,

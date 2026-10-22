@@ -20,6 +20,7 @@ import {
   verificationMail,
 } from './mail/templates'
 import { horseRepository } from './repositories/horses'
+import type { ErrorReporter } from './error-reporting'
 import type { FileStore } from './storage'
 
 export interface AuthDeps {
@@ -27,6 +28,8 @@ export interface AuthDeps {
   database: Database
   mailer: Mailer
   logger: Logger
+  /** Where an unexpected error of an account route is reported (#43). */
+  errors: ErrorReporter
   /** Where the reports of a deleted account's horses are removed from (#41). */
   files: FileStore
 }
@@ -40,7 +43,7 @@ const MAX_NAME_LENGTH = 100
  */
 export const CLIENT_IP_HEADER = 'x-fodr-client-ip'
 
-export function createAuth({ config, database, mailer, logger, files }: AuthDeps) {
+export function createAuth({ config, database, mailer, logger, errors, files }: AuthDeps) {
   // Work that touches mail runs without being awaited: a reply that waited for SMTP (or for looking up whether an
   // account exists) would take longer for some emails than others and so reveal which have accounts. A failure is
   // logged by its type only, without the address.
@@ -155,7 +158,14 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
         logger[level]({ source: 'better-auth' }, line)
       },
     },
-    onAPIError: { onError: (err) => logger.error({ source: 'better-auth', err }, 'auth error') },
+    // Better Auth catches its routes' errors itself, so they never reach the app's onError: an unexpected one is
+    // reported here (#43), an answer it gives on purpose (a refused sign-in) is not.
+    onAPIError: {
+      onError: (err) => {
+        logger.error({ source: 'better-auth', err }, 'auth error')
+        if (!(err instanceof APIError) || err.statusCode >= 500) errors.report(err, {})
+      },
+    },
     // Verification, password reset and magic link tokens are stored hashed, so a database leak opens no account.
     verification: { storeIdentifier: 'hashed' },
     databaseHooks: {

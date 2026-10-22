@@ -109,7 +109,8 @@ changed by `products:import` again.
 
 Unexpected errors go to Sentry in its EU region (#43, ADR 0015): the API's 500s and crashes, and in the browser
 uncaught errors, pages that failed to render and failed API calls. A report carries the error, the release (the commit),
-the environment, the request ID and the user's ID; nothing else about the user (`packages/contracts/src/error-scrubbing.ts`).
+the environment, the request ID, the route and the user's ID; nothing else about the user
+(`packages/contracts/src/error-scrubbing.ts`).
 Expected failures (a refused request, the AI unavailable) are only logged. Without a DSN nothing is sent, as in
 development and the tests.
 
@@ -120,9 +121,11 @@ Setting it up, once per environment:
    SDKs and DSNs (ADR 0015).
 2. In each project's security and privacy settings, turn on the data scrubber and **Prevent Storing of IP Addresses**,
    so the browser's connection address is not kept either.
-3. Give the API its DSN at runtime: `SENTRY_DSN` and `SENTRY_ENVIRONMENT` (the image defaults to `production`).
-4. Build the image with the web app's DSN, which the browser bundle carries (it is public by design):
+3. Build the image with the web app's DSN, which the browser bundle carries (it is public by design), and the
+   environment both apps name (`production` by default):
    `docker build --build-arg GIT_SHA=... --build-arg SENTRY_DSN_WEB=... --build-arg SENTRY_ENVIRONMENT=... -t fodr .`
+   The browser's environment is fixed in the image, so build one image per environment rather than promoting one.
+4. Give the API its DSN at runtime: `SENTRY_DSN` (`SENTRY_ENVIRONMENT` overrides the image's, for the API only).
 
 To check it, sign in as an admin and press **Skicka testfel** at the bottom of `/admin/products`. The page shows a
 request ID; within a minute both projects have an event tagged `request_id` with that value: "Test error requested by an

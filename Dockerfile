@@ -29,6 +29,9 @@ RUN VITE_SENTRY_DSN="$SENTRY_DSN_WEB" VITE_SENTRY_ENVIRONMENT="$SENTRY_ENVIRONME
 RUN node apps/web/scripts/check-bundle.mjs
 
 FROM node:24.21.0-bookworm-slim
+# The environment the reports name, the same for the API as for the browser bundle built above (#43); the runtime
+# SENTRY_ENVIRONMENT still overrides the API's.
+ARG SENTRY_ENVIRONMENT=production
 # The commit the image is built from, recorded with every saved plan as its engine version (CF5, #27). Required: an
 # image that cannot say which code computed its plans is not built.
 ARG GIT_SHA
@@ -38,7 +41,7 @@ ENV NODE_ENV=production \
     PORT=3000 \
     WEB_DIST_DIR=/app/apps/web/dist \
     APP_VERSION=$GIT_SHA \
-    SENTRY_ENVIRONMENT=production
+    SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT
 # The API is bundled with its dependencies (apps/api/build.mjs), so no node_modules is needed.
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/drizzle apps/api/drizzle

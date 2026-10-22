@@ -85,8 +85,8 @@ const EnvSchema = z.object({
     .enum(['true', 'false'], { error: 'must be true or false' })
     .default('false')
     .transform((v) => v === 'true'),
-  // Error tracking (#43, ADR 0015): the API's Sentry project in the EU region. Unset, no error leaves the process, as in
-  // development and the tests. The environment names where the report comes from.
+  // Error tracking (#43, ADR 0015): the API's Sentry project in the EU region. Unset, no error leaves the process, as
+  // in development and the tests. The environment names where the report comes from.
   SENTRY_DSN: z.url({ protocol: /^https$/, error: 'must be an https:// URL' }).optional(),
   SENTRY_ENVIRONMENT: z.string().min(1).default('development'),
 })

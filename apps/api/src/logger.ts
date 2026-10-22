@@ -47,9 +47,9 @@ function stackFrames(stack: string | undefined): string | undefined {
     .join('\n')
 }
 
-// The error as an error report may carry it (error-reporting.ts, #43), by the rules above: a failed query keeps its
-// type and stack frames, not its SQL or parameters; a Postgres error keeps its message and code, not the row values in
-// `detail`. The cause chain is copied the same way, so Sentry shows it as linked errors.
+// The error as an error report may carry it (error-reporting.ts, #43), stricter than the log line above: a failed
+// query keeps its type and stack frames, not its SQL or parameters; a Postgres error keeps its code and constraint,
+// not its message or the row values in `detail`. The cause chain is copied the same way, as Sentry links causes.
 export function reportableError(error: unknown): unknown {
   if (!(error instanceof Error)) return error
   const name = error.constructor.name
@@ -60,7 +60,12 @@ export function reportableError(error: unknown): unknown {
     copy.stack = `${name}: Failed query\n${stackFrames(error.stack) ?? ''}`
     return copy
   }
-  const message = error instanceof DatabaseError && error.code ? `${error.message} (${error.code})` : error.message
+  // Postgres quotes the input it refused in some messages (invalid input syntax for type uuid: "..."), so a report
+  // names the error by its code and constraint only.
+  const message =
+    error instanceof DatabaseError
+      ? [error.code, error.constraint].filter(Boolean).join(' ') || 'Database error'
+      : error.message
   const copy = new Error(message, cause)
   copy.name = name
   copy.stack = error.stack
