@@ -6,6 +6,8 @@ import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { MeResponseSchema } from '@fodr/contracts/me'
 import { aiRoutes } from './ai/routes'
 import type { AiProvider } from './ai/provider'
+import { createMeteredAi } from './ai/metered'
+import type { UsageRepository } from './repositories/ai-usage'
 import type { Config } from './config'
 import type { Logger } from './logger'
 import { CLIENT_IP_HEADER, type Auth } from './auth'
@@ -35,6 +37,7 @@ export interface AppDeps {
     analyses: AnalysisRepository
     plans: PlanRepository
     journal: JournalRepository
+    usage: UsageRepository
   }
 }
 
@@ -44,6 +47,8 @@ export type AppEnv = { Variables: RequestIdVariables }
 const loggedPath = (path: string) => path.replace(/^(\/api\/auth\/reset-password\/)[^/]+/, '$1[redacted]')
 
 export function createApp({ config, logger, ai, auth, files, catalogue, repositories }: AppDeps): Hono<AppEnv> {
+  // Every model call counts against the user's daily quota and is logged with its cost (#31).
+  const metered = createMeteredAi({ ai, usage: repositories.usage, config: config.ai, logger })
   const app = new Hono<AppEnv>()
 
   // X-Request-Id on every response; a valid incoming ID (from a proxy) is kept, anything else is replaced.
@@ -77,7 +82,10 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
   // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
   const origin = new URL(config.betterAuthUrl).origin
-  app.route('/api/v1/horses/:horseId/analyses', analysisRoutes({ origin, auth, ai, files, logger, ...repositories }))
+  app.route(
+    '/api/v1/horses/:horseId/analyses',
+    analysisRoutes({ origin, auth, ai: metered, files, logger, ...repositories }),
+  )
   app.route(
     '/api/v1/horses/:horseId/plans',
     planRoutes({ auth, catalogue, engineVersion: config.appVersion, ...repositories }),
@@ -85,7 +93,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   app.route('/api/v1/products', productRoutes(catalogue))
-  app.route('/api/v1/ai', aiRoutes({ auth, ai, logger }))
+  app.route('/api/v1/ai', aiRoutes({ auth, ai: metered, logger }))
 
   if (config.webDistDir) {
     const root = config.webDistDir

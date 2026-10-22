@@ -2,4 +2,4 @@
 import { createAnthropicProvider } from './ai/anthropic'
 import { runServer } from './server'
 
-runServer((config) => createAnthropicProvider({ apiKey: config.anthropicApiKey }))
+runServer((config) => createAnthropicProvider({ apiKey: config.anthropicApiKey, model: config.ai.model }))

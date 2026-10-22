@@ -15,9 +15,10 @@ import type {
   ProfileRequest,
   ProfileResponse as ProfileContract,
 } from '@fodr/contracts/ai'
-import { AiProviderError, type AiProvider, type AnalysisFile } from './provider'
+import { AiProviderError, type AiProvider, type AiReply, type AnalysisFile, type TokenUsage } from './provider'
 
-const MODEL = 'claude-sonnet-5-5'
+/** The model when the config names none (AI_MODEL, #31). */
+export const DEFAULT_MODEL = 'claude-sonnet-5-5'
 const BREED_IDS = RASER.map((r) => r.id) as [string, ...string[]]
 
 const nullableNumber = z.number().nullable()
@@ -61,7 +62,7 @@ Returnera värden omräknade till per kg torrsubstans (ts):
 - Socker kan heta WSC eller vattenlösliga kolhydrater.
 Ett värde som inte står i dokumentet ska vara null. Gissa aldrig och fyll aldrig i typvärden.`
 
-async function readAnalysis(client: Anthropic, file: AnalysisFile): Promise<AnalysisResponse> {
+async function readAnalysis(client: Anthropic, model: string, file: AnalysisFile): Promise<AiReply<AnalysisResponse>> {
   const document: Anthropic.ContentBlockParam =
     file.mediaType === 'application/pdf'
       ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.base64 } }
@@ -74,13 +75,13 @@ async function readAnalysis(client: Anthropic, file: AnalysisFile): Promise<Anal
           },
         }
   const response = await client.messages.parse({
-    model: MODEL,
+    model,
     max_tokens: 16000,
     system: ANALYSIS_SYSTEM,
     output_config: { effort: 'low', format: zodOutputFormat(AnalysisSchema) },
     messages: [{ role: 'user', content: [document, { type: 'text', text: 'Läs ut analysen.' }] }],
   })
-  return parsedOutput(requireCompleteResponse(response))
+  return { value: parsedOutput(requireCompleteResponse(response)), usage: usageOf(response) }
 }
 
 const ProfileSchema = z.object({
@@ -133,7 +134,11 @@ Du får fritext om hästen (ras, arbete, miljö), vad den äter i dag och om hä
 - Fråga bara om sådant som påverkar foderplanen. Inga följdfrågor om allt är tydligt.
 Svara på svenska.`
 
-async function interpretProfile(client: Anthropic, input: ProfileRequest): Promise<ProfileResponse> {
+async function interpretProfile(
+  client: Anthropic,
+  model: string,
+  input: ProfileRequest,
+): Promise<AiReply<ProfileResponse>> {
   const text = [
     `Om hästen och vad den äter i dag:\n${input.foderText || '(inget angivet)'}`,
     `Hälsa:\n${input.halsaText || '(inget angivet)'}`,
@@ -145,13 +150,13 @@ async function interpretProfile(client: Anthropic, input: ProfileRequest): Promi
     .filter(Boolean)
     .join('\n\n')
   const response = await client.messages.parse({
-    model: MODEL,
+    model,
     max_tokens: 8000,
     system: PROFILE_SYSTEM,
     output_config: { effort: 'low', format: zodOutputFormat(ProfileSchema) },
     messages: [{ role: 'user', content: text }],
   })
-  return parsedOutput(requireCompleteResponse(response))
+  return { value: parsedOutput(requireCompleteResponse(response)), usage: usageOf(response) }
 }
 
 const EXPLANATION_SYSTEM = `Du förklarar en färdigberäknad foderplan för en hästägare på vanlig svenska.
@@ -167,19 +172,20 @@ Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan kla
 - Inga förkortningar utan förklaring, inga tabeller.
 - Högst 120 ord i högst tre korta stycken: läget i dag, förslaget och varför, och det hästägaren ska tänka på. Hellre färre siffror än fler.`
 
-async function explainPlan(client: Anthropic, payload: ExplanationRequest): Promise<string> {
+async function explainPlan(client: Anthropic, model: string, payload: ExplanationRequest): Promise<AiReply<string>> {
   const response = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 4000,
     system: EXPLANATION_SYSTEM,
     output_config: { effort: 'medium' },
     messages: [{ role: 'user', content: JSON.stringify(payload) }],
   })
   requireCompleteResponse(response)
-  return response.content
+  const value = response.content
     .filter((b): b is Anthropic.TextBlock => b.type === 'text')
     .map((b) => b.text)
     .join('\n')
+  return { value, usage: usageOf(response) }
 }
 
 /**
@@ -191,11 +197,17 @@ function parsedOutput<T>(response: { parsed_output: T | null }): T {
   return response.parsed_output!
 }
 
-function requireCompleteResponse<T extends { stop_reason: string | null }>(response: T): T {
-  if (response.stop_reason === 'refusal') throw new AiProviderError('refusal')
-  if (response.stop_reason === 'max_tokens') throw new AiProviderError('truncated')
+function requireCompleteResponse<T extends { stop_reason: string | null; usage: Anthropic.Usage }>(response: T): T {
+  // A refused or cut-off reply still used tokens, which the usage log records (#31).
+  if (response.stop_reason === 'refusal') throw new AiProviderError('refusal', undefined, usageOf(response))
+  if (response.stop_reason === 'max_tokens') throw new AiProviderError('truncated', undefined, usageOf(response))
   return response
 }
+
+const usageOf = (response: { usage: Anthropic.Usage }): TokenUsage => ({
+  inputTokens: response.usage.input_tokens,
+  outputTokens: response.usage.output_tokens,
+})
 
 const JournalSchema = z.object({
   sammanfattning: z.string().describe('Högst 60 ord om hur det gått över tid'),
@@ -236,25 +248,35 @@ Du får hästens profil, journalposterna i datumordning, trenden som redan är b
 - Nästa steg ska vara praktiska, till exempel när hästen ska vägas eller vad ägaren ska anteckna.
 Svara på enkel svenska.`
 
-async function analyzeJournal(client: Anthropic, payload: JournalRequest): Promise<JournalResponse> {
+async function analyzeJournal(
+  client: Anthropic,
+  model: string,
+  payload: JournalRequest,
+): Promise<AiReply<JournalResponse>> {
   const response = await client.messages.parse({
-    model: MODEL,
+    model,
     max_tokens: 8000,
     system: JOURNAL_SYSTEM,
     output_config: { effort: 'medium', format: zodOutputFormat(JournalSchema) },
     messages: [{ role: 'user', content: JSON.stringify(payload) }],
   })
-  return parsedOutput(requireCompleteResponse(response))
+  return { value: parsedOutput(requireCompleteResponse(response)), usage: usageOf(response) }
 }
 
 export interface AnthropicProviderOptions {
   /** ANTHROPIC_API_KEY. Without it every call fails with `missing_key` and the rest of the API works. */
   apiKey: string | undefined
+  /** AI_MODEL (#31); DEFAULT_MODEL when not given. */
+  model?: string
   /** Passed to the SDK client; tests give it a fake fetch. */
   clientOptions?: ClientOptions
 }
 
-export function createAnthropicProvider({ apiKey, clientOptions }: AnthropicProviderOptions): AiProvider {
+export function createAnthropicProvider({
+  apiKey,
+  model = DEFAULT_MODEL,
+  clientOptions,
+}: AnthropicProviderOptions): AiProvider {
   let client: Anthropic | undefined
   async function call<T>(run: (client: Anthropic) => Promise<T>): Promise<T> {
     if (!apiKey) throw new AiProviderError('missing_key')
@@ -266,10 +288,10 @@ export function createAnthropicProvider({ apiKey, clientOptions }: AnthropicProv
     }
   }
   return {
-    readAnalysis: (file) => call((c) => readAnalysis(c, file)),
-    interpretProfile: (input) => call((c) => interpretProfile(c, input)),
-    explainPlan: (payload) => call((c) => explainPlan(c, payload)),
-    analyzeJournal: (payload) => call((c) => analyzeJournal(c, payload)),
+    readAnalysis: (file) => call((c) => readAnalysis(c, model, file)),
+    interpretProfile: (input) => call((c) => interpretProfile(c, model, input)),
+    explainPlan: (payload) => call((c) => explainPlan(c, model, payload)),
+    analyzeJournal: (payload) => call((c) => analyzeJournal(c, model, payload)),
   }
 }
 

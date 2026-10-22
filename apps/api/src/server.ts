@@ -11,6 +11,7 @@ import { createSmtpMailer } from './mail/mailer'
 import { loadCatalogue } from './products'
 import { analysisRepository } from './repositories/analyses'
 import { horseRepository } from './repositories/horses'
+import { usageRepository } from './repositories/ai-usage'
 import { journalRepository } from './repositories/journal'
 import { planRepository } from './repositories/plans'
 import { createFileStore } from './storage'
@@ -44,6 +45,7 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
       analyses: analysisRepository(database.db),
       plans: planRepository(database.db),
       journal: journalRepository(database.db),
+      usage: usageRepository(database.db),
     },
   })
 

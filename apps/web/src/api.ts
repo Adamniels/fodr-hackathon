@@ -43,6 +43,8 @@ export function aiErrorText(e: unknown): string {
       return i18n.t('ai.errors.notConfigured')
     case 'ai.rate_limited':
       return i18n.t('ai.errors.rateLimited')
+    case 'ai.quota_exceeded':
+      return i18n.t('ai.errors.quotaExceeded')
     case 'ai.unavailable':
       return i18n.t('ai.errors.unavailable')
     case 'ai.refused':

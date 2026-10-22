@@ -9,6 +9,12 @@ const required = (rule: string) => (issue: { input: unknown }) =>
 
 const DATABASE_URL = z.url({ protocol: /^postgres(ql)?$/, error: required('a postgres:// URL') })
 
+// A string first, so a missing price says "is required" (as SMTP_PORT); Number() then turns text into NaN, which fails.
+const price = z
+  .string({ error: required('a price in SEK') })
+  .transform(Number)
+  .pipe(z.number({ error: 'must be a price in SEK' }).nonnegative({ error: 'must not be negative' }))
+
 const EnvSchema = z.object({
   DATABASE_URL,
   PORT: z.coerce
@@ -26,6 +32,17 @@ const EnvSchema = z.object({
   APP_VERSION: z.string().default('dev'),
   // Optional: without it the AI routes answer with the missing-key error and everything else works.
   ANTHROPIC_API_KEY: z.string().optional(),
+  // The model, the daily AI calls per user and the prices that estimate each call's cost (#31, ADR 0015). The prices are
+  // SEK per million tokens, from the provider's price list at the current exchange rate; no default, so nobody runs on
+  // a made-up price.
+  AI_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+  AI_DAILY_CALLS_PER_USER: z.coerce
+    .number({ error: required('a whole number') })
+    .int({ error: required('a whole number') })
+    .min(1, { error: 'must be at least 1' })
+    .default(30),
+  AI_PRICE_SEK_PER_MTOK_INPUT: price,
+  AI_PRICE_SEK_PER_MTOK_OUTPUT: price,
   // Auth (ADR 0009): signs session cookies and tokens; the public address of the app, which the emailed links use
   // and whose origin is the only trusted one (in development the Vite address, which proxies /api).
   BETTER_AUTH_SECRET: z.string({ error: required('a secret') }).min(32, { error: 'must be at least 32 characters' }),
@@ -74,6 +91,7 @@ export interface Config {
   webDistDir: string | undefined
   appVersion: string
   anthropicApiKey: string | undefined
+  ai: { model: string; dailyCallsPerUser: number; priceSekPerMtokInput: number; priceSekPerMtokOutput: number }
   betterAuthSecret: string
   betterAuthUrl: string
   smtpHost: string
@@ -114,6 +132,12 @@ export function parseConfig(env: Record<string, string | undefined>): ConfigResu
       webDistDir: parsed.WEB_DIST_DIR,
       appVersion: parsed.APP_VERSION,
       anthropicApiKey: parsed.ANTHROPIC_API_KEY,
+      ai: {
+        model: parsed.AI_MODEL,
+        dailyCallsPerUser: parsed.AI_DAILY_CALLS_PER_USER,
+        priceSekPerMtokInput: parsed.AI_PRICE_SEK_PER_MTOK_INPUT,
+        priceSekPerMtokOutput: parsed.AI_PRICE_SEK_PER_MTOK_OUTPUT,
+      },
       betterAuthSecret: parsed.BETTER_AUTH_SECRET,
       betterAuthUrl: parsed.BETTER_AUTH_URL,
       smtpHost: parsed.SMTP_HOST,

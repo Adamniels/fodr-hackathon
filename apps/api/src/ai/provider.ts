@@ -15,11 +15,23 @@ export interface AnalysisFile {
   base64: string
 }
 
+/** The tokens a call used, as the provider reports them; its cost is estimated from them (#31). */
+export interface TokenUsage {
+  inputTokens: number
+  outputTokens: number
+}
+
+/** A call's answer and the tokens it used. */
+export interface AiReply<T> {
+  value: T
+  usage: TokenUsage
+}
+
 export interface AiProvider {
-  readAnalysis(file: AnalysisFile): Promise<AnalysisResponse>
-  interpretProfile(input: ProfileRequest): Promise<ProfileResponse>
-  explainPlan(payload: ExplanationRequest): Promise<string>
-  analyzeJournal(payload: JournalRequest): Promise<JournalResponse>
+  readAnalysis(file: AnalysisFile): Promise<AiReply<AnalysisResponse>>
+  interpretProfile(input: ProfileRequest): Promise<AiReply<ProfileResponse>>
+  explainPlan(payload: ExplanationRequest): Promise<AiReply<string>>
+  analyzeJournal(payload: JournalRequest): Promise<AiReply<JournalResponse>>
 }
 
 /**
@@ -32,11 +44,14 @@ export type AiErrorKind = 'missing_key' | 'auth' | 'rate_limit' | 'upstream' | '
 export class AiProviderError extends Error {
   readonly kind: AiErrorKind
   readonly status: number | undefined
+  /** The tokens a failed call still used (a refused or cut-off reply), when the provider reported them. */
+  readonly usage: TokenUsage | undefined
 
-  constructor(kind: AiErrorKind, status?: number) {
+  constructor(kind: AiErrorKind, status?: number, usage?: TokenUsage) {
     super(status === undefined ? kind : `${kind} ${status}`)
     this.name = 'AiProviderError'
     this.kind = kind
     this.status = status
+    this.usage = usage
   }
 }

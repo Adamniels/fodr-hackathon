@@ -17,7 +17,7 @@ const markerProvider: AiProvider = {
     if (!line) return Promise.reject(new Error('The e2e report has no reading'))
     const reading = JSON.parse(line.slice(MARKER.length)) as AnalysisResponse | { error: AiErrorKind }
     if ('error' in reading) return Promise.reject(new AiProviderError(reading.error, 500))
-    return Promise.resolve(reading)
+    return Promise.resolve({ value: reading, usage: { inputTokens: 1000, outputTokens: 200 } })
   },
   interpretProfile: notInE2e,
   explainPlan: notInE2e,

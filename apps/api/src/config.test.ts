@@ -12,7 +12,10 @@ const VALID = {
   S3_BUCKET: 'fodr',
   S3_ACCESS_KEY_ID: 'fodr',
   S3_SECRET_ACCESS_KEY: 'fodr-dev-secret',
+  AI_PRICE_SEK_PER_MTOK_INPUT: '30',
+  AI_PRICE_SEK_PER_MTOK_OUTPUT: '150',
 }
+const AI = { model: 'claude-sonnet-5-5', dailyCallsPerUser: 30, priceSekPerMtokInput: 30, priceSekPerMtokOutput: 150 }
 const AUTH_AND_MAIL = {
   betterAuthSecret: VALID.BETTER_AUTH_SECRET,
   betterAuthUrl: VALID.BETTER_AUTH_URL,
@@ -43,6 +46,7 @@ describe('parseConfig', () => {
         webDistDir: undefined,
         appVersion: 'dev',
         anthropicApiKey: undefined,
+        ai: AI,
         ...AUTH_AND_MAIL,
       },
     })
@@ -69,6 +73,7 @@ describe('parseConfig', () => {
         webDistDir: '/app/web',
         appVersion: '6efb5f1',
         anthropicApiKey: 'sk-ant-test',
+        ai: AI,
         ...AUTH_AND_MAIL,
         smtpUser: 'mailer',
         smtpPassword: 'smtp-secret',
@@ -111,6 +116,22 @@ describe('parseConfig', () => {
     const wrong = parseConfig({ ...VALID, S3_CREATE_BUCKET: 'ja' })
     expect(wrong.ok).toBe(false)
     if (!wrong.ok) expect(wrong.message).toMatch(/S3_CREATE_BUCKET must be true or false/)
+  })
+
+  it('reads the AI settings, and requires the prices (#31)', () => {
+    const result = parseConfig({ ...VALID, AI_MODEL: 'claude-other', AI_DAILY_CALLS_PER_USER: '5' })
+    expect(result.ok && result.config.ai).toEqual({ ...AI, model: 'claude-other', dailyCallsPerUser: 5 })
+    const missing = parseConfig({
+      ...VALID,
+      AI_PRICE_SEK_PER_MTOK_INPUT: undefined,
+      AI_PRICE_SEK_PER_MTOK_OUTPUT: undefined,
+    })
+    expect(missing.ok).toBe(false)
+    if (!missing.ok) {
+      expect(missing.message).toMatch(/AI_PRICE_SEK_PER_MTOK_INPUT is required/)
+      expect(missing.message).toMatch(/AI_PRICE_SEK_PER_MTOK_OUTPUT is required/)
+    }
+    expect(parseConfig({ ...VALID, AI_DAILY_CALLS_PER_USER: '0' }).ok).toBe(false)
   })
 
   it('requires the auth, mail and file store settings (#22, #26)', () => {

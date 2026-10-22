@@ -99,6 +99,16 @@ test('a file of the wrong type or too large is refused before it is uploaded', a
   expect(uploads).toEqual([])
 })
 
+test('a used daily AI quota is said, and the report is not read (#31)', async ({ page }) => {
+  // The e2e API allows five AI calls per user and day (playwright.config.ts); each report read is one.
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  for (let i = 0; i < 5; i++) await uploadExample(page)
+  await fileInput(page).setInputFiles(reportWith({ ...analysA01, tsProcent: 50 }))
+  await expect(page.getByText('Du har använt dagens AI-frågor. De fylls på vid midnatt.')).toBeVisible()
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue('39.7')
+})
+
 test('the AI being unavailable is said, and nothing is stored', async ({ page }) => {
   await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')

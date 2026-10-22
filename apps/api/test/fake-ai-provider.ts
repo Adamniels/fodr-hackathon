@@ -11,6 +11,9 @@ export interface FakeAiProvider extends AiProvider {
   reset(): void
 }
 
+/** The tokens every fake answer reports. */
+export const FAKE_USAGE = { inputTokens: 1000, outputTokens: 200 }
+
 export function fakeAiProvider(): FakeAiProvider {
   const answers = new Map<Method, unknown>()
   const failures = new Map<Method, Error>()
@@ -19,7 +22,8 @@ export function fakeAiProvider(): FakeAiProvider {
     calls.push({ method, input })
     const failure = failures.get(method)
     if (failure) return Promise.reject(failure)
-    return Promise.resolve(answers.get(method) as never)
+    // Every answer used a few tokens, so the usage log and its cost have something to record (#31).
+    return Promise.resolve({ value: answers.get(method), usage: FAKE_USAGE } as never)
   }
   return {
     calls,

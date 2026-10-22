@@ -6,6 +6,7 @@ import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { usageRepository } from '../src/repositories/ai-usage'
 import { journalRepository } from '../src/repositories/journal'
 import { planRepository } from '../src/repositories/plans'
 import type { FileStore } from '../src/storage'
@@ -17,6 +18,7 @@ export const UNIT_CONFIG: Config = {
   webDistDir: undefined,
   appVersion: 'unit',
   anthropicApiKey: undefined,
+  ai: { model: 'claude-sonnet-5-5', dailyCallsPerUser: 30, priceSekPerMtokInput: 30, priceSekPerMtokOutput: 150 },
   betterAuthSecret: 'unit-test-secret-of-at-least-32-characters',
   betterAuthUrl: 'http://localhost:3000',
   smtpHost: '127.0.0.1',
@@ -52,6 +54,7 @@ export function unitRepositories() {
     analyses: analysisRepository(db),
     plans: planRepository(db),
     journal: journalRepository(db),
+    usage: usageRepository(db),
   }
 }
 

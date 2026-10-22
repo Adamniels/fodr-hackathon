@@ -19,6 +19,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -211,4 +212,25 @@ export const journalEntries = pgTable(
     createdAt: createdInOrder(),
   },
   (table) => [index('journal_entries_horse_id_date_idx').on(table.horseId, table.date, table.createdAt)],
+)
+
+// Every call to the AI (#31, ADR 0008, ADR 0015): who made it, for which route, with which model, the tokens it used
+// and its estimated cost. A call reserves its row as pending before it is sent, which the daily quota counts; the row
+// then records how it went. Deleting the user deletes their usage.
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    id: id(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    route: text('route', { enum: ['analysis', 'profile', 'explanation', 'journal'] }).notNull(),
+    model: text('model').notNull(),
+    status: text('status', { enum: ['pending', 'ok', 'failed'] }).notNull(),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    costSek: numeric('cost_sek', { precision: 12, scale: 4, mode: 'number' }).notNull().default(0),
+    createdAt: createdInOrder(),
+  },
+  (table) => [index('ai_usage_user_id_created_at_idx').on(table.userId, table.createdAt)],
 )

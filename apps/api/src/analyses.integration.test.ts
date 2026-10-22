@@ -200,7 +200,7 @@ describe('uploading a report', () => {
       ...ai,
       readAnalysis: async () => {
         await deleteHorse()
-        return READING
+        return { value: READING, usage: { inputTokens: 1, outputTokens: 1 } }
       },
     }
     const recording: FileStore = {

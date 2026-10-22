@@ -12,7 +12,8 @@ import type { Logger } from '../logger'
 import { problem } from '../problem'
 import { requireUser, type UserVariables } from '../session'
 import { parseJson } from '../validation'
-import { AiProviderError, type AiErrorKind, type AiProvider } from './provider'
+import { AiQuotaExceeded, type MeteredAi } from './metered'
+import { AiProviderError, type AiErrorKind } from './provider'
 
 // The profile and the explanation are a few KB. A journal is up to AI_JOURNAL_ENTRIES_MAX entries of up to
 // JOURNAL_TEXT_MAX characters, each with a plan snapshot: 100 × (about 4 KB of escaped text and 0.5 KB of fields).
@@ -32,7 +33,7 @@ const FAILURES: Record<AiErrorKind, { status: 429 | 502 | 503; code: string }> =
   truncated: { status: 502, code: 'ai.truncated' },
 }
 
-export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: AiProvider; logger: Logger }) {
+export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: MeteredAi; logger: Logger }) {
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
   const limit = (maxSize: number) =>
@@ -49,14 +50,16 @@ export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: AiProvider; log
     path: string,
     maxBytes: number,
     schema: S,
-    call: (body: z.infer<S>) => Promise<unknown>,
+    call: (userId: string, body: z.infer<S>) => Promise<unknown>,
   ) {
     routes.post(path, limit(maxBytes), async (c: C) => {
       const body = await parseJson(c, schema)
       if (!body.ok) return body.response
       try {
-        return c.json(await call(body.data))
+        return c.json(await call(c.get('user').id, body.data))
       } catch (e) {
+        // Today's calls are used: nothing was sent to the model (#31).
+        if (e instanceof AiQuotaExceeded) return problem(c, 429, 'ai.quota_exceeded')
         // The kind or the error type only, never a message: the request and the model's reply hold the owner's text.
         if (e instanceof AiProviderError) {
           logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, 'ai request failed')
@@ -70,11 +73,15 @@ export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: AiProvider; log
     })
   }
 
-  route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, (body) => ai.interpretProfile(body))
-  route('/explanation', MAX_BODY_BYTES, ExplanationRequestSchema, async (body) => ({
-    text: await ai.explainPlan(body),
+  route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, (userId, body) =>
+    ai.run(userId, 'profile', (provider) => provider.interpretProfile(body)),
+  )
+  route('/explanation', MAX_BODY_BYTES, ExplanationRequestSchema, async (userId, body) => ({
+    text: await ai.run(userId, 'explanation', (provider) => provider.explainPlan(body)),
   }))
-  route('/journal', MAX_JOURNAL_BODY_BYTES, JournalRequestSchema, (body) => ai.analyzeJournal(body))
+  route('/journal', MAX_JOURNAL_BODY_BYTES, JournalRequestSchema, (userId, body) =>
+    ai.run(userId, 'journal', (provider) => provider.analyzeJournal(body)),
+  )
   return routes
 }
 
