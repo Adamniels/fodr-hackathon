@@ -17,6 +17,7 @@ import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
 import { databaseCatalogue } from '../src/products'
 import { productRepository } from '../src/repositories/products'
+import { exportRepository } from '../src/repositories/export'
 import { createFileStore, type FileStore } from '../src/storage'
 import { fakeAiProvider } from './fake-ai-provider'
 import { linkIn, waitForMail } from './mailpit'
@@ -78,6 +79,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       journal: journalRepository(database.db),
       usage: usageRepository(database.db),
       products: productRepository(database.db),
+      exports: exportRepository(database.db),
     },
   })
   return { app, database, logs, ai, files, close: () => database.close() }
