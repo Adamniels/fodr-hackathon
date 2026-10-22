@@ -6,7 +6,7 @@ import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { SavedPlan } from '@fodr/contracts/plans'
 import { skapaPlan } from '@fodr/domain/plan'
 import { newJournalEntryId } from '../storage'
-import { useApiJournal, type JournalStore } from '../journal'
+import { UnsavedProfileError, useApiJournal, type JournalStore } from '../journal'
 import { useApiHorses, type HorseStore } from '../horses'
 import { useApiAnalysis, type AnalysisStore } from '../analyses'
 import { SaveStatus } from '../components/SaveStatus'
@@ -69,7 +69,19 @@ function AccountWorkspace(props: WorkspaceProps) {
   const analyses = useApiAnalysis(props.user.id, knownHorseId)
   const savedPlans = useSavedPlans(props.user.id, knownHorseId)
   // A profile the server updated from a journal entry goes into the horses cache, so the plan recalculates (CF7).
-  const journal = useApiJournal(props.user.id, knownHorseId, (horse) => store?.apply(horse))
+  const apiJournal = useApiJournal(props.user.id, knownHorseId, (horse) => store?.apply(horse))
+  // Before an entry updates the profile, the profile's own edits go out: a waiting or failed edit holds the whole
+  // profile, and would undo the entry's update when it is sent later.
+  const journal: JournalStore = {
+    ...apiJournal,
+    add: async (draft, updateProfile) => {
+      if (updateProfile && store) {
+        await store.flush()
+        if (store.hasUnsaved()) throw new UnsavedProfileError()
+      }
+      await apiJournal.add(draft, updateProfile)
+    },
+  }
   if (store === undefined) {
     return (
       <p className="arbetsyta-laddar" role="status">

@@ -9,7 +9,7 @@ import { ApiError } from './api-v1'
 import { fileToBase64, readAnalysis } from './api'
 import { nyPost, type Journalpost } from '@fodr/domain/journal'
 import type { JournalStore } from './journal'
-import { loadJournal, newJournalEntryId, saveJournal } from './storage'
+import { JOURNAL_KEY_PREFIX, loadJournal, newJournalEntryId, saveJournal } from './storage'
 import { demoHast, ponny } from './data/examples'
 import { newHorseProfile, type HorseStore } from './horses'
 
@@ -125,14 +125,13 @@ export function useDemoAnalysis(horseId: string | undefined): AnalysisStore {
   }
 }
 
-// An account's journal was kept under this prefix before the API (#28): removed once at startup like the horses above.
-const JOURNAL_PREFIX = 'krubba.journal.v1.'
+// An account's journal was kept in the browser before the API (#28): removed once at startup like the horses above.
 
 export function forgetLocalJournals(): void {
   try {
     const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i))
     for (const key of keys) {
-      if (key?.startsWith(JOURNAL_PREFIX) && key !== JOURNAL_PREFIX + DEMO_USER.id) localStorage.removeItem(key)
+      if (key?.startsWith(JOURNAL_KEY_PREFIX) && key !== JOURNAL_KEY_PREFIX + DEMO_USER.id) localStorage.removeItem(key)
     }
   } catch {
     // Storage blocked: nothing to remove.

@@ -189,7 +189,8 @@
       "seenPlaceholder": "T.ex. piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg",
       "updateProfile": "Uppdatera profilen och räkna om foderplanen",
       "add": "Lägg till",
-      "saveFailed": "Anteckningen kunde inte sparas. Försök igen."
+      "saveFailed": "Anteckningen kunde inte sparas. Försök igen.",
+      "unsavedProfile": "Hästens ändringar är inte sparade än. Spara eller rätta profilen först, eller lägg till anteckningen utan att uppdatera profilen."
     },
     "ai": {
       "title": "Vad säger journalen?",

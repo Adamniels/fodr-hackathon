@@ -92,6 +92,33 @@ describe('journal entries', () => {
     expect(await (await browser.request(`/api/v1/horses/${horseId}`)).json()).toMatchObject({ viktKg: SIXTEN.viktKg })
   })
 
+  it('updates only the measured value: a condition alone leaves the weight as it was', async () => {
+    const { browser, horseId, journal } = await horse()
+    await browser.post(journal, { datum: '2026-10-15', hull: 6, text: '', updateProfile: true })
+    expect(await (await browser.request(`/api/v1/horses/${horseId}`)).json()).toMatchObject({
+      viktKg: SIXTEN.viktKg,
+      hull: 6,
+    })
+  })
+
+  it('never takes a plan from the client: only saving a plan links one', async () => {
+    const { browser, journal } = await horse()
+    const res = await browser.post(journal, {
+      datum: '2026-10-15',
+      text: 'x',
+      planId: '00000000-0000-4000-8000-000000000000',
+      plan: { analys: 'falsk', grovfoderKgPerDag: 1, produkter: [], kostnadPerManad: 0 },
+    })
+    expect(res.status).toBe(201)
+    expect(((await res.json()) as { entry: Entry }).entry).not.toHaveProperty('plan')
+  })
+
+  it('needs a session, and refuses a body larger than an entry can be', async () => {
+    const { browser, journal } = await horse()
+    expect((await app.request(`http://localhost:3000${journal}`)).status).toBe(401)
+    expect((await browser.post(journal, { datum: '2026-10-15', text: 'x'.repeat(20 * 1024) })).status).toBe(413)
+  })
+
   it('refuses a text longer than an entry may be', async () => {
     const { browser, journal } = await horse()
     expect((await browser.post(journal, { datum: '2026-10-15', text: 'x'.repeat(2001) })).status).toBe(400)

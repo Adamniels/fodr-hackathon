@@ -7,14 +7,17 @@ import type { Journalpost } from '@fodr/domain/journal'
 
 /**
  * The ID of a new journal entry. It starts with the time, so entries on the same date keep the order they were
- * added in (sorteradePoster sorts by date, then ID); #28 replaces it with the database ID and an explicit order.
+ * added in (sorteradePoster sorts by date, then ID). Only the demo's entries get one: an account's entries have the
+ * database's ID and their creation time (#28).
  */
 export function newJournalEntryId(): string {
   return `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
 // Journal per user: horse ID to entries.
-const journalKey = (userId: string) => `krubba.journal.v1.${userId}`
+/** The key prefix of a stored journal, followed by the user's ID. */
+export const JOURNAL_KEY_PREFIX = 'krubba.journal.v1.'
+const journalKey = (userId: string) => `${JOURNAL_KEY_PREFIX}${userId}`
 
 export function loadJournal(userId: string): Record<string, Journalpost[]> {
   try {

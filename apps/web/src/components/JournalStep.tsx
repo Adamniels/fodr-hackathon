@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { analyzeJournal, type JournalAnalysis } from '../api'
-import type { EntryDraft } from '../journal'
+import { UnsavedProfileError, type EntryDraft } from '../journal'
 import { beraknaTrend, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
@@ -198,18 +198,18 @@ function NewEntry({
   }
 
   const [saving, setSaving] = useState(false)
-  const [saveFailed, setSaveFailed] = useState(false)
+  const [saveFailed, setSaveFailed] = useState<'failed' | 'unsavedProfile' | null>(null)
   // The draft is cleared once the entry is saved (on the server for an account, #28), and kept when it was refused.
   async function spara() {
     setSaving(true)
-    setSaveFailed(false)
+    setSaveFailed(null)
     try {
       await onAdd({ datum, ...matt, text: text.trim() }, uppdatera && harMatt)
       setVikt(undefined)
       setHull('')
       setText('')
-    } catch {
-      setSaveFailed(true)
+    } catch (e) {
+      setSaveFailed(e instanceof UnsavedProfileError ? 'unsavedProfile' : 'failed')
     } finally {
       setSaving(false)
     }
@@ -273,7 +273,7 @@ function NewEntry({
       )}
       {saveFailed && (
         <p className="ruta fel" role="alert">
-          {t('journal.newEntry.saveFailed')}
+          {t(saveFailed === 'unsavedProfile' ? 'journal.newEntry.unsavedProfile' : 'journal.newEntry.saveFailed')}
         </p>
       )}
       <div className="atgardsrad">
@@ -320,7 +320,15 @@ function AiAnalysis({
             hull: hast.hull,
             halsa: hast.halsa,
           },
-          poster: sorteradePoster(poster).map((p) => (p.plan ? { ...p, plan: forModel(p.plan, t) } : p)),
+          // The fields the model has always read: no creation time (#28).
+          poster: sorteradePoster(poster).map(({ id, datum, viktKg, hull, text, plan }) => ({
+            id,
+            datum,
+            viktKg,
+            hull,
+            text,
+            ...(plan && { plan: forModel(plan, t) }),
+          })),
           // The model reads the warnings as text, as it did before the engine returned codes (#12).
           trend: { ...trend, varningar: trend.varningar.map(domainText) },
           aktuellPlan: aktuellPlan && forModel(aktuellPlan, t),

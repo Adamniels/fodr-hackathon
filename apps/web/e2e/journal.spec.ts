@@ -149,6 +149,38 @@ test('entry with weight updates the profile, on the server', async ({ page, brow
   await elsewhere.context().close()
 })
 
+test('a profile update from an entry recalculates the plan (CF7)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await showExamplePlan(page)
+  const miner = page.getByRole('row').filter({ hasText: 'Krafft Miner Original Pellets 20kg' })
+  const before = await miner.innerText()
+  await goToStep(page, 'Journal')
+  await page.getByLabel('Vikt (kg)').fill('420')
+  await page.getByRole('button', { name: 'Lägg till', exact: true }).click()
+  await expect(page.getByRole('definition').filter({ hasText: '420 kg' })).toBeVisible()
+  await goToStep(page, 'Foderplan')
+  await expect(miner).not.toHaveText(before)
+  await page.reload()
+  await expect(miner).not.toHaveText(before)
+})
+
+test('an entry does not update the profile while a profile edit has failed to save', async ({ page }) => {
+  await createAccountWithHorses(page)
+  // /api/v1 belongs to the real backend and is otherwise never intercepted; only a stubbed answer fails a save.
+  await page.route('**/api/v1/horses/*', (route) =>
+    route.request().method() === 'PUT'
+      ? route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' })
+      : route.fallback(),
+  )
+  await page.getByLabel('Namn').fill('Sixten Andra')
+  await expect(page.getByText('Kunde inte spara ändringarna.')).toBeVisible()
+  await goToStep(page, 'Journal')
+  await page.getByLabel('Vikt (kg)').fill('545')
+  await page.getByRole('button', { name: 'Lägg till', exact: true }).click()
+  await expect(page.getByText(/^Hästens ändringar är inte sparade än/)).toBeVisible()
+  await expect(page.getByRole('listitem').filter({ hasText: '545 kg' })).toHaveCount(0)
+})
+
 test('saving the plan adds a timeline entry, kept on the server', async ({ page, browser }) => {
   const account = await createAccountWithHorses(page)
   await showExamplePlan(page)

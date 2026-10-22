@@ -9,6 +9,17 @@ import type { Horse } from '@fodr/contracts/horses'
 import type { Journalpost } from '@fodr/domain/journal'
 import { callApi, sessionGuard } from './api-v1'
 
+/**
+ * An entry that would update the profile while a profile edit has not reached the server: the server's update and the
+ * waiting edit would overwrite each other, so the entry is refused until the profile is saved.
+ */
+export class UnsavedProfileError extends Error {
+  constructor() {
+    super('unsaved profile')
+    this.name = 'UnsavedProfileError'
+  }
+}
+
 /** A new entry as the form makes it: no ID or creation time, which the store gives it. */
 export type EntryDraft = Omit<NewJournalEntry, 'updateProfile'>
 
@@ -54,7 +65,8 @@ export function useApiJournal(
     // enabled only with a horse.
     queryFn: () => guard(journalApi.list(horseId ?? '')),
     enabled: horseId !== undefined,
-    staleTime: Infinity,
+    // Read again when the window regains focus, so entries made on another device show; nothing here waits to be saved.
+    staleTime: 0,
     retry: false,
   })
   // Closing the workspace drops the cached journals; an answer that comes after that is not put back.
@@ -67,9 +79,13 @@ export function useApiJournal(
     }
   }, [queryClient, userId])
 
+  // A journal that never loaded (or failed to) is read again rather than replaced by this one entry.
   const append = (forHorse: string, entry: Journalpost) => {
     if (closed.current) return
-    queryClient.setQueryData<Journalpost[]>(journalKey(userId, forHorse), (entries) => [...(entries ?? []), entry])
+    const key = journalKey(userId, forHorse)
+    if (queryClient.getQueryData<Journalpost[]>(key)) {
+      queryClient.setQueryData<Journalpost[]>(key, (entries) => entries && [...entries, entry])
+    } else void queryClient.invalidateQueries({ queryKey: key })
   }
 
   return {
@@ -85,6 +101,7 @@ export function useApiJournal(
     addSaved: (entry) => {
       if (horseId !== undefined) append(horseId, entry)
     },
+    // The server deletes a horse's journal with it; the cached copy goes when the workspace closes.
     forgetHorse: () => undefined,
   }
 }
