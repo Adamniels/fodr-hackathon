@@ -58,3 +58,24 @@ Each user may make `AI_DAILY_CALLS_PER_USER` calls per calendar day in Sweden; o
 may have reached the model count, failed or not, a timeout too; a call refused before it (a malformed request, no API
 key, a key the provider rejects) does not. A row left `pending` is a call whose result could not be recorded;
 it still counts for that day.
+
+## The extraction eval in CI
+
+CI's `eval` job (#34) reads every test report in `testdata/Testdata-from-other-dev/krubba-testdata-v2` with the real
+model and compares it with the answer key, on any PR that changes the prompts or schemas, the provider interface, the
+scoring, the model default, the eval script, its test data or the workflow (`scripts/ci/eval-needed.sh`); other PRs
+skip it. It fails on an invented value, the reference report read as an analysis, a failed call, or fewer than
+`EVAL_THRESHOLD` (95 %) of the values right; the job summary shows each file. The baseline when the gate was added was
+126 of 128 values right, the two misses being copper in B06, which the report rounds.
+
+- **The key.** The job needs the repository secret `ANTHROPIC_API_KEY` (Settings > Secrets and variables > Actions)
+  and fails without it. A key of its own with a monthly spend limit keeps CI's cost apart from the app's. A run is
+  about 11 calls with PDFs and images, a few kronor.
+- **The model.** The repository variable `AI_MODEL`, when set, is the model the eval uses, so it can match what the
+  API is deployed with; otherwise the code's default.
+- **Blocking merges.** A skipped job counts as passed, so `eval` can be a required status check in the branch
+  protection rules (Settings > Branches): then a PR that breaks the reading cannot be merged, and other PRs are not
+  held up.
+- **Not covered.** An Anthropic SDK upgrade in `package-lock.json` does not run the eval, as that would run it on every
+  dependency change; run `npm run eval:analysis -w apps/api` by hand for such an upgrade.
+

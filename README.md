@@ -28,14 +28,14 @@ Without an API key everything except the AI parts works (reading an uploaded rep
 
 ## Commands
 
-Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the agent script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, and builds and smoke tests the Docker image.
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, builds and smoke tests the Docker image, and runs the extraction eval when a PR changes the prompts, schemas or model (#34).
 
 | Command | What |
 |---|---|
 | `npm test` | Unit tests for the calculation engine (including hand calculated SLU cases) and the API, no services needed |
 | `npm run test:integration` | API tests against the Compose Postgres, in their own `fodr_test` database |
 | `npm run test:e2e` | Playwright tests of every user flow against the real API (needs `docker compose up --wait`), AI mocked (report reading by a fake in the API), no key needed |
-| `npm run test:scripts` | Offline tests of the agent scripts in `scripts/agent/` (needs `jq`) |
+| `npm run test:scripts` | Offline tests of the scripts in `scripts/agent/` and `scripts/ci/` (needs `jq`) |
 | `npm run lint` | ESLint (type aware) |
 | `npm run typecheck` | TypeScript |
 | `npm run format` | Prettier |
@@ -43,7 +43,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 | `npm run seed` | Creates the demo account (`SEED_EMAIL`, `SEED_PASSWORD`) with Sixten and Pysen; idempotent, also in the image (`node apps/api/dist/seed.mjs`) |
 | `docker build -t fodr .` | The production image: one Node process serving the API and the web app (`docker run -p 3000:3000 -e DATABASE_URL=... fodr`) |
 | `node apps/web/scripts/import-products.mjs` | Rebuilds `apps/api/src/data/products.json` from the store data |
-| `npm run eval:analysis -w apps/api` | Checks AI extraction against the answer key (calls the provider directly; needs an API key, about 11 API calls) |
+| `npm run eval:analysis -w apps/api` | Checks AI extraction against the answer key and fails below the gate (calls the provider directly; needs an API key, about 11 API calls; CI runs it when the prompts, schemas or model change) |
 
 To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 

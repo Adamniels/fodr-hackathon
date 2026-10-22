@@ -14,7 +14,7 @@ Work is tracked as issues in the GitHub Project "fodr". One PR delivers one tick
 
 ## Commands
 
-All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the agent script tests in `scripts/agent/`. The API, the integration tests and the e2e tests need the Compose services (`docker compose up --wait`); the API also needs the root `.env` (copy `.env.example`), while the tests set their own environment. Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, and builds the Docker image.
+All run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`) and fail if one lacks the script; `dev` and `build` run `apps/web` and `apps/api`; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the script tests in `scripts/agent/` and `scripts/ci/`. The API, the integration tests and the e2e tests need the Compose services (`docker compose up --wait`); the API also needs the root `.env` (copy `.env.example`), while the tests set their own environment. Every check must pass before a PR is opened; CI runs `format:check`, `lint`, `typecheck`, `test`, `test:scripts`, `test:integration` and `test:e2e`, builds the Docker image, and runs the extraction eval when a PR changes what it checks (#34).
 
 | Command | What |
 |---|---|
@@ -24,7 +24,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
 | `npm run seed` | Creates the demo account from `SEED_EMAIL` and `SEED_PASSWORD` with Sixten and Pysen (idempotent); e2e tests seed one per test with `seededAccount` |
 | `npm run test:e2e` | Playwright e2e tests against the real API (own servers on :3100 and :5174, own `fodr_e2e` database and `fodr-e2e` bucket, mail read from Mailpit), AI mocked, no API key needed |
-| `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
+| `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` and `scripts/ci/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
 | `npm run lint` | ESLint, type aware |
 | `npm run typecheck` | TypeScript in every workspace |
 | `npm run format` / `format:check` | Prettier |
@@ -58,4 +58,4 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
 - The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`: the AI routes under `/api/v1/ai/` (#30) answer from fixtures, an error with `problem()`, and any other unmocked `/api` call fails the test. The rest of `/api/v1` and `/api/auth` is not intercepted, because it belongs to the real backend. Report reading (#26) and plan explanations (#32) happen inside the API, whose e2e entry `apps/api/test/e2e-server.ts` has a fake AI: a report's reading comes from the uploaded file (build test reports with `e2e/support/reports.ts`), and an explanation names the horse and fails as a marker in the horse's "Övrigt" note says (`apps/api/test/e2e-explanations.ts`). Account mail is read from Mailpit (`e2e/support/mailpit.ts`), each test with its own address and client IP.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.
-- Changes to AI prompts, schemas or the model must be checked with `npm run eval:analysis -w apps/api` (calls the provider directly, about 11 API calls).
+- Changes to AI prompts, schemas or the model must be checked with `npm run eval:analysis -w apps/api` (calls the provider directly, about 11 API calls). CI's `eval` job runs it on such PRs (`scripts/ci/eval-needed.sh` decides) and fails on an invented value, the reference report read as an analysis, a failed call, or fewer than `EVAL_THRESHOLD` of the values right (`apps/api/src/ai/eval.ts`); never lower the threshold to let a change through.

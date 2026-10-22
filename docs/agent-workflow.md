@@ -43,7 +43,7 @@ The PR's "Review" section lists every finding with its outcome. The rule is step
 
 Nothing starts until the owner confirms; he can also name any other number.
 
-`next.sh` and `board.sh` each have an offline test suite beside them (`scripts/agent/*.test.sh`, with a fake `gh`, so no test calls GitHub). `npm run test:scripts` runs every suite, and CI runs it in the `checks` job, so a change that breaks a script fails the PR. A new `*.test.sh` file there is picked up without changing the workflow, as long as it exits non-zero when any of its tests fails.
+`next.sh` and `board.sh` each have an offline test suite beside them (`scripts/agent/*.test.sh`, with a fake `gh`, so no test calls GitHub). `npm run test:scripts` runs every suite, and CI runs it in the `checks` job, so a change that breaks a script fails the PR. A new `*.test.sh` file there, or in `scripts/ci/`, is picked up without changing the workflow, as long as it exits non-zero when any of its tests fails.
 
 ## Mac mini runbook
 
