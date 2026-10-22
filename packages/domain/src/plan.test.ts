@@ -106,6 +106,17 @@ describe('foderplan', () => {
   })
 })
 
+describe('produkter som urvalet får välja (CF9, #36)', () => {
+  it('väljer aldrig en produkt vars deklaration ingen admin har kontrollerat', () => {
+    const okontrollerade = produkter.map((p) => ({ ...p, deklarationKontrollerad: false }))
+    const plan = planFor(demoHast, analysKomplett, okontrollerade)
+    expect(plan.urval?.poster ?? []).toEqual([])
+  })
+  it('väljer bland de kontrollerade', () => {
+    expect(planFor(demoHast, analysKomplett, produkter).urval?.poster.length).toBeGreaterThan(0)
+  })
+})
+
 describe('foderplanens meddelanden (ADR 0014)', () => {
   const plan = planFor(demoHast, analysKomplett, produkter)
 

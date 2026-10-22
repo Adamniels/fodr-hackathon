@@ -80,7 +80,8 @@
       "unnamedHorse": "Namnlös häst",
       "addHorse": "Lägg till häst",
       "toLanding": "Till startsidan",
-      "logOut": "Logga ut"
+      "logOut": "Logga ut",
+      "products": "Produkter"
     },
     "openMenu": "Visa hästar och meny",
     "newHorse": "Ny häst",
@@ -797,5 +798,86 @@
       "failed": "Något gick fel. Försök igen.",
       "quotaExceeded": "Du har använt dagens AI-frågor. De fylls på vid midnatt."
     }
+  },
+  "admin": {
+    "title": "Produkter",
+    "intro": "Produkterna som foderplanerna väljer bland. Varje ändring blir en ny version; sparade planer behåller den version de räknades med.",
+    "search": "Sök produkt",
+    "new": "Ny produkt",
+    "back": "Alla produkter",
+    "loading": "Läser produkterna…",
+    "loadFailed": "Produkterna kunde inte läsas.",
+    "notFound": "Produkten finns inte.",
+    "count": "{{count}} produkter",
+    "columns": {
+      "name": "Produkt",
+      "store": "Butik",
+      "category": "Kategori",
+      "price": "Pris",
+      "selectable": "I urvalet",
+      "checked": "Deklaration kontrollerad",
+      "verified": "Senast kontrollerad",
+      "status": "Status"
+    },
+    "yes": "Ja",
+    "no": "Nej",
+    "retired": "Utgått",
+    "active": "I sortimentet",
+    "editedByAdmin": "Ändrad av admin",
+    "newTitle": "Ny produkt",
+    "sections": {
+      "product": "Produkt",
+      "dose": "Dos och urval",
+      "declaration": "Deklaration per kg foder",
+      "source": "Källa och kontroll"
+    },
+    "fields": {
+      "namn": "Namn",
+      "marke": "Märke",
+      "butik": "Butik",
+      "url": "Länk",
+      "kategori": "Kategori",
+      "prisKr": "Pris (kr)",
+      "forpackningKg": "Förpackning (kg)",
+      "form": "Form",
+      "ingredienser": "Ingredienser",
+      "ingredienserHint": "Kommaseparerade, t.ex. melass, lusern",
+      "dosMin": "Dos minst (g per 100 kg och dag)",
+      "dosMax": "Dos högst (g per 100 kg och dag)",
+      "dosKalla": "Dosens källa",
+      "iUrval": "Urvalet får välja produkten",
+      "deklarationKontrollerad": "Deklarationen är kontrollerad mot förpackningen",
+      "lampligVidFangEms": "Passar vid fång och EMS",
+      "naringsdata": "Deklarationens omfattning",
+      "nutrient": "{{name}} ({{unit}} per kg)",
+      "antaganden": "Antaganden",
+      "antagandenHint": "Ett per rad",
+      "kalla": "Källa",
+      "insamlad": "Insamlad",
+      "verifiedOn": "Senast kontrollerad"
+    },
+    "category": {
+      "mineralfoder": "Mineralfoder",
+      "tillskott": "Tillskott",
+      "salt": "Salt",
+      "kraftfoder": "Kraftfoder",
+      "proteinfoder": "Proteinfoder",
+      "ovrigt": "Övrigt"
+    },
+    "declaration": {
+      "komplett": "Komplett",
+      "delvis": "Delvis",
+      "bara_ravarde": "Bara råvärden",
+      "saknas": "Saknas",
+      "ej_relevant": "Ej relevant"
+    },
+    "save": "Spara produkt",
+    "saving": "Sparar…",
+    "saved": "Sparad",
+    "saveFailed": "Produkten kunde inte sparas. Försök igen.",
+    "invalid": "Rätta de markerade fälten.",
+    "fieldInvalid": "Värdet är inte giltigt.",
+    "retire": "Ta ur sortimentet",
+    "restore": "Ta tillbaka i sortimentet"
   }
 }

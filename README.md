@@ -29,7 +29,7 @@ Without an API key everything except the AI parts works (reading an uploaded rep
 
 ## Commands
 
-Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate`, `products:import` and `seed` run `apps/api`; `test:scripts` runs the script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, builds and smoke tests the Docker image, and runs the extraction eval when a PR changes the prompts, schemas or model (#34).
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate`, `products:import`, `admin:grant`, `admin:revoke` and `seed` run `apps/api`; `test:scripts` runs the script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, builds and smoke tests the Docker image, and runs the extraction eval when a PR changes the prompts, schemas or model (#34).
 
 | Command | What |
 |---|---|
@@ -42,6 +42,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 | `npm run format` | Prettier |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
 | `npm run products:import` | Mirrors the catalogue file `apps/api/src/data/products.json` into the product tables (new set only when something changed); idempotent, also in the image (`node apps/api/dist/import-products.mjs`) |
+| `npm run admin:grant -- <email>` | Makes a verified account an admin (product administration, CF9); `admin:revoke` takes it back; also in the image (`node apps/api/dist/admin.mjs grant <email>`) |
 | `npm run seed` | Creates the demo account (`SEED_EMAIL`, `SEED_PASSWORD`) with Sixten and Pysen; idempotent, also in the image (`node apps/api/dist/seed.mjs`) |
 | `docker build -t fodr .` | The production image: one Node process serving the API and the web app (`docker run -p 3000:3000 -e DATABASE_URL=... fodr`) |
 | `node apps/web/scripts/import-products.mjs` | Rebuilds `apps/api/src/data/products.json` from the store data |

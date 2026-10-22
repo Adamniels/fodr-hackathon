@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
+import { Link, Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { SavedPlan } from '@fodr/contracts/plans'
@@ -307,6 +307,11 @@ function Workspace({
               <span>{user.email}</span>
             </span>
           </div>
+          {user.role === 'admin' && (
+            <Link className="sidofalt-lank" to="/admin/products">
+              {t('app.sidebar.products')}
+            </Link>
+          )}
           <button className="sidofalt-lank" onClick={() => void navigate('/')}>
             {t('app.sidebar.toLanding')}
           </button>

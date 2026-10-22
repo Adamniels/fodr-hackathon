@@ -77,6 +77,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       explanations: explanationRepository(database.db),
       journal: journalRepository(database.db),
       usage: usageRepository(database.db),
+      products: productRepository(database.db),
     },
   })
   return { app, database, logs, ai, files, close: () => database.close() }

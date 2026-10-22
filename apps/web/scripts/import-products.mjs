@@ -1,7 +1,8 @@
 // Converts the stores' product files to the app's format (apps/api/src/data/products.json, #27), which
 // `npm run products:import` then loads into the database the API plans from (#35).
 // Usage: node scripts/import-products.mjs [source-dir]
-// The selectable products and their doses come from scripts/produktval.json, which is reviewed by hand.
+// The selectable products and their doses come from scripts/produktval.json, which is reviewed by hand. The output is
+// checked by Prettier (the API's format:check): run `npx prettier --write apps/api/src/data/products.json` after it.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -179,6 +180,9 @@ function buildProduct({
     forpackningKg: round(amount / 1000, 3),
     ...(v ? { dosGramPer100kg: { min: v.dos[0], max: v.dos[1] }, dosKalla: v.dosKalla } : {}),
     iUrval: Boolean(v),
+    // The selection's products were converted by hand from the manufacturers' text; #37 checks each against the
+    // package, and the admin view keeps the flag from then on (CF9, #36).
+    ...(v ? { deklarationKontrollerad: true } : {}),
     lampligVidFangEms: lamplighetFangEms(kategori, perKg),
     ingredienser: ingredienser(`${namn} ${description ?? ''}`),
     form: form(p),

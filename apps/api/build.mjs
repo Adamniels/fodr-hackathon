@@ -1,5 +1,5 @@
 // Bundles the API for production: dist/main.mjs (the server), dist/migrate.mjs, dist/seed.mjs (#29) and
-// dist/import-products.mjs (#35, with the catalogue file), each one file with every dependency
+// dist/import-products.mjs (#35, with the catalogue file) and dist/admin.mjs (#36), each one file with every dependency
 // and the workspace packages inlined, so the image runs them with plain node and no node_modules.
 import { build } from 'esbuild'
 
@@ -9,6 +9,7 @@ await build({
     { in: 'src/migrate.ts', out: 'migrate' },
     { in: 'src/seed-cli.ts', out: 'seed' },
     { in: 'src/import-products-cli.ts', out: 'import-products' },
+    { in: 'src/admin-cli.ts', out: 'admin' },
   ],
   outdir: 'dist',
   bundle: true,

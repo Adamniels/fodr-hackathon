@@ -12,6 +12,7 @@ import { basicReading, completeReading } from '../fixtures/ai'
 import { PYSEN, SIXTEN } from '../fixtures/horses'
 import { createDatabase, type Database } from '../../../api/src/db'
 import { seedDemo } from '../../../api/src/seed'
+import { accountRepository } from '../../../api/src/repositories/accounts'
 import { reportWith } from './reports'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
 import { mockAi, type AiMock } from './mock-ai'
@@ -147,6 +148,15 @@ export async function seededAccount(page: Page, email = 'demo@example.se'): Prom
   await logIn(page, account.email)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
   return account
+}
+
+/**
+ * Makes the account an admin (#36), as `npm run admin:grant` does, in this process, and reloads the page so the
+ * session's role is read again.
+ */
+export async function grantAdmin(page: Page, account: Account): Promise<void> {
+  expect(await accountRepository(seedDb()).setRole(account.email, 'admin')).toBe('ok')
+  await page.reload()
 }
 
 /** Runs `npm run seed`'s script for a new account, as an operator would, and returns the account (#29). */

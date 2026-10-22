@@ -25,10 +25,28 @@ export interface AccountRepository {
    * never adds horses to a real user's account or leaves an account the seed's password cannot open.
    */
   ensureSeedUser(email: string, name: string, password: string): Promise<{ id: string; created: boolean }>
+  /**
+   * Gives the account the role (#36): only an existing account whose email is verified, so an admin is always someone
+   * who proved the address. The CLI's only call (admin-cli.ts).
+   */
+  setRole(email: string, role: 'user' | 'admin'): Promise<'ok' | 'not_found' | 'unverified'>
 }
 
 export function accountRepository(db: Executor): AccountRepository {
   return {
+    async setRole(email, role) {
+      const account = (
+        await db
+          .select({ id: users.id, emailVerified: users.emailVerified })
+          .from(users)
+          .where(eq(users.email, email.trim().toLowerCase()))
+      ).at(0)
+      if (!account) return 'not_found'
+      if (!account.emailVerified) return 'unverified'
+      await db.update(users).set({ role }).where(eq(users.id, account.id))
+      return 'ok'
+    },
+
     async ensureSeedUser(email, name, password) {
       const normalised = email.trim().toLowerCase()
       const [existing] = await db

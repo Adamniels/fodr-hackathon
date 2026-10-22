@@ -49,6 +49,10 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  /** 'admin' may administer products (#36, CF9); a Better Auth field no client can set (auth.ts). */
+  role: text('role', { enum: ['user', 'admin'] })
+    .notNull()
+    .default('user'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 })
@@ -253,6 +257,8 @@ export const aiUsage = pgTable(
 export const products = pgTable('products', {
   id: text('id').primaryKey(),
   retiredAt: instant('retired_at'),
+  /** When an admin first wrote the product (#36): the import leaves it as it is from then on. */
+  adminManagedAt: instant('admin_managed_at'),
   createdAt: createdAt(),
 })
 
@@ -266,6 +272,8 @@ export const productVersions = pgTable(
     data: jsonb('data').$type<Produkt>().notNull(),
     /** When the data was last checked against the package (CF9); set by curation (#36, #37). */
     verifiedOn: date('verified_on', { mode: 'string' }),
+    /** The admin who made the version (#36); null for the import. Kept when the account goes. */
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: createdInOrder(),
   },
   (table) => [index('product_versions_product_id_idx').on(table.productId, table.createdAt)],

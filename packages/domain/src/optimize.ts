@@ -120,7 +120,10 @@ function saltPost(intag: Intag, behov: Behov, salt: Produkt | undefined, viktKg:
 export function valjProdukter(input: UrvalsIndata): Urvalsutfall {
   const { bas, behov, berakningsviktKg: vikt } = input
   // Produkterna är redan filtrerade efter hästens känsligheter (sensitivity.ts).
-  const valbara = input.produkter.filter((p): p is Doserbar => p.iUrval && p.dosGramPer100kg !== undefined)
+  // Valbara: markerade för urvalet, med dos, och med en deklaration som en admin har kontrollerat (CF9, #36).
+  const valbara = input.produkter.filter(
+    (p): p is Doserbar => p.iUrval && p.dosGramPer100kg !== undefined && p.deklarationKontrollerad === true,
+  )
   const kandidater = valbara.filter((p) => p.kategori === 'mineralfoder' || p.kategori === 'tillskott')
   const salt = valbara
     .filter((p) => p.kategori === 'salt')
