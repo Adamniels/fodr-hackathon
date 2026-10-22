@@ -177,9 +177,10 @@ function Workspace({
     requestAnimationFrame(() => title.current?.focus())
   }
   const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, analys) : null
-  // Saving: the server computes and stores the plan and its journal entry, whose snapshot is of what it computed
-  // (#27, #28). Rejects when the server refused, for the plan step to say so.
-  const savePlan = async () => {
+  // Saving the plan on screen: the server computes and stores it, and with a journal date its journal entry, whose
+  // snapshot is of what it computed (#27, #28). A plan the newest saved one equals is not stored again (#32). Rejects
+  // when the server refused, for the plan step to say so.
+  const saveShownPlan = async (journalDatum?: string) => {
     if (!hast || !analys || !plan || !('plan' in plan)) return
     // The server plans from what it holds: the edits still on their way go first, and an edit it does not have
     // (failed, refused, invalid) stops the save rather than saving another plan than the one on screen.
@@ -189,11 +190,28 @@ function Workspace({
     if (!analysisId) throw new Error('An account analysis has no ID')
     // A catalogue changed by a deploy since the page loaded: revalidated by its version, so the server's is used.
     const { data: current } = await catalogue.refetch()
-    // The entry is dated with the user's own calendar day (C6).
-    const { plan: saved, entry } = await savedPlans.save(analysisId, localIsoDate())
+    const { plan: saved, entry } = await savedPlans.save(analysisId, journalDatum)
     if (entry) journal.addSaved(entry)
     if (!current || !isSavedFor(saved, hast, analys, current.version)) throw new PlanSaveError('differs')
   }
+  // The entry is dated with the user's own calendar day (C6).
+  const savePlan = () => saveShownPlan(localIsoDate())
+
+  // The plan step saves the plan it shows once the horse's saved plans are read, so the plan has an ID for its
+  // explanation (#32, CF6) and every plan shown is reproducible (CF5). Once per preview: a save that failed, or came out
+  // different, is not repeated until the plan on screen changes; the plan step says why there is no explanation.
+  const unsavedPreview =
+    step === 'plan' && preview && 'plan' in preview && !savedPlan && savedPlans.latest !== undefined ? preview : null
+  const autoSaved = useRef<unknown>(null)
+  const [autoSaveFailure, setAutoSaveFailure] = useState<{ preview: unknown; error: unknown } | null>(null)
+  useEffect(() => {
+    if (!unsavedPreview || autoSaved.current === unsavedPreview) return
+    autoSaved.current = unsavedPreview
+    saveShownPlan().catch((error: unknown) => setAutoSaveFailure({ preview: unsavedPreview, error }))
+    // saveShownPlan reads this render's state, which unsavedPreview is computed from.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unsavedPreview])
+  const planSaveError = autoSaveFailure && autoSaveFailure.preview === preview ? autoSaveFailure.error : null
 
   const tillganglig = (s: Step) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
@@ -214,6 +232,8 @@ function Workspace({
     plan,
     savedPlan,
     savePlan,
+    planSaveError,
+    userId: user.id,
     planOgonblick,
     produkter,
     catalogueFailed: catalogue.isError,

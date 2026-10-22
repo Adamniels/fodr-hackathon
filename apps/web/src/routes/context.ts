@@ -28,6 +28,10 @@ export interface WorkspaceContext {
   savedPlan: SavedPlan | null
   /** Saves the plan on screen (on the server for an account) and adds its snapshot to the journal. */
   savePlan: () => Promise<void>
+  /** Why the plan on screen could not be saved when the plan step showed it (#32), or null. */
+  planSaveError: unknown
+  /** The signed-in user, whose caches the steps' queries belong to. */
+  userId: string
   planOgonblick: PlanOgonblick | null
   /** The catalogue from the API (#27); undefined while it loads, which only the plan and the feed list wait for. */
   produkter: Produkt[] | undefined

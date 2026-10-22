@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { test as base, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
+import type { ExplanationRequest } from '@fodr/contracts/ai'
 import type { HorseProfile } from '@fodr/contracts/horses'
 import { basicReading, completeReading } from '../fixtures/ai'
 import { PYSEN, SIXTEN } from '../fixtures/horses'
@@ -187,6 +188,22 @@ export async function loadExamplePlan(page: Page): Promise<void> {
   await goToStep(page, 'Analysen')
   await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
   await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
+}
+
+/**
+ * The plan explanations the page asks the API to write from now on (#32): the body of each POST to a plan's
+ * explanation, in order. Reading a stored explanation is a GET, which is not listed.
+ */
+export function explanationRequests(page: Page): { request: ExplanationRequest; regenerate?: boolean }[] {
+  const sent: { request: ExplanationRequest; regenerate?: boolean }[] = []
+  page.on('request', (r) => {
+    if (
+      r.method() === 'POST' &&
+      /^\/api\/v1\/horses\/[^/]+\/plans\/[^/]+\/explanation$/.test(new URL(r.url()).pathname)
+    )
+      sent.push(r.postDataJSON() as (typeof sent)[number])
+  })
+  return sent
 }
 
 /** On the analysis step, uploads a report the AI reads as the complete (or basic) example analysis. */

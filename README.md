@@ -65,10 +65,10 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
 | Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses |
 | Analyses API | `apps/api/src/analyses-routes.ts`, `repositories/analyses.ts`, `storage.ts` | Report upload per horse (type by magic bytes, PDF 20 MB, photo 5 MB), read by the AI, converted by the domain, stored with the file in S3 (ADR 0011) |
-| Plans API | `apps/api/src/plans-routes.ts`, `repositories/plans.ts` | Saved plans per horse, computed by the server and stored immutably with the build (`APP_VERSION`) and catalogue versions (ADR 0004) |
+| Plans API | `apps/api/src/plans-routes.ts`, `repositories/plans.ts`, `repositories/explanations.ts` | Saved plans per horse, computed by the server and stored immutably with the build (`APP_VERSION`) and catalogue versions (ADR 0004); the plan step saves the plan it shows, and each saved plan's AI explanation is stored with it (CF6) |
 | Journal API | `apps/api/src/journal-routes.ts`, `repositories/journal.ts` | The journal per horse; an entry can update the profile atomically, and a saved plan's entry is made with it (CF7) |
 | AI usage | `apps/api/src/ai/metered.ts`, `repositories/ai-usage.ts` | Every model call logged with tokens and estimated cost, a daily quota per user (`AI_DAILY_CALLS_PER_USER`); the monthly cost query is in `docs/operations.md` |
-| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses, analyses, plans, journal, the AI routes |
+| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses, analyses, plans and their explanations, journal, the AI routes |
 | AI | `apps/api/src/ai/` | Reads reports (in the analysis upload), interprets free text and explains at `/api/v1/ai/*` for signed-in users, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/api/src/data/products.json` | Generated from store data (228 items), not edited by hand; served at `/api/v1/products`, versioned by its hash |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |

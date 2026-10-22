@@ -2,12 +2,13 @@
 // catalogue versions, from a horse and an analysis the user can reach (ADR 0010). The catalogue is public.
 import { skapaPlan } from '@fodr/domain/plan'
 import type { Produkt } from '@fodr/domain/types'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../test/auth-app'
 import { COMPLETE } from '../test/fixtures/analyses'
 import { SIXTEN } from '../test/fixtures/horses'
-import { plans } from './db/schema'
+import { horseMembers, plans } from './db/schema'
+import { planRepository } from './repositories/plans'
 
 const { app, database, close } = authApp()
 afterAll(close)
@@ -85,12 +86,70 @@ describe('saving a plan', () => {
   })
 
   it('returns the newest as the latest', async () => {
-    const { browser, analysis, plans: path } = await horseWithAnalysis()
+    const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
     await browser.post(path, { analysisId: analysis.id })
+    await browser.request(`/api/v1/horses/${horse.id}`, { method: 'PUT', body: { ...SIXTEN, viktKg: 560 } })
     const second = ((await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody })
       .plan
     const latest = (await (await browser.request(`${path}/latest`)).json()) as { plan: SavedPlanBody }
     expect(latest.plan.id).toBe(second.id)
+  })
+
+  it('reuses the latest plan when nothing it was computed from changed (#32)', async () => {
+    // The plan step saves the plan it shows; showing it again must not store it again.
+    const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
+    const first = (await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody }
+    const again = await browser.post(path, { analysisId: analysis.id })
+    expect(again.status).toBe(200)
+    expect(((await again.json()) as { plan: SavedPlanBody }).plan).toEqual(first.plan)
+    expect(await database.db.select().from(plans).where(eq(plans.horseId, horse.id))).toHaveLength(1)
+  })
+
+  it('saves a new plan when the build or the catalogue that computed the latest one differs (#32)', async () => {
+    const { browser, analysis, plans: path } = await horseWithAnalysis()
+    for (const changed of [{ engineVersion: 'older-build' }, { productSetVersion: 'older-catalogue' }]) {
+      const latest = (await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody }
+      await database.db.update(plans).set(changed).where(eq(plans.id, latest.plan.id))
+      const res = await browser.post(path, { analysisId: analysis.id })
+      expect(res.status).toBe(201)
+      expect(((await res.json()) as { plan: SavedPlanBody }).plan.id).not.toBe(latest.plan.id)
+    }
+  })
+
+  it('stores one plan for identical saves made together (#32)', async () => {
+    // At the repository: through HTTP each save computes its plan first, which spaces the saves out and hides a race.
+    const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
+    await browser.post(path, { analysisId: analysis.id })
+    // The plan as stored, saved again by five saves at once once it is gone.
+    const [stored] = await database.db.delete(plans).where(eq(plans.horseId, horse.id)).returning()
+    const [member] = await database.db.select().from(horseMembers).where(eq(horseMembers.horseId, horse.id))
+    const repository = planRepository(database.db)
+    // Open the connections first, so the saves run together rather than as each connection is made.
+    await Promise.all(Array.from({ length: 5 }, () => database.db.execute(sql`select pg_sleep(0.05)`)))
+    const saved = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        repository.create({ id: member.userId }, horse.id, {
+          analysisId: stored.analysisId,
+          inputs: stored.inputs,
+          result: stored.result,
+          engineVersion: stored.engineVersion,
+          productSetVersion: stored.productSetVersion,
+        }),
+      ),
+    )
+    expect(new Set(saved.map((s) => s?.plan.id)).size).toBe(1)
+    expect(saved.filter((s) => s?.created)).toHaveLength(1)
+    expect(await database.db.select().from(plans).where(eq(plans.horseId, horse.id))).toHaveLength(1)
+  })
+
+  it('adds the journal entry to the plan already saved, rather than saving it again (#32)', async () => {
+    const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
+    const shown = (await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody }
+    const res = await browser.post(path, { analysisId: analysis.id, journalDatum: '2026-10-22' })
+    const { plan, entry } = (await res.json()) as { plan: SavedPlanBody; entry: { plan: { planId: string } } }
+    expect(plan.id).toBe(shown.plan.id)
+    expect(entry.plan.planId).toBe(shown.plan.id)
+    expect(await database.db.select().from(plans).where(eq(plans.horseId, horse.id))).toHaveLength(1)
   })
 
   it('stores nothing for input the engine refuses, and says which fields', async () => {

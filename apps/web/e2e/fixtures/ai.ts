@@ -57,8 +57,6 @@ export const FOLJDFRAGA = 'Hur mycket väger en liter av pelletsen?'
 
 export const profilMedFoljdfraga = { ...profil, foljdfragor: [FOLJDFRAGA] } satisfies ProfileResponse
 
-export const forklaring = { text: 'E2E-förklaring: stycke ett.\nStycke två.' }
-
 export const journal = {
   sammanfattning: 'E2E-sammanfattning av journalen.',
   monster: [{ iakttagelse: 'Lös mage efter bytet', mojligKoppling: 'Byte av hösilage', datum: '2026-09-28' }],

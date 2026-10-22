@@ -1,10 +1,12 @@
 import { readFile } from 'node:fs/promises'
-import { analysA01, completeReading, forklaring } from './fixtures/ai'
+import { analysA01, completeReading } from './fixtures/ai'
+import { e2eExplanationText, explanationMarker } from '../../api/test/e2e-explanations'
 import {
   createAccountWithHorses,
   expect,
   expectGrams,
   expectMoney,
+  explanationRequests,
   FIXED_NOW,
   goToStep,
   horseList,
@@ -13,7 +15,6 @@ import {
   typeKeyByKey,
   uploadExample,
 } from './support/helpers'
-import { problem } from './support/mock-ai'
 import { reportWith } from './support/reports'
 import type { Locator, Page } from '@playwright/test'
 
@@ -213,57 +214,64 @@ test('a plan is not saved while an edit has failed to save (#27)', async ({ page
   await page.getByLabel('Vikt (kg)').fill('540')
   await expect(page.getByText('Kunde inte spara ändringarna.')).toBeVisible()
   await goToStep(page, 'Foderplan')
+  // The plan on screen cannot be saved, so it gets no explanation, and the explanation says why (#32).
+  await expect(page.getByText(/^Förklaringen kunde inte hämtas\. Alla ändringar är inte sparade än/)).toBeVisible()
   await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
   await expect(page.getByText(/^Alla ändringar är inte sparade än/)).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
 })
 
-test('plan explanation comes from the AI mock', async ({ page, ai }) => {
+test('the plan explanation is written for the saved plan once, and read back after that (CF6, #32)', async ({
+  page,
+}) => {
+  const sent = explanationRequests(page)
   await loadExamplePlan(page)
   const paragraphs = page.getByRole('paragraph')
-  const [first, second] = forklaring.text.split('\n')
+  const [first, second] = e2eExplanationText('Sixten').split('\n')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
   await expect(paragraphs.filter({ hasText: second })).toBeVisible()
-  // Dev mode runs effects twice (React StrictMode), so the first visit may send two requests.
-  // The contract tested here is the cache: revisiting the same plan sends no new request.
-  await ai.settled()
-  const callsAfterFirstVisit = ai.calls('explanation').length
-  expect(callsAfterFirstVisit).toBeGreaterThan(0)
+  // Dev mode runs effects twice (React StrictMode), so the first visit may ask twice; the API writes it once.
+  const asked = sent.length
+  expect(asked).toBeGreaterThan(0)
 
+  // The stored explanation answers a revisit, and a reload too: nothing is asked again.
   await goToStep(page, 'Journal')
   await goToStep(page, 'Foderplan')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
-  await ai.settled()
-  expect(ai.calls('explanation')).toHaveLength(callsAfterFirstVisit)
+  await page.reload()
+  await expect(paragraphs.filter({ hasText: first })).toBeVisible()
+  expect(sent).toHaveLength(asked)
 })
 
-test('explanation failure keeps the plan usable', async ({ page, ai }) => {
-  ai.respondWith('explanation', problem(502, 'ai.unavailable'), 502)
-  await loadExamplePlan(page)
+/** As loadExamplePlan, with a note on Sixten that makes his explanation calls go as `steps` (#32). */
+async function planWithExplanations(page: Page, steps: Parameters<typeof explanationMarker>[0]) {
+  await createAccountWithHorses(page)
+  await page.getByLabel('Övrigt').fill(explanationMarker(steps))
+  await showExamplePlan(page)
+}
+
+test('explanation failure keeps the plan usable', async ({ page }) => {
+  await planWithExplanations(page, ['upstream'])
   await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
   await expect(page.getByRole('row').filter({ hasText: 'Salt 1,5 kg' })).toBeVisible()
 })
 
-test('a failed rewrite shows the error, and a revisit shows the saved text without asking again', async ({
-  page,
-  ai,
-}) => {
-  await loadExamplePlan(page)
-  const [first] = forklaring.text.split('\n')
+test('a failed rewrite shows the error, and a revisit shows the stored text without asking again', async ({ page }) => {
+  const sent = explanationRequests(page)
+  await planWithExplanations(page, ['ok', 'upstream'])
+  const [first] = e2eExplanationText('Sixten').split('\n')
   const paragraphs = page.getByRole('paragraph')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
 
-  ai.respondWith('explanation', problem(502, 'ai.unavailable'), 502)
   await page.getByRole('button', { name: 'Skriv om' }).click()
   await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
-  await ai.settled()
-  const callsAfterRewrite = ai.calls('explanation').length
+  expect(sent.at(-1)?.regenerate).toBe(true)
+  const asked = sent.length
 
   await goToStep(page, 'Journal')
   await goToStep(page, 'Foderplan')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
-  await ai.settled()
-  expect(ai.calls('explanation')).toHaveLength(callsAfterRewrite)
+  expect(sent).toHaveLength(asked)
 })
 
 test.describe('dry matter entry (#50)', () => {
@@ -360,7 +368,8 @@ test('analysis values: text is refused, a cleared value is missing (C2)', async 
   await expect(page.getByRole('row', { name: /^Kalcium/ })).toContainText('Saknas, uppskattas')
 })
 
-test('the plan explanation gets grams as the page shows them (#103)', async ({ page, ai }) => {
+test('the plan explanation gets grams as the page shows them (#103)', async ({ page }) => {
+  const sent = explanationRequests(page)
   await createAccountWithHorses(page)
   await page.getByRole('button', { name: '+ Lägg till foder' }).click()
   const produkt = page.getByPlaceholder('Sök produkt, t.ex. Krafft').last()
@@ -370,9 +379,8 @@ test('the plan explanation gets grams as the page shows them (#103)', async ({ p
   await goToStep(page, 'Analysen')
   await uploadExample(page)
   await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
-  await ai.settled()
-  const [underlag] = ai.calls('explanation') as { byten: { fran: string }[] }[]
-  expect(underlag.byten.map((b) => b.fran)).toContain('Pellets 15 kg Mineral Röd 100 g/dag')
+  await expect.poll(() => sent.length).toBeGreaterThan(0)
+  expect(sent[0].request.byten.map((b) => b.fran)).toContain('Pellets 15 kg Mineral Röd 100 g/dag')
 })
 
 test.describe('the transition calendar across horses and plans (#109)', () => {
@@ -458,7 +466,8 @@ test('calendar download is a valid ics', async ({ page }) => {
   expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
 })
 
-test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai }) => {
+test('infeasible plan is not shown as no supplements (C3)', async ({ page }) => {
+  const sent = explanationRequests(page)
   await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
   await uploadExample(page)
@@ -469,9 +478,8 @@ test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai })
   await expect(page.getByText(reason)).toBeVisible()
   await expect(page.getByText('Inga tillskott behövs utöver grovfodret.')).toBeHidden()
   // The explanation reads the reason among the warnings, so it cannot say that no supplements are needed.
-  await ai.settled()
-  const [underlag] = ai.calls('explanation') as { varningar: string[] }[]
-  expect(underlag.varningar.some((v) => v.startsWith(reason))).toBe(true)
+  await expect.poll(() => sent.length).toBeGreaterThan(0)
+  expect(sent[0].request.varningar.some((v) => v.startsWith(reason))).toBe(true)
 })
 
 /** The analysis step after the AI read the A01 report with these values changed (#102). */

@@ -39,8 +39,20 @@ export function AnalysisRoute() {
 
 export function PlanRoute() {
   const { t } = useTranslation()
-  const { hast, analys, analyses, plan, savedPlan, savePlan, produkter, catalogueFailed, reloadCatalogue, goTo } =
-    useWorkspace()
+  const {
+    hast,
+    analys,
+    analyses,
+    plan,
+    savedPlan,
+    savePlan,
+    planSaveError,
+    userId,
+    produkter,
+    catalogueFailed,
+    reloadCatalogue,
+    goTo,
+  } = useWorkspace()
   if (!hast) return null
   if (!produkter) {
     return catalogueFailed ? (
@@ -65,7 +77,9 @@ export function PlanRoute() {
       hast={hast}
       analys={analys}
       plan={plan.plan}
-      savedAt={savedPlan?.createdAt}
+      userId={userId}
+      saved={savedPlan ? { id: savedPlan.id, createdAt: savedPlan.createdAt } : undefined}
+      planSaveError={planSaveError}
       onSaveToJournal={async () => {
         await savePlan()
         goTo('journal')

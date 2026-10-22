@@ -1,11 +1,9 @@
-// The AI routes on the API (#30): /api/v1/ai/profile, /explanation and /journal, signed-in only, requests and answers
+// The AI routes on the API (#30): /api/v1/ai/profile and /journal (a plan's explanation is in plans.ts since #32), signed-in only, requests and answers
 // in the shared contracts (@fodr/contracts/ai). The AI only reads and explains; the plan is the domain's (CLAUDE.md).
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  ExplanationResponseSchema,
   JournalResponseSchema,
   ProfileResponseSchema,
-  type ExplanationRequest,
   type JournalRequest,
   type JournalResponse,
   type ProfileRequest,
@@ -20,8 +18,6 @@ const ask = async (path: string, body: unknown): Promise<unknown> =>
 export const aiApi = {
   interpretProfile: async (body: ProfileRequest): Promise<ProfileResponse> =>
     ProfileResponseSchema.parse(await ask('profile', body)),
-  explainPlan: async (body: ExplanationRequest): Promise<{ text: string }> =>
-    ExplanationResponseSchema.parse(await ask('explanation', body)),
   analyzeJournal: async (body: JournalRequest): Promise<JournalResponse> =>
     JournalResponseSchema.parse(await ask('journal', body)),
 }
@@ -31,7 +27,6 @@ export function useAi(): typeof aiApi {
   const guard = sessionGuard(useQueryClient())
   return {
     interpretProfile: (body) => guard(aiApi.interpretProfile(body)),
-    explainPlan: (body) => guard(aiApi.explainPlan(body)),
     analyzeJournal: (body) => guard(aiApi.analyzeJournal(body)),
   }
 }

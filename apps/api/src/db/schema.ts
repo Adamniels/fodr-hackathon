@@ -194,6 +194,17 @@ export const plans = pgTable(
   (table) => [index('plans_horse_id_created_at_idx').on(table.horseId, table.createdAt)],
 )
 
+// A saved plan's AI explanation (#32, CF6, ADR 0008): one per plan, kept apart so plans stay immutable. Regenerating
+// replaces the text, and `created_at` is when the current text was written. It goes with its plan.
+export const planExplanations = pgTable('plan_explanations', {
+  planId: uuid('plan_id')
+    .primaryKey()
+    .references(() => plans.id, { onDelete: 'cascade' }),
+  text: text('text').notNull(),
+  model: text('model').notNull(),
+  createdAt: createdAt(),
+})
+
 // Journal entries (#28, CF7, ADR 0008): measurements and notes per horse over time. An entry made by saving a plan
 // refers to it, and its snapshot is derived from that plan when read rather than stored twice. `created_at` orders
 // entries on the same date.

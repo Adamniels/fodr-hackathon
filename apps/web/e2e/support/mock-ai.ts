@@ -1,13 +1,15 @@
-// Intercepts /api requests in the browser context. The AI routes (/api/v1/ai/*, #30) answer from fixtures; any other
+// Intercepts /api requests in the browser context. The AI routes (/api/v1/ai/profile and /journal, #30) answer from
+// fixtures; any other
 // /api request outside the real backend is aborted and recorded, and the test fixture in helpers.ts fails the test if
 // that happened. The rest of /api/v1 and /api/auth is not intercepted: it belongs to the real backend (ADR 0007,
-// ADR 0009). Report reading happens inside the API (#26), with a fake AI there (apps/api/test/e2e-server.ts).
+// ADR 0009). Report reading (#26) and plan explanations (#32) happen inside the API, with a fake AI there
+// (apps/api/test/e2e-server.ts).
 
 import { expect, type BrowserContext } from '@playwright/test'
-import { ExplanationRequestSchema, JournalRequestSchema, ProfileRequestSchema } from '@fodr/contracts/ai'
+import { JournalRequestSchema, ProfileRequestSchema } from '@fodr/contracts/ai'
 import * as fixtures from '../fixtures/ai'
 
-export type AiRoute = 'profile' | 'explanation' | 'journal'
+export type AiRoute = 'profile' | 'journal'
 
 export interface AiMock {
   /** Parsed request bodies received on a route, in order. */
@@ -38,18 +40,13 @@ const isBackend = (path: string) =>
 
 const DEFAULTS: Record<AiRoute, unknown> = {
   profile: fixtures.profil,
-  explanation: fixtures.forklaring,
   journal: fixtures.journal,
 }
 
 // What the API would accept on each route: a request the contract refuses fails the test, so every e2e flow checks the
 // web's real requests against the API's contracts (#30).
-const REQUESTS: Record<
-  AiRoute,
-  typeof ProfileRequestSchema | typeof ExplanationRequestSchema | typeof JournalRequestSchema
-> = {
+const REQUESTS: Record<AiRoute, typeof ProfileRequestSchema | typeof JournalRequestSchema> = {
   profile: ProfileRequestSchema,
-  explanation: ExplanationRequestSchema,
   journal: JournalRequestSchema,
 }
 

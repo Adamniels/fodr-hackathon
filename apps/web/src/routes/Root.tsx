@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Outlet } from 'react-router'
 import { authClient, fetchMe, ME_QUERY_KEY as ME } from '../auth-client'
 import { ANALYSES_QUERY_KEY } from '../analyses'
-import { clearExplanations } from '../explanations'
 import { HORSES_QUERY_KEY } from '../horses'
 import { JOURNAL_QUERY_KEY } from '../journal'
 import { PLANS_QUERY_KEY } from '../plans'
@@ -31,8 +30,6 @@ export function Root() {
         queryClient.removeQueries({ queryKey: ANALYSES_QUERY_KEY })
         queryClient.removeQueries({ queryKey: PLANS_QUERY_KEY })
         queryClient.removeQueries({ queryKey: JOURNAL_QUERY_KEY })
-        queryClient.removeQueries({ queryKey: ['explanation'] })
-        clearExplanations()
         queryClient.setQueryData(ME, null)
       } catch {
         // Sign-out failed (offline, server error): read the session again rather than pretend it ended.

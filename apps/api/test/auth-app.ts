@@ -13,6 +13,7 @@ import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
 import { usageRepository } from '../src/repositories/ai-usage'
 import { journalRepository } from '../src/repositories/journal'
+import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
 import { loadCatalogue } from '../src/products'
 import { createFileStore, type FileStore } from '../src/storage'
@@ -71,6 +72,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       horses: horseRepository(database.db),
       analyses: analysisRepository(database.db),
       plans: planRepository(database.db),
+      explanations: explanationRepository(database.db),
       journal: journalRepository(database.db),
       usage: usageRepository(database.db),
     },
