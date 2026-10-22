@@ -73,7 +73,7 @@ A curated, versioned product table is the only source the optimiser reads, edite
 | M4-01 | [#35](https://github.com/Adamniels/fodr-hackathon/issues/35) | feature | versioned product tables and import | M2-10 ([#27](https://github.com/Adamniels/fodr-hackathon/issues/27)) |
 | M4-02 | [#36](https://github.com/Adamniels/fodr-hackathon/issues/36) | feature | admin role and product administration (CF9) | M4-01 ([#35](https://github.com/Adamniels/fodr-hackathon/issues/35)) |
 | M4-03 | [#37](https://github.com/Adamniels/fodr-hackathon/issues/37) | chore | curate the selectable product set | M4-02 ([#36](https://github.com/Adamniels/fodr-hackathon/issues/36)) |
-| M4-04 | [#38](https://github.com/Adamniels/fodr-hackathon/issues/38) | fix | plans are reproducible across product changes (CF5) | M4-01 ([#35](https://github.com/Adamniels/fodr-hackathon/issues/35)) |
+| M4-04 | [#38](https://github.com/Adamniels/fodr-hackathon/issues/38) | chore | plans are reproducible across product changes (CF5): tests only, as #35 and #36 made it hold | M4-01 ([#35](https://github.com/Adamniels/fodr-hackathon/issues/35)) |
 
 ## M5 Beta readiness
 

@@ -4,12 +4,12 @@ import { e2eExplanationText, explanationMarker } from '../../api/test/e2e-explan
 import {
   createAccountWithHorses,
   expect,
-  grantAdmin,
   expectGrams,
   expectMoney,
   explanationRequests,
   FIXED_NOW,
   goToStep,
+  grantAdmin,
   horseList,
   showExamplePlan,
   test,
@@ -382,13 +382,18 @@ test('a saved plan keeps its product prices when an admin edits one, and a new p
   await page.getByRole('button', { name: 'Spara produkt' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Sparad' })).toBeVisible()
 
+  // Back by the link, without a reload, so the open page's catalogue is the one refreshed by the edit.
+  await page.getByRole('link', { name: 'Till hästarna' }).click()
   // The saved plan in the journal: as it was saved.
-  await page.goto('/horses')
   await goToStep(page, 'Journal')
   await expect(entry).toHaveText(saved)
-  // The plan step now plans with the new version.
+  // The plan step now plans with the new version, and saving it stores a new plan computed by the server: 300 kr more.
   await goToStep(page, 'Foderplan')
   await expectMoney(row, 600)
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+  await expect(entry).toHaveCount(2)
+  await expect(entry.filter({ hasText: saved })).toHaveCount(1)
+  await expectMoney(entry.filter({ hasNotText: saved }), 688)
 })
 
 test.describe('dry matter entry (#50)', () => {

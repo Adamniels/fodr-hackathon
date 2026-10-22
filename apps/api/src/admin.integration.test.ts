@@ -8,9 +8,9 @@ import { eq } from 'drizzle-orm'
 import { afterAll, describe, expect, inject, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../test/auth-app'
 import { recreateDatabase } from '../test/database'
-import { loadCatalogueFile } from './catalogue-file'
 import { COMPLETE } from '../test/fixtures/analyses'
 import { SIXTEN } from '../test/fixtures/horses'
+import { loadCatalogueFile } from './catalogue-file'
 import { users } from './db/schema'
 import { accountRepository } from './repositories/accounts'
 import { productRepository } from './repositories/products'
@@ -281,7 +281,7 @@ describe('a saved plan when a product it uses is edited', () => {
     }
     const plans = `/api/v1/horses/${horse.id}/plans`
     type SavedPlan = { id: string; productSetVersion: string; result: { behallnaFoder: { produkt: Produkt }[] } }
-    type Entry = { plan?: { planId: string; kostnadPerManad: number } }
+    type Entry = { plan?: { planId: string; kostnadPerManad: number; produkter: { namn: string }[] } }
     const kept = (plan: SavedPlan) => plan.result.behallnaFoder.find((f) => f.produkt.id === product.id)?.produkt.prisKr
     const saved = (await (
       await browser.post(plans, { analysisId: analysis.id, journalDatum: '2026-10-22' })
@@ -290,7 +290,10 @@ describe('a saved plan when a product it uses is edited', () => {
       entry: Entry
     }
     expect(kept(saved.plan)).toBe(200)
+    // The journal's snapshot covers the product, with a cost to compare.
     const cost = saved.entry.plan?.kostnadPerManad
+    expect(cost).toEqual(expect.any(Number))
+    expect(saved.entry.plan?.produkter.map((p) => p.namn)).toContain(feed.namn)
 
     const edited = await browser.request(`/api/v1/admin/products/${product.id}`, {
       method: 'PUT',
