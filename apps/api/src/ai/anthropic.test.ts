@@ -4,6 +4,10 @@ import { describe, expect, it } from 'vitest'
 import { createAnthropicProvider } from './anthropic'
 import { AiProviderError, type AiProvider } from './provider'
 
+// The provider sends what it is given; the routes hold the contracts (#30). These requests stay as small as they were,
+// so the snapshots below show that no prompt, schema or limit changed.
+const payload = (value: object) => value as never
+
 const ANALYSIS = {
   arAnalys: true,
   typ: 'hosilage',
@@ -111,7 +115,7 @@ describe('the Anthropic provider', () => {
 
   it('explains a plan with the text of the reply', async () => {
     const { ai, requests } = provider(200, message('Grovfodret räcker.'))
-    expect(await ai.explainPlan({ behov: 1 })).toBe('Grovfodret räcker.')
+    expect(await ai.explainPlan(payload({ behov: 1 }))).toBe('Grovfodret räcker.')
     expect(requests[0]).toMatchObject({ max_tokens: 4000, messages: [{ role: 'user', content: '{"behov":1}' }] })
   })
 
@@ -130,8 +134,8 @@ describe('the Anthropic provider', () => {
           produkter: [{ id: 'p1', namn: 'Mineral' }],
         }),
     ],
-    ['explainPlan', 'Text.', (ai: AiProvider) => ai.explainPlan({ behov: 1 })],
-    ['analyzeJournal', JOURNAL, (ai: AiProvider) => ai.analyzeJournal({ poster: [] })],
+    ['explainPlan', 'Text.', (ai: AiProvider) => ai.explainPlan(payload({ behov: 1 }))],
+    ['analyzeJournal', JOURNAL, (ai: AiProvider) => ai.analyzeJournal(payload({ poster: [] }))],
   ] as const)('%s sends the request it always sent', async (_method, reply, call) => {
     const { ai, requests } = provider(200, message(typeof reply === 'string' ? reply : JSON.stringify(reply)))
     expect(await call(ai)).toEqual(reply)
@@ -142,7 +146,7 @@ describe('the Anthropic provider', () => {
   it('turns a failed connection into upstream without a status', async () => {
     const fetch: ClientOptions['fetch'] = () => Promise.reject(new TypeError('fetch failed'))
     const ai = createAnthropicProvider({ apiKey: 'test-key', clientOptions: { fetch, maxRetries: 0 } })
-    const error = await ai.explainPlan({}).catch((e: unknown) => e)
+    const error = await ai.explainPlan(payload({})).catch((e: unknown) => e)
     expect(error).toEqual(new AiProviderError('upstream'))
     expect((error as AiProviderError).status).toBeUndefined()
   })
@@ -152,7 +156,7 @@ describe('the Anthropic provider', () => {
     ['max_tokens', 'truncated'],
   ])('turns a reply that stopped with %s into %s', async (stopReason, kind) => {
     const { ai } = provider(200, message('Grovfodret', stopReason))
-    await expect(ai.explainPlan({})).rejects.toEqual(new AiProviderError(kind as 'refusal'))
+    await expect(ai.explainPlan(payload({}))).rejects.toEqual(new AiProviderError(kind as 'refusal'))
   })
 
   it.each([
@@ -161,7 +165,7 @@ describe('the Anthropic provider', () => {
     [529, 'overloaded_error', new AiProviderError('upstream', 529)],
   ])('turns an HTTP %i from Anthropic into a provider error', async (status, type, expected) => {
     const { ai } = provider(status, { type: 'error', error: { type, message: 'x' } })
-    const error = await ai.explainPlan({}).catch((e: unknown) => e)
+    const error = await ai.explainPlan(payload({})).catch((e: unknown) => e)
     expect(error).toEqual(expected)
     expect((error as AiProviderError).status).toBe(expected.status)
   })
@@ -169,7 +173,7 @@ describe('the Anthropic provider', () => {
   it('without a key, fails every call with missing_key and sends nothing', async () => {
     const { ai, requests } = provider(200, message('x'), false)
     await expect(ai.readAnalysis(PDF)).rejects.toEqual(new AiProviderError('missing_key'))
-    await expect(ai.explainPlan({})).rejects.toEqual(new AiProviderError('missing_key'))
+    await expect(ai.explainPlan(payload({}))).rejects.toEqual(new AiProviderError('missing_key'))
     expect(requests).toEqual([])
   })
 })

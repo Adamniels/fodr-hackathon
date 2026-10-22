@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { analyzeJournal, type JournalAnalysis } from '../api'
+import { AI_JOURNAL_ENTRIES_MAX, type JournalResponse } from '@fodr/contracts/ai'
+import { aiErrorText, useAi } from '../api'
 import { UnsavedProfileError, type EntryDraft } from '../journal'
 import { beraknaTrend, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
@@ -301,7 +302,8 @@ function AiAnalysis({
   aktuellPlan: PlanOgonblick | null
 }) {
   const { t } = useTranslation()
-  const [svar, setSvar] = useState<JournalAnalysis | null>(null)
+  const [svar, setSvar] = useState<JournalResponse | null>(null)
+  const { analyzeJournal } = useAi()
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
 
@@ -321,21 +323,24 @@ function AiAnalysis({
             halsa: hast.halsa,
           },
           // The fields the model has always read: no creation time (#28).
-          poster: sorteradePoster(poster).map(({ id, datum, viktKg, hull, text, plan }) => ({
-            id,
-            datum,
-            viktKg,
-            hull,
-            text,
-            ...(plan && { plan: forModel(plan, t) }),
-          })),
+          // The latest entries only, which bounds the request and its cost (#30); the trend is computed from them all.
+          poster: sorteradePoster(poster)
+            .slice(-AI_JOURNAL_ENTRIES_MAX)
+            .map(({ id, datum, viktKg, hull, text, plan }) => ({
+              id,
+              datum,
+              viktKg,
+              hull,
+              text,
+              ...(plan && { plan: forModel(plan, t) }),
+            })),
           // The model reads the warnings as text, as it did before the engine returned codes (#12).
           trend: { ...trend, varningar: trend.varningar.map(domainText) },
           aktuellPlan: aktuellPlan && forModel(aktuellPlan, t),
         }),
       )
     } catch (e) {
-      setFel(e instanceof Error ? e.message : String(e))
+      setFel(aiErrorText(e))
     } finally {
       setLaddar(false)
     }

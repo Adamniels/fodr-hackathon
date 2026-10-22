@@ -43,7 +43,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 | `npm run seed` | Creates the demo account (`SEED_EMAIL`, `SEED_PASSWORD`) with Sixten and Pysen; idempotent, also in the image (`node apps/api/dist/seed.mjs`) |
 | `docker build -t fodr .` | The production image: one Node process serving the API and the web app (`docker run -p 3000:3000 -e DATABASE_URL=... fodr`) |
 | `node apps/web/scripts/import-products.mjs` | Rebuilds `apps/api/src/data/products.json` from the store data |
-| `node apps/web/scripts/evaluate-analysis-reading.mjs` | Checks AI extraction against the answer key (needs `npm run dev` and an API key, about 11 API calls) |
+| `npm run eval:analysis -w apps/api` | Checks AI extraction against the answer key (calls the provider directly; needs an API key, about 11 API calls) |
 
 To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 
@@ -67,8 +67,8 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Analyses API | `apps/api/src/analyses-routes.ts`, `repositories/analyses.ts`, `storage.ts` | Report upload per horse (type by magic bytes, PDF 20 MB, photo 5 MB), read by the AI, converted by the domain, stored with the file in S3 (ADR 0011) |
 | Plans API | `apps/api/src/plans-routes.ts`, `repositories/plans.ts` | Saved plans per horse, computed by the server and stored immutably with the build (`APP_VERSION`) and catalogue versions (ADR 0004) |
 | Journal API | `apps/api/src/journal-routes.ts`, `repositories/journal.ts` | The journal per horse; an entry can update the profile atomically, and a saved plan's entry is made with it (CF7) |
-| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses |
-| AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
+| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses, analyses, plans, journal, the AI routes |
+| AI | `apps/api/src/ai/` | Reads reports (in the analysis upload), interprets free text and explains at `/api/v1/ai/*` for signed-in users, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/api/src/data/products.json` | Generated from store data (228 items), not edited by hand; served at `/api/v1/products`, versioned by its hash |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |
 | E2E tests | `apps/web/e2e/` | Playwright specs, AI mocks and fixtures; the API they run against is `apps/api/test/e2e-server.ts` |

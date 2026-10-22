@@ -1,26 +1,25 @@
 // The AI behind an interface (#20): the routes call an AiProvider, main.ts gives them the Anthropic one
-// (anthropic.ts), and tests a fake. Request and response shapes are the ones the web app sends and reads; they move
-// to packages/contracts with request validation in #30, which also ends this file importing its response types from
-// the Anthropic implementation.
-import type { AnalysisResponse, JournalResponse, ProfileResponse } from './anthropic'
+// (anthropic.ts), and tests a fake. The requests and answers of the AI routes are the shared contracts (#30); a
+// report reading is the provider's own shape, which the analysis upload converts with the domain (#26).
+import type {
+  ExplanationRequest,
+  JournalRequest,
+  JournalResponse,
+  ProfileRequest,
+  ProfileResponse,
+} from '@fodr/contracts/ai'
+import type { AnalysisResponse } from './anthropic'
 
 export interface AnalysisFile {
   mediaType: string
   base64: string
 }
 
-export interface ProfileInput {
-  foderText: string
-  halsaText: string
-  tidigareSvar: { fraga: string; svar: string }[]
-  produkter: { id: string; namn: string }[]
-}
-
 export interface AiProvider {
   readAnalysis(file: AnalysisFile): Promise<AnalysisResponse>
-  interpretProfile(input: ProfileInput): Promise<ProfileResponse>
-  explainPlan(payload: unknown): Promise<string>
-  analyzeJournal(payload: unknown): Promise<JournalResponse>
+  interpretProfile(input: ProfileRequest): Promise<ProfileResponse>
+  explainPlan(payload: ExplanationRequest): Promise<string>
+  analyzeJournal(payload: JournalRequest): Promise<JournalResponse>
 }
 
 /**
