@@ -4,6 +4,7 @@ import { e2eExplanationText, explanationMarker } from '../../api/test/e2e-explan
 import {
   createAccountWithHorses,
   expect,
+  grantAdmin,
   expectGrams,
   expectMoney,
   explanationRequests,
@@ -338,6 +339,56 @@ test('a plan saved differently from the one shown says so, and sends nowhere it 
   })
   await loadExamplePlan(page)
   await expect(page.getByText(/^Förklaringen kunde inte hämtas\. Planen ändrades medan den sparades/)).toBeVisible()
+})
+
+test('a saved plan keeps its product prices when an admin edits one, and a new plan uses the new price (CF5, #38)', async ({
+  page,
+}) => {
+  // A product of this test's own, which no other test's plan uses: not selectable, no declaration, so neither the
+  // selection nor the swaps pick it for anyone else. Sixten is fed 500 g a day of it: 15 kg a month at 20 kr per kg.
+  const account = await createAccountWithHorses(page)
+  await grantAdmin(page, account)
+  const name = `E2E Eget foder ${String(Date.now())}`
+  await page.goto('/admin/products/new')
+  await page.getByLabel('Namn').fill(name)
+  await page.getByLabel('Butik').fill('Testbutik')
+  await page.getByLabel('Kategori').selectOption({ label: 'Övrigt' })
+  await page.getByLabel('Deklarationens omfattning').selectOption({ label: 'Saknas' })
+  await page.getByLabel('Pris (kr)').fill('200')
+  await page.getByLabel('Förpackning (kg)').fill('10')
+  await page.getByLabel('Källa', { exact: true }).fill('Förpackningen')
+  await page.getByRole('button', { name: 'Spara produkt' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparad' })).toBeVisible()
+  const productPage = page.url()
+
+  await page.goto('/horses')
+  await page.getByRole('button', { name: '+ Lägg till foder' }).click()
+  const feed = page.getByPlaceholder('Sök produkt, t.ex. Krafft').last()
+  await feed.fill(name)
+  // The gram field in a feed row has no accessible name yet, so it is reached through its row.
+  await feed.locator('xpath=following-sibling::input[1]').fill('500')
+  await goToStep(page, 'Analysen')
+  await uploadExample(page)
+  await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+  const row = page.getByRole('row').filter({ hasText: name })
+  await expectMoney(row, 300)
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+  const entry = page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })
+  await expect(entry).toBeVisible()
+  const saved = (await entry.textContent()) ?? ''
+
+  await page.goto(productPage)
+  await page.getByLabel('Pris (kr)').fill('400')
+  await page.getByRole('button', { name: 'Spara produkt' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparad' })).toBeVisible()
+
+  // The saved plan in the journal: as it was saved.
+  await page.goto('/horses')
+  await goToStep(page, 'Journal')
+  await expect(entry).toHaveText(saved)
+  // The plan step now plans with the new version.
+  await goToStep(page, 'Foderplan')
+  await expectMoney(row, 600)
 })
 
 test.describe('dry matter entry (#50)', () => {
