@@ -22,8 +22,8 @@ function requireAdmin(auth: Auth) {
   return createMiddleware<{ Variables: UserVariables }>(async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (session?.user.role !== 'admin') return problem(c, 404, 'http.not_found')
-    const { id, name, email, emailVerified } = session.user
-    c.set('user', { id, name, email, emailVerified, role: 'admin' })
+    const { id, name, email, emailVerified, termsVersion } = session.user
+    c.set('user', { id, name, email, emailVerified, role: 'admin', termsVersion: termsVersion ?? null })
     await next()
   })
 }

@@ -4,6 +4,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono, type Context } from 'hono'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { MeResponseSchema } from '@fodr/contracts/me'
+import { AcceptTermsSchema } from '@fodr/contracts/terms'
 import { aiRoutes } from './ai/routes'
 import type { AiProvider } from './ai/provider'
 import { createMeteredAi } from './ai/metered'
@@ -23,6 +24,8 @@ import type { ProductRepository } from './repositories/products'
 import { adminRoutes } from './admin-routes'
 import { exportRoutes } from './export-routes'
 import type { ExportRepository } from './repositories/export'
+import type { AccountRepository } from './repositories/accounts'
+import { parseJson } from './validation'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
 import type { FileStore } from './storage'
@@ -46,6 +49,7 @@ export interface AppDeps {
     usage: UsageRepository
     products: ProductRepository
     exports: ExportRepository
+    accounts: AccountRepository
   }
 }
 
@@ -89,6 +93,14 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   })
   app.route('/api/v1/me/export', exportRoutes({ auth, files, logger, ...repositories }))
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
+  // The signed-in user accepts the current beta terms (#42), when they were signed up under an older version.
+  app.post('/api/v1/me/terms', requireUser(auth), async (c) => {
+    const body = await parseJson(c, AcceptTermsSchema)
+    if (!body.ok) return body.response
+    const user = c.get('user')
+    await repositories.accounts.acceptTerms(user.id)
+    return c.json(MeResponseSchema.parse({ user: { ...user, termsVersion: body.data.version } }))
+  })
   // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
   const origin = new URL(config.betterAuthUrl).origin
   app.route(

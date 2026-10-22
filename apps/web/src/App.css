@@ -2158,3 +2158,13 @@ label.kryss {
   max-width: 960px;
   margin: 16px auto 0;
 }
+
+/* The terms and the privacy notice (#42): one readable column. */
+.juridik {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.plan-forbehall {
+  margin-top: 16px;
+}

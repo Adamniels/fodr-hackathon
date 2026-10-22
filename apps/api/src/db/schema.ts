@@ -56,6 +56,9 @@ export const users = pgTable(
     role: text('role', { enum: ['user', 'admin'] })
       .notNull()
       .default('user'),
+    /** The beta terms version the user accepted (#42), and when; set at sign-up and by accepting a newer version. */
+    termsVersion: text('terms_version'),
+    termsAcceptedAt: instant('terms_accepted_at'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

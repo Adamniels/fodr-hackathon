@@ -1,6 +1,7 @@
 // Product administration at API level (#36, CF9): an admin role no client can set, granted by the CLI's repository
 // call; admin routes that answer 404 to everyone else; and every write a new version and a new product set, so the
 // catalogue changes at once while an older set (a saved plan's) keeps its versions. The import leaves what an admin
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 // wrote. On a database of its own, since these tests change the catalogue the other test files plan with.
 import { ProductDataSchema, type AdminProduct, type ProductData } from '@fodr/contracts/admin'
 import type { Produkt } from '@fodr/domain/types'
@@ -59,7 +60,13 @@ describe('the admin role', () => {
     await app.request(`${BASE_URL}/api/auth/sign-up/email`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: BASE_URL, 'x-forwarded-for': nextIp() },
-      body: JSON.stringify({ name: 'Eva', email, password: 'hemligt-losenord-1', role: 'admin' }),
+      body: JSON.stringify({
+        name: 'Eva',
+        email,
+        password: 'hemligt-losenord-1',
+        termsVersion: TERMS_VERSION,
+        role: 'admin',
+      }),
     })
     const [row] = await database.db.select({ role: users.role }).from(users).where(eq(users.email, email))
     expect(row.role).toBe('user')
@@ -71,7 +78,7 @@ describe('the admin role', () => {
     await app.request(`${BASE_URL}/api/auth/sign-up/email`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: BASE_URL, 'x-forwarded-for': nextIp() },
-      body: JSON.stringify({ name: 'Eva', email, password: 'hemligt-losenord-1' }),
+      body: JSON.stringify({ name: 'Eva', email, password: 'hemligt-losenord-1', termsVersion: TERMS_VERSION }),
     })
     expect(await accounts.setRole(email, 'admin')).toBe('unverified')
   })

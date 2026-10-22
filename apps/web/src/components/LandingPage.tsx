@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router'
 import { Trans, useTranslation } from 'react-i18next'
 import { analysKomplett, demoHast } from '../data/examples'
 import { monthlyCost } from '@fodr/domain/intake'
@@ -242,6 +243,9 @@ export function LandingPage({ produkter, loggedInAs, onGetStarted, onLogIn }: Pr
         <Wordmark />
         <p>{t('landing.footer.text')}</p>
         <p className="liten">{t('landing.footer.photos')}</p>
+        <p className="liten">
+          <Link to="/villkor">{t('legal.links.terms')}</Link> · <Link to="/integritet">{t('legal.links.privacy')}</Link>
+        </p>
       </footer>
     </div>
   )

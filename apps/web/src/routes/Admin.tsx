@@ -10,6 +10,7 @@ import { useAdminProduct, useAdminProducts, useAdminWrites } from '../admin'
 import { ApiError } from '../api-v1'
 import { DecimalInput } from '../components/DecimalInput'
 import { formatDate, formatMoney, formatNumber, localIsoDate, nutrientLabel } from '../format'
+import { AcceptTerms } from './Legal'
 import { PageNotFound } from './RouteError'
 import { useSession } from './session'
 
@@ -22,12 +23,14 @@ export function AdminGate() {
   const { t } = useTranslation()
   if (user?.role !== 'admin') return <PageNotFound />
   return (
-    <main className="admin">
-      <nav className="admin-nav">
-        <Link to="/horses">{t('admin.toHorses')}</Link>
-      </nav>
-      <Outlet />
-    </main>
+    <AcceptTerms>
+      <main className="admin">
+        <nav className="admin-nav">
+          <Link to="/horses">{t('admin.toHorses')}</Link>
+        </nav>
+        <Outlet />
+      </main>
+    </AcceptTerms>
   )
 }
 

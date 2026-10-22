@@ -10,6 +10,7 @@ import type { FakeAiProvider } from '../test/fake-ai-provider'
 import { EXPLANATION_REQUEST, PROFILE_REQUEST, PROFILE_RESPONSE } from '../test/fixtures/ai'
 import { COMPLETE, PDF, READING } from '../test/fixtures/analyses'
 import { PYSEN, SIXTEN } from '../test/fixtures/horses'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { analyses } from './db/schema'
 
 const harness = authApp()
@@ -72,9 +73,26 @@ describe('exporting my data', () => {
     )
     // Exactly these fields: nothing else of the account (a password hash, a token) may ever slip in.
     expect(Object.keys(json('account.json') as object).sort()).toEqual(
-      ['createdAt', 'email', 'emailVerified', 'id', 'name', 'role', 'updatedAt'].sort(),
+      [
+        'createdAt',
+        'email',
+        'emailVerified',
+        'id',
+        'name',
+        'role',
+        'termsAcceptedAt',
+        'termsVersion',
+        'updatedAt',
+      ].sort(),
     )
-    expect(json('account.json')).toMatchObject({ email, name: 'Anna', emailVerified: true, role: 'user' })
+    expect(json('account.json')).toMatchObject({
+      email,
+      name: 'Anna',
+      emailVerified: true,
+      role: 'user',
+      termsVersion: TERMS_VERSION,
+      termsAcceptedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) as unknown,
+    })
     // The devices signed in, without the session token.
     const sessions = json('sessions.json') as Record<string, unknown>[]
     expect(sessions.length).toBeGreaterThan(0)
