@@ -12,6 +12,11 @@ export function RouteError({ page = false }: { page?: boolean }) {
   return <ErrorContent page={page} notFound={isRouteErrorResponse(error) && error.status === 404} />
 }
 
+/** A page that does not exist for this visitor (the admin pages for anyone else, #36): the not-found page. */
+export function PageNotFound() {
+  return <ErrorContent page notFound />
+}
+
 /** An address under a horse that is no step: the not-found text inside the workspace, which stays. */
 export function StepNotFound() {
   return <ErrorContent page={false} notFound />

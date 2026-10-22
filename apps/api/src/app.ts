@@ -19,6 +19,8 @@ import { planRoutes, productRoutes } from './plans-routes'
 import type { CatalogueSource } from './products'
 import type { PlanRepository } from './repositories/plans'
 import type { ExplanationRepository } from './repositories/explanations'
+import type { ProductRepository } from './repositories/products'
+import { adminRoutes } from './admin-routes'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
 import type { FileStore } from './storage'
@@ -40,6 +42,7 @@ export interface AppDeps {
     explanations: ExplanationRepository
     journal: JournalRepository
     usage: UsageRepository
+    products: ProductRepository
   }
 }
 
@@ -95,6 +98,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   app.route('/api/v1/products', productRoutes(catalogue))
+  app.route('/api/v1/admin', adminRoutes({ auth, products: repositories.products }))
   app.route('/api/v1/ai', aiRoutes({ auth, ai: metered, logger, catalogue }))
 
   if (config.webDistDir) {

@@ -57,6 +57,8 @@ The code names what the domain is about in Swedish and how the software works in
 | omräkning | conversion of an analysis value, for example to per kg dry matter | `Omrakning` |
 | foder, foderpost | a feed and its daily amount | `Foderpost`, `NuvarandeFoder` |
 | produkt | feed product in the product database | `Produkt`, `Produktkategori`, `filtreraProdukter` |
+| deklaration kontrollerad | the product's declaration checked against its package by an admin (CF9) | `deklarationKontrollerad` |
+| valbar | a product the selection may choose: selectable, dosed, its declaration checked (CF9) | `arValbar` |
 | ingrediens | ingredient of a feed product | `Ingrediens`, `INGREDIENSER` |
 | nuläge | today's ration, before the plan | `nulage` |
 | krav | requirement range for one nutrient | `Krav` |

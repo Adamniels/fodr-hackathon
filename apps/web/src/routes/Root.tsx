@@ -7,6 +7,7 @@ import { ANALYSES_QUERY_KEY } from '../analyses'
 import { HORSES_QUERY_KEY } from '../horses'
 import { JOURNAL_QUERY_KEY } from '../journal'
 import { PLANS_QUERY_KEY } from '../plans'
+import { ADMIN_QUERY_KEY } from '../admin'
 import { SessionContext, type Session } from './session'
 
 export function Root() {
@@ -30,6 +31,7 @@ export function Root() {
         queryClient.removeQueries({ queryKey: ANALYSES_QUERY_KEY })
         queryClient.removeQueries({ queryKey: PLANS_QUERY_KEY })
         queryClient.removeQueries({ queryKey: JOURNAL_QUERY_KEY })
+        queryClient.removeQueries({ queryKey: ADMIN_QUERY_KEY })
         queryClient.setQueryData(ME, null)
       } catch {
         // Sign-out failed (offline, server error): read the session again rather than pretend it ended.

@@ -7,6 +7,7 @@ import { createLogger } from '../src/logger'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
 import { usageRepository } from '../src/repositories/ai-usage'
+import { productRepository } from '../src/repositories/products'
 import { journalRepository } from '../src/repositories/journal'
 import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
@@ -57,6 +58,7 @@ export function unitRepositories() {
     explanations: explanationRepository(db),
     journal: journalRepository(db),
     usage: usageRepository(db),
+    products: productRepository(db),
   }
 }
 

@@ -8,6 +8,7 @@ describe('MeResponseSchema', () => {
     name: 'Anna',
     email: 'anna@example.se',
     emailVerified: true,
+    role: 'user' as const,
   }
 
   it('accepts the signed-in user', () => {

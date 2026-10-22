@@ -106,6 +106,31 @@ describe('foderplan', () => {
   })
 })
 
+describe('produkter som urvalet får välja (CF9, #36)', () => {
+  it('väljer aldrig en produkt vars deklaration ingen admin har kontrollerat', () => {
+    const okontrollerade = produkter.map((p) => ({ ...p, deklarationKontrollerad: false }))
+    const plan = planFor(demoHast, analysKomplett, okontrollerade)
+    expect(plan.urval?.poster ?? []).toEqual([])
+  })
+  it('räknar inte en okontrollerad produkt som bortvald för hästens känslighet', () => {
+    // Valbar men okontrollerad, och olämplig vid fång: urvalet hade aldrig kunnat välja den, så den är inte bortvald.
+    const mall = produkter.find((p) => p.iUrval && p.kategori === 'tillskott')!
+    const okontrollerad = {
+      ...mall,
+      id: 'okontrollerad',
+      namn: 'Okontrollerad',
+      deklarationKontrollerad: false,
+      lampligVidFangEms: false,
+    }
+    const fanghast = { ...demoHast, halsa: { ...demoHast.halsa, fang: true } }
+    const plan = planFor(fanghast, analysKomplett, [...produkter, okontrollerad])
+    expect(plan.bortvalda.map((b) => b.namn)).not.toContain('Okontrollerad')
+  })
+  it('väljer bland de kontrollerade', () => {
+    expect(planFor(demoHast, analysKomplett, produkter).urval?.poster.length).toBeGreaterThan(0)
+  })
+})
+
 describe('foderplanens meddelanden (ADR 0014)', () => {
   const plan = planFor(demoHast, analysKomplett, produkter)
 

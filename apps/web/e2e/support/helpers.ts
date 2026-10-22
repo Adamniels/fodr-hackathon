@@ -21,6 +21,7 @@ const E2E_DATABASE_URL = `postgres://fodr:fodr@127.0.0.1:${process.env.POSTGRES_
 /** The API package and its seed script, found from this file so the tests can run from any directory. */
 const API_DIR = fileURLToPath(new URL('../../../api/', import.meta.url))
 const SEED_CLI = fileURLToPath(new URL('../../../api/src/seed-cli.ts', import.meta.url))
+const ADMIN_CLI = fileURLToPath(new URL('../../../api/src/admin-cli.ts', import.meta.url))
 
 // One database pool per test worker for the seed, opened when a test first seeds and closed when the worker ends
 // (the seedDatabase fixture below).
@@ -147,6 +148,23 @@ export async function seededAccount(page: Page, email = 'demo@example.se'): Prom
   await logIn(page, account.email)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
   return account
+}
+
+/**
+ * Makes the account an admin (#36) with the real `npm run admin:grant` script, as an operator would, and reloads the
+ * page so the session's role is read again.
+ */
+export async function grantAdmin(page: Page, account: Account): Promise<void> {
+  const { stdout } = await promisify(execFile)(
+    process.execPath,
+    ['--import', 'tsx', ADMIN_CLI, 'grant', account.email],
+    {
+      cwd: API_DIR,
+      env: { PATH: process.env.PATH, DATABASE_URL: E2E_DATABASE_URL },
+    },
+  )
+  expect(stdout).toContain(`${account.email} is now an admin.`)
+  await page.reload()
 }
 
 /** Runs `npm run seed`'s script for a new account, as an operator would, and returns the account (#29). */

@@ -6,6 +6,8 @@ export const UserSchema = z.object({
   name: z.string(),
   email: z.email(),
   emailVerified: z.boolean(),
+  /** 'admin' may administer products (#36, CF9); granted with `npm run admin:grant`. */
+  role: z.enum(['user', 'admin']),
 })
 
 export const MeResponseSchema = z.object({ user: UserSchema })

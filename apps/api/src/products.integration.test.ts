@@ -47,7 +47,7 @@ describe('importing the catalogue', () => {
   it('changes nothing when imported again unchanged', async () => {
     const first = await repository.importCatalogue(FILE)
     const again = await repository.importCatalogue(FILE)
-    expect(again).toEqual({ added: 0, changed: 0, retired: 0, restored: 0, setId: null })
+    expect(again).toEqual({ added: 0, changed: 0, retired: 0, restored: 0, kept: 0, setId: null })
     expect(await repository.currentSetId()).toBe(first.setId)
     expect(await database.db.select().from(productSets)).toHaveLength(1)
   })
@@ -116,6 +116,14 @@ describe('importing the catalogue', () => {
   it('refuses a catalogue with a product twice, naming it, and changes nothing', async () => {
     const [head] = FILE
     await expect(repository.importCatalogue([...FILE, head])).rejects.toThrow(`twice: ${head.id}`)
+    expect(await repository.currentSetId()).toBeNull()
+  })
+
+  it('refuses a catalogue with a product the admin view could not show, naming it, and changes nothing', async () => {
+    const [head, ...rest] = FILE
+    await expect(repository.importCatalogue([{ ...head, url: 'javascript:alert(1)' }, ...rest])).rejects.toThrow(
+      head.id,
+    )
     expect(await repository.currentSetId()).toBeNull()
   })
 

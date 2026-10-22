@@ -20,6 +20,8 @@
     "format:check": "prettier --check .",
     "seed": "tsx --env-file-if-exists=../../.env src/seed-cli.ts",
     "products:import": "tsx --env-file-if-exists=../../.env src/import-products-cli.ts",
+    "admin:grant": "tsx --env-file-if-exists=../../.env src/admin-cli.ts grant",
+    "admin:revoke": "tsx --env-file-if-exists=../../.env src/admin-cli.ts revoke",
     "eval:analysis": "tsx --env-file-if-exists=../../.env scripts/evaluate-analysis-reading.mjs"
   },
   "dependencies": {

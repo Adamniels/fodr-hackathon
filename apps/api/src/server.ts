@@ -51,6 +51,7 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
       explanations: explanationRepository(database.db),
       journal: journalRepository(database.db),
       usage: usageRepository(database.db),
+      products,
     },
   })
 

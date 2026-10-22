@@ -2134,3 +2134,21 @@ label.kryss {
 .bekrafta h2 {
   margin-top: 0;
 }
+
+/* Product administration (#36): one column on the page's own background, the sections as cards. */
+.admin {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.admin-nav {
+  margin-bottom: 16px;
+}
+.admin-produkt .kort {
+  margin-bottom: 16px;
+}
+.falt.kryss {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}

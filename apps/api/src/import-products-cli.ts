@@ -23,7 +23,7 @@ try {
   const r = await productRepository(database.db).importCatalogue(catalogue)
   process.stdout.write(
     `${String(catalogue.length)} products in the file: ${String(r.added)} added, ${String(r.changed)} changed, ` +
-      `${String(r.retired)} retired, ${String(r.restored)} back. ` +
+      `${String(r.retired)} retired, ${String(r.restored)} back, ${String(r.kept)} kept as an admin left them. ` +
       (r.setId ? `New product set ${r.setId}.\n` : 'Nothing changed; the product set stays.\n'),
   )
 } catch (e) {

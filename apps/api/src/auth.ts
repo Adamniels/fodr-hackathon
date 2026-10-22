@@ -67,6 +67,9 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
       disableCSRFCheck: false,
     },
     telemetry: { enabled: false },
+    // The admin role (#36, CF9): in the session, so a request knows it without a query; `input: false`, so no sign-up
+    // or profile update can set it. Only `npm run admin:grant` changes it (repositories/accounts.ts).
+    user: { additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } } },
     // Its own log lines go to pino (ADR 0015), first line only, and never one about a query: those carry the SQL
     // parameters, which hold emails, password hashes or tokens. Its errors go through pino's error serializer.
     logger: {

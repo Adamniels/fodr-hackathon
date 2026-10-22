@@ -71,6 +71,13 @@
       "when": 1792685263766,
       "tag": "0009_product_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792689154310,
+      "tag": "0010_product_admin",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import { WorkspaceGate } from './routes/Workspace'
 import { AnalysisRoute, HorsesIndex, JournalRoute, PlanRoute, ProfileRoute } from './routes/steps'
 import { RouteError, StepNotFound } from './routes/RouteError'
 import { STEP_PATH } from './routes/context'
+import { AdminGate, AdminProductEdit, AdminProductList } from './routes/Admin'
 
 // A route whose own component fails loses the whole page; a step fails inside the workspace, which stays.
 const pageError = <RouteError page />
@@ -22,6 +23,17 @@ export const router = createBrowserRouter([
       { index: true, element: <Landing />, errorElement: pageError },
       { path: 'login', element: <Landing login />, errorElement: pageError },
       { path: 'reset-password', element: <ResetPassword />, errorElement: pageError },
+      // Product administration (#36, CF9), admins only.
+      {
+        path: 'admin',
+        element: <AdminGate />,
+        errorElement: pageError,
+        children: [
+          { path: 'products', element: <AdminProductList />, errorElement: pageError },
+          { path: 'products/new', element: <AdminProductEdit />, errorElement: pageError },
+          { path: 'products/:productId', element: <AdminProductEdit />, errorElement: pageError },
+        ],
+      },
       {
         path: 'horses',
         element: <WorkspaceGate />,

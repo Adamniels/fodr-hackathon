@@ -118,6 +118,11 @@ export interface Produkt {
   dosKalla?: string
   /** Whether the selection may suggest the product. Set by scripts/produktval.json. */
   iUrval: boolean
+  /**
+   * Whether an admin has checked the declaration (perKg, naringsdata) against the package (CF9, #36). The selection
+   * chooses only checked products; scripts/produktval.json sets it for the products it makes selectable.
+   */
+  deklarationKontrollerad?: boolean
   /** False when sugar plus starch is high, or unknown for a concentrate. */
   lampligVidFangEms: boolean
   /** Derived from the name and description, e.g. 'melass', 'lusern', 'soja', 'spannmål'. */

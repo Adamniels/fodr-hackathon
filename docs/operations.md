@@ -90,3 +90,17 @@ runs, in this order: the migrations (`node apps/api/dist/migrate.mjs`), the prod
 and is safe to run every release: an unchanged file changes nothing. It prints how many products were added, changed,
 retired or brought back, and the new set's ID when there is one. A running API picks up a new set on its next request,
 without a restart.
+
+## Admins
+
+An admin can list, create, edit, retire and restore products at `/admin/products` (CF9, #36); a link appears in the
+workspace's sidebar for them. Grant the role to a verified account, and take it back, with:
+
+```
+npm run admin:grant -- anna@example.se      # in the image: node apps/api/dist/admin.mjs grant anna@example.se
+npm run admin:revoke -- anna@example.se
+```
+
+The API applies it to the account's next request; the web app shows the admin link, or hides it, once the page is reloaded. Every save is a new product version and a new product set, so new
+plans use it at once and saved plans keep the set they were computed from. A product an admin has written is never
+changed by `products:import` again.
