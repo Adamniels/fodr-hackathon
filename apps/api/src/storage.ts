@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import {
   CreateBucketCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -16,6 +17,8 @@ export interface FileStore {
   put(bytes: Uint8Array, mediaType: string): Promise<string>
   /** Deletes the objects; a key with no object is no error. */
   remove(keys: string[]): Promise<void>
+  /** The object as a stream, for the user's export (#40); rejects when there is no such object. */
+  open(key: string): Promise<ReadableStream<Uint8Array>>
 }
 
 export interface S3FileStore extends FileStore {
@@ -54,6 +57,12 @@ export function createFileStore(config: Config['s3']): S3FileStore {
         )
         if (result.Errors?.length) throw new Error(`Could not delete ${String(result.Errors.length)} objects`)
       }
+    },
+
+    async open(key) {
+      const result = await client.send(new GetObjectCommand({ Bucket, Key: key }))
+      if (!result.Body) throw new Error('The object has no body')
+      return result.Body.transformToWebStream()
     },
 
     async ensureBucket() {

@@ -9,6 +9,7 @@ import { createDatabase } from './db'
 import { createLogger, type Logger } from './logger'
 import { createSmtpMailer } from './mail/mailer'
 import { databaseCatalogue, NoCatalogue } from './products'
+import { exportRepository } from './repositories/export'
 import { productRepository, type ProductRepository } from './repositories/products'
 import { analysisRepository } from './repositories/analyses'
 import { horseRepository } from './repositories/horses'
@@ -52,6 +53,7 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
       journal: journalRepository(database.db),
       usage: usageRepository(database.db),
       products,
+      exports: exportRepository(database.db),
     },
   })
 

@@ -81,7 +81,8 @@
       "addHorse": "Lägg till häst",
       "toLanding": "Till startsidan",
       "logOut": "Logga ut",
-      "products": "Produkter"
+      "products": "Produkter",
+      "export": "Exportera mina data"
     },
     "openMenu": "Visa hästar och meny",
     "newHorse": "Ny häst",

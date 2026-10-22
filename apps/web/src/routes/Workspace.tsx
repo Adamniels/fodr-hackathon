@@ -307,6 +307,10 @@ function Workspace({
               <span>{user.email}</span>
             </span>
           </div>
+          {/* Everything the app holds about the account, as a ZIP the browser saves (CF8, #40). */}
+          <a className="sidofalt-lank" href="/api/v1/me/export" download>
+            {t('app.sidebar.export')}
+          </a>
           {user.role === 'admin' && (
             <Link className="sidofalt-lank" to="/admin/products">
               {t('app.sidebar.products')}

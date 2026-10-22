@@ -14,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 type Row = typeof plans.$inferSelect
 
 // Parsed on the way out: the envelope field by field, the plan as the domain's type (contracts/plans.ts).
-const toPlan = (row: Row): SavedPlan =>
+export const toPlan = (row: Row): SavedPlan =>
   SavedPlanSchema.parse({
     id: row.id,
     horseId: row.horseId,

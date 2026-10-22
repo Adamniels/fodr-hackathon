@@ -21,6 +21,8 @@ import type { PlanRepository } from './repositories/plans'
 import type { ExplanationRepository } from './repositories/explanations'
 import type { ProductRepository } from './repositories/products'
 import { adminRoutes } from './admin-routes'
+import { exportRoutes } from './export-routes'
+import type { ExportRepository } from './repositories/export'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
 import type { FileStore } from './storage'
@@ -43,6 +45,7 @@ export interface AppDeps {
     journal: JournalRepository
     usage: UsageRepository
     products: ProductRepository
+    exports: ExportRepository
   }
 }
 
@@ -84,6 +87,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
     if (ip) headers.set(CLIENT_IP_HEADER, ip)
     return auth.handler(new Request(c.req.raw, { headers }))
   })
+  app.route('/api/v1/me/export', exportRoutes({ auth, files, logger, ...repositories }))
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
   // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
   const origin = new URL(config.betterAuthUrl).origin

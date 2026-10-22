@@ -15,7 +15,7 @@ const sampledOn = (provdatum: string | undefined) =>
 type Row = typeof analyses.$inferSelect
 
 // Parsed on the way out, since jsonb is only as safe as its schema (ADR 0008).
-const toAnalysis = (row: Row): Analysis =>
+export const toAnalysis = (row: Row): Analysis =>
   AnalysisSchema.parse({
     ...row.values,
     id: row.id,

@@ -8,6 +8,7 @@ import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
 import { usageRepository } from '../src/repositories/ai-usage'
 import { productRepository } from '../src/repositories/products'
+import { exportRepository } from '../src/repositories/export'
 import { journalRepository } from '../src/repositories/journal'
 import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
@@ -59,6 +60,7 @@ export function unitRepositories() {
     journal: journalRepository(db),
     usage: usageRepository(db),
     products: productRepository(db),
+    exports: exportRepository(db),
   }
 }
 
@@ -66,4 +68,5 @@ export function unitRepositories() {
 export const unitFiles: FileStore = {
   put: () => Promise.reject(new Error('no file store in unit tests')),
   remove: () => Promise.reject(new Error('no file store in unit tests')),
+  open: () => Promise.reject(new Error('no file store in unit tests')),
 }

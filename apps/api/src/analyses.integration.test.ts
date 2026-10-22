@@ -205,6 +205,7 @@ describe('uploading a report', () => {
     }
     const recording: FileStore = {
       put: (bytes, type) => files.put(bytes, type),
+      open: (key) => files.open(key),
       // The horse's own delete removes its (no) files too; only the upload's cleanup is of interest.
       remove: async (keys) => {
         if (keys.length > 0) removed.push(keys)
@@ -227,7 +228,11 @@ describe('uploading a report', () => {
   })
 
   it('saves no row when the file cannot be stored', async () => {
-    const broken: FileStore = { put: () => Promise.reject(new Error('store down')), remove: () => Promise.resolve() }
+    const broken: FileStore = {
+      put: () => Promise.reject(new Error('store down')),
+      remove: () => Promise.resolve(),
+      open: () => Promise.reject(new Error('store down')),
+    }
     const other = authApp({}, { files: broken })
     try {
       ;(other.ai as FakeAiProvider).answer('readAnalysis', READING)
