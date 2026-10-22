@@ -6,6 +6,10 @@
 // A run fails on any invented value (a mineral the report does not have, returned anyway: the plan would trust it), on
 // the reference report read as an analysis, or on a failed call. Otherwise it passes when at least the threshold share
 // of the expected values are right: one near miss among a hundred values is model variance, not a broken prompt.
+//
+// It checks the report reading only (readAnalysis), not the profile, explanation or journal prompts. Invented values
+// are looked for among the minerals, the values the answer key says a report may lack; a filled energiIdisslare,
+// raprotein or starkelse is not checked.
 import type { AnalysisResponse } from './anthropic'
 
 /**
@@ -128,6 +132,8 @@ export function verdict(results: CaseResult[], threshold: number): Verdict {
 }
 
 const pct = (share: number) => `${(share * 100).toFixed(1)} %`
+// A table cell: a pipe or a line break in a provider's error message would end the cell or the row.
+const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ')
 
 /** The run as markdown, for the CI job summary. */
 export function summaryMarkdown(results: CaseResult[], v: Verdict): string {
@@ -141,10 +147,10 @@ export function summaryMarkdown(results: CaseResult[], v: Verdict): string {
     '| File | Result | Details |',
     '|---|---|---|',
     ...results.map((r) => {
-      if ('error' in r) return `| ${r.id} | call failed | ${r.error} |`
+      if ('error' in r) return `| ${r.id} | call failed | ${cell(r.error)} |`
       if ('rejected' in r) return `| ${r.id} | ${r.rejected ? 'rejected' : 'NOT rejected'} | |`
       const details = [...r.invented.map((i) => `invented ${i}`), ...r.wrong].join('<br>')
-      return `| ${r.id} | ${String(r.correct)}/${String(r.total)} | ${details} |`
+      return `| ${r.id} | ${String(r.correct)}/${String(r.total)} | ${cell(details)} |`
     }),
   ]
   return lines.join('\n') + '\n'

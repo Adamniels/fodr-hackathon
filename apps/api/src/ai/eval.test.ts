@@ -48,6 +48,16 @@ describe('the extraction eval (#34)', () => {
     expect(result.wrong).toEqual(['ca: got 6.5, expected 5.3'])
   })
 
+  it('allows 5 % off, or 0.011 for a value under 1, and no more', () => {
+    const expected = expectedValues(ANSWER)
+    // 5 % of 10.2 is 0.51; selenium 0.03 has the absolute margin 0.011. Just inside and just outside each.
+    expect(scoreReading('A01', expected, reading({ energi: 10.7, se: 0.04 })).wrong).toEqual([])
+    expect(scoreReading('A01', expected, reading({ energi: 10.75, se: 0.042 })).wrong).toEqual([
+      'energi: got 10.75, expected 10.2',
+      'se: got 0.042, expected 0.03',
+    ])
+  })
+
   it('fails a run with an invented value, even when every expected value is right', () => {
     const results = [scoreReading('A01', expectedValues(ANSWER), reading({ zn: 32 }))]
     expect(results[0].invented).toEqual(['zn: 32, not in the report'])
@@ -78,5 +88,11 @@ describe('the extraction eval (#34)', () => {
     const summary = summaryMarkdown(results, verdict(results, 0.9))
     expect(summary).toContain('FAIL')
     expect(summary).toContain('zn: 32, not in the report')
+  })
+
+  it('keeps the summary table whole when an error has a pipe or a line break in it', () => {
+    const results = [{ id: 'A01', error: 'upstream | 500\nretry' }]
+    const summary = summaryMarkdown(results, verdict(results, 0.9))
+    expect(summary).toContain('| A01 | call failed | upstream \\| 500 retry |')
   })
 })

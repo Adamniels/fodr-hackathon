@@ -6,7 +6,8 @@
 // or model change (#34) and puts the summary in the job summary.
 import { appendFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createAnthropicProvider, DEFAULT_MODEL } from '../src/ai/anthropic.ts'
+import { createAnthropicProvider } from '../src/ai/anthropic.ts'
+import { DEFAULT_AI_MODEL } from '../src/config.ts'
 import {
   EVAL_THRESHOLD,
   expectedValues,
@@ -22,7 +23,7 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.error('ANTHROPIC_API_KEY is not set: add it to the root .env, or as a GitHub Actions secret for CI.')
   process.exit(1)
 }
-const model = process.env.AI_MODEL || DEFAULT_MODEL
+const model = process.env.AI_MODEL || DEFAULT_AI_MODEL
 const ai = createAnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY, model })
 const answerKey = JSON.parse(readFileSync(join(dataDir, 'data/facit.json'), 'utf8')).analyser
 const files = [

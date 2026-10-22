@@ -63,8 +63,10 @@ it still counts for that day.
 
 CI's `eval` job (#34) reads every test report in `testdata/Testdata-from-other-dev/krubba-testdata-v2` with the real
 model and compares it with the answer key, on any PR that changes the prompts or schemas, the provider interface, the
-scoring, the model default, the eval script, its test data or the workflow (`scripts/ci/eval-needed.sh`); other PRs
-skip it. It fails on an invented value, the reference report read as an analysis, a failed call, or fewer than
+scoring, the model default (`DEFAULT_AI_MODEL` in `apps/api/src/config.ts`), the eval script, its command in
+`apps/api/package.json`, its test data or the workflow (`scripts/ci/eval-needed.sh`); other PRs skip it, and so do
+Dependabot's, which get no secrets and only bump versions. It checks the report reading only: the profile,
+explanation and journal prompts are not evaluated. It fails on an invented value, the reference report read as an analysis, a failed call, or fewer than
 `EVAL_THRESHOLD` (95 %) of the values right; the job summary shows each file. The baseline when the gate was added was
 126 of 128 values right, the two misses being copper in B06, which the report rounds.
 
@@ -76,6 +78,6 @@ skip it. It fails on an invented value, the reference report read as an analysis
 - **Blocking merges.** A skipped job counts as passed, so `eval` can be a required status check in the branch
   protection rules (Settings > Branches): then a PR that breaks the reading cannot be merged, and other PRs are not
   held up.
-- **Not covered.** An Anthropic SDK upgrade in `package-lock.json` does not run the eval, as that would run it on every
-  dependency change; run `npm run eval:analysis -w apps/api` by hand for such an upgrade.
-
+- **Not covered.** An upgrade of the Anthropic SDK, zod or tsx in `package-lock.json` does not run the eval, as that
+  would run it on every dependency change; run `npm run eval:analysis -w apps/api` by hand for such an upgrade.
+- **A broken detection.** If the `ai-changes` job fails, `eval` runs anyway rather than being skipped.
