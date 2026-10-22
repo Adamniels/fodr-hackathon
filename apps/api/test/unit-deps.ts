@@ -4,6 +4,7 @@ import { createAuth } from '../src/auth'
 import type { Config } from '../src/config'
 import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
+import { horseRepository } from '../src/repositories/horses'
 
 export const UNIT_CONFIG: Config = {
   databaseUrl: 'postgres://fodr:fodr@127.0.0.1:1/unreachable',
@@ -28,4 +29,9 @@ export function unitAuth() {
     mailer: { send: () => Promise.resolve() },
     logger: createLogger('silent'),
   })
+}
+
+/** Repositories over a database that is never reached. */
+export function unitRepositories() {
+  return { horses: horseRepository(createDatabase(UNIT_CONFIG.databaseUrl).db) }
 }

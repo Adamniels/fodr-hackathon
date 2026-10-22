@@ -8,7 +8,9 @@ import type { Config } from '../src/config'
 import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
 import { createSmtpMailer } from '../src/mail/mailer'
+import { horseRepository } from '../src/repositories/horses'
 import { fakeAiProvider } from './fake-ai-provider'
+import { linkIn, waitForMail } from './mailpit'
 
 export const BASE_URL = 'http://localhost:3000'
 
@@ -45,7 +47,13 @@ export function authApp(overrides: Partial<Config> = {}) {
   })
   const logger = createLogger('debug', stream)
   const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
-  const app = createApp({ config, logger, ai: fakeAiProvider(), auth })
+  const app = createApp({
+    config,
+    logger,
+    ai: fakeAiProvider(),
+    auth,
+    repositories: { horses: horseRepository(database.db) },
+  })
   return { app, database, logs, close: () => database.close() }
 }
 
@@ -73,4 +81,22 @@ export function client(app: ReturnType<typeof authApp>['app'], ip: string, baseU
     return res
   }
   return { request, cookies, post: (path: string, body: unknown) => request(path, { method: 'POST', body }) }
+}
+
+let accountCounter = 0
+
+/** A signed-up, verified and signed-in user with a client of their own (signs up, then follows the mailed link). */
+export async function signedInUser(app: ReturnType<typeof authApp>['app'], ip: string) {
+  const email = `user${String(++accountCounter)}-${String(Date.now())}@example.se`
+  const browser = client(app, ip)
+  const res = await browser.post('/api/auth/sign-up/email', {
+    name: 'Anna',
+    email,
+    password: 'hemligt-losenord-1',
+    callbackURL: '/horses',
+  })
+  if (res.status !== 200) throw new Error(`Sign up failed: ${String(res.status)}`)
+  const link = linkIn(await waitForMail(email))
+  await browser.request(link.pathname + link.search)
+  return { email, browser }
 }

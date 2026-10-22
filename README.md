@@ -60,7 +60,8 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Web routes | `apps/web/src/router.tsx`, `routes/` | A URL for every page: `/`, `/login`, `/horses` and `/horses/:horseId/{profile,analysis,plan,journal}`; an error boundary on every page and step |
 | API | `apps/api/src/` | Hono app (`app.ts`), config from the environment (`config.ts`), problem+json errors, Drizzle (`db.ts`, migrations in `apps/api/drizzle/`) |
 | Auth | `apps/api/src/auth.ts`, `session.ts`, `mail/` | Better Auth at `/api/auth/*` (sign up, verification, login, logout, password reset, magic link), `requireUser` for protected routes, account emails over SMTP (Mailpit locally) |
-| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me` |
+| Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
+| Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses |
 | AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |

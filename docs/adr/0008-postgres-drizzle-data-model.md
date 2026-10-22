@@ -39,3 +39,7 @@ A **product set version** names the exact set of `product_versions` the optimise
 - Drizzle is still 0.x: pin exact versions and read release notes on upgrades.
 - jsonb data is only as safe as its zod schema; contracts and migrations must change together.
 - Account deletion (CF8) deletes horses through `horse_members` ownership, plus files in object storage.
+
+## Notes
+
+- 2026-10-21 (#24): `horses` (id, name, profile jsonb, created_at, updated_at) and `horse_members` (horse_id, user_id, role `'owner'`). Deleting a horse is a hard delete that cascades to everything referencing it; there is no `deleted_at` (owner). The profile is validated for shape and types only: an out-of-range value saves as a draft and the engine refuses to plan with it (owner). Deleting a user cascades to the membership, not the horse, so account deletion (CF8) must delete the user's horses through ownership, as the Consequences say.

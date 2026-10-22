@@ -4,9 +4,28 @@ import type { Problem } from '@fodr/contracts/problem'
 import type { Context } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 
-const TITLES = { 401: 'Unauthorized', 404: 'Not Found', 500: 'Internal Server Error' } as const
+const TITLES = {
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  404: 'Not Found',
+  413: 'Content Too Large',
+  415: 'Unsupported Media Type',
+  500: 'Internal Server Error',
+} as const
 
-export function problem(c: Context, status: keyof typeof TITLES & ContentfulStatusCode, code: string): Response {
-  const body: Problem = { type: 'about:blank', title: TITLES[status], status, code, requestId: c.get('requestId') }
+export function problem(
+  c: Context,
+  status: keyof typeof TITLES & ContentfulStatusCode,
+  code: string,
+  errors?: Problem['errors'],
+): Response {
+  const body: Problem = {
+    type: 'about:blank',
+    title: TITLES[status],
+    status,
+    code,
+    requestId: c.get('requestId'),
+    ...(errors && { errors }),
+  }
   return c.body(JSON.stringify(body), status, { 'Content-Type': 'application/problem+json' })
 }

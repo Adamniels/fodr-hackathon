@@ -25,3 +25,7 @@ Today the client trusts `res.json()` with a type cast, the server does not valid
 - One place to change a contract; both ends fail to compile or fail at runtime when they drift.
 - The AI fixtures in `app/e2e/fixtures/ai.ts` are typed against these contracts once they move.
 - A thin typed client is code we own; it stays small (request, parse, map errors per ADR 0013).
+
+## Notes
+
+- 2026-10-21 (#24): requests are validated with a small helper of our own (`apps/api/src/validation.ts`: parse with the contract, else a problem+json 400 with each field's path and zod's issue code) rather than `@hono/zod-validator`, which would be a dependency for about fifteen lines.
