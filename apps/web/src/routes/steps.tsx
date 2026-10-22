@@ -1,5 +1,6 @@
 // The workspace steps, one route each under /horses/:horseId (router.tsx). Each reads the workspace state from the
 // outlet context and renders the step component as App.tsx did before the steps had URLs (#21).
+import { useTranslation } from 'react-i18next'
 import { Navigate } from 'react-router'
 import { nyPost } from '@fodr/domain/journal'
 import { newJournalEntryId } from '../storage'
@@ -34,23 +35,18 @@ export function ProfileRoute() {
 }
 
 export function AnalysisRoute() {
-  const { hast, analys, omrakningar, setAnalysis, goTo } = useWorkspace()
+  const { hast, analyses, goTo } = useWorkspace()
   if (!hast) return null
-  return (
-    <AnalysisStep
-      hast={hast}
-      analys={analys}
-      omrakningar={omrakningar}
-      onAnalysisChange={setAnalysis}
-      onNext={() => goTo('plan')}
-    />
-  )
+  // Keyed by horse, so an upload's message or a draft value never carries over to another horse.
+  return <AnalysisStep key={hast.id} hast={hast} analyses={analyses} onNext={() => goTo('plan')} />
 }
 
 export function PlanRoute() {
-  const { hast, analys, plan, planOgonblick, addEntry, goTo } = useWorkspace()
+  const { t } = useTranslation()
+  const { hast, analys, analyses, plan, planOgonblick, addEntry, goTo } = useWorkspace()
   if (!hast) return null
-  // The analysis is not stored (#26), so after a reload the plan has nothing to plan from: back to the analysis.
+  // Wait for the horse's analysis; without one, the plan has nothing to plan from: back to the analysis.
+  if (analyses.current === undefined) return <p role="status">{t('analysis.loading')}</p>
   if (!analys || !plan) return <Navigate to={`/horses/${hast.id}/${STEP_PATH.analys}`} replace />
   if ('errors' in plan) {
     return <InvalidInput errors={plan.errors} onToHorse={() => goTo('hast')} onToAnalysis={() => goTo('analys')} />

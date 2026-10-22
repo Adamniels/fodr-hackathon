@@ -6,8 +6,23 @@
 // and must stay as they are; our own tables reference users.id. Timestamps are timestamptz, unlike the generator's
 // plain timestamp: pg reads a plain timestamp in the process's time zone, which would shift expiry times whenever the
 // server and the database disagree on it.
+import type { Values } from '@fodr/contracts/analyses'
 import type { HorseProfile } from '@fodr/contracts/horses'
-import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import {
+  bigint,
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core'
 
 const id = () => uuid('id').defaultRandom().primaryKey()
 const instant = (name: string) => timestamp(name, { withTimezone: true })
@@ -117,5 +132,32 @@ export const horseMembers = pgTable(
   (table) => [
     primaryKey({ columns: [table.horseId, table.userId] }),
     index('horse_members_user_id_idx').on(table.userId),
+  ],
+)
+
+// Roughage analyses (#26, CF4, ADR 0008), each of one horse. `values` are what the plan uses (the converted analysis,
+// corrected by the owner); `extracted` is the AI's reading as it came, kept for comparison and support. The original
+// report is in the file store under `file_key`; an analysis without a file (an example) has none. The newest is
+// current: at most one per horse, enforced by the partial unique index.
+export const analyses = pgTable(
+  'analyses',
+  {
+    id: id(),
+    horseId: uuid('horse_id')
+      .notNull()
+      .references(() => horses.id, { onDelete: 'cascade' }),
+    fileKey: text('file_key'),
+    mediaType: text('media_type'),
+    values: jsonb('values').$type<Values>().notNull(),
+    extracted: jsonb('extracted').$type<{ anmarkningar: string[] } & Record<string, unknown>>(),
+    isCurrent: boolean('is_current').notNull(),
+    sampledOn: date('sampled_on', { mode: 'string' }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index('analyses_horse_id_idx').on(table.horseId),
+    uniqueIndex('analyses_one_current_per_horse')
+      .on(table.horseId)
+      .where(sql`${table.isCurrent}`),
   ],
 )

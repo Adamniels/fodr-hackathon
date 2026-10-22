@@ -1,9 +1,9 @@
 // What the step routes share through React Router's outlet context: the workspace state from Workspace.
 import { useOutletContext } from 'react-router'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import type { Omrakning } from '@fodr/domain/analysis'
 import type { skapaPlan } from '@fodr/domain/plan'
 import type { Journalpost, PlanOgonblick } from '@fodr/domain/journal'
+import type { AnalysisStore } from '../analyses'
 
 /** The workspace's steps, as the state names them. */
 export type Step = 'hast' | 'analys' | 'plan' | 'journal'
@@ -18,13 +18,13 @@ export interface WorkspaceContext {
   /** The horse in the URL; undefined only for an account with no horses (/horses). */
   hast: Hastprofil | undefined
   analys: Grovfoderanalys | null
-  omrakningar: Omrakning[]
+  /** The current horse's analysis and what can be done with it (#26). */
+  analyses: AnalysisStore
   plan: ReturnType<typeof skapaPlan> | null
   planOgonblick: PlanOgonblick | null
   journal: Record<string, Journalpost[]>
   today: string
   goTo: (step: Step) => void
-  setAnalysis: (analys: Grovfoderanalys | null, omrakningar: Omrakning[]) => void
   updateHorse: (horse: Hastprofil) => void
   /** Creates a horse and opens its profile. */
   addHorse: () => void

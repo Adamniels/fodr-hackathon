@@ -33,7 +33,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 |---|---|
 | `npm test` | Unit tests for the calculation engine (including hand calculated SLU cases) and the API, no services needed |
 | `npm run test:integration` | API tests against the Compose Postgres, in their own `fodr_test` database |
-| `npm run test:e2e` | Playwright tests of every user flow against the real API (needs `docker compose up --wait`), AI mocked, no key needed |
+| `npm run test:e2e` | Playwright tests of every user flow against the real API (needs `docker compose up --wait`), AI mocked (report reading by a fake in the API), no key needed |
 | `npm run test:scripts` | Offline tests of the agent scripts in `scripts/agent/` (needs `jq`) |
 | `npm run lint` | ESLint (type aware) |
 | `npm run typecheck` | TypeScript |
@@ -62,11 +62,12 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Auth | `apps/api/src/auth.ts`, `session.ts`, `mail/` | Better Auth at `/api/auth/*` (sign up, verification, login, logout, password reset, magic link), `requireUser` for protected routes, account emails over SMTP (Mailpit locally) |
 | Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
 | Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses; the demo keeps its own in the browser (`demo.ts`, until #29) |
+| Analyses API | `apps/api/src/analyses-routes.ts`, `repositories/analyses.ts`, `storage.ts` | Report upload per horse (type by magic bytes, PDF 20 MB, photo 5 MB), read by the AI, converted by the domain, stored with the file in S3 (ADR 0011) |
 | Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses |
 | AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |
 | Selectable products | `apps/web/scripts/produktval.json` | The 15 products the optimiser may choose, with hand converted doses and sources |
-| E2E tests | `apps/web/e2e/` | Playwright specs, AI mocks and fixtures |
+| E2E tests | `apps/web/e2e/` | Playwright specs, AI mocks and fixtures; the API they run against is `apps/api/test/e2e-server.ts` |
 | Test data | `testdata/Testdata-from-other-dev/` | Synthetic lab reports based on national statistics, with an answer key |
 
 The AI understands, asks and explains. The model calculates. Numbers in explanations come only from the calculation.

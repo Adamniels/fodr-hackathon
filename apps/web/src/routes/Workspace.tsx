@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import type { Omrakning } from '@fodr/domain/analysis'
 import { skapaPlan } from '@fodr/domain/plan'
 import { loadJournal, saveJournal } from '../storage'
-import { useApiHorses, type HorseStore, type SaveState } from '../horses'
-import { DEMO_USER, useDemoHorses } from '../demo'
+import { useApiHorses, type HorseStore } from '../horses'
+import { useApiAnalysis, type AnalysisStore } from '../analyses'
+import { SaveStatus } from '../components/SaveStatus'
+import { DEMO_USER, useDemoAnalysis, useDemoHorses } from '../demo'
 import { ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
@@ -36,15 +37,26 @@ interface WorkspaceProps {
   logOut: () => Promise<void>
 }
 
-/** The browser-only demo's workspace, its horses in localStorage until #29. */
+/** The horse in the URL, whose analysis the workspace shows. */
+const useHorseIdInUrl = () => useMatch('/horses/:horseId/*')?.params.horseId
+
+/** The browser-only demo's workspace, its horses in localStorage and analyses in memory until #29. */
 function DemoWorkspace(props: WorkspaceProps) {
-  return <Workspace {...props} horses={useDemoHorses()} />
+  const horses = useDemoHorses()
+  const analyses = useDemoAnalysis(useHorseIdInUrl())
+  return <Workspace {...props} horses={horses} analyses={analyses} />
 }
 
-/** An account's workspace, its horses on the API (#25). It opens once they are read. */
+/** An account's workspace, its horses (#25) and analyses (#26) on the API. It opens once the horses are read. */
 function AccountWorkspace(props: WorkspaceProps) {
   const { t } = useTranslation()
   const { store, reload } = useApiHorses(props.user.id)
+  // Only a horse of the account: another ID in the URL is sent to /horses by the workspace, never read.
+  const urlHorseId = useHorseIdInUrl()
+  const analyses = useApiAnalysis(
+    props.user.id,
+    store?.horses.some((h) => h.id === urlHorseId) ? urlHorseId : undefined,
+  )
   if (store === undefined) {
     return (
       <p className="arbetsyta-laddar" role="status">
@@ -64,19 +76,24 @@ function AccountWorkspace(props: WorkspaceProps) {
       </div>
     )
   }
-  return <Workspace {...props} horses={store} />
+  return <Workspace {...props} horses={store} analyses={analyses} />
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
 // The horse and step come from the URL, /horses/:horseId/<step>; the steps render in the Outlet (steps.tsx).
-function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseStore }) {
+function Workspace({
+  user,
+  logOut,
+  horses,
+  analyses,
+}: WorkspaceProps & { horses: HorseStore; analyses: AnalysisStore }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const horseMatch = useMatch('/horses/:horseId/*')
   const stepMatch = useMatch('/horses/:horseId/:step')
   const hastar = horses.horses
-  const [analys, setAnalys] = useState<Grovfoderanalys | null>(null)
-  const [omrakningar, setOmrakningar] = useState<Omrakning[]>([])
+  // The current horse's own analysis (C4), undefined while it loads.
+  const analys = analyses.current?.analys ?? null
   const [journal, setJournal] = useState<Record<string, Journalpost[]>>(() => loadJournal(user.id))
   const [menyOppen, setMenyOppen] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -140,7 +157,7 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
     }
   }
   // The deleted horse leaves the list, and its URL then sends to /horses (below). Its journal is kept in the browser
-  // until #28, so it is removed here; its analysis and plan are not stored yet (#26, #27).
+  // until #28, so it is removed here; its analyses go with it on the server (#26), its plan is not stored yet (#27).
   // Focus moves to the page title, as the dialog that held it goes away with the profile.
   const removeHorse = async (id: string) => {
     await horses.remove(id)
@@ -170,16 +187,12 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
     hastar,
     hast,
     analys,
-    omrakningar,
+    analyses,
     plan,
     planOgonblick,
     journal,
     today,
     goTo,
-    setAnalysis: (a, o) => {
-      setAnalys(a)
-      setOmrakningar(o)
-    },
     updateHorse,
     addHorse: () => void addHorse(),
     removeHorse,
@@ -335,21 +348,6 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
           <p className="fotnot">{t('app.footnote')}</p>
         </div>
       </div>
-    </div>
-  )
-}
-
-/** Where the horse's edits are. The status is read out when it changes; a failed save keeps the edits for a retry. */
-function SaveStatus({ state, onRetry }: { state: SaveState | undefined; onRetry: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="sparstatus">
-      <span role="status">{state && t(`app.save.${state}`)}</span>
-      {state === 'failed' && (
-        <button className="knapp text kompakt" onClick={onRetry}>
-          {t('app.save.retry')}
-        </button>
-      )}
     </div>
   )
 }

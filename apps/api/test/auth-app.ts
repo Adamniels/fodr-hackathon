@@ -8,9 +8,13 @@ import type { Config } from '../src/config'
 import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
 import { createSmtpMailer } from '../src/mail/mailer'
+import type { AiProvider } from '../src/ai/provider'
+import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { createFileStore, type FileStore } from '../src/storage'
 import { fakeAiProvider } from './fake-ai-provider'
 import { linkIn, waitForMail } from './mailpit'
+import { testS3Config } from './s3'
 
 export const BASE_URL = 'http://localhost:3000'
 
@@ -30,12 +34,15 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     mailFrom: 'Fodr <no-reply@fodr.test>',
     // The tests stand in for a trusted proxy that sets x-forwarded-for, so each test client can have its own IP.
     clientIpHeader: 'x-forwarded-for',
+    s3: testS3Config(),
     ...overrides,
   }
 }
 
-export function authApp(overrides: Partial<Config> = {}) {
+export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider; files?: FileStore } = {}) {
   const config = testConfig(overrides)
+  const files = createFileStore(config.s3)
+  const ai = deps.ai ?? fakeAiProvider()
   const database = createDatabase(config.databaseUrl)
   // Every log line, raw, so a test can assert what never reaches the logs.
   const logs: string[] = []
@@ -50,24 +57,29 @@ export function authApp(overrides: Partial<Config> = {}) {
   const app = createApp({
     config,
     logger,
-    ai: fakeAiProvider(),
+    ai,
     auth,
-    repositories: { horses: horseRepository(database.db) },
+    files: deps.files ?? files,
+    repositories: { horses: horseRepository(database.db), analyses: analysisRepository(database.db) },
   })
-  return { app, database, logs, close: () => database.close() }
+  return { app, database, logs, ai, files, close: () => database.close() }
 }
 
 /** A browser-like client: one IP (rate limits key on it), and the cookies the API set. */
 export function client(app: ReturnType<typeof authApp>['app'], ip: string, baseUrl = BASE_URL) {
   const cookies = new Map<string, string>()
-  async function request(path: string, init: { method?: string; body?: unknown } = {}): Promise<Response> {
+  async function request(
+    path: string,
+    init: { method?: string; body?: unknown; form?: FormData } = {},
+  ): Promise<Response> {
     const headers: Record<string, string> = { 'x-forwarded-for': ip, origin: baseUrl }
+    // A form sets its own multipart content type, with the boundary.
     if (init.body !== undefined) headers['content-type'] = 'application/json'
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join('; ')
     const res = await app.request(`${baseUrl}${path}`, {
       method: init.method ?? 'GET',
       headers,
-      body: init.body === undefined ? undefined : JSON.stringify(init.body),
+      body: init.form ?? (init.body === undefined ? undefined : JSON.stringify(init.body)),
       redirect: 'manual',
     })
     for (const line of res.headers.getSetCookie()) {
@@ -80,7 +92,12 @@ export function client(app: ReturnType<typeof authApp>['app'], ip: string, baseU
     }
     return res
   }
-  return { request, cookies, post: (path: string, body: unknown) => request(path, { method: 'POST', body }) }
+  return {
+    request,
+    cookies,
+    post: (path: string, body: unknown) => request(path, { method: 'POST', body }),
+    upload: (path: string, form: FormData) => request(path, { method: 'POST', form }),
+  }
 }
 
 let accountCounter = 0

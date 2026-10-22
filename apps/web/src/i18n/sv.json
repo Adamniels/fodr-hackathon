@@ -114,7 +114,8 @@
       "saved": "Sparat",
       "failed": "Kunde inte spara ändringarna.",
       "retry": "Försök igen",
-      "refused": "Ändringarna kunde inte sparas eftersom något värde inte godtas. Kontrollera fälten."
+      "refused": "Ändringarna kunde inte sparas eftersom något värde inte godtas. Kontrollera fälten.",
+      "invalid": "Ändringen sparas när alla värden är giltiga."
     }
   },
   "analysis": {
@@ -140,7 +141,17 @@
       "missing": "Saknas"
     },
     "toCheck": "Att kontrollera:",
-    "toPlan": "Räkna fram foderplan →"
+    "toPlan": "Räkna fram foderplan →",
+    "upload": {
+      "unsupportedType": "Välj en PDF eller en bild (PNG, JPEG eller WebP).",
+      "tooLarge": "Filen är för stor. En PDF får vara högst {{pdf}} MB och en bild högst {{image}} MB.",
+      "aiBusy": "Många analyser läses just nu. Vänta en stund och försök igen.",
+      "aiUnavailable": "Analysen kunde inte läsas just nu. Försök igen om en stund.",
+      "failed": "Analysen kunde inte laddas upp. Försök igen."
+    },
+    "loading": "Hämtar analysen…",
+    "loadFailed": "Kunde inte hämta analysen.",
+    "retry": "Försök igen"
   },
   "journal": {
     "title": "Journal för {{name}}",

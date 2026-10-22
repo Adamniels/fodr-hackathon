@@ -41,7 +41,7 @@ export default tseslint.config(
       'src/db.ts',
       'src/db/**',
       'src/auth.ts',
-      'src/main.ts',
+      'src/server.ts',
       'src/migrate.ts',
       'src/repositories/**',
       // Imports Drizzle's and pg's error classes to keep query data out of the logs; no data access.

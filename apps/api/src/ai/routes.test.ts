@@ -3,7 +3,7 @@
 import { Writable } from 'node:stream'
 import { describe, expect, it } from 'vitest'
 import { fakeAiProvider } from '../../test/fake-ai-provider'
-import { UNIT_CONFIG, unitAuth, unitRepositories } from '../../test/unit-deps'
+import { UNIT_CONFIG, unitAuth, unitFiles, unitRepositories } from '../../test/unit-deps'
 import { createApp } from '../app'
 import { createLogger } from '../logger'
 import { AiProviderError } from './provider'
@@ -23,6 +23,7 @@ function setup() {
     logger: createLogger('info', stream),
     ai,
     auth: unitAuth(),
+    files: unitFiles,
     repositories: unitRepositories(),
   })
   const post = (path: string, body: unknown) =>

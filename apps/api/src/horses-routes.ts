@@ -1,18 +1,27 @@
-// The horse routes (#24, CF2): /api/v1/horses. Signed-in users only; data only through the horse repository, which
-// takes the user (ADR 0010). Not found and not yours are both 404.
+// The horse routes (#24, CF2): /api/v1/horses. Signed-in users only; data only through the repositories, which take
+// the user (ADR 0010). Not found and not yours are both 404. Deleting a horse deletes its stored reports too (ADR 0011).
 import { HorseProfileSchema } from '@fodr/contracts/horses'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import type { AppEnv } from './app'
 import type { Auth } from './auth'
+import type { Logger } from './logger'
 import { problem } from './problem'
 import type { HorseRepository } from './repositories/horses'
 import { requireUser, type UserVariables } from './session'
+import type { FileStore } from './storage'
 import { parseJson } from './validation'
 
 const MAX_BODY_BYTES = 64 * 1024
 
-export function horseRoutes(auth: Auth, horses: HorseRepository) {
+export interface HorseRouteDeps {
+  auth: Auth
+  files: FileStore
+  logger: Logger
+  horses: HorseRepository
+}
+
+export function horseRoutes({ auth, files, logger, horses }: HorseRouteDeps) {
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
   // A profile is at most about 15 KB within the contract's caps; a larger body is refused before it is read whole.
@@ -40,8 +49,16 @@ export function horseRoutes(auth: Auth, horses: HorseRepository) {
   })
 
   routes.delete('/:id', async (c) => {
-    const removed = await horses.remove(c.get('user'), c.req.param('id'))
-    return removed ? c.body(null, 204) : notFound(c)
+    const keys = await horses.remove(c.get('user'), c.req.param('id'))
+    if (!keys) return notFound(c)
+    try {
+      await files.remove(keys)
+    } catch (err) {
+      // The horse is gone and nothing refers to the files any more. Their keys are random and hold no personal data,
+      // so they are logged, for removing the files by hand.
+      logger.error({ requestId: c.get('requestId'), err, keys }, 'reports of a deleted horse remain')
+    }
+    return c.body(null, 204)
   })
 
   return routes

@@ -4,7 +4,9 @@ import { createAuth } from '../src/auth'
 import type { Config } from '../src/config'
 import { createDatabase } from '../src/db'
 import { createLogger } from '../src/logger'
+import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import type { FileStore } from '../src/storage'
 
 export const UNIT_CONFIG: Config = {
   databaseUrl: 'postgres://fodr:fodr@127.0.0.1:1/unreachable',
@@ -20,6 +22,14 @@ export const UNIT_CONFIG: Config = {
   smtpPassword: undefined,
   mailFrom: 'Fodr <no-reply@fodr.test>',
   clientIpHeader: undefined,
+  s3: {
+    endpoint: 'http://127.0.0.1:1',
+    region: 'us-east-1',
+    bucket: 'unreachable',
+    accessKeyId: 'fodr',
+    secretAccessKey: 'fodr-dev-secret',
+    createBucket: false,
+  },
 }
 
 export function unitAuth() {
@@ -33,5 +43,12 @@ export function unitAuth() {
 
 /** Repositories over a database that is never reached. */
 export function unitRepositories() {
-  return { horses: horseRepository(createDatabase(UNIT_CONFIG.databaseUrl).db) }
+  const { db } = createDatabase(UNIT_CONFIG.databaseUrl)
+  return { horses: horseRepository(db), analyses: analysisRepository(db) }
+}
+
+/** A file store unit tests never reach. */
+export const unitFiles: FileStore = {
+  put: () => Promise.reject(new Error('no file store in unit tests')),
+  remove: () => Promise.reject(new Error('no file store in unit tests')),
 }

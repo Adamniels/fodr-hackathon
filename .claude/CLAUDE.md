@@ -22,7 +22,7 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 | `npm test` | Unit tests (Vitest, `src/**/*.test.ts`), no services needed |
 | `npm run test:integration` | API integration tests against the Compose Postgres (`src/**/*.integration.test.ts`, own `fodr_test` database) |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
-| `npm run test:e2e` | Playwright e2e tests against the real API (own servers on :3100 and :5174, own `fodr_e2e` database, mail read from Mailpit), AI mocked, no API key needed |
+| `npm run test:e2e` | Playwright e2e tests against the real API (own servers on :3100 and :5174, own `fodr_e2e` database and `fodr-e2e` bucket, mail read from Mailpit), AI mocked, no API key needed |
 | `npm run test:scripts` | Offline tests of `scripts/agent/*.sh` (every `*.test.sh`, fake `gh`, needs `jq`) |
 | `npm run lint` | ESLint, type aware |
 | `npm run typecheck` | TypeScript in every workspace |
@@ -55,6 +55,6 @@ All run at the repository root. `lint`, `typecheck`, `test` and `format` run in 
 - New behaviour gets a failing test first (unit for `packages/domain`, e2e for user flows).
 - `packages/domain` is pure (ADR 0004): no I/O, timers, DOM or Node APIs, enforced by its tsconfig and ESLint config. Its unit tests use frozen fixtures in `packages/domain/test/fixtures/`, not the app's data.
 - E2E tests drive the UI by role, label and visible text only. They never read or write storage directly and never use CSS classes unless no accessible alternative exists (say so in a comment).
-- The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` and `/api/auth` are not intercepted, because they belong to the real backend. Account mail is read from Mailpit (`e2e/support/mailpit.ts`), each test with its own address and client IP.
+- The AI is mocked at the HTTP boundary through `e2e/support/mock-ai.ts`; an unmocked `/api` call fails the test. `/api/v1` and `/api/auth` are not intercepted, because they belong to the real backend. Report reading happens inside the API (#26), whose e2e entry `apps/api/test/e2e-server.ts` has a fake AI that takes its answer from the uploaded file: build test reports with `e2e/support/reports.ts`. Account mail is read from Mailpit (`e2e/support/mailpit.ts`), each test with its own address and client IP.
 - Tests characterising known bugs do not assert the bug: use a `test.skip` marker naming the finding.
 - Changes to AI prompts, schemas or the model must be checked with `node apps/web/scripts/evaluate-analysis-reading.mjs` (costs about 11 API calls).

@@ -1,48 +1,132 @@
 import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { analysA01, forklaring } from './fixtures/ai'
 import {
   FIXED_NOW,
-  enterDemo,
+  createAccountWithHorses,
   expect,
   expectGrams,
   expectMoney,
   goToStep,
   horseList,
-  loadExamplePlan,
+  showExamplePlan,
   test,
   typeKeyByKey,
 } from './support/helpers'
+import { reportWith } from './support/reports'
 import type { Locator, Page } from '@playwright/test'
-import type { AiMock } from './support/mock-ai'
 
-const A01_PDF = fileURLToPath(
-  new URL('../../../testdata/Testdata-from-other-dev/krubba-testdata-v2/pdf/A01-medel-skord1.pdf', import.meta.url),
-)
+// Analyses on the API (CF4, #26): every test uses a real account with Sixten and Pysen, and an uploaded report is read
+// by the e2e API's fake AI from the file itself (support/reports.ts).
+
+/** A real account, Sixten, with the built-in complete example analysis, ending on the plan step. */
+async function loadExamplePlan(page: Page): Promise<void> {
+  await createAccountWithHorses(page)
+  await showExamplePlan(page)
+}
+
+const fileInput = (page: Page) => page.getByLabel(/Välj analysrapport/)
 
 const nutrientRow = (page: import('@playwright/test').Page, name: string) =>
   page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) })
 
-test('upload a report shows extracted values', async ({ page, ai }) => {
-  await enterDemo(page)
+test('an uploaded report shows the extracted values, and they survive reload', async ({ page }) => {
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.locator('input[type="file"]').setInputFiles(A01_PDF)
+  await fileInput(page).setInputFiles(reportWith(analysA01))
 
   await expect(page.getByLabel('Torrsubstans')).toHaveValue(String(analysA01.tsProcent))
   await expect(nutrientRow(page, 'Energi').getByRole('textbox')).toHaveValue(String(analysA01.perKgTs.energi))
-  const [call] = ai.calls('analys') as { mediaType: string; base64: string }[]
-  expect(call.mediaType).toBe('application/pdf')
-  expect(call.base64.length).toBeGreaterThan(0)
+
+  await page.reload()
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue(String(analysA01.tsProcent))
+  await page.getByRole('button', { name: /Räkna fram foderplan/ }).click()
+  await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
+  // The plan step after a reload plans from the stored analysis, rather than sending back to the analysis.
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
 })
 
-test('non-analysis document is rejected', async ({ page, ai }) => {
-  ai.respondWith('analys', { ...analysA01, arAnalys: false })
-  await enterDemo(page)
+test('non-analysis document is rejected', async ({ page }) => {
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.locator('input[type="file"]').setInputFiles(A01_PDF)
+  await fileInput(page).setInputFiles(reportWith({ ...analysA01, arAnalys: false }))
 
   await expect(page.getByText('Dokumentet ser inte ut att vara en foderanalys.')).toBeVisible()
   await expect(page.getByRole('button', { name: /Räkna fram foderplan/ })).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByLabel('Torrsubstans')).toHaveCount(0)
+})
+
+test("switching horse shows that horse's own analysis (C4)", async ({ page }) => {
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  await fileInput(page).setInputFiles(reportWith(analysA01))
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue('39.7')
+
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await expect(page.getByRole('heading', { name: /Pysen/, level: 2 })).toBeVisible()
+  await expect(page.getByLabel('Torrsubstans')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Exempel: basanalys' }).click()
+  const pysensTs = await page.getByLabel('Torrsubstans').inputValue()
+  expect(pysensTs).not.toBe('39.7')
+
+  await horseList(page).getByRole('button', { name: 'Sixten' }).click()
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue('39.7')
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue(pysensTs)
+})
+
+test('a file of the wrong type or too large is refused before it is uploaded', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  const uploads: string[] = []
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && r.url().includes('/analyses')) uploads.push(r.url())
+  })
+
+  await fileInput(page).setInputFiles({ name: 'analys.txt', mimeType: 'text/plain', buffer: Buffer.from('text') })
+  await expect(page.getByText('Välj en PDF eller en bild (PNG, JPEG eller WebP).')).toBeVisible()
+
+  const photo = Buffer.alloc(5 * 1024 * 1024 + 1)
+  await fileInput(page).setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: photo })
+  await expect(page.getByText('Filen är för stor. En PDF får vara högst 20 MB och en bild högst 5 MB.')).toBeVisible()
+  // A PDF has a limit of its own, 20 MB: just over it is refused as well.
+  const pdf = Buffer.alloc(20 * 1024 * 1024 + 1)
+  await fileInput(page).setInputFiles({ name: 'stor.pdf', mimeType: 'application/pdf', buffer: pdf })
+  await expect(page.getByText('Filen är för stor. En PDF får vara högst 20 MB och en bild högst 5 MB.')).toBeVisible()
+  expect(uploads).toEqual([])
+})
+
+test('the AI being unavailable is said, and nothing is stored', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  await fileInput(page).setInputFiles(reportWith({ error: 'upstream' }))
+  await expect(page.getByText('Analysen kunde inte läsas just nu. Försök igen om en stund.')).toBeVisible()
+  await expect(page.getByLabel('Torrsubstans')).toHaveCount(0)
+})
+
+test('a corrected value is saved, an invalid one is not (CF4)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  await fileInput(page).setInputFiles(reportWith(analysA01))
+  const energi = nutrientRow(page, 'Energi').getByRole('textbox')
+  await energi.fill('11')
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
+
+  // An invalid value is never sent: the page holds it back, rather than leaving it to the server to refuse.
+  const saves: string[] = []
+  page.on('request', (r) => {
+    if (r.method() === 'PUT' && r.url().endsWith('/values')) saves.push(r.postData() ?? '')
+  })
+  await page.getByLabel('Torrsubstans').fill('150')
+  await expect(page.getByText('Ändringen sparas när alla värden är giltiga.')).toBeVisible()
+  // Longer than the autosave pause, so a save that was going to be sent has been.
+  await page.waitForTimeout(1000)
+  expect(saves.filter((body) => body.includes('"tsProcent":150'))).toEqual([])
+
+  await page.reload()
+  await expect(nutrientRow(page, 'Energi').getByRole('textbox')).toHaveValue('11')
+  await expect(page.getByLabel('Torrsubstans')).toHaveValue('39.7')
 })
 
 test('example analysis produces the known plan', async ({ page }) => {
@@ -115,7 +199,7 @@ test.describe('dry matter entry (#50)', () => {
   }
 
   async function openExampleAnalysis(page: Page): Promise<Locator> {
-    await enterDemo(page)
+    await createAccountWithHorses(page)
     await goToStep(page, 'Analysen')
     await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
     return page.getByLabel('Torrsubstans')
@@ -153,7 +237,7 @@ test.describe('dry matter entry (#50)', () => {
 })
 
 test('a cleared dry matter shows the value it holds again when an example is loaded (#50, #13)', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
   await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
   const torrsubstans = page.getByLabel('Torrsubstans')
@@ -164,7 +248,7 @@ test('a cleared dry matter shows the value it holds again when an example is loa
 })
 
 test('analysis values: text is refused, a cleared value is missing (C2)', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
   await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
   const energi = page.getByRole('textbox', { name: 'Energi' })
@@ -181,7 +265,7 @@ test('analysis values: text is refused, a cleared value is missing (C2)', async 
 })
 
 test('the plan explanation gets grams as the page shows them (#103)', async ({ page, ai }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await page.getByRole('button', { name: '+ Lägg till foder' }).click()
   const produkt = page.getByPlaceholder('Sök produkt, t.ex. Krafft').last()
   await produkt.fill('Pellets 15 kg Mineral Röd')
@@ -199,9 +283,12 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
   const steps = (page: Page) => page.getByRole('button', { name: /steg \d+: ändra måtten/ })
 
   async function pysenPlanWithLastStep(page: Page) {
-    await enterDemo(page)
-    // Sixten tolerates changes well: 4 steps. Pysen has EMS, so she is sensitive: 5 steps.
+    await createAccountWithHorses(page)
+    // Sixten tolerates changes well: 4 steps. Pysen has EMS, so she is sensitive: 5 steps. Each horse has its own
+    // analysis (C4), so Sixten gets the example too.
     await page.getByRole('radio', { name: /Tål byten bra/ }).click()
+    await goToStep(page, 'Analysen')
+    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
     await horseList(page).getByRole('button', { name: 'Pysen' }).click()
     await goToStep(page, 'Analysen')
     await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
@@ -234,7 +321,13 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
   })
 
   test('a start date picked for one horse does not carry over', async ({ page }) => {
-    await loadExamplePlan(page)
+    // Pysen gets her own analysis first (C4), so she has a plan to switch to.
+    await createAccountWithHorses(page)
+    await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+    await goToStep(page, 'Analysen')
+    await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
+    await horseList(page).getByRole('button', { name: 'Sixten' }).click()
+    await showExamplePlan(page)
     await page.getByLabel('Första dagen').fill('2026-11-02')
     await expect(page.getByLabel('Första dagen')).toHaveValue('2026-11-02')
     await horseList(page).getByRole('button', { name: 'Pysen' }).click()
@@ -269,9 +362,8 @@ test('calendar download is a valid ics', async ({ page }) => {
   expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
 })
 
-test.skip("switching horse uses that horse's analysis (C4, fixed in M1/M2)", () => {})
 test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
   await page.getByRole('button', { name: 'Exempel: komplett analys' }).click()
   // The audit's probe: selenium read in µg as mg, far over SLU's maximum before any supplement.
@@ -286,41 +378,40 @@ test('infeasible plan is not shown as no supplements (C3)', async ({ page, ai })
   expect(underlag.varningar.some((v) => v.startsWith(reason))).toBe(true)
 })
 
-/** The analysis step after the mocked AI read the A01 report with these values changed (#102). */
-async function readA01With(page: Page, ai: AiMock, values: object) {
-  ai.respondWith('analys', { ...analysA01, ...values })
-  await enterDemo(page)
+/** The analysis step after the AI read the A01 report with these values changed (#102). */
+async function readA01With(page: Page, values: object) {
+  await createAccountWithHorses(page)
   await goToStep(page, 'Analysen')
-  await page.getByLabel(/Välj analysrapport/).setInputFiles(A01_PDF)
+  await fileInput(page).setInputFiles(reportWith({ ...analysA01, ...values }))
 }
 
-test('a reported ash of 0 is a value, not a missing one (#102)', async ({ page, ai }) => {
-  await readA01With(page, ai, { askaGPerKgTs: 0 })
+test('a reported ash of 0 is a value, not a missing one (#102)', async ({ page }) => {
+  await readA01With(page, { askaGPerKgTs: 0 })
   await expect(page.getByLabel('Aska')).toHaveValue('0')
 })
 
-test('a reported dry matter of 0 loads and is shown as out of range (#102)', async ({ page, ai }) => {
+test('a reported dry matter of 0 loads and is shown as out of range (#102)', async ({ page }) => {
   // Out-of-range input is shown next to the field (#13), instead of rejecting the report.
-  await readA01With(page, ai, { tsProcent: 0 })
+  await readA01With(page, { tsProcent: 0 })
   await expect(page.getByLabel('Torrsubstans')).toHaveValue('0')
   await expect(page.getByLabel('Torrsubstans')).toHaveAccessibleDescription('Ange ett värde mellan 1 och 100.')
   await expect(page.getByText('Hittade ingen torrsubstanshalt')).toHaveCount(0)
 })
 
-test('a missing ash stays missing (#102)', async ({ page, ai }) => {
-  await readA01With(page, ai, { askaGPerKgTs: null })
+test('a missing ash stays missing (#102)', async ({ page }) => {
+  await readA01With(page, { askaGPerKgTs: null })
   await expect(page.getByLabel('Torrsubstans')).toHaveValue(String(analysA01.tsProcent))
   await expect(page.getByLabel('Aska')).toHaveValue('')
 })
 
-test('a missing dry matter still rejects the report (#102)', async ({ page, ai }) => {
-  await readA01With(page, ai, { tsProcent: null })
+test('a missing dry matter still rejects the report (#102)', async ({ page }) => {
+  await readA01With(page, { tsProcent: null })
   await expect(page.getByText('Hittade ingen torrsubstanshalt i analysen. Fyll i den manuellt.')).toBeVisible()
 })
 
-test('a conversion note shows the report value formatted for the locale (#102)', async ({ page, ai }) => {
+test('a conversion note shows the report value formatted for the locale (#102)', async ({ page }) => {
   const perKgTs = { ...analysA01.perKgTs, energi: null, energiIdisslare: 10.5, smbRp: null, raprotein: 123.4 }
-  await readA01With(page, ai, { perKgTs })
+  await readA01With(page, { perKgTs })
   await expect(nutrientRow(page, 'Energi')).toContainText('Räknat från idisslarvärdet 10,5 MJ med SLU:s formel')
   await expect(nutrientRow(page, 'Smältbart råprotein')).toContainText('Räknat från råprotein 123,4 g med SLU:s formel')
 })

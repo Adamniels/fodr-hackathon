@@ -7,6 +7,8 @@ export interface FakeAiProvider extends AiProvider {
   calls: { method: Method; input: unknown }[]
   answer(method: Method, value: unknown): void
   fail(method: Method, error: Error): void
+  /** Forgets the calls, answers and failures. */
+  reset(): void
 }
 
 export function fakeAiProvider(): FakeAiProvider {
@@ -23,6 +25,11 @@ export function fakeAiProvider(): FakeAiProvider {
     calls,
     answer: (method, value) => answers.set(method, value),
     fail: (method, error) => failures.set(method, error),
+    reset: () => {
+      calls.length = 0
+      answers.clear()
+      failures.clear()
+    },
     readAnalysis: handle('readAnalysis'),
     interpretProfile: handle('interpretProfile'),
     explainPlan: handle('explainPlan'),
