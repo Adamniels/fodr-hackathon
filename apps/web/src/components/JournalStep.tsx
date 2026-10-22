@@ -1,5 +1,6 @@
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { analyzeJournal, type JournalAnalysis } from '../api'
 import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
@@ -9,6 +10,25 @@ import { HULLSKALA, breedName, formatDate, bodyConditionText, formatMoney, forma
 import { domainText } from '../i18n/domain'
 import { newJournalEntryId } from '../storage'
 import { DecimalInput } from './DecimalInput'
+
+/**
+ * The analysis a saved plan was made from, as one line: the roughage from the catalogue and the sampling date for the
+ * locale (#27). A snapshot saved before #27 holds the line as it was composed then.
+ */
+function planAnalysisText(analys: PlanOgonblick['analys'], t: TFunction): string {
+  if (typeof analys === 'string') return analys
+  return [t(`roughageTitle.${analys.typ}`), analys.labb, analys.provdatum && formatDate(analys.provdatum)]
+    .filter(Boolean)
+    .join(', ')
+}
+
+/** A snapshot as the model has always read it: these fields, the analysis as that line (no plan ID, #27). */
+const forModel = (plan: PlanOgonblick, t: TFunction) => ({
+  analys: planAnalysisText(plan.analys, t),
+  grovfoderKgPerDag: plan.grovfoderKgPerDag,
+  produkter: plan.produkter,
+  kostnadPerManad: plan.kostnadPerManad,
+})
 
 interface Props {
   hast: Hastprofil
@@ -101,7 +121,7 @@ export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
                     <span className="liten">
                       {t('journal.planRoughage', {
                         kg: formatNumber(p.plan.grovfoderKgPerDag, 1),
-                        analysis: p.plan.analys,
+                        analysis: planAnalysisText(p.plan.analys, t),
                       })}
                       {p.plan.produkter
                         .map((x) => t('journal.planProduct', { grams: formatNumber(x.gramPerDag, 0), name: x.namn }))
@@ -273,10 +293,10 @@ function AiAnalysis({
             hull: hast.hull,
             halsa: hast.halsa,
           },
-          poster: sorteradePoster(poster),
+          poster: sorteradePoster(poster).map((p) => (p.plan ? { ...p, plan: forModel(p.plan, t) } : p)),
           // The model reads the warnings as text, as it did before the engine returned codes (#12).
           trend: { ...trend, varningar: trend.varningar.map(domainText) },
-          aktuellPlan,
+          aktuellPlan: aktuellPlan && forModel(aktuellPlan, t),
         }),
       )
     } catch (e) {

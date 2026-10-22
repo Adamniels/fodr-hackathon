@@ -32,9 +32,10 @@ describe('beraknaTrend', () => {
     const t = beraknaTrend([post('2026-09-01', undefined, 6), post('2026-10-01', undefined, 7)], '2026-10-02')
     expect(t.varningar).toEqual([{ code: 'trend.conditionRising', params: {} }])
   })
-  it('ögonblicksbilden sparar analystexten som webben ger, och räknar inget språk själv (ADR 0014)', () => {
-    const o = ogonblickAvPlan({ grovfoderKgPerDag: 9.04, behallnaFoder: [], urval: null }, 'Hö, Labb, 2026-06-05')
-    expect(o).toEqual({ analys: 'Hö, Labb, 2026-06-05', grovfoderKgPerDag: 9, produkter: [], kostnadPerManad: 0 })
+  it('ögonblicksbilden sparar analysens värden och den sparade planens id, ingen text (ADR 0014, #27)', () => {
+    const analys = { typ: 'ho' as const, labb: 'Labb', provdatum: '2026-06-05' }
+    const o = ogonblickAvPlan({ grovfoderKgPerDag: 9.04, behallnaFoder: [], urval: null }, analys, 'plan-1')
+    expect(o).toEqual({ analys, planId: 'plan-1', grovfoderKgPerDag: 9, produkter: [], kostnadPerManad: 0 })
   })
   it('uppföljning förfallen 28 dagar efter senaste mätning', () => {
     const t = beraknaTrend([post('2026-09-01', 500)], '2026-09-29')

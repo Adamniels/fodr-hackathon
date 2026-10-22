@@ -4,6 +4,8 @@ import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
 import type { skapaPlan } from '@fodr/domain/plan'
 import type { Journalpost, PlanOgonblick } from '@fodr/domain/journal'
 import type { AnalysisStore } from '../analyses'
+import type { SavedPlan } from '@fodr/contracts/plans'
+import type { Produkt } from '@fodr/domain/types'
 
 /** The workspace's steps, as the state names them. */
 export type Step = 'hast' | 'analys' | 'plan' | 'journal'
@@ -21,7 +23,13 @@ export interface WorkspaceContext {
   /** The current horse's analysis and what can be done with it (#26). */
   analyses: AnalysisStore
   plan: ReturnType<typeof skapaPlan> | null
+  /** The saved plan on screen: the horse's latest, when computed from exactly these inputs (#27). */
+  savedPlan: SavedPlan | null
+  /** Saves the plan on screen (on the server for an account) and adds its snapshot to the journal. */
+  savePlan: () => Promise<void>
   planOgonblick: PlanOgonblick | null
+  /** The catalogue from the API (#27). */
+  produkter: Produkt[]
   journal: Record<string, Journalpost[]>
   today: string
   goTo: (step: Step) => void

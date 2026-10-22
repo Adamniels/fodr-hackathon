@@ -1,4 +1,4 @@
-// Converts the stores' product files to the app's format (src/data/products.json).
+// Converts the stores' product files to the app's format (apps/api/src/data/products.json, which the API serves, #27).
 // Usage: node scripts/import-products.mjs [source-dir]
 // The selectable products and their doses come from scripts/produktval.json, which is reviewed by hand.
 
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const sourceDir = process.argv[2] ?? join(here, '../../../testdata/Testdata-from-other-dev')
-const outFile = join(here, '../src/data/products.json')
+const outFile = join(here, '../../api/src/data/products.json')
 
 const NA_PER_NACL = 0.393
 // SLU: SE × 0.86 ≈ OE (page 7).

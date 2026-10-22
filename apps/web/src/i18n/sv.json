@@ -116,6 +116,10 @@
       "retry": "Försök igen",
       "refused": "Ändringarna kunde inte sparas eftersom något värde inte godtas. Kontrollera fälten.",
       "invalid": "Ändringen sparas när alla värden är giltiga."
+    },
+    "catalogue": {
+      "loading": "Hämtar produkterna…",
+      "loadFailed": "Kunde inte hämta produkterna."
     }
   },
   "analysis": {
@@ -318,7 +322,9 @@
       "normalWeight": "Vikt vid normalt hull",
       "hull": "Hull",
       "feedRow": "Nuvarande foder, rad {{row}}"
-    }
+    },
+    "saved": "Sparad {{date}}",
+    "saveFailed": "Planen kunde inte sparas. Försök igen."
   },
   "horse": {
     "performance": {

@@ -30,6 +30,8 @@ export function reportProblem(file: File): ReportProblem | undefined {
 
 /** An analysis as the steps use it. */
 export interface StoredAnalysis {
+  /** The server's ID, which a saved plan refers to; none for the demo's analyses, which live in the browser. */
+  id?: string
   analys: Grovfoderanalys
   omrakningar: Omrakning[]
   /** The AI's notes on what it was unsure of; empty for an example. */

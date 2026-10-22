@@ -29,3 +29,4 @@ Today the client trusts `res.json()` with a type cast, the server does not valid
 ## Notes
 
 - 2026-10-21 (#24): requests are validated with a small helper of our own (`apps/api/src/validation.ts`: parse with the contract, else a problem+json 400 with each field's path and zod's issue code) rather than `@hono/zod-validator`, which would be a dependency for about fifteen lines.
+- 2026-10-22 (#27): a saved plan's envelope (IDs, inputs, versions, date) is validated field by field, but the plan itself and the catalogue's products are typed as the domain's types (`z.custom`) rather than mirrored in zod (owner). Web and API ship from one build, so they cannot drift, and each stored plan names the engine version that computed it, so a later engine can recognise an older plan's shape.

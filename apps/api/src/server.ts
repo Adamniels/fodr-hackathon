@@ -8,8 +8,10 @@ import { parseConfig, type Config } from './config'
 import { createDatabase } from './db'
 import { createLogger } from './logger'
 import { createSmtpMailer } from './mail/mailer'
+import { loadCatalogue } from './products'
 import { analysisRepository } from './repositories/analyses'
 import { horseRepository } from './repositories/horses'
+import { planRepository } from './repositories/plans'
 import { createFileStore } from './storage'
 
 export function runServer(createAi: (config: Config) => AiProvider): void {
@@ -35,7 +37,12 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
     ai: createAi(config),
     auth,
     files,
-    repositories: { horses: horseRepository(database.db), analyses: analysisRepository(database.db) },
+    catalogue: loadCatalogue(),
+    repositories: {
+      horses: horseRepository(database.db),
+      analyses: analysisRepository(database.db),
+      plans: planRepository(database.db),
+    },
   })
 
   const server = serve({ fetch: app.fetch, port: config.port }, (info) => {

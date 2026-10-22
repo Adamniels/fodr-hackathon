@@ -73,5 +73,5 @@ The code names what the domain is about in Swedish and how the software works in
 | grovfoderkvalitet | quality of the roughage itself (SLU table 32, with its horse groups) | `Kvalitetsflagga`, `bedomGrovfoder`, `Tabell32Grupp` |
 | bytestakt | pace of a feed transition | `Bytestakt`, `BYTESTAKT` |
 | trend | weight and body condition over time, from the journal | `Trend`, `beraknaTrend`, `Trendvarning` |
-| sparad plan | snapshot of a plan saved in the journal | `PlanOgonblick`, `ogonblickAvPlan` |
+| sparad plan | snapshot of a plan saved in the journal | `PlanOgonblick`, `ogonblickAvPlan`, `PlanensAnalys` (the analysis it was planned from) |
 | ANTAGANDE | assumption not taken from SLU | code comment marker |

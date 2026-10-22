@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - run: docker build -t fodr .
+      - run: docker build --build-arg GIT_SHA=${{ github.sha }} -t fodr .
       # The Compose Postgres (same image and settings as locally), reached by service name on the Compose network.
       - run: docker compose up --wait --wait-timeout 120 postgres
       # The image's migrator, as a release runs it (ADR 0008); twice, since a run with nothing pending must pass too.

@@ -2,10 +2,6 @@
 // outlet context and renders the step component as App.tsx did before the steps had URLs (#21).
 import { useTranslation } from 'react-i18next'
 import { Navigate } from 'react-router'
-import { nyPost } from '@fodr/domain/journal'
-import { newJournalEntryId } from '../storage'
-import { localIsoDate } from '../format'
-import { produkter } from '../products'
 import { HorseStep } from '../components/HorseStep'
 import { AnalysisStep } from '../components/AnalysisStep'
 import { PlanStep } from '../components/PlanStep'
@@ -21,7 +17,7 @@ export function HorsesIndex() {
 }
 
 export function ProfileRoute() {
-  const { hast, updateHorse, addHorse, removeHorse, goTo } = useWorkspace()
+  const { hast, produkter, updateHorse, addHorse, removeHorse, goTo } = useWorkspace()
   return (
     <HorseStep
       selected={hast}
@@ -43,7 +39,7 @@ export function AnalysisRoute() {
 
 export function PlanRoute() {
   const { t } = useTranslation()
-  const { hast, analys, analyses, plan, planOgonblick, addEntry, goTo } = useWorkspace()
+  const { hast, analys, analyses, plan, savedPlan, savePlan, goTo } = useWorkspace()
   if (!hast) return null
   // Wait for the horse's analysis; without one, the plan has nothing to plan from: back to the analysis.
   if (analyses.current === undefined) return <p role="status">{t('analysis.loading')}</p>
@@ -56,10 +52,9 @@ export function PlanRoute() {
       hast={hast}
       analys={analys}
       plan={plan.plan}
-      onSaveToJournal={() => {
-        // The plan is shown, so its snapshot exists.
-        if (planOgonblick)
-          addEntry(hast.id, nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: planOgonblick }))
+      savedAt={savedPlan?.createdAt}
+      onSaveToJournal={async () => {
+        await savePlan()
         goTo('journal')
       }}
     />

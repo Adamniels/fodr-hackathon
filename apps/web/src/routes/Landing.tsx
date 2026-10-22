@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LandingPage } from '../components/LandingPage'
 import { Login, type LoginMode } from '../components/Login'
-import { produkter } from '../products'
+import { useCatalogue } from '../products'
 import { useSession } from './session'
 
 export function Landing({ login = false }: { login?: boolean }) {
@@ -16,6 +16,8 @@ export function Landing({ login = false }: { login?: boolean }) {
   // `from`: the page a logged-out visitor asked for; `fromLanding`: the dialog was opened here; `mode`: which form.
   const state = useLocation().state as { from?: string; fromLanding?: boolean; mode?: LoginMode } | null
   const target = state?.from ?? '/horses'
+  // The preview's catalogue from the API (#27); the page shows without it while it loads.
+  const catalogue = useCatalogue()
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -33,7 +35,7 @@ export function Landing({ login = false }: { login?: boolean }) {
   return (
     <>
       <LandingPage
-        produkter={produkter}
+        produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}
         onDemo={openDemo}
         onLogIn={() => void navigate('/login', { state: { fromLanding: true } })}

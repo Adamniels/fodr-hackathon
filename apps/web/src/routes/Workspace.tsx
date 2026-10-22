@@ -3,18 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
+import type { SavedPlan } from '@fodr/contracts/plans'
 import { skapaPlan } from '@fodr/domain/plan'
-import { loadJournal, saveJournal } from '../storage'
+import { loadJournal, newJournalEntryId, saveJournal } from '../storage'
 import { useApiHorses, type HorseStore } from '../horses'
 import { useApiAnalysis, type AnalysisStore } from '../analyses'
 import { SaveStatus } from '../components/SaveStatus'
 import { DEMO_USER, useDemoAnalysis, useDemoHorses } from '../demo'
-import { ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
+import { nyPost, ogonblickAvPlan, type Journalpost } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
 import { Wordmark } from '../components/Brand'
-import { produkter } from '../products'
+import { useCatalogue } from '../products'
+import { isSavedFor, useSavedPlans } from '../plans'
 import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
 import { useSession } from './session'
 
@@ -44,8 +46,12 @@ const useHorseIdInUrl = () => useMatch('/horses/:horseId/*')?.params.horseId
 function DemoWorkspace(props: WorkspaceProps) {
   const horses = useDemoHorses()
   const analyses = useDemoAnalysis(useHorseIdInUrl())
-  return <Workspace {...props} horses={horses} analyses={analyses} />
+  // The demo has no server: its plans are saved in its browser journal only.
+  return <Workspace {...props} horses={horses} analyses={analyses} savedPlans={null} />
 }
+
+/** Saving plans on the server (#27); null for the demo. */
+type SavedPlans = ReturnType<typeof useSavedPlans> | null
 
 /** An account's workspace, its horses (#25) and analyses (#26) on the API. It opens once the horses are read. */
 function AccountWorkspace(props: WorkspaceProps) {
@@ -53,10 +59,9 @@ function AccountWorkspace(props: WorkspaceProps) {
   const { store, reload } = useApiHorses(props.user.id)
   // Only a horse of the account: another ID in the URL is sent to /horses by the workspace, never read.
   const urlHorseId = useHorseIdInUrl()
-  const analyses = useApiAnalysis(
-    props.user.id,
-    store?.horses.some((h) => h.id === urlHorseId) ? urlHorseId : undefined,
-  )
+  const knownHorseId = store?.horses.some((h) => h.id === urlHorseId) ? urlHorseId : undefined
+  const analyses = useApiAnalysis(props.user.id, knownHorseId)
+  const savedPlans = useSavedPlans(props.user.id, knownHorseId)
   if (store === undefined) {
     return (
       <p className="arbetsyta-laddar" role="status">
@@ -76,7 +81,7 @@ function AccountWorkspace(props: WorkspaceProps) {
       </div>
     )
   }
-  return <Workspace {...props} horses={store} analyses={analyses} />
+  return <Workspace {...props} horses={store} analyses={analyses} savedPlans={savedPlans} />
 }
 
 /* Arbetsytan: sidofält med hästarna, varje häst som en egen sida med omslag, egenskaper och flikar. */
@@ -86,7 +91,8 @@ function Workspace({
   logOut,
   horses,
   analyses,
-}: WorkspaceProps & { horses: HorseStore; analyses: AnalysisStore }) {
+  savedPlans,
+}: WorkspaceProps & { horses: HorseStore; analyses: AnalysisStore; savedPlans: SavedPlans }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const horseMatch = useMatch('/horses/:horseId/*')
@@ -119,13 +125,24 @@ function Workspace({
   // An account with no horses has only the profile step, at /horses.
   const step: Step = (stepMatch?.params.step && STEP_OF_PATH[stepMatch.params.step]) || 'hast'
 
-  const plan = useMemo(
-    () =>
-      hast && analys
-        ? skapaPlan({ ...hast, grovfoder: { ...hast.grovfoder, typ: analys.typ } }, analys, produkter)
-        : null,
-    [hast, analys],
+  // The catalogue from the API (#27): the preview plans with the one the server saves plans with.
+  const catalogue = useCatalogue()
+  const produkter = catalogue.data?.products
+  const preview = useMemo(
+    () => (hast && analys && produkter ? skapaPlan(hast, analys, produkter) : null),
+    [hast, analys, produkter],
   )
+  // The horse's latest saved plan, when it was computed from what is on screen: the page then shows the server's plan
+  // (ADR 0004), marked as saved.
+  const savedPlan: SavedPlan | null =
+    savedPlans &&
+    hast &&
+    analys &&
+    catalogue.data &&
+    isSavedFor(savedPlans.latest, hast, analys, catalogue.data.version)
+      ? savedPlans.latest
+      : null
+  const plan = savedPlan ? { plan: savedPlan.result } : preview
 
   // Choosing a horse keeps the step, as it did before the steps had URLs. flushSync renders the new step during the
   // click, as the state change did: in a transition the old step stays on screen a moment and takes the next input.
@@ -157,7 +174,7 @@ function Workspace({
     }
   }
   // The deleted horse leaves the list, and its URL then sends to /horses (below). Its journal is kept in the browser
-  // until #28, so it is removed here; its analyses go with it on the server (#26), its plan is not stored yet (#27).
+  // until #28, so it is removed here; its analyses and saved plans go with it on the server (#26, #27).
   // Focus moves to the page title, as the dialog that held it goes away with the profile.
   const removeHorse = async (id: string) => {
     await horses.remove(id)
@@ -166,11 +183,21 @@ function Workspace({
   }
   const addEntry = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
-  // A saved plan stores its analysis as this text, exactly as before #12. The date stays YYYY-MM-DD because the text
-  // is stored as it is; #27 stores the analysis as values instead.
-  const savedAnalysisText = (a: Grovfoderanalys) =>
-    [t(`roughageTitle.${a.typ}`), a.labb, a.provdatum].filter(Boolean).join(', ')
-  const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, savedAnalysisText(analys)) : null
+  const planOgonblick = plan && 'plan' in plan && analys ? ogonblickAvPlan(plan.plan, analys) : null
+  // Saving: the server computes and stores the plan, and the journal entry is a snapshot of what it computed, with
+  // its ID (#27). The demo, without a server, snapshots its preview. Rejects when the server refused, for the plan step
+  // to say so.
+  const savePlan = async () => {
+    if (!hast || !analys || !plan || !('plan' in plan)) return
+    const analysisId = analyses.current?.id
+    const snapshot =
+      savedPlans && analysisId
+        ? await savedPlans
+            .save(analysisId)
+            .then((saved) => ogonblickAvPlan(saved.result, saved.inputs.analys, saved.id))
+        : ogonblickAvPlan(plan.plan, analys)
+    addEntry(hast.id, nyPost(newJournalEntryId(), localIsoDate(), { text: '', plan: snapshot }))
+  }
 
   const tillganglig = (s: Step) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
@@ -182,6 +209,22 @@ function Workspace({
 
   // A link to a horse this account does not have lands on the first horse.
   if (horseId !== undefined && !hast) return <Navigate to="/horses" replace />
+  if (!produkter) {
+    return catalogue.isError ? (
+      <div className="arbetsyta-laddar">
+        <p className="ruta fel" role="alert">
+          {t('app.catalogue.loadFailed')}
+        </p>
+        <button className="knapp" onClick={() => void catalogue.refetch()}>
+          {t('app.horses.retry')}
+        </button>
+      </div>
+    ) : (
+      <p className="arbetsyta-laddar" role="status">
+        {t('app.catalogue.loading')}
+      </p>
+    )
+  }
 
   const context: WorkspaceContext = {
     hastar,
@@ -189,7 +232,10 @@ function Workspace({
     analys,
     analyses,
     plan,
+    savedPlan,
+    savePlan,
     planOgonblick,
+    produkter,
     journal,
     today,
     goTo,

@@ -1,4 +1,5 @@
 // Frozen AI readings for the analysis tests: what AiProvider.readAnalysis returns for a report.
+import type { Grovfoderanalys } from '@fodr/domain/types'
 import type { AnalysisResponse } from '../../src/ai/anthropic'
 
 /** A complete hösilage analysis, with a horse energy value and a ruminant-only protein to convert. */
@@ -43,3 +44,26 @@ export const WEBP = new Uint8Array([
   0,
   ...new TextEncoder().encode('WEBP'),
 ])
+
+/** A complete analysis as the plan uses it (the web app's "Exempel: komplett analys"). */
+export const COMPLETE: Grovfoderanalys = {
+  typ: 'hosilage',
+  labb: 'Testlabb Alfa',
+  provdatum: '2026-06-10',
+  tsProcent: 39.7,
+  askaGPerKgTs: 71,
+  perKgTs: {
+    energi: 10.2,
+    smbRp: 104,
+    socker: 61,
+    ca: 5.3,
+    p: 2.66,
+    mg: 1.71,
+    na: 0.83,
+    fe: 180,
+    mn: 58,
+    zn: 32,
+    cu: 6,
+    se: 0.03,
+  },
+}

@@ -141,6 +141,33 @@ test('example analysis produces the known plan', async ({ page }) => {
   await expect(page.getByRole('listitem').filter({ hasText: 'Ta bort Krafft Leisure Pellets 20kg' })).toBeVisible()
 })
 
+test('saving the plan stores what the server computed, and marks the plan as saved (#27)', async ({ page }) => {
+  await loadExamplePlan(page)
+  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+
+  // The journal entry holds the server's plan, with the analysis it was planned from.
+  const entry = page.getByText('Plan sparad').locator('..')
+  await expect(entry).toContainText('Testlabb Alfa')
+  await expectGrams(entry, 66)
+
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  const shoppingRow = (product: string) => page.getByRole('row').filter({ hasText: product })
+  await expectGrams(shoppingRow('Krafft Miner Original Pellets 20kg'), 66)
+  await expectGrams(shoppingRow('Salt 1,5 kg'), 14)
+  await expectMoney(shoppingRow('Totalt utöver grovfodret'), 88)
+
+  await page.reload()
+  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  // A changed profile is another plan: no longer the saved one.
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Vikt (kg)').fill('540')
+  await goToStep(page, 'Foderplan')
+  await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
+  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+})
+
 test('plan explanation comes from the AI mock', async ({ page, ai }) => {
   await loadExamplePlan(page)
   const paragraphs = page.getByRole('paragraph')

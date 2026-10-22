@@ -21,6 +21,8 @@ const EnvSchema = z.object({
   // The built web app (apps/web/dist). When set, the API serves it on the same origin; unset in development, where
   // Vite serves the web app and proxies /api here.
   WEB_DIST_DIR: z.string().optional(),
+  // The build the API runs (its git commit, set by the image), recorded with every saved plan (CF5, #27).
+  APP_VERSION: z.string().default('dev'),
   // Optional: without it the AI routes answer with the missing-key error and everything else works.
   ANTHROPIC_API_KEY: z.string().optional(),
   // Auth (ADR 0009): signs session cookies and tokens; the public address of the app, which the emailed links use
@@ -69,6 +71,7 @@ export interface Config {
   port: number
   logLevel: (typeof LOG_LEVELS)[number]
   webDistDir: string | undefined
+  appVersion: string
   anthropicApiKey: string | undefined
   betterAuthSecret: string
   betterAuthUrl: string
@@ -108,6 +111,7 @@ export function parseConfig(env: Record<string, string | undefined>): ConfigResu
       port: parsed.PORT,
       logLevel: parsed.LOG_LEVEL,
       webDistDir: parsed.WEB_DIST_DIR,
+      appVersion: parsed.APP_VERSION,
       anthropicApiKey: parsed.ANTHROPIC_API_KEY,
       betterAuthSecret: parsed.BETTER_AUTH_SECRET,
       betterAuthUrl: parsed.BETTER_AUTH_URL,

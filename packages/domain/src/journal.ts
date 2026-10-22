@@ -3,9 +3,16 @@
 
 import { monthlyCost, type Foderpost } from './intake'
 import type { Trendvarning } from './messages'
+import type { Grovfoderanalys } from './types'
+
+/** The analysis a plan was made from, as values: the web shows them with the catalogue and the locale (#27). */
+export type PlanensAnalys = Pick<Grovfoderanalys, 'typ' | 'labb' | 'provdatum'>
 
 export interface PlanOgonblick {
-  analys: string
+  /** Values from #27 on. A snapshot saved before then holds the text the web composed, kept as it was saved. */
+  analys: PlanensAnalys | string
+  /** The plan saved on the server that the snapshot is of; none for the demo or a snapshot from before #27. */
+  planId?: string
   grovfoderKgPerDag: number
   produkter: { namn: string; gramPerDag: number }[]
   kostnadPerManad: number
@@ -95,11 +102,13 @@ export function ogonblickAvPlan(
     behallnaFoder: Foderpost[]
     urval: { poster: Foderpost[]; kostnadPerManad: number } | null
   },
-  analys: string,
+  analys: PlanensAnalys,
+  planId?: string,
 ): PlanOgonblick {
   const poster = [...plan.behallnaFoder, ...(plan.urval?.poster ?? [])]
   return {
-    analys,
+    analys: { typ: analys.typ, labb: analys.labb, provdatum: analys.provdatum },
+    ...(planId !== undefined && { planId }),
     grovfoderKgPerDag: Math.round(plan.grovfoderKgPerDag * 10) / 10,
     produkter: poster.map((p) => ({ namn: p.produkt.namn, gramPerDag: p.gramPerDag })),
     kostnadPerManad: Math.round(poster.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)),
