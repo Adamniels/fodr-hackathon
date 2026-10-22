@@ -11,7 +11,7 @@ import type { z } from 'zod'
 import type { AppEnv } from '../app'
 import type { Auth } from '../auth'
 import type { Logger } from '../logger'
-import type { Catalogue } from '../products'
+import type { CatalogueSource } from '../products'
 import { problem } from '../problem'
 import { requireUser, type UserVariables } from '../session'
 import { parseJson } from '../validation'
@@ -62,10 +62,8 @@ export function aiRoutes({
   auth: Auth
   ai: MeteredAi
   logger: Logger
-  catalogue: Catalogue
+  catalogue: CatalogueSource
 }) {
-  // The catalogue is bundled and fixed per build; once products are versioned in the database (#35), read it per request.
-  const known = new Set(catalogue.products.map((p) => p.id))
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
   const limit = (maxSize: number) =>
@@ -97,6 +95,8 @@ export function aiRoutes({
 
   route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, async (userId, body) => {
     const profile = await ai.run(userId, 'profile', (provider) => provider.interpretProfile(body))
+    // The catalogue as it is now (#35), which the profile's feeds will be planned with.
+    const known = new Set((await catalogue.current()).products.map((p) => p.id))
     // A product is linked only when the catalogue has it (CF3, C8): an ID the model invented is an unknown feed, kept
     // with its name and dose for the owner to see and pick from the list.
     return {

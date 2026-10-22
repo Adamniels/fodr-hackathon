@@ -16,7 +16,7 @@ import { horseRoutes } from './horses-routes'
 import { journalRoutes } from './journal-routes'
 import type { JournalRepository } from './repositories/journal'
 import { planRoutes, productRoutes } from './plans-routes'
-import type { Catalogue } from './products'
+import type { CatalogueSource } from './products'
 import type { PlanRepository } from './repositories/plans'
 import type { ExplanationRepository } from './repositories/explanations'
 import type { AnalysisRepository } from './repositories/analyses'
@@ -32,7 +32,7 @@ export interface AppDeps {
   ai: AiProvider
   auth: Auth
   files: FileStore
-  catalogue: Catalogue
+  catalogue: CatalogueSource
   repositories: {
     horses: HorseRepository
     analyses: AnalysisRepository

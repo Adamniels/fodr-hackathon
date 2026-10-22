@@ -20,6 +20,7 @@ bash scripts/dev/check-services.sh       # optional: checks that all three answe
 npm ci
 npx playwright install chromium
 npm run db:migrate          # applies the database migrations
+npm run products:import     # loads the product catalogue into the database; the API refuses to start without it
 npm run seed                # the demo account from SEED_EMAIL and SEED_PASSWORD, with Sixten and Pysen
 npm run dev                 # the web app on http://localhost:5173, the API on http://localhost:3000
 ```
@@ -28,7 +29,7 @@ Without an API key everything except the AI parts works (reading an uploaded rep
 
 ## Commands
 
-Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, builds and smoke tests the Docker image, and runs the extraction eval when a PR changes the prompts, schemas or model (#34).
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate`, `products:import` and `seed` run `apps/api`; `test:scripts` runs the script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, builds and smoke tests the Docker image, and runs the extraction eval when a PR changes the prompts, schemas or model (#34).
 
 | Command | What |
 |---|---|
@@ -40,6 +41,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 | `npm run typecheck` | TypeScript |
 | `npm run format` | Prettier |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
+| `npm run products:import` | Mirrors the catalogue file `apps/api/src/data/products.json` into the product tables (new set only when something changed); idempotent, also in the image (`node apps/api/dist/import-products.mjs`) |
 | `npm run seed` | Creates the demo account (`SEED_EMAIL`, `SEED_PASSWORD`) with Sixten and Pysen; idempotent, also in the image (`node apps/api/dist/seed.mjs`) |
 | `docker build -t fodr .` | The production image: one Node process serving the API and the web app (`docker run -p 3000:3000 -e DATABASE_URL=... fodr`) |
 | `node apps/web/scripts/import-products.mjs` | Rebuilds `apps/api/src/data/products.json` from the store data |
@@ -65,6 +67,7 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
 | Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses |
 | Analyses API | `apps/api/src/analyses-routes.ts`, `repositories/analyses.ts`, `storage.ts` | Report upload per horse (type by magic bytes, PDF 20 MB, photo 5 MB), read by the AI, converted by the domain, stored with the file in S3 (ADR 0011) |
+| Product catalogue | `apps/api/src/products.ts`, `repositories/products.ts`, `import-products-cli.ts` | Products, their immutable versions and the product sets plans record (ADR 0008), read per request from the newest set |
 | Plans API | `apps/api/src/plans-routes.ts`, `repositories/plans.ts`, `repositories/explanations.ts` | Saved plans per horse, computed by the server and stored immutably with the build (`APP_VERSION`) and catalogue versions (ADR 0004); the plan step saves the plan it shows, and each saved plan's AI explanation is stored with it (CF6) |
 | Journal API | `apps/api/src/journal-routes.ts`, `repositories/journal.ts` | The journal per horse; an entry can update the profile atomically, and a saved plan's entry is made with it (CF7) |
 | AI usage | `apps/api/src/ai/metered.ts`, `repositories/ai-usage.ts` | Every model call logged with tokens and estimated cost, a daily quota per user (`AI_DAILY_CALLS_PER_USER`); the monthly cost query is in `docs/operations.md` |

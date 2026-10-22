@@ -5,6 +5,7 @@ import type { Produkt } from '@fodr/domain/types'
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../test/auth-app'
+import { loadCatalogueFile } from './catalogue-file'
 import { COMPLETE } from '../test/fixtures/analyses'
 import { SIXTEN } from '../test/fixtures/horses'
 import { horseMembers, plans } from './db/schema'
@@ -44,7 +45,8 @@ describe('the product catalogue', () => {
   it('is public, with its version as the ETag', async () => {
     const { res, body } = await catalogue()
     expect(res.status).toBe(200)
-    expect(body.version).toMatch(/^[0-9a-f]{16}$/)
+    // The newest product set in the database (#35).
+    expect(body.version).toMatch(/^[0-9a-f-]{36}$/)
     expect(body.products.length).toBeGreaterThan(100)
     expect(res.headers.get('etag')).toBe(`"${body.version}"`)
   })
@@ -75,6 +77,10 @@ describe('saving a plan', () => {
     const preview = skapaPlan({ ...SIXTEN, id: horse.id }, COMPLETE, served.products)
     expect('plan' in preview).toBe(true)
     if ('plan' in preview) expect(saved.result).toEqual(JSON.parse(JSON.stringify(preview.plan)))
+    // And the same plan as from the catalogue file itself: moving the catalogue into the database changed no plan (#35).
+    const fromFile = skapaPlan({ ...SIXTEN, id: horse.id }, COMPLETE, loadCatalogueFile())
+    if ('plan' in fromFile) expect(saved.result).toEqual(JSON.parse(JSON.stringify(fromFile.plan)))
+    else expect.fail('the catalogue file gives no plan')
     expect(saved).toMatchObject({
       horseId: horse.id,
       analysisId: analysis.id,

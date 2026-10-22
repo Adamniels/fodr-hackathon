@@ -6,9 +6,10 @@ import { createApp } from './app'
 import { createAuth } from './auth'
 import { parseConfig, type Config } from './config'
 import { createDatabase } from './db'
-import { createLogger } from './logger'
+import { createLogger, type Logger } from './logger'
 import { createSmtpMailer } from './mail/mailer'
-import { loadCatalogue } from './products'
+import { databaseCatalogue, NoCatalogue } from './products'
+import { productRepository, type ProductRepository } from './repositories/products'
 import { analysisRepository } from './repositories/analyses'
 import { horseRepository } from './repositories/horses'
 import { usageRepository } from './repositories/ai-usage'
@@ -34,13 +35,15 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   if (config.s3.createBucket) {
     files.ensureBucket().catch((err: unknown) => logger.warn({ err }, 'could not create the bucket at start'))
   }
+  const products = productRepository(database.db)
+  void requireCatalogue(products, logger)
   const app = createApp({
     config,
     logger,
     ai: createAi(config),
     auth,
     files,
-    catalogue: loadCatalogue(),
+    catalogue: databaseCatalogue(products),
     repositories: {
       horses: horseRepository(database.db),
       analyses: analysisRepository(database.db),
@@ -63,4 +66,32 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   }
   process.once('SIGTERM', shutdown)
   process.once('SIGINT', shutdown)
+}
+
+/**
+ * Exits when the database has no product catalogue (#35): a plan without products would leave out every supplement
+ * without saying why. Checked in the background like everything that needs the database, so the API still starts (and
+ * serves health) while the database comes up; it retries until the database answers.
+ */
+export function requireCatalogue(
+  products: Pick<ProductRepository, 'currentSetId'>,
+  logger: Logger,
+  {
+    exit = (code: number): void => process.exit(code),
+    retryMs = 2000,
+  }: { exit?: (code: number) => void; retryMs?: number } = {},
+): Promise<void> {
+  const check = async (): Promise<void> => {
+    try {
+      if ((await products.currentSetId()) === null) {
+        logger.fatal(new NoCatalogue().message)
+        exit(1)
+      }
+    } catch (err) {
+      logger.warn({ err }, 'could not check the product catalogue, retrying')
+      await new Promise((resolve) => setTimeout(resolve, retryMs).unref())
+      return check()
+    }
+  }
+  return check()
 }

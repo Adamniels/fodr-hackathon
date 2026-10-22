@@ -46,6 +46,7 @@ export default tseslint.config(
       // The seed's composition roots: one transaction around the repositories it uses (#29).
       'src/seed.ts',
       'src/seed-cli.ts',
+      'src/import-products-cli.ts',
       'src/repositories/**',
       // Imports Drizzle's and pg's error classes to keep query data out of the logs; no data access.
       'src/logger.ts',

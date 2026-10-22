@@ -81,3 +81,12 @@ explanation and journal prompts are not evaluated. It fails on an invented value
 - **Not covered.** An upgrade of the Anthropic SDK, zod or tsx in `package-lock.json` does not run the eval, as that
   would run it on every dependency change; run `npm run eval:analysis -w apps/api` by hand for such an upgrade.
 - **A broken detection.** If the `ai-changes` job fails, `eval` runs anyway rather than being skipped.
+
+## The product catalogue
+
+The API plans with the newest product set in the database (#35, ADR 0008) and refuses to start without one. A release
+runs, in this order: the migrations (`node apps/api/dist/migrate.mjs`), the product import
+(`node apps/api/dist/import-products.mjs`), then the API. The import mirrors the catalogue file built into the image
+and is safe to run every release: an unchanged file changes nothing. It prints how many products were added, changed,
+retired or brought back, and the new set's ID when there is one. A running API picks up a new set on its next request,
+without a restart.

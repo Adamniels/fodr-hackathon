@@ -64,6 +64,13 @@
       "when": 1792676202760,
       "tag": "0008_plan_explanations",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792684290818,
+      "tag": "0009_product_tables",
+      "breakpoints": true
     }
   ]
 }

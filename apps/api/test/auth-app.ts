@@ -15,7 +15,8 @@ import { usageRepository } from '../src/repositories/ai-usage'
 import { journalRepository } from '../src/repositories/journal'
 import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
-import { loadCatalogue } from '../src/products'
+import { databaseCatalogue } from '../src/products'
+import { productRepository } from '../src/repositories/products'
 import { createFileStore, type FileStore } from '../src/storage'
 import { fakeAiProvider } from './fake-ai-provider'
 import { linkIn, waitForMail } from './mailpit'
@@ -67,7 +68,8 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
     ai,
     auth,
     files: deps.files ?? files,
-    catalogue: loadCatalogue(),
+    // The catalogue integration-setup.ts imported into the test database.
+    catalogue: databaseCatalogue(productRepository(database.db)),
     repositories: {
       horses: horseRepository(database.db),
       analyses: analysisRepository(database.db),

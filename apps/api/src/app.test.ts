@@ -10,6 +10,7 @@ import { UNIT_CONFIG, unitAuth, unitFiles, unitRepositories } from '../test/unit
 import { createApp } from './app'
 import type { Config } from './config'
 import { createLogger } from './logger'
+import { staticCatalogue } from './products'
 
 const CONFIG: Config = UNIT_CONFIG
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
@@ -29,7 +30,7 @@ function setup(config: Partial<Config> = {}) {
     ai: fakeAiProvider(),
     auth: unitAuth(),
     files: unitFiles,
-    catalogue: { version: 'unit', products: [] },
+    catalogue: staticCatalogue({ version: 'unit', products: [] }),
     repositories: unitRepositories(),
   })
   return { app, lines }
