@@ -45,7 +45,7 @@ export const WEBP = new Uint8Array([
   ...new TextEncoder().encode('WEBP'),
 ])
 
-/** A complete analysis as the plan uses it (the web app's "Exempel: komplett analys"). */
+/** A complete analysis as the plan uses it (the seed's analysis of Sixten, seed-data.ts). */
 export const COMPLETE: Grovfoderanalys = {
   typ: 'hosilage',
   labb: 'Testlabb Alfa',

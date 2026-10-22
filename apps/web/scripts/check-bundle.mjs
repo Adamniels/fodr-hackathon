@@ -1,7 +1,7 @@
 // Fails when the built web app contains the product catalogue (#27): the catalogue comes from the API, so the preview
 // plans with the one the server saves plans with (ADR 0004). Run after `npm run build` (the Dockerfile does).
-// The demo's example data names a product or two until #29, so a handful of names is allowed; the catalogue would
-// bring all of them.
+// The landing preview's example horse names the one feed it eats today (data/examples.ts); the catalogue would bring
+// all of them.
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -14,7 +14,7 @@ const bundle = readdirSync(assets)
   .join('\n')
 
 const found = catalogue.map((p) => p.namn).filter((name) => bundle.includes(name))
-const ALLOWED = 5
+const ALLOWED = 2
 if (found.length >= ALLOWED) {
   console.error(`The web bundle contains ${found.length} of ${catalogue.length} catalogue products, e.g. ${found[0]}.`)
   process.exit(1)

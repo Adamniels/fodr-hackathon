@@ -30,26 +30,25 @@ export function reportProblem(file: File): ReportProblem | undefined {
 
 /** An analysis as the steps use it. */
 export interface StoredAnalysis {
-  /** The server's ID, which a saved plan refers to; none for the demo's analyses, which live in the browser. */
-  id?: string
+  /** The server's ID, which a saved plan refers to. */
+  id: string
   analys: Grovfoderanalys
   omrakningar: Omrakning[]
-  /** The AI's notes on what it was unsure of; empty for an example. */
+  /** The AI's notes on what it was unsure of; empty for an analysis without a report. */
   anmarkningar: string[]
 }
 
 /** Where the corrections are; `invalid` while a value the domain refuses keeps them from being sent. */
 export type AnalysisSaveState = SaveState | 'invalid'
 
-/** What the steps need of the current horse's analysis, from the API for an account or the browser for the demo. */
+/** What the steps need of the current horse's analysis. */
 export interface AnalysisStore {
   /** Undefined while it loads, null when the horse has none (or it could not be read: see loadFailed). */
   current: StoredAnalysis | null | undefined
   loadFailed: boolean
   reload: () => void
-  /** Reads and stores the report; rejects with an ApiError (or the demo's Error) when it cannot. */
+  /** Reads and stores the report; rejects with an ApiError when it cannot. */
   upload: (file: File) => Promise<void>
-  loadExample: (analys: Grovfoderanalys) => Promise<void>
   correct: (analys: Grovfoderanalys, omrakningar: Omrakning[]) => void
   saveState: AnalysisSaveState | undefined
   retrySave: () => void
@@ -69,10 +68,6 @@ export const analysesApi = {
     form.set('file', file)
     return AnalysisSchema.parse(await (await callApi(base(horseId), { method: 'POST', body: form })).json())
   },
-  createWithoutFile: async (horseId: string, analys: Grovfoderanalys): Promise<Analysis> =>
-    AnalysisSchema.parse(
-      await (await callApi(base(horseId), { method: 'POST', body: JSON.stringify({ analys }) })).json(),
-    ),
   // keepalive lets the request outlive the page, for the save sent when the page is left.
   updateValues: async (horseId: string, analysisId: string, values: Values, keepalive = false): Promise<void> => {
     await callApi(`${base(horseId)}/${analysisId}/values`, { method: 'PUT', body: JSON.stringify(values), keepalive })
@@ -158,9 +153,6 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     reload: () => void query.refetch(),
     upload: async (file) => {
       if (horseId !== undefined) store(await guard(analysesApi.upload(horseId, file)))
-    },
-    loadExample: async (analys) => {
-      if (horseId !== undefined) store(await guard(analysesApi.createWithoutFile(horseId, analys)))
     },
     correct: (analys, omrakningar) => {
       const analysis = query.data

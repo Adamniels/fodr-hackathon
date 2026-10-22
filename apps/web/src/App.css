@@ -1549,6 +1549,8 @@ label.kryss {
   background: var(--yta-2);
   text-align: center;
   color: var(--text-2);
+  /* Space before the analysis below it. */
+  margin-bottom: 22px;
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -1584,11 +1586,6 @@ label.kryss {
   50% {
     background: var(--gron-bg);
   }
-}
-.exempel {
-  margin: 14px 0 22px;
-  font-size: 16px;
-  color: var(--text-2);
 }
 
 .analyshuvud {
@@ -1926,21 +1923,6 @@ label.kryss {
 .login form {
   display: flex;
   flex-direction: column;
-}
-.login-skiljare {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-3);
-  font-size: 14px;
-  margin: 4px 0;
-}
-.login-skiljare::before,
-.login-skiljare::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--linje);
 }
 .login-byt {
   align-self: center;

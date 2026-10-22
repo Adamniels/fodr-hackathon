@@ -1,9 +1,13 @@
-// Bundles the API for production: dist/main.mjs (the server) and dist/migrate.mjs, each one file with every dependency
+// Bundles the API for production: dist/main.mjs (the server), dist/migrate.mjs and dist/seed.mjs (#29), each one file with every dependency
 // and the workspace packages inlined, so the image runs them with plain node and no node_modules.
 import { build } from 'esbuild'
 
 await build({
-  entryPoints: ['src/main.ts', 'src/migrate.ts'],
+  entryPoints: [
+    { in: 'src/main.ts', out: 'main' },
+    { in: 'src/migrate.ts', out: 'migrate' },
+    { in: 'src/seed-cli.ts', out: 'seed' },
+  ],
   outdir: 'dist',
   bundle: true,
   platform: 'node',

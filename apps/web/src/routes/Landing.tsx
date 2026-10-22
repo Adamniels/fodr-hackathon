@@ -25,10 +25,11 @@ export function Landing({ login = false }: { login?: boolean }) {
 
   if (login && session.user) return <Navigate to={target} replace />
 
-  const openDemo = () => {
-    if (!session.user) session.openDemo()
-    void navigate(target, { replace: login })
-  }
+  // Signed in: to the app. Otherwise the account dialog opens on sign-up (#29; the browser demo is gone).
+  const getStarted = () =>
+    void (session.user
+      ? navigate(target, { replace: login })
+      : navigate('/login', { state: { fromLanding: true, mode: 'signUp' satisfies LoginMode } }))
   // Back to the landing page it was opened from, so history keeps one entry for it; else (a redirect) to /.
   const close = () => void (state?.fromLanding ? navigate(-1) : navigate('/', { replace: true }))
 
@@ -37,7 +38,7 @@ export function Landing({ login = false }: { login?: boolean }) {
       <LandingPage
         produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}
-        onDemo={openDemo}
+        onGetStarted={getStarted}
         onLogIn={() => void navigate('/login', { state: { fromLanding: true } })}
       />
       {login && (
@@ -54,7 +55,6 @@ export function Landing({ login = false }: { login?: boolean }) {
             </button>
             <Login
               onLoggedIn={() => void session.refresh()}
-              onDemo={openDemo}
               initialMode={state?.mode}
               linkFailed={params.has('error')}
             />

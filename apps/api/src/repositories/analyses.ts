@@ -3,7 +3,7 @@
 import { AnalysisSchema, type Analysis, type Values } from '@fodr/contracts/analyses'
 import type { User } from '@fodr/contracts/me'
 import { and, eq, exists } from 'drizzle-orm'
-import type { Database } from '../db'
+import type { Executor } from '../db'
 import { analyses, horseMembers, horses } from '../db/schema'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -45,7 +45,7 @@ export interface AnalysisRepository {
   ): Promise<Analysis | undefined>
 }
 
-export function analysisRepository(db: Database['db']): AnalysisRepository {
+export function analysisRepository(db: Executor): AnalysisRepository {
   const isMember = (user: Pick<User, 'id'>, horseId: string) =>
     exists(
       db

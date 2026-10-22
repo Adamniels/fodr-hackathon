@@ -17,7 +17,7 @@ import {
 } from '../format'
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
-import { fingerprint, loadExplanation, saveExplanation } from '../storage'
+import { fingerprint, loadExplanation, saveExplanation } from '../explanations'
 import { PlanSaveError } from '../plans'
 import { TransitionCalendar } from './TransitionCalendar'
 
@@ -71,7 +71,7 @@ export function PlanStep({
       saveExplanation(hast.id, payloadFingerprint, text)
       return text
     },
-    // The saved text for this plan, so a revisit or a reload asks nothing; never refetched on its own, and a failure
+    // The kept text for this plan, so a revisit asks nothing; never refetched on its own, and a failure
     // is shown at once rather than retried, as before the server-state layer (#21).
     initialData: () => loadExplanation(hast.id, payloadFingerprint) ?? undefined,
     staleTime: Infinity,

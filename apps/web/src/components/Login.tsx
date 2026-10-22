@@ -8,7 +8,6 @@ export type LoginMode = 'logIn' | 'signUp' | 'magicLink' | 'forgot'
 interface Props {
   /** A password login succeeded; the parent reads the session. */
   onLoggedIn: () => void
-  onDemo: () => void
   initialMode?: LoginMode
   /** A mailed link failed (expired, used or invalid): /login?error=… from the API. */
   linkFailed?: boolean
@@ -16,7 +15,7 @@ interface Props {
 
 // The account dialog (#23, CF1): log in with a password, sign up, a login link by mail, or a link for a new password.
 // What happens after a mailed link is the API's (Better Auth); this only asks for it and says where to look.
-export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = false }: Props) {
+export function Login({ onLoggedIn, initialMode = 'logIn', linkFailed = false }: Props) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<LoginMode>(initialMode)
   const [email, setEmail] = useState('')
@@ -157,17 +156,6 @@ export function Login({ onLoggedIn, onDemo, initialMode = 'logIn', linkFailed = 
         {titles[mode]}
       </h2>
       <p className="ingress">{intros[mode]}</p>
-
-      {mode === 'logIn' && (
-        <>
-          <button className="knapp bred" onClick={onDemo}>
-            {t('login.demo')}
-          </button>
-          <div className="login-skiljare">
-            <span>{t('login.orEmail')}</span>
-          </div>
-        </>
-      )}
 
       <form onSubmit={submit}>
         {mode === 'signUp' && (

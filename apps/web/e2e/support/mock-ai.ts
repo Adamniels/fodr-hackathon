@@ -1,12 +1,13 @@
 // Intercepts /api requests in the browser context. Known AI routes answer from fixtures; anything else is aborted
 // and recorded, and the test fixture in helpers.ts fails the test if that happened. /api/v1 and /api/auth are not
-// intercepted: they belong to the real backend (ADR 0007, ADR 0009). When the AI routes move under /api/v1 (M3), mock
-// them there.
+// intercepted: they belong to the real backend (ADR 0007, ADR 0009). Report reading happens inside the API since #26
+// (a fake AI there, apps/api/test/e2e-server.ts), so /api/analys is not mocked: a call to it from the browser fails the
+// test. When the AI routes move under /api/v1 (M3), mock them there.
 
 import { expect, type BrowserContext } from '@playwright/test'
 import * as fixtures from '../fixtures/ai'
 
-export type AiRoute = 'analys' | 'profil' | 'forklaring' | 'journal'
+export type AiRoute = 'profil' | 'forklaring' | 'journal'
 
 export interface AiMock {
   /** Parsed request bodies received on a route, in order. */
@@ -24,7 +25,6 @@ const QUIET_MS = 500
 const isBackend = (path: string) => ['/api/v1', '/api/auth'].some((p) => path === p || path.startsWith(`${p}/`))
 
 const DEFAULTS: Record<AiRoute, unknown> = {
-  analys: fixtures.analysA01,
   profil: fixtures.profil,
   forklaring: fixtures.forklaring,
   journal: fixtures.journal,

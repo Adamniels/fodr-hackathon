@@ -20,14 +20,15 @@ bash scripts/dev/check-services.sh       # optional: checks that all three answe
 npm ci
 npx playwright install chromium
 npm run db:migrate          # applies the database migrations
+npm run seed                # the demo account from SEED_EMAIL and SEED_PASSWORD, with Sixten and Pysen
 npm run dev                 # the web app on http://localhost:5173, the API on http://localhost:3000
 ```
 
-Without an API key everything except the AI parts works (reading an uploaded report, filling the profile from free text, the explanations). Use "Exempel: komplett analys" on the analysis step instead.
+Without an API key everything except the AI parts works (reading an uploaded report, filling the profile from free text, the explanations). Log in as the seeded demo account instead: its Sixten has an analysis and a journal, so the plan works without reading a report.
 
 ## Commands
 
-Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration` and `db:migrate` run `apps/api`; `test:scripts` runs the agent script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, and builds and smoke tests the Docker image.
+Run at the repository root. `lint`, `typecheck`, `test` and `format` run in every workspace (`apps/web`, `apps/api`, `packages/domain`, `packages/contracts`); `dev` and `build` run the web app and the API; `test:e2e` runs `apps/web`; `test:integration`, `db:migrate` and `seed` run `apps/api`; `test:scripts` runs the agent script tests. CI runs format, lint, typecheck, unit, script, integration and e2e tests on every PR, and builds and smoke tests the Docker image.
 
 | Command | What |
 |---|---|
@@ -39,6 +40,7 @@ Run at the repository root. `lint`, `typecheck`, `test` and `format` run in ever
 | `npm run typecheck` | TypeScript |
 | `npm run format` | Prettier |
 | `npm run db:migrate` | Applies pending migrations from `apps/api/drizzle/` to `DATABASE_URL` |
+| `npm run seed` | Creates the demo account (`SEED_EMAIL`, `SEED_PASSWORD`) with Sixten and Pysen; idempotent, also in the image (`node apps/api/dist/seed.mjs`) |
 | `docker build -t fodr .` | The production image: one Node process serving the API and the web app (`docker run -p 3000:3000 -e DATABASE_URL=... fodr`) |
 | `node apps/web/scripts/import-products.mjs` | Rebuilds `apps/api/src/data/products.json` from the store data |
 | `node apps/web/scripts/evaluate-analysis-reading.mjs` | Checks AI extraction against the answer key (needs `npm run dev` and an API key, about 11 API calls) |
@@ -61,7 +63,7 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | API | `apps/api/src/` | Hono app (`app.ts`), config from the environment (`config.ts`), problem+json errors, Drizzle (`db.ts`, migrations in `apps/api/drizzle/`) |
 | Auth | `apps/api/src/auth.ts`, `session.ts`, `mail/` | Better Auth at `/api/auth/*` (sign up, verification, login, logout, password reset, magic link), `requireUser` for protected routes, account emails over SMTP (Mailpit locally) |
 | Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
-| Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses; the demo keeps its own in the browser (`demo.ts`, until #29) |
+| Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses |
 | Analyses API | `apps/api/src/analyses-routes.ts`, `repositories/analyses.ts`, `storage.ts` | Report upload per horse (type by magic bytes, PDF 20 MB, photo 5 MB), read by the AI, converted by the domain, stored with the file in S3 (ADR 0011) |
 | Plans API | `apps/api/src/plans-routes.ts`, `repositories/plans.ts` | Saved plans per horse, computed by the server and stored immutably with the build (`APP_VERSION`) and catalogue versions (ADR 0004) |
 | Journal API | `apps/api/src/journal-routes.ts`, `repositories/journal.ts` | The journal per horse; an entry can update the profile atomically, and a saved plan's entry is made with it (CF7) |
