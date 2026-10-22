@@ -941,7 +941,7 @@
           "paragraphs": [
             "När du laddar upp en analysrapport, visar en foderplan, låter AI:n fylla i hästprofilen från fri text eller sammanfatta journalen skickas uppgifterna till vår AI-leverantör Anthropic i USA. Det gäller rapporten du laddat upp, som kan innehålla ditt namn och din adress, och det du skrivit om hästen, även om dess hälsa. Förklaringen av en foderplan hämtas av sig själv när planen visas.",
             "[Att verifiera mot avtalet med Anthropic: hur länge Anthropic sparar uppgifterna, att de inte används för att träna modeller och vilket skydd som gäller för överföringen till USA, till exempel EU:s standardavtalsklausuler.]",
-            "Uppgifterna lagras hos [driftleverantör] och e-post skickas genom [e-postleverantör]. Typsnitten på sidorna hämtas från Google Fonts, vilket gör att din webbläsare skickar din IP-adress till Google i USA. Vi säljer inte dina uppgifter och delar dem inte med butiker eller tillverkare."
+            "Uppgifterna lagras hos [driftleverantör] inom EU och e-post skickas genom [e-postleverantör]. Typsnitten på sidorna hämtas från Google Fonts, vilket gör att din webbläsare skickar din IP-adress till Google i USA. Vi säljer inte dina uppgifter och delar dem inte med butiker eller tillverkare."
           ]
         },
         {
