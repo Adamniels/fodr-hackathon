@@ -39,8 +39,21 @@ export function AnalysisRoute() {
 
 export function PlanRoute() {
   const { t } = useTranslation()
-  const { hast, analys, analyses, plan, savedPlan, savePlan, produkter, catalogueFailed, reloadCatalogue, goTo } =
-    useWorkspace()
+  const {
+    hast,
+    analys,
+    analyses,
+    plan,
+    savedPlan,
+    savePlan,
+    planSaveError,
+    planInJournal,
+    userId,
+    produkter,
+    catalogueFailed,
+    reloadCatalogue,
+    goTo,
+  } = useWorkspace()
   if (!hast) return null
   if (!produkter) {
     return catalogueFailed ? (
@@ -60,12 +73,17 @@ export function PlanRoute() {
   if ('errors' in plan) {
     return <InvalidInput errors={plan.errors} onToHorse={() => goTo('hast')} onToAnalysis={() => goTo('analys')} />
   }
+  // Keyed on the horse: a rewrite of one horse's explanation, failed or under way, is not another horse's (#32).
   return (
     <PlanStep
+      key={hast.id}
       hast={hast}
       analys={analys}
       plan={plan.plan}
-      savedAt={savedPlan?.createdAt}
+      userId={userId}
+      planId={savedPlan?.id}
+      inJournalOn={planInJournal}
+      planSaveError={planSaveError}
       onSaveToJournal={async () => {
         await savePlan()
         goTo('journal')

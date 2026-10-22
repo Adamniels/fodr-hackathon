@@ -1,8 +1,10 @@
-// The AI routes (#30): /api/v1/ai/profile, /explanation and /journal (the contracts are in @fodr/contracts/ai).
+// The AI routes (#30): /api/v1/ai/profile and /journal (the contracts are in @fodr/contracts/ai). A plan's explanation
+// is written for the saved plan, under the plan routes (#32).
 // Signed-in users only. A body is read as JSON and validated before the provider is called, so only the contract's
 // fields reach the model and anything malformed is a 400 that costs no call. A provider failure is a problem+json code
-// (ADR 0013) the web translates (ADR 0014). Reports are read by the analysis upload (#26), not here.
-import { ExplanationRequestSchema, JournalRequestSchema, ProfileRequestSchema } from '@fodr/contracts/ai'
+// (ADR 0013) the web translates (ADR 0014), with aiFailure, which the plan explanation answers with too. Reports are read
+// by the analysis upload (#26), not here.
+import { JournalRequestSchema, ProfileRequestSchema } from '@fodr/contracts/ai'
 import { Hono, type Context } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import type { z } from 'zod'
@@ -15,12 +17,29 @@ import { parseJson } from '../validation'
 import { AiQuotaExceeded, type MeteredAi } from './metered'
 import { AiProviderError, type AiErrorKind } from './provider'
 
-// The profile and the explanation are a few KB. A journal is up to AI_JOURNAL_ENTRIES_MAX entries of up to
+// The profile is a few KB. A journal is up to AI_JOURNAL_ENTRIES_MAX entries of up to
 // JOURNAL_TEXT_MAX characters, each with a plan snapshot: 100 × (about 4 KB of escaped text and 0.5 KB of fields).
 const MAX_BODY_BYTES = 64 * 1024
 const MAX_JOURNAL_BODY_BYTES = 512 * 1024
 
 type C = Context<AppEnv & { Variables: UserVariables }>
+
+/**
+ * The answer to an AI call that failed: the quota, the provider's failure as its problem code, or a reply that could
+ * not be read. Logs the kind or the error type only, never a message: the request and the reply hold the owner's text.
+ */
+export function aiFailure(c: C, e: unknown, logger: Logger, message: string) {
+  // Today's calls are used: nothing was sent to the model (#31).
+  if (e instanceof AiQuotaExceeded) return problem(c, 429, 'ai.quota_exceeded')
+  if (e instanceof AiProviderError) {
+    logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, message)
+    const failure = FAILURES[e.kind]
+    return problem(c, failure.status, failure.code)
+  }
+  // A reply that could not be read (not the promised shape): the service failed us, as far as the owner can tell.
+  logger.warn({ requestId: c.get('requestId'), errorType: errorType(e) }, message)
+  return problem(c, 502, 'ai.unavailable')
+}
 
 /** What a provider failure tells the web: missing configuration, a busy or failing service, a refusal, a cut reply. */
 const FAILURES: Record<AiErrorKind, { status: 429 | 502 | 503; code: string }> = {
@@ -58,17 +77,7 @@ export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: MeteredAi; logg
       try {
         return c.json(await call(c.get('user').id, body.data))
       } catch (e) {
-        // Today's calls are used: nothing was sent to the model (#31).
-        if (e instanceof AiQuotaExceeded) return problem(c, 429, 'ai.quota_exceeded')
-        // The kind or the error type only, never a message: the request and the model's reply hold the owner's text.
-        if (e instanceof AiProviderError) {
-          logger.warn({ requestId: c.get('requestId'), kind: e.kind, status: e.status }, 'ai request failed')
-          const failure = FAILURES[e.kind]
-          return problem(c, failure.status, failure.code)
-        }
-        // A reply that could not be read (not the promised shape): the service failed us, as far as the owner can tell.
-        logger.warn({ requestId: c.get('requestId'), errorType: errorType(e) }, 'ai request failed')
-        return problem(c, 502, 'ai.unavailable')
+        return aiFailure(c, e, logger, 'ai request failed')
       }
     })
   }
@@ -76,9 +85,6 @@ export function aiRoutes({ auth, ai, logger }: { auth: Auth; ai: MeteredAi; logg
   route('/profile', MAX_BODY_BYTES, ProfileRequestSchema, (userId, body) =>
     ai.run(userId, 'profile', (provider) => provider.interpretProfile(body)),
   )
-  route('/explanation', MAX_BODY_BYTES, ExplanationRequestSchema, async (userId, body) => ({
-    text: await ai.run(userId, 'explanation', (provider) => provider.explainPlan(body)),
-  }))
   route('/journal', MAX_JOURNAL_BODY_BYTES, JournalRequestSchema, (userId, body) =>
     ai.run(userId, 'journal', (provider) => provider.analyzeJournal(body)),
   )

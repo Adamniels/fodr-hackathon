@@ -265,6 +265,7 @@
     "explanation": {
       "title": "Vad betyder det här?",
       "failed": "Förklaringen kunde inte hämtas. {{error}} Planen gäller ändå.",
+      "differs": "Planen ändrades medan den sparades. Ladda om sidan.",
       "writing": "Skriver förklaring…",
       "rewrite": "Skriv om förklaringen"
     },
@@ -324,7 +325,7 @@
       "hull": "Hull",
       "feedRow": "Nuvarande foder, rad {{row}}"
     },
-    "saved": "Sparad {{date}}",
+    "saved": "Sparad i journalen {{date}}",
     "saveError": {
       "failed": "Planen kunde inte sparas. Försök igen.",
       "unsaved": "Alla ändringar är inte sparade än. Rätta eller spara om hästen och analysen, och spara sedan planen.",

@@ -8,6 +8,7 @@ import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
 import { usageRepository } from '../src/repositories/ai-usage'
 import { journalRepository } from '../src/repositories/journal'
+import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
 import type { FileStore } from '../src/storage'
 
@@ -53,6 +54,7 @@ export function unitRepositories() {
     horses: horseRepository(db),
     analyses: analysisRepository(db),
     plans: planRepository(db),
+    explanations: explanationRepository(db),
     journal: journalRepository(db),
     usage: usageRepository(db),
   }

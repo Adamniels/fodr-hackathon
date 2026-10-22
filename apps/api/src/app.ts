@@ -18,6 +18,7 @@ import type { JournalRepository } from './repositories/journal'
 import { planRoutes, productRoutes } from './plans-routes'
 import type { Catalogue } from './products'
 import type { PlanRepository } from './repositories/plans'
+import type { ExplanationRepository } from './repositories/explanations'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
 import type { FileStore } from './storage'
@@ -36,6 +37,7 @@ export interface AppDeps {
     horses: HorseRepository
     analyses: AnalysisRepository
     plans: PlanRepository
+    explanations: ExplanationRepository
     journal: JournalRepository
     usage: UsageRepository
   }
@@ -88,7 +90,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   )
   app.route(
     '/api/v1/horses/:horseId/plans',
-    planRoutes({ auth, catalogue, engineVersion: config.appVersion, ...repositories }),
+    planRoutes({ auth, catalogue, engineVersion: config.appVersion, ai: metered, logger, ...repositories }),
   )
   app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))

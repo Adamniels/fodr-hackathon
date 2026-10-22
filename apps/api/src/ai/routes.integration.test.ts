@@ -1,9 +1,10 @@
-// The AI routes at API level (#30): signed-in users only, requests validated with the shared contracts so only their
-// fields reach the provider, and errors as problem+json codes (ADR 0013). The provider is a fake; auth is real.
+// The AI routes at API level (#30; the plan explanation is in explanations.integration.test.ts since #32): signed-in
+// users only, requests validated with the shared contracts so only their fields reach the provider, and errors as
+// problem+json codes (ADR 0013). The provider is a fake; auth is real.
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../../test/auth-app'
 import type { FakeAiProvider } from '../../test/fake-ai-provider'
-import { EXPLANATION_REQUEST, JOURNAL_REQUEST, PROFILE_REQUEST } from '../../test/fixtures/ai'
+import { JOURNAL_REQUEST, PROFILE_REQUEST } from '../../test/fixtures/ai'
 import { AiProviderError, type AiErrorKind } from './provider'
 
 const harness = authApp()
@@ -39,7 +40,6 @@ const JOURNAL_RESPONSE = {
 
 const ROUTES = [
   { path: '/api/v1/ai/profile', method: 'interpretProfile', body: PROFILE_REQUEST, answer: PROFILE_RESPONSE },
-  { path: '/api/v1/ai/explanation', method: 'explainPlan', body: EXPLANATION_REQUEST, answer: 'En förklaring.' },
   { path: '/api/v1/ai/journal', method: 'analyzeJournal', body: JOURNAL_REQUEST, answer: JOURNAL_RESPONSE },
 ] as const
 
@@ -75,8 +75,7 @@ describe('the AI routes', () => {
   it('answers each route with the provider result in the contract shape', async () => {
     const { browser } = await user()
     expect(await (await browser.post(ROUTES[0].path, PROFILE_REQUEST)).json()).toEqual(PROFILE_RESPONSE)
-    expect(await (await browser.post(ROUTES[1].path, EXPLANATION_REQUEST)).json()).toEqual({ text: 'En förklaring.' })
-    expect(await (await browser.post(ROUTES[2].path, JOURNAL_REQUEST)).json()).toEqual(JOURNAL_RESPONSE)
+    expect(await (await browser.post(ROUTES[1].path, JOURNAL_REQUEST)).json()).toEqual(JOURNAL_RESPONSE)
   })
 
   it.each(ROUTES)('$path refuses a malformed body with 400 and the field, before the provider', async ({ path }) => {
@@ -106,14 +105,15 @@ describe('the AI routes', () => {
       plan: { analys: 'Hösilage, Labb, 2026-06-10', grovfoderKgPerDag: 16, produkter: [], kostnadPerManad: 88 },
     })
     const full = { ...JOURNAL_REQUEST, poster: Array.from({ length: 100 }, (_, i) => entry(i)) }
-    expect((await browser.post(ROUTES[2].path, full)).status).toBe(200)
+    expect((await browser.post(ROUTES[1].path, full)).status).toBe(200)
     const tooMany = { ...JOURNAL_REQUEST, poster: Array.from({ length: 101 }, (_, i) => ({ ...entry(i), text: 'x' })) }
-    expect((await browser.post(ROUTES[2].path, tooMany)).status).toBe(400)
+    expect((await browser.post(ROUTES[1].path, tooMany)).status).toBe(400)
   })
 
-  it('no longer has the analysis reading route: reports are read by the upload (#26)', async () => {
+  it('no longer has the analysis reading route (#26) or the explanation route (#32)', async () => {
+    // Reports are read by the upload; a plan is explained under the plan routes, for the saved plan.
     const { browser } = await user()
-    for (const path of ['/api/analys', '/api/profil', '/api/forklaring', '/api/journal']) {
+    for (const path of ['/api/analys', '/api/profil', '/api/forklaring', '/api/journal', '/api/v1/ai/explanation']) {
       expect((await browser.post(path, {})).status).toBe(404)
     }
   })

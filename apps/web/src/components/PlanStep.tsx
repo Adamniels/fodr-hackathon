@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { aiErrorText, useAi } from '../api'
+import { aiErrorText } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
@@ -12,13 +11,11 @@ import {
   formatDate,
   formatMoney,
   formatNumber,
-  localIsoDate,
   shortNutrientLabel,
 } from '../format'
 import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
-import { fingerprint, loadExplanation, saveExplanation } from '../explanations'
-import { PlanSaveError } from '../plans'
+import { PlanSaveError, usePlanExplanation } from '../plans'
 import { TransitionCalendar } from './TransitionCalendar'
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -35,14 +32,22 @@ export function PlanStep({
   hast,
   analys,
   plan,
-  savedAt,
+  userId,
+  planId,
+  inJournalOn,
+  planSaveError,
   onSaveToJournal,
 }: {
   hast: Hastprofil
   analys: Grovfoderanalys
   plan: Plan
-  /** When the plan on screen was saved on the server (#27): it is then the server's plan. */
-  savedAt?: string
+  userId: string
+  /** The saved plan on screen (#27): it is then the server's plan, and its explanation is stored with it (#32). */
+  planId?: string
+  /** The day (YYYY-MM-DD) the plan on screen was saved to the journal, if it was (#32). */
+  inJournalOn?: string
+  /** Why the plan on screen could not be saved when it was shown (#32): then it has no explanation. */
+  planSaveError: unknown
   /** Saves the plan and adds it to the journal; rejects when the server refused. */
   onSaveToJournal: () => Promise<void>
 }) {
@@ -58,40 +63,23 @@ export function PlanStep({
       setSaving(false)
     })
   }
-  // The explanation is cached per horse and payload. The same plan shows the cached text instead of
-  // asking Claude again; only a changed plan (or the "Skriv om" button) makes a new call.
+  // The explanation is stored with the saved plan (#32, CF6): a revisit or a reload shows it without asking the AI
+  // again; only "Skriv om" writes a new one. Until the plan on screen is saved it is being written, unless the save
+  // failed, which is said instead.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
-  const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
-  const queryClient = useQueryClient()
-  const { explainPlan } = useAi()
-  const queryKey = useMemo(() => ['explanation', hast.id, payloadFingerprint], [hast.id, payloadFingerprint])
-  const explanationQuery = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const { text } = await explainPlan(payload)
-      saveExplanation(hast.id, payloadFingerprint, text)
-      return text
-    },
-    // The kept text for this plan, so a revisit asks nothing; never refetched on its own, and a failure
-    // is shown at once rather than retried, as before the server-state layer (#21).
-    initialData: () => loadExplanation(hast.id, payloadFingerprint) ?? undefined,
-    staleTime: Infinity,
-    retry: false,
-  })
-  // While a text is written, and after a failed "Skriv om", the old text gives way to the writing note or the error,
-  // as before: the query keeps the old text as data in both cases.
-  const settled = !explanationQuery.isFetching
-  const explanation = settled && !explanationQuery.error ? (explanationQuery.data ?? null) : null
-  const explanationError = settled && explanationQuery.error ? aiErrorText(explanationQuery.error) : null
-  // A failure belongs to the visit that saw it: leaving the plan resets a failed query, so a revisit starts again from
-  // the saved text (or asks again when there is none), as the remounted component did before (#21).
-  useEffect(
-    () => () => {
-      if (queryClient.getQueryState(queryKey)?.status === 'error')
-        void queryClient.resetQueries({ queryKey, exact: true })
-    },
-    [queryClient, queryKey],
-  )
+  const planExplanation = usePlanExplanation(userId, hast.id, planId, payload)
+  const explanation = planSaveError ? null : planExplanation.text
+  const explanationError = planSaveError
+    ? t(
+        planSaveError instanceof PlanSaveError
+          ? planSaveError.code === 'differs'
+            ? 'plan.explanation.differs'
+            : 'plan.saveError.unsaved'
+          : 'plan.saveError.failed',
+      )
+    : planExplanation.error
+      ? aiErrorText(planExplanation.error)
+      : null
 
   const u = plan.urval
   const nyKostnad = u?.kostnadPerManad ?? 0
@@ -167,7 +155,7 @@ export function PlanStep({
           )}
           {explanation && (
             <div className="forklaring-fot">
-              <button className="lank liten" onClick={() => void explanationQuery.refetch()}>
+              <button className="lank liten" onClick={planExplanation.rewrite}>
                 {t('plan.explanation.rewrite')}
               </button>
             </div>
@@ -187,9 +175,7 @@ export function PlanStep({
       <section className="kort">
         <div className="kort-rubrikrad">
           <h3>{t('plan.shopping.title')}</h3>
-          {savedAt && (
-            <span className="liten">{t('plan.saved', { date: formatDate(localIsoDate(new Date(savedAt))) })}</span>
-          )}
+          {inJournalOn && <span className="liten">{t('plan.saved', { date: formatDate(inJournalOn) })}</span>}
           <button className="knapp sekundar kompakt" disabled={saving} onClick={save}>
             {t('plan.shopping.saveToJournal')}
           </button>

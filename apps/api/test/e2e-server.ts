@@ -1,10 +1,12 @@
 // The API for the web app's e2e run (apps/web/playwright.config.ts): the real server with a fake AI, since report
 // reading happens in the API (#26) where the browser's AI mock cannot reach. The fake reads the answer a test wants
 // from the uploaded file itself: a line `FODR-E2E-READING <json>` in the generated test file
-// (apps/web/e2e/support/reports.ts). A reading of `{"error": "<kind>"}` fails as the provider would.
+// (apps/web/e2e/support/reports.ts). A reading of `{"error": "<kind>"}` fails as the provider would. A plan's
+// explanation is written on the API too (#32), by the fake in e2e-explanations.ts.
 import { AiProviderError, type AiErrorKind, type AiProvider } from '../src/ai/provider'
 import type { AnalysisResponse } from '../src/ai/anthropic'
 import { runServer } from '../src/server'
+import { e2eExplainer } from './e2e-explanations'
 
 const MARKER = 'FODR-E2E-READING '
 
@@ -20,7 +22,7 @@ const markerProvider: AiProvider = {
     return Promise.resolve({ value: reading, usage: { inputTokens: 1000, outputTokens: 200 } })
   },
   interpretProfile: notInE2e,
-  explainPlan: notInE2e,
+  explainPlan: e2eExplainer(),
   analyzeJournal: notInE2e,
 }
 

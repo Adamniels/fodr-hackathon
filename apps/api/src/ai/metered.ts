@@ -31,6 +31,8 @@ const NO_TOKENS: TokenUsage = { inputTokens: 0, outputTokens: 0 }
 const NEVER_SENT = new Set<AiErrorKind>(['missing_key', 'auth'])
 
 export interface MeteredAi {
+  /** The model the calls are sent to, for what they produce to record (#32). */
+  readonly model: string
   /** Runs one AI call for the user: rejects with AiQuotaExceeded when today's calls are used, without calling. */
   run<T>(userId: string, route: AiRoute, call: (ai: AiProvider) => Promise<AiReply<T>>): Promise<T>
 }
@@ -47,6 +49,7 @@ export function createMeteredAi({
   logger: Logger
 }): MeteredAi {
   return {
+    model: config.model,
     async run(userId, route, call) {
       const slot = await usage.reserve(userId, route, config.model, config.dailyCallsPerUser)
       if (!slot) {

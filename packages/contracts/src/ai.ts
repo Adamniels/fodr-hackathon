@@ -1,6 +1,7 @@
 // The AI routes (#30, ADR 0007), signed-in users only:
 //   POST /api/v1/ai/profile (ProfileRequestSchema): the owner's free text read into profile fields (CF3).
-//   POST /api/v1/ai/explanation (ExplanationRequestSchema): the plan the browser computed, explained in plain Swedish.
+//   ExplanationRequestSchema: the plan as the page shows it, for its explanation in plain Swedish, which is written
+//   for the saved plan under the plan routes (#32, ./plans).
 //   POST /api/v1/ai/journal (JournalRequestSchema): the journal read for patterns, a vet flag and next steps (CF7).
 // Only what a schema names reaches the model: unknown fields are dropped, and every text and list is capped, so the
 // routes forward no arbitrary JSON (the open-proxy finding). Field names reach the model, so they are contract names
@@ -102,8 +103,6 @@ export const ExplanationRequestSchema = z.object({
   foderbyte: z.object({ dagar: z.number(), steg: z.number() }),
   saknasIAnalysen: lines(40),
 })
-
-export const ExplanationResponseSchema = z.object({ text: z.string() })
 
 /** A saved plan in the journal as the model reads it: its analysis as one line (JournalStep's forModel). */
 const JournalPlan = z.object({
