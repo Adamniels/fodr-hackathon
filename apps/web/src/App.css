@@ -1549,7 +1549,7 @@ label.kryss {
   background: var(--yta-2);
   text-align: center;
   color: var(--text-2);
-  /* The space the example links below it used to give (#29). */
+  /* Space before the analysis below it. */
   margin-bottom: 22px;
   transition:
     border-color 0.15s,

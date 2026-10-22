@@ -122,26 +122,24 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
 
       {/* Hidden while the stored analysis could not be read, so an upload never replaces one the page cannot show. */}
       {!analyses.loadFailed && (
-        <>
-          <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
-            <input
-              type="file"
-              accept="application/pdf,image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                const fil = e.target.files?.[0]
-                if (fil) void laddaUpp(fil)
-              }}
-              disabled={laddar}
-            />
-            {laddar ? (
-              <span>{t('analysis.reading', { file: filnamn })}</span>
-            ) : (
-              <span>
-                <Trans i18nKey="analysis.choose" components={{ strong: <strong /> }} />
-              </span>
-            )}
-          </label>
-        </>
+        <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
+          <input
+            type="file"
+            accept="application/pdf,image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const fil = e.target.files?.[0]
+              if (fil) void laddaUpp(fil)
+            }}
+            disabled={laddar}
+          />
+          {laddar ? (
+            <span>{t('analysis.reading', { file: filnamn })}</span>
+          ) : (
+            <span>
+              <Trans i18nKey="analysis.choose" components={{ strong: <strong /> }} />
+            </span>
+          )}
+        </label>
       )}
       {fel && (
         <div className="ruta fel" role="alert">

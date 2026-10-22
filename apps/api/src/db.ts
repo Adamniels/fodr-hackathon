@@ -14,6 +14,13 @@ export interface Database {
   close(): Promise<void>
 }
 
+/**
+ * What a repository runs its queries on: the database, or a transaction around several repositories (the seed, #29).
+ * A repository's own transaction inside one becomes a savepoint.
+ */
+export type Executor =
+  NodePgDatabase<typeof schema> | Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0]
+
 export function createDatabase(url: string): Database {
   const pool = new pg.Pool({ connectionString: url })
   return { db: drizzle(pool, { schema }), close: () => pool.end() }

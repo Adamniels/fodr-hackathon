@@ -30,6 +30,12 @@ import {
 const id = () => uuid('id').defaultRandom().primaryKey()
 const instant = (name: string) => timestamp(name, { withTimezone: true })
 const createdAt = () => instant('created_at').defaultNow().notNull()
+// The moment the row is written, where rows are listed in the order they were made: now() is the transaction's start,
+// so rows made in one transaction (the seed, #29) would all get the same time and list in random order.
+const createdInOrder = () =>
+  instant('created_at')
+    .default(sql`clock_timestamp()`)
+    .notNull()
 const updatedAt = () =>
   instant('updated_at')
     .defaultNow()
@@ -114,7 +120,7 @@ export const horses = pgTable('horses', {
   id: id(),
   name: text('name').notNull(),
   profile: jsonb('profile').$type<Omit<HorseProfile, 'namn'>>().notNull(),
-  createdAt: createdAt(),
+  createdAt: createdInOrder(),
   updatedAt: updatedAt(),
 })
 
@@ -202,7 +208,7 @@ export const journalEntries = pgTable(
     bodyCondition: integer('body_condition'),
     text: text('text').notNull(),
     planId: uuid('plan_id').references(() => plans.id, { onDelete: 'cascade' }),
-    createdAt: createdAt(),
+    createdAt: createdInOrder(),
   },
   (table) => [index('journal_entries_horse_id_date_idx').on(table.horseId, table.date, table.createdAt)],
 )

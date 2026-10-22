@@ -1,8 +1,9 @@
-// Shared e2e helpers. Tests drive the UI by role, label and visible text only, and never touch storage,
-// so they keep working when localStorage is replaced by a real backend.
+// Shared e2e helpers. Tests drive the UI by role, label and visible text only, and never touch browser storage; the
+// data is on the real backend, and accounts come from sign-up (createAccount) or the seed (seededAccount).
 
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
+import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { test as base, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import type { HorseProfile } from '@fodr/contracts/horses'
@@ -10,10 +11,13 @@ import { basicReading, completeReading } from '../fixtures/ai'
 import { PYSEN, SIXTEN } from '../fixtures/horses'
 import { reportWith } from './reports'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
-
-/** The e2e run's database (playwright.config.ts), which the seed writes to. */
-const E2E_DATABASE_URL = `postgres://fodr:fodr@127.0.0.1:${process.env.POSTGRES_PORT ?? '5432'}/fodr_e2e`
 import { mockAi, type AiMock } from './mock-ai'
+
+/** The e2e run's database, as playwright.config.ts gives it to the API; the seed writes to it. */
+const E2E_DATABASE_URL = `postgres://fodr:fodr@127.0.0.1:${process.env.POSTGRES_PORT ?? '5432'}/fodr_e2e`
+/** The API package and its seed script, found from this file so the tests can run from any directory. */
+const API_DIR = fileURLToPath(new URL('../../../api/', import.meta.url))
+const SEED_CLI = fileURLToPath(new URL('../../../api/src/seed-cli.ts', import.meta.url))
 
 /** The password every e2e account gets. */
 export const PASSWORD = 'e2e-losenord-123'
@@ -114,12 +118,15 @@ export async function createAccountWithHorses(
  */
 export async function seededAccount(page: Page, email = 'demo@example.se'): Promise<Account> {
   const account = { email: uniqueEmail(email.split('@')[0]), password: PASSWORD }
-  await promisify(execFile)('node', ['--import', 'tsx', '../api/src/seed-cli.ts'], {
+  // Only what the seed needs, so nothing from the shell (a SEED_NAME, NODE_OPTIONS) changes what a test sees.
+  await promisify(execFile)(process.execPath, ['--import', 'tsx', SEED_CLI], {
+    cwd: API_DIR,
     env: {
-      ...process.env,
+      PATH: process.env.PATH,
       DATABASE_URL: E2E_DATABASE_URL,
       SEED_EMAIL: account.email,
       SEED_PASSWORD: account.password,
+      SEED_NAME: 'Demo',
       SEED_TODAY: FIXED_NOW.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' }),
     },
   })

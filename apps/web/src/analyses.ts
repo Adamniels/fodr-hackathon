@@ -34,7 +34,7 @@ export interface StoredAnalysis {
   id: string
   analys: Grovfoderanalys
   omrakningar: Omrakning[]
-  /** The AI's notes on what it was unsure of; empty for an example. */
+  /** The AI's notes on what it was unsure of; empty for an analysis without a report. */
   anmarkningar: string[]
 }
 

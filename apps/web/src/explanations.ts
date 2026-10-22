@@ -12,6 +12,11 @@ export function saveExplanation(hastId: string, planFingerprint: string, text: s
   explanations.set(hastId, { fingerprint: planFingerprint, text })
 }
 
+/** Forgets every kept explanation, on logout: the text can mention the horse's health. */
+export function clearExplanations(): void {
+  explanations.clear()
+}
+
 /** A short, stable fingerprint of a text (FNV-1a). */
 export function fingerprint(text: string): string {
   let h = 0x811c9dc5

@@ -6,7 +6,7 @@ import type { Horse } from '@fodr/contracts/horses'
 import type { User } from '@fodr/contracts/me'
 import { ogonblickAvPlan } from '@fodr/domain/journal'
 import { and, asc, eq, exists, sql } from 'drizzle-orm'
-import type { Database } from '../db'
+import type { Executor } from '../db'
 import { horseMembers, horses, journalEntries, plans } from '../db/schema'
 import { toHorse } from './horses'
 
@@ -38,7 +38,7 @@ export interface JournalRepository {
   ): Promise<{ entry: JournalEntry; horse: Horse | null } | undefined>
 }
 
-export function journalRepository(db: Database['db']): JournalRepository {
+export function journalRepository(db: Executor): JournalRepository {
   const isMember = (user: Pick<User, 'id'>, horseId: string) =>
     exists(
       db

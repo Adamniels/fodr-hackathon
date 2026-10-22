@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { analysA01, forklaring } from './fixtures/ai'
+import { analysA01, completeReading, forklaring } from './fixtures/ai'
 import {
   createAccountWithHorses,
   expect,
@@ -299,6 +299,24 @@ test.describe('dry matter entry (#50)', () => {
     await typeKeyByKey(field, '')
     await expect(field).toHaveValue('')
   })
+})
+
+test('a cleared dry matter shows the value it holds again when the same report is loaded (#50, #13)', async ({
+  page,
+}) => {
+  await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  await uploadExample(page)
+  const torrsubstans = page.getByLabel('Torrsubstans')
+  await torrsubstans.fill('')
+  await expect(page.getByText('Fyll i ett värde.')).toBeVisible()
+  // As a user does: a click on the upload box takes the focus from the field, which then shows its value again, and
+  // opens the file chooser for the same report.
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByText('Välj analysrapport').click()
+  await (await chooser).setFiles(reportWith(completeReading))
+  await expect(torrsubstans).toHaveValue('39.7')
+  await expect(page.getByText('Fyll i ett värde.')).toBeHidden()
 })
 
 test('a cleared dry matter shows the value of a report loaded meanwhile (#50, #13)', async ({ page }) => {

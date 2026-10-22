@@ -23,7 +23,7 @@ async function journalElsewhere(browser: Browser, email: string): Promise<Page> 
 // The journal on the API (CF7, #28): the flows run on real accounts. The trend, the AI analysis and the time zone test
 // use a seeded account (seededAccount), whose journal has entries to show.
 
-test('demo journal shows trend', async ({ page }) => {
+test('the seeded journal shows the trend', async ({ page }) => {
   await seededAccount(page)
   await goToStep(page, 'Journal')
   await expect(page.getByText('570 → 550 kg')).toBeVisible()

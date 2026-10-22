@@ -4,7 +4,7 @@
 import type { User } from '@fodr/contracts/me'
 import { SavedPlanSchema, type SavedPlan } from '@fodr/contracts/plans'
 import { and, desc, eq, exists } from 'drizzle-orm'
-import type { Database } from '../db'
+import type { Executor } from '../db'
 import type { JournalEntry } from '@fodr/contracts/journal'
 import { horseMembers, horses, journalEntries, plans } from '../db/schema'
 import { toEntry } from './journal'
@@ -43,7 +43,7 @@ export interface PlanRepository {
   latest(user: Pick<User, 'id'>, horseId: string): Promise<SavedPlan | null | undefined>
 }
 
-export function planRepository(db: Database['db']): PlanRepository {
+export function planRepository(db: Executor): PlanRepository {
   const isMember = (user: Pick<User, 'id'>, horseId: string) =>
     exists(
       db

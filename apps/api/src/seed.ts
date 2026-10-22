@@ -1,20 +1,17 @@
 // The demo account (#29): `npm run seed` (seed-cli.ts) creates it in any environment, and the e2e tests seed one per
-// test. Idempotent: an existing account is reused as it is, and each horse is created, with its analysis and journal,
-// only when the account has no horse of that name, so seeding again duplicates and overwrites nothing.
+// test. Idempotent: the account is the seed's own (created now, or found verified with the seed's password; any other
+// account is refused, accounts.ts), and each horse is created, with its analysis and journal, only when the account has
+// no horse of that name. The whole seed is one transaction under a lock on the email, so a failed run leaves nothing
+// half made and two runs at once take turns.
 import type { HorseProfile } from '@fodr/contracts/horses'
 import type { Grovfoderanalys } from '@fodr/domain/types'
-import type { AccountRepository } from './repositories/accounts'
-import type { AnalysisRepository } from './repositories/analyses'
-import type { HorseRepository } from './repositories/horses'
-import type { JournalRepository } from './repositories/journal'
+import { sql } from 'drizzle-orm'
+import type { Executor } from './db'
+import { accountRepository } from './repositories/accounts'
+import { analysisRepository } from './repositories/analyses'
+import { horseRepository } from './repositories/horses'
+import { journalRepository } from './repositories/journal'
 import { PYSEN, PYSEN_JOURNAL, SIXTEN, SIXTEN_ANALYSIS, SIXTEN_JOURNAL, type SeedEntry } from './seed-data'
-
-export interface SeedRepositories {
-  accounts: AccountRepository
-  horses: HorseRepository
-  analyses: AnalysisRepository
-  journal: JournalRepository
-}
 
 export interface SeedOptions {
   email: string
@@ -38,8 +35,21 @@ export function daysBefore(today: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-export async function seedDemo(repos: SeedRepositories, options: SeedOptions): Promise<SeedResult> {
-  const account = await repos.accounts.ensureVerifiedUser(options.email, options.name, options.password)
+export function seedDemo(db: Executor, options: SeedOptions): Promise<SeedResult> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${options.email.trim().toLowerCase()}))`)
+    return seedIn(tx, options)
+  })
+}
+
+async function seedIn(db: Executor, options: SeedOptions): Promise<SeedResult> {
+  const repos = {
+    accounts: accountRepository(db),
+    horses: horseRepository(db),
+    analyses: analysisRepository(db),
+    journal: journalRepository(db),
+  }
+  const account = await repos.accounts.ensureSeedUser(options.email, options.name, options.password)
   const user = { id: account.id }
   const existing = new Set((await repos.horses.listFor(user)).map((h) => h.namn))
   const horsesCreated: string[] = []

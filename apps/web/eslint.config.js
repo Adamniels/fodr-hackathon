@@ -23,6 +23,10 @@ const inlineText = [':matches(JSXElement, JSXFragment)', `JSXAttribute[name.name
   ])
 const UI_TEXT_MESSAGE = 'UI text goes in src/i18n/sv.json and is rendered with t() or <Trans> (ADR 0014).'
 
+// Browser storage, which holds no data since #29 (see the rule below).
+const STORAGE = ['localStorage', 'sessionStorage', 'indexedDB']
+const STORAGE_MESSAGE = 'Data lives on the API; per-viewer UI preferences go in one src/preferences.ts (#29).'
+
 export default tseslint.config(
   { ignores: ['dist', 'playwright-report', 'test-results'] },
   {
@@ -68,18 +72,17 @@ export default tseslint.config(
   {
     // No data in the browser (#29): accounts, horses, analyses, plans and the journal live on the API. Only per-viewer
     // UI preferences may be stored, in src/preferences.ts; legacy-storage.ts removes what older versions left behind.
-    files: ['src/**/*.{ts,tsx}'],
+    // E2E tests never touch storage either (CLAUDE.md).
+    files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts'],
     ignores: ['src/preferences.ts', 'src/legacy-storage.ts'],
     rules: {
-      'no-restricted-globals': [
-        'error',
-        { name: 'localStorage', message: 'Data lives on the API; UI preferences go in src/preferences.ts (#29).' },
-        { name: 'sessionStorage', message: 'Data lives on the API; UI preferences go in src/preferences.ts (#29).' },
-      ],
+      'no-restricted-globals': ['error', ...STORAGE.map((name) => ({ name, message: STORAGE_MESSAGE }))],
       'no-restricted-properties': [
         'error',
-        { object: 'window', property: 'localStorage', message: 'Data lives on the API (#29).' },
-        { object: 'window', property: 'sessionStorage', message: 'Data lives on the API (#29).' },
+        ...['window', 'globalThis', 'self'].flatMap((object) =>
+          STORAGE.map((property) => ({ object, property, message: STORAGE_MESSAGE })),
+        ),
+        { object: 'document', property: 'cookie', message: STORAGE_MESSAGE },
       ],
     },
   },

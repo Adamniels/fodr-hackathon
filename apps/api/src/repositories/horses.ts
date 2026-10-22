@@ -4,7 +4,7 @@
 import { HorseSchema, type Horse, type HorseProfile } from '@fodr/contracts/horses'
 import type { User } from '@fodr/contracts/me'
 import { and, asc, eq, exists, isNotNull, sql } from 'drizzle-orm'
-import type { Database } from '../db'
+import type { Executor } from '../db'
 import { analyses, horseMembers, horses } from '../db/schema'
 
 // Postgres refuses a malformed UUID with an error; it can only be an ID that names no horse.
@@ -26,7 +26,7 @@ export interface HorseRepository {
   remove(user: Pick<User, 'id'>, id: string): Promise<string[] | undefined>
 }
 
-export function horseRepository(db: Database['db']): HorseRepository {
+export function horseRepository(db: Executor): HorseRepository {
   const isMember = (user: Pick<User, 'id'>) =>
     exists(
       db
