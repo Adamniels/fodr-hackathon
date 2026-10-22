@@ -2,13 +2,13 @@ import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { analyzeJournal, type JournalAnalysis } from '../api'
-import { beraknaTrend, nyPost, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
+import { UnsavedProfileError, type EntryDraft } from '../journal'
+import { beraknaTrend, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { Hastprofil } from '@fodr/domain/types'
 import { validateJournalEntry, type JournalField } from '@fodr/domain/validation'
 import { HULLSKALA, breedName, formatDate, bodyConditionText, formatMoney, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
-import { newJournalEntryId } from '../storage'
 import { DecimalInput } from './DecimalInput'
 
 /**
@@ -42,7 +42,7 @@ interface Props {
   poster: Journalpost[]
   aktuellPlan: PlanOgonblick | null
   idag: string
-  onAdd: (post: Journalpost, uppdateraProfil: boolean) => void
+  onAdd: (entry: EntryDraft, uppdateraProfil: boolean) => Promise<void>
 }
 
 export function JournalStep({ hast, poster, aktuellPlan, idag, onAdd }: Props) {
@@ -173,7 +173,7 @@ function NewEntry({
 }: {
   hast: Hastprofil
   idag: string
-  onAdd: (post: Journalpost, uppdateraProfil: boolean) => void
+  onAdd: (entry: EntryDraft, uppdateraProfil: boolean) => Promise<void>
 }) {
   const { t } = useTranslation()
   // Only a date the owner picks is kept, also after saving (for several back-dated entries in a row); otherwise the
@@ -197,11 +197,22 @@ function NewEntry({
     return error && domainText(error.message)
   }
 
-  function spara() {
-    onAdd(nyPost(newJournalEntryId(), datum, { ...matt, text: text.trim() }), uppdatera && harMatt)
-    setVikt(undefined)
-    setHull('')
-    setText('')
+  const [saving, setSaving] = useState(false)
+  const [saveFailed, setSaveFailed] = useState<'failed' | 'unsavedProfile' | null>(null)
+  // The draft is cleared once the entry is saved (on the server for an account, #28), and kept when it was refused.
+  async function spara() {
+    setSaving(true)
+    setSaveFailed(null)
+    try {
+      await onAdd({ datum, ...matt, text: text.trim() }, uppdatera && harMatt)
+      setVikt(undefined)
+      setHull('')
+      setText('')
+    } catch (e) {
+      setSaveFailed(e instanceof UnsavedProfileError ? 'unsavedProfile' : 'failed')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -260,8 +271,17 @@ function NewEntry({
           {t('journal.newEntry.updateProfile')}
         </label>
       )}
+      {saveFailed && (
+        <p className="ruta fel" role="alert">
+          {t(saveFailed === 'unsavedProfile' ? 'journal.newEntry.unsavedProfile' : 'journal.newEntry.saveFailed')}
+        </p>
+      )}
       <div className="atgardsrad">
-        <button className="knapp" disabled={(!harMatt && !text.trim()) || errors.length > 0} onClick={spara}>
+        <button
+          className="knapp"
+          disabled={saving || (!harMatt && !text.trim()) || errors.length > 0}
+          onClick={() => void spara()}
+        >
           {t('journal.newEntry.add')}
         </button>
       </div>
@@ -300,7 +320,15 @@ function AiAnalysis({
             hull: hast.hull,
             halsa: hast.halsa,
           },
-          poster: sorteradePoster(poster).map((p) => (p.plan ? { ...p, plan: forModel(p.plan, t) } : p)),
+          // The fields the model has always read: no creation time (#28).
+          poster: sorteradePoster(poster).map(({ id, datum, viktKg, hull, text, plan }) => ({
+            id,
+            datum,
+            viktKg,
+            hull,
+            text,
+            ...(plan && { plan: forModel(plan, t) }),
+          })),
           // The model reads the warnings as text, as it did before the engine returned codes (#12).
           trend: { ...trend, varningar: trend.varningar.map(domainText) },
           aktuellPlan: aktuellPlan && forModel(aktuellPlan, t),

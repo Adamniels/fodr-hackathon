@@ -11,6 +11,7 @@ import { createSmtpMailer } from '../src/mail/mailer'
 import type { AiProvider } from '../src/ai/provider'
 import { analysisRepository } from '../src/repositories/analyses'
 import { horseRepository } from '../src/repositories/horses'
+import { journalRepository } from '../src/repositories/journal'
 import { planRepository } from '../src/repositories/plans'
 import { loadCatalogue } from '../src/products'
 import { createFileStore, type FileStore } from '../src/storage'
@@ -68,6 +69,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       horses: horseRepository(database.db),
       analyses: analysisRepository(database.db),
       plans: planRepository(database.db),
+      journal: journalRepository(database.db),
     },
   })
   return { app, database, logs, ai, files, close: () => database.close() }

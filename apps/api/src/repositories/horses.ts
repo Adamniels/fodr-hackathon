@@ -14,7 +14,7 @@ type Row = typeof horses.$inferSelect
 
 // The server's ID and name last, so nothing stored in the jsonb can replace them; parsed on the way out too, since jsonb
 // is only as safe as its schema (ADR 0008).
-const toHorse = (row: Row): Horse => HorseSchema.parse({ ...row.profile, id: row.id, namn: row.name })
+export const toHorse = (row: Row): Horse => HorseSchema.parse({ ...row.profile, id: row.id, namn: row.name })
 const toColumns = ({ namn, ...profile }: HorseProfile) => ({ name: namn, profile })
 
 export interface HorseRepository {

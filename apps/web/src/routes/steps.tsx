@@ -75,20 +75,23 @@ export function PlanRoute() {
 }
 
 export function JournalRoute() {
-  const { hast, journal, planOgonblick, today, addEntry, updateHorse } = useWorkspace()
+  const { t } = useTranslation()
+  const { hast, journal, planOgonblick, today } = useWorkspace()
   if (!hast) return null
+  if (journal.loadFailed) {
+    return (
+      <div className="ruta fel" role="alert">
+        {t('journal.loadFailed')}{' '}
+        <button className="lank" onClick={journal.reload}>
+          {t('journal.retry')}
+        </button>
+      </div>
+    )
+  }
+  if (!journal.entries) return <p role="status">{t('journal.loading')}</p>
+  // The store adds the entry, and with "Uppdatera profilen" its measurements to the profile (on the server for an
+  // account, #28), after which the plan is calculated again.
   return (
-    <JournalStep
-      hast={hast}
-      poster={journal[hast.id] ?? []}
-      aktuellPlan={planOgonblick}
-      idag={today}
-      onAdd={(post, uppdateraProfil) => {
-        addEntry(hast.id, post)
-        if (uppdateraProfil) {
-          updateHorse({ ...hast, viktKg: post.viktKg ?? hast.viktKg, hull: post.hull ?? hast.hull })
-        }
-      }}
-    />
+    <JournalStep hast={hast} poster={journal.entries} aktuellPlan={planOgonblick} idag={today} onAdd={journal.add} />
   )
 }

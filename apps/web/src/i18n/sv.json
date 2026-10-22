@@ -188,7 +188,9 @@
       "seen": "Vad har du sett?",
       "seenPlaceholder": "T.ex. piggare sedan bytet, lite lös i magen, öm i hovarna efter grusväg",
       "updateProfile": "Uppdatera profilen och räkna om foderplanen",
-      "add": "Lägg till"
+      "add": "Lägg till",
+      "saveFailed": "Anteckningen kunde inte sparas. Försök igen.",
+      "unsavedProfile": "Hästens ändringar är inte sparade än. Spara eller rätta profilen först, eller lägg till anteckningen utan att uppdatera profilen."
     },
     "ai": {
       "title": "Vad säger journalen?",
@@ -199,7 +201,10 @@
       "reading": "Läser journalen…",
       "again": "Analysera igen",
       "analyse": "Analysera journalen"
-    }
+    },
+    "loading": "Hämtar journalen…",
+    "loadFailed": "Kunde inte hämta journalen.",
+    "retry": "Försök igen"
   },
   "calendar": {
     "weekdays": {

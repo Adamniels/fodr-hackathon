@@ -4,6 +4,7 @@
 // only; data only through the repositories, which take the user (ADR 0010).
 import { SavePlanSchema } from '@fodr/contracts/plans'
 import { skapaPlan } from '@fodr/domain/plan'
+import { validateJournalEntry } from '@fodr/domain/validation'
 import { Hono, type Context } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import type { AppEnv } from './app'
@@ -42,6 +43,18 @@ export function planRoutes({ auth, catalogue, engineVersion, horses, analyses, p
   routes.post('/', async (c) => {
     const body = await parseJson(c, SavePlanSchema)
     if (!body.ok) return body.response
+    // A journal date that is no calendar day is refused before anything is computed or stored.
+    if (body.data.journalDatum !== undefined) {
+      const errors = validateJournalEntry({ datum: body.data.journalDatum })
+      if (errors.length > 0) {
+        return problem(
+          c,
+          400,
+          'validation.invalid',
+          errors.map((e) => ({ path: 'journalDatum', code: e.message.code })),
+        )
+      }
+    }
     const user = c.get('user')
     const horse = await horses.get(user, horseId(c))
     if (!horse) return horseNotFound(c)
@@ -58,13 +71,18 @@ export function planRoutes({ auth, catalogue, engineVersion, horses, analyses, p
         result.errors.map((e) => ({ path: e.field, code: e.message.code })),
       )
     }
-    const saved = await plans.create(user, horse.id, {
-      analysisId: analysis.id,
-      inputs: { profil: horse, analys: analysis.analys },
-      result: result.plan,
-      engineVersion,
-      productSetVersion: catalogue.version,
-    })
+    const saved = await plans.create(
+      user,
+      horse.id,
+      {
+        analysisId: analysis.id,
+        inputs: { profil: horse, analys: analysis.analys },
+        result: result.plan,
+        engineVersion,
+        productSetVersion: catalogue.version,
+      },
+      body.data.journalDatum,
+    )
     return saved ? c.json(saved, 201) : horseNotFound(c)
   })
 

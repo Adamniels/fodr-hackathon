@@ -15,6 +15,7 @@ import {
   bigint,
   boolean,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -184,4 +185,24 @@ export const plans = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index('plans_horse_id_created_at_idx').on(table.horseId, table.createdAt)],
+)
+
+// Journal entries (#28, CF7, ADR 0008): measurements and notes per horse over time. An entry made by saving a plan
+// refers to it, and its snapshot is derived from that plan when read rather than stored twice. `created_at` orders
+// entries on the same date.
+export const journalEntries = pgTable(
+  'journal_entries',
+  {
+    id: id(),
+    horseId: uuid('horse_id')
+      .notNull()
+      .references(() => horses.id, { onDelete: 'cascade' }),
+    date: date('date', { mode: 'string' }).notNull(),
+    weightKg: doublePrecision('weight_kg'),
+    bodyCondition: integer('body_condition'),
+    text: text('text').notNull(),
+    planId: uuid('plan_id').references(() => plans.id, { onDelete: 'cascade' }),
+    createdAt: createdAt(),
+  },
+  (table) => [index('journal_entries_horse_id_date_idx').on(table.horseId, table.date, table.createdAt)],
 )

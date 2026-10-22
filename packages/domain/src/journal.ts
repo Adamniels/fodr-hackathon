@@ -26,6 +26,8 @@ export interface Journalpost {
   hull?: number
   text: string
   plan?: PlanOgonblick
+  /** When the entry was made (ISO timestamp, from the server), which orders entries on the same date (#28). */
+  skapad?: string
 }
 
 export interface Trend {
@@ -48,7 +50,13 @@ const addDays = (datum: string, dagar: number) =>
   new Date(Date.parse(datum) + dagar * DAY_MS).toISOString().slice(0, 10)
 
 export function sorteradePoster(poster: Journalpost[]): Journalpost[] {
-  return [...poster].sort((a, b) => a.datum.localeCompare(b.datum) || a.id.localeCompare(b.id))
+  return [...poster].sort(
+    (a, b) =>
+      a.datum.localeCompare(b.datum) ||
+      (a.skapad && b.skapad ? a.skapad.localeCompare(b.skapad) : 0) ||
+      // Entries without a creation time (the demo's, in the browser) have IDs that start with it (newJournalEntryId).
+      a.id.localeCompare(b.id),
+  )
 }
 
 export function beraknaTrend(poster: Journalpost[], idag: string): Trend {

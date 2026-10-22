@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { demoJournal } from '../test/fixtures/examples'
-import { beraknaTrend, nyPost, ogonblickAvPlan, type Journalpost } from './journal'
+import { beraknaTrend, nyPost, ogonblickAvPlan, sorteradePoster, type Journalpost } from './journal'
 
 const post = (datum: string, viktKg?: number, hull?: number): Journalpost => ({
   id: datum,
@@ -52,5 +52,12 @@ describe('nyPost (#80)', () => {
     const a = nyPost('post-1', '2026-10-15', { text: 'Pigg', viktKg: 540 })
     expect(a).toEqual({ id: 'post-1', datum: '2026-10-15', text: 'Pigg', viktKg: 540 })
     expect(nyPost('post-1', '2026-10-15', { text: 'Pigg', viktKg: 540 })).toEqual(a)
+  })
+  it('ordnar poster samma dag efter när de skapades, före id (#28)', () => {
+    // Database IDs are random, so they say nothing about order; the creation time does.
+    const senare = { ...post('2026-10-15', 500), id: 'aaa', skapad: '2026-10-15T10:00:00.000Z' }
+    const tidigare = { ...post('2026-10-15', 501), id: 'zzz', skapad: '2026-10-15T09:00:00.000Z' }
+    const dagenFore = { ...post('2026-10-14', 502), id: 'mmm', skapad: '2026-10-15T11:00:00.000Z' }
+    expect(sorteradePoster([senare, dagenFore, tidigare]).map((p) => p.id)).toEqual(['mmm', 'zzz', 'aaa'])
   })
 })
