@@ -8,6 +8,8 @@ import { eq } from 'drizzle-orm'
 import { afterAll, describe, expect, inject, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../test/auth-app'
 import { recreateDatabase } from '../test/database'
+import { COMPLETE } from '../test/fixtures/analyses'
+import { SIXTEN } from '../test/fixtures/horses'
 import { loadCatalogueFile } from './catalogue-file'
 import { users } from './db/schema'
 import { accountRepository } from './repositories/accounts'
@@ -244,5 +246,75 @@ describe('the import after an admin wrote a product', () => {
     const ids = (await products.products((await products.currentSetId()) ?? '')).map((p) => p.id)
     expect(ids).toContain(created.id)
     expect(ids).not.toContain(retiredByAdmin.id)
+  })
+})
+
+// CF5 across product changes (#38): an admin's edit of a product a saved plan uses never changes that plan, and a plan
+// saved after it uses the new version. On a product of the test's own, which no other plan uses.
+describe('a saved plan when a product it uses is edited', () => {
+  it('keeps what it was computed from, and a new plan uses the new version', async () => {
+    const { browser } = await admin()
+    const feed: ProductData = {
+      ...NEW,
+      namn: 'Eget foder CF5',
+      kategori: 'ovrigt',
+      naringsdata: 'saknas',
+      perKg: {},
+      prisKr: 200,
+      forpackningKg: 10,
+    }
+    const { product } = (await (
+      await browser.post('/api/v1/admin/products', { data: feed, verifiedOn: null })
+    ).json()) as {
+      product: AdminProduct
+    }
+    const horse = (await (
+      await browser.post('/api/v1/horses', {
+        ...SIXTEN,
+        nuvarandeFoder: [{ produktId: product.id, namn: feed.namn, gramPerDag: 500 }],
+      })
+    ).json()) as { id: string }
+    const analysis = (await (
+      await browser.post(`/api/v1/horses/${horse.id}/analyses`, { analys: COMPLETE })
+    ).json()) as {
+      id: string
+    }
+    const plans = `/api/v1/horses/${horse.id}/plans`
+    type SavedPlan = { id: string; productSetVersion: string; result: { behallnaFoder: { produkt: Produkt }[] } }
+    type Entry = { plan?: { planId: string; kostnadPerManad: number; produkter: { namn: string }[] } }
+    const kept = (plan: SavedPlan) => plan.result.behallnaFoder.find((f) => f.produkt.id === product.id)?.produkt.prisKr
+    const saved = (await (
+      await browser.post(plans, { analysisId: analysis.id, journalDatum: '2026-10-22' })
+    ).json()) as {
+      plan: SavedPlan
+      entry: Entry
+    }
+    expect(kept(saved.plan)).toBe(200)
+    // The journal's snapshot covers the product, with a cost to compare.
+    const cost = saved.entry.plan?.kostnadPerManad
+    expect(cost).toEqual(expect.any(Number))
+    expect(saved.entry.plan?.produkter.map((p) => p.namn)).toContain(feed.namn)
+
+    const edited = await browser.request(`/api/v1/admin/products/${product.id}`, {
+      method: 'PUT',
+      body: { data: { ...feed, prisKr: 400 }, verifiedOn: null },
+    })
+    expect(edited.status).toBe(200)
+
+    // The saved plan and its journal entry: as they were.
+    const latest = ((await (await browser.request(`${plans}/latest`)).json()) as { plan: SavedPlan }).plan
+    expect(latest).toEqual(saved.plan)
+    const { entries } = (await (await browser.request(`/api/v1/horses/${horse.id}/journal`)).json()) as {
+      entries: Entry[]
+    }
+    expect(entries.find((e) => e.plan?.planId === saved.plan.id)?.plan?.kostnadPerManad).toBe(cost)
+
+    // A plan saved now: the new version, in a new product set.
+    const again = await browser.post(plans, { analysisId: analysis.id })
+    expect(again.status).toBe(201)
+    const next = ((await again.json()) as { plan: SavedPlan }).plan
+    expect(next.id).not.toBe(saved.plan.id)
+    expect(next.productSetVersion).not.toBe(saved.plan.productSetVersion)
+    expect(kept(next)).toBe(400)
   })
 })
