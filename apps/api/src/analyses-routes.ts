@@ -24,8 +24,13 @@ import { requireUser, type UserVariables } from './session'
 import type { FileStore } from './storage'
 import { parseJson } from './validation'
 
-// The largest accepted file and room for the multipart framing around it; a larger body is refused before it is read.
-const MAX_BODY_BYTES = Math.max(...Object.values(ANALYSIS_FILE_LIMITS)) + 64 * 1024
+// An upload may be the largest accepted file and the multipart framing around it; anything else is JSON of a few KB, held
+// to the horse routes' limit. A larger body is refused before it is read.
+const MAX_UPLOAD_BYTES = Math.max(...Object.values(ANALYSIS_FILE_LIMITS)) + 64 * 1024
+const MAX_JSON_BYTES = 64 * 1024
+
+const isMultipart = (c: Context) =>
+  c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase() === 'multipart/form-data'
 
 /** The type a file's first bytes show, or undefined for anything that is not a PDF or an accepted photo. */
 export function mediaTypeOf(bytes: Uint8Array): AnalysisMediaType | undefined {
@@ -46,6 +51,8 @@ const withinContract = (a: Grovfoderanalys): Grovfoderanalys => ({
 })
 
 export interface AnalysisRouteDeps {
+  /** The app's own origin, the only one an upload may come from. */
+  origin: string
   auth: Auth
   ai: AiProvider
   files: FileStore
@@ -54,10 +61,12 @@ export interface AnalysisRouteDeps {
   analyses: AnalysisRepository
 }
 
-export function analysisRoutes({ auth, ai, files, logger, horses, analyses }: AnalysisRouteDeps) {
+export function analysisRoutes({ origin, auth, ai, files, logger, horses, analyses }: AnalysisRouteDeps) {
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
-  routes.use(bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => problem(c, 413, 'analysis.too_large') }))
+  const uploadLimit = bodyLimit({ maxSize: MAX_UPLOAD_BYTES, onError: (c) => problem(c, 413, 'analysis.too_large') })
+  const jsonLimit = bodyLimit({ maxSize: MAX_JSON_BYTES, onError: (c) => problem(c, 413, 'request.too_large') })
+  routes.use((c, next) => (isMultipart(c) ? uploadLimit(c, next) : jsonLimit(c, next)))
   type C = Context<AppEnv & { Variables: UserVariables }>
   const horseId = (c: C) => c.req.param('horseId') ?? ''
   const horseNotFound = (c: C) => problem(c, 404, 'horse.not_found')
@@ -80,8 +89,7 @@ export function analysisRoutes({ auth, ai, files, logger, horses, analyses }: An
   })
 
   routes.post('/', async (c) => {
-    const type = c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase()
-    if (type === 'multipart/form-data') return upload(c)
+    if (isMultipart(c)) return upload(c)
     const body = await parseJson(c, CreateAnalysisSchema)
     if (!body.ok) return body.response
     const invalid = refused(c, body.data.analys)
@@ -93,6 +101,9 @@ export function analysisRoutes({ auth, ai, files, logger, horses, analyses }: An
   })
 
   async function upload(c: C): Promise<Response> {
+    // A form on another page can send multipart without asking first (it is a simple request, unlike JSON), with the
+    // session cookie where SameSite allows it; only the app itself may upload. Browsers send Origin with every POST.
+    if (c.req.header('Origin') !== origin) return problem(c, 403, 'request.forbidden_origin')
     const user = c.get('user')
     // The horse first, so a horse that is not the user's never costs an AI call.
     if (!(await horses.get(user, horseId(c)))) return horseNotFound(c)

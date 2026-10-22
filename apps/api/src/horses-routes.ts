@@ -7,7 +7,6 @@ import type { AppEnv } from './app'
 import type { Auth } from './auth'
 import type { Logger } from './logger'
 import { problem } from './problem'
-import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
 import { requireUser, type UserVariables } from './session'
 import type { FileStore } from './storage'
@@ -20,10 +19,9 @@ export interface HorseRouteDeps {
   files: FileStore
   logger: Logger
   horses: HorseRepository
-  analyses: AnalysisRepository
 }
 
-export function horseRoutes({ auth, files, logger, horses, analyses }: HorseRouteDeps) {
+export function horseRoutes({ auth, files, logger, horses }: HorseRouteDeps) {
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))
   // A profile is at most about 15 KB within the contract's caps; a larger body is refused before it is read whole.
@@ -51,16 +49,14 @@ export function horseRoutes({ auth, files, logger, horses, analyses }: HorseRout
   })
 
   routes.delete('/:id', async (c) => {
-    const user = c.get('user')
-    // The keys first: the rows cascade away with the horse.
-    const keys = await analyses.fileKeys(user, c.req.param('id'))
-    const removed = await horses.remove(user, c.req.param('id'))
-    if (!removed) return notFound(c)
+    const keys = await horses.remove(c.get('user'), c.req.param('id'))
+    if (!keys) return notFound(c)
     try {
       await files.remove(keys)
     } catch (err) {
-      // The horse is gone and nothing refers to the files any more; they are logged by count, never by content.
-      logger.error({ requestId: c.get('requestId'), err, files: keys.length }, 'reports of a deleted horse remain')
+      // The horse is gone and nothing refers to the files any more. Their keys are random and hold no personal data,
+      // so they are logged, for removing the files by hand.
+      logger.error({ requestId: c.get('requestId'), err, keys }, 'reports of a deleted horse remain')
     }
     return c.body(null, 204)
   })

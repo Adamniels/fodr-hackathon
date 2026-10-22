@@ -77,7 +77,7 @@ jobs:
               node apps/api/dist/migrate.mjs
           done
       # The production image serves the API and the web app on one origin (ADR 0005). No mail is sent and no file
-      # stored in the smoke test, so SMTP and the file store point nowhere (the API logs that the store is unreachable).
+      # stored in the smoke test, so SMTP and the file store point nowhere.
       - run: >-
           docker run -d --name fodr --network fodr_default -p 127.0.0.1:3000:3000
           -e DATABASE_URL=postgres://fodr:fodr@postgres:5432/fodr

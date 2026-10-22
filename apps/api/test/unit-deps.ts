@@ -28,6 +28,7 @@ export const UNIT_CONFIG: Config = {
     bucket: 'unreachable',
     accessKeyId: 'fodr',
     secretAccessKey: 'fodr-dev-secret',
+    createBucket: false,
   },
 }
 

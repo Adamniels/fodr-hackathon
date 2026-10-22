@@ -28,6 +28,7 @@ const AUTH_AND_MAIL = {
     bucket: 'fodr',
     accessKeyId: 'fodr',
     secretAccessKey: VALID.S3_SECRET_ACCESS_KEY,
+    createBucket: false,
   },
 }
 
@@ -99,6 +100,14 @@ describe('parseConfig', () => {
     const result = parseConfig({ DATABASE_URL: 'http://fodr:secret-password@localhost/fodr' })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.message).not.toMatch(/secret-password/)
+  })
+
+  it('creates the bucket at start only when asked to (#26)', () => {
+    const on = parseConfig({ ...VALID, S3_CREATE_BUCKET: 'true' })
+    expect(on.ok && on.config.s3.createBucket).toBe(true)
+    const wrong = parseConfig({ ...VALID, S3_CREATE_BUCKET: 'ja' })
+    expect(wrong.ok).toBe(false)
+    if (!wrong.ok) expect(wrong.message).toMatch(/S3_CREATE_BUCKET must be true or false/)
   })
 
   it('requires the auth, mail and file store settings (#22, #26)', () => {

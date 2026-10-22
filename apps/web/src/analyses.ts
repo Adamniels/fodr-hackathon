@@ -4,7 +4,7 @@
 // value (an invalid correction stays on the page with its message and is never sent). As with the horses, the cached
 // analyses are dropped when the workspace closes.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ANALYSIS_FILE_LIMITS,
   ANALYSIS_MEDIA_TYPES,
@@ -18,7 +18,7 @@ import type { Omrakning } from '@fodr/domain/analysis'
 import type { Grovfoderanalys } from '@fodr/domain/types'
 import { validateAnalysis } from '@fodr/domain/validation'
 import { callApi, refusedByServer, sessionGuard } from './api-v1'
-import { AutoSaver, type SaveState } from './horses'
+import { AutoSaver, type SaveState } from './autosave'
 
 /** Why a report cannot be uploaded, checked in the browser before any request (CF4); the API checks again. */
 export type ReportProblem = 'analysis.unsupported_type' | 'analysis.too_large'
@@ -107,15 +107,25 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     queryFn: async () => {
       await closing.get(userId)
       // enabled only with a horse.
-      return guard(analysesApi.current(horseId ?? ''))
+      const analysis = await guard(analysesApi.current(horseId ?? ''))
+      // A correction begun while this read was on its way is newer than what it brings: the page's copy stays.
+      return saver.busy() ? (queryClient.getQueryData<Analysis | null>(key) ?? analysis) : analysis
     },
     enabled: horseId !== undefined,
-    staleTime: Infinity,
+    // As for the horses: read again on focus or reconnect only while every correction is saved, stale at once so the
+    // reads run.
+    staleTime: 0,
     refetchOnWindowFocus: () => !saver.busy(),
+    refetchOnReconnect: () => !saver.busy(),
     retry: false,
   })
 
+  // Whether the workspace has closed (the landing page, logging out): an upload answered after that is not put back in
+  // the cache, which closing emptied.
+  const closed = useRef(false)
+
   useEffect(() => {
+    closed.current = false
     const onPageHide = () => saver.flushOnExit()
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (saver.busy()) e.preventDefault()
@@ -125,6 +135,7 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     return () => {
       window.removeEventListener('pagehide', onPageHide)
       window.removeEventListener('beforeunload', onBeforeUnload)
+      closed.current = true
       closing.set(userId, saver.flush())
       queryClient.removeQueries({ queryKey: [...ANALYSES_QUERY_KEY, userId] })
     }
@@ -132,7 +143,7 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
 
   const current = horseId === undefined ? null : query.isPending ? undefined : (query.data ?? null)
   const store = (analysis: Analysis) => {
-    if (horseId !== undefined) queryClient.setQueryData(analysisKey(userId, horseId), analysis)
+    if (horseId !== undefined && !closed.current) queryClient.setQueryData(analysisKey(userId, horseId), analysis)
   }
 
   return {

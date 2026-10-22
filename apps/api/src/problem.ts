@@ -7,6 +7,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 const TITLES = {
   400: 'Bad Request',
   401: 'Unauthorized',
+  403: 'Forbidden',
   404: 'Not Found',
   413: 'Content Too Large',
   415: 'Unsupported Media Type',

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Hastprofil } from '@fodr/domain/types'
-import { AutoSaver, newHorseProfile, type SaveState } from './horses'
+import { AutoSaver, type SaveState } from './autosave'
+import { newHorseProfile } from './horses'
 
 const horse = (id: string, namn: string): Hastprofil => ({ ...newHorseProfile(), id, namn })
 

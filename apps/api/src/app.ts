@@ -65,7 +65,8 @@ export function createApp({ config, logger, ai, auth, files, repositories }: App
   })
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
   // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
-  app.route('/api/v1/horses/:horseId/analyses', analysisRoutes({ auth, ai, files, logger, ...repositories }))
+  const origin = new URL(config.betterAuthUrl).origin
+  app.route('/api/v1/horses/:horseId/analyses', analysisRoutes({ origin, auth, ai, files, logger, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   // The AI routes keep their paths outside /api/v1 until #30 versions them.
   app.route('/api', aiRoutes(ai, logger))

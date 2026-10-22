@@ -56,6 +56,12 @@ const EnvSchema = z.object({
   S3_BUCKET: z.string({ error: required('a bucket name') }),
   S3_ACCESS_KEY_ID: z.string({ error: required('an access key ID') }),
   S3_SECRET_ACCESS_KEY: z.string({ error: required('a secret') }),
+  // Whether the API creates a missing bucket at start: for a local or test store. Production provisions its own bucket,
+  // with its settings, so a wrong name fails loudly rather than creating an empty bucket.
+  S3_CREATE_BUCKET: z
+    .enum(['true', 'false'], { error: 'must be true or false' })
+    .default('false')
+    .transform((v) => v === 'true'),
 })
 
 export interface Config {
@@ -72,7 +78,14 @@ export interface Config {
   smtpPassword: string | undefined
   mailFrom: string
   clientIpHeader: string | undefined
-  s3: { endpoint: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string }
+  s3: {
+    endpoint: string
+    region: string
+    bucket: string
+    accessKeyId: string
+    secretAccessKey: string
+    createBucket: boolean
+  }
 }
 
 export type ConfigResult = { ok: true; config: Config } | { ok: false; message: string }
@@ -110,6 +123,7 @@ export function parseConfig(env: Record<string, string | undefined>): ConfigResu
         bucket: parsed.S3_BUCKET,
         accessKeyId: parsed.S3_ACCESS_KEY_ID,
         secretAccessKey: parsed.S3_SECRET_ACCESS_KEY,
+        createBucket: parsed.S3_CREATE_BUCKET,
       },
     },
   }

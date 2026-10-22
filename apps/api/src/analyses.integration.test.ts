@@ -130,6 +130,21 @@ describe('uploading a report', () => {
     expect((await browser.upload(base, form(big))).status).toBe(201)
   })
 
+  it('refuses an upload sent from another origin, which a form on another page could do', async () => {
+    const { browser, base } = await userWithHorse()
+    const cookie = [...browser.cookies].map(([name, value]) => `${name}=${value}`).join('; ')
+    for (const origin of ['https://elak.example', undefined]) {
+      const res = await app.request(`http://localhost:3000${base}`, {
+        method: 'POST',
+        headers: { cookie, 'x-forwarded-for': nextIp(), ...(origin && { origin }) },
+        body: form(PDF),
+      })
+      expect(res.status).toBe(403)
+      expect(await res.json()).toMatchObject({ code: 'request.forbidden_origin' })
+    }
+    expect(ai.calls).toEqual([])
+  })
+
   it('refuses a request without a file', async () => {
     const { browser, base } = await userWithHorse()
     const res = await browser.upload(base, new FormData())
@@ -238,6 +253,29 @@ describe('an analysis without a file', () => {
     expect(ai.calls).toEqual([])
   })
 
+  it("is 404 for another user's horse", async () => {
+    const { base } = await userWithHorse()
+    const { browser: other } = await signedInUser(app, nextIp())
+    const res = await other.post(base, { analys })
+    expect(res.status).toBe(404)
+    expect(await res.json()).toMatchObject({ code: 'horse.not_found' })
+  })
+
+  it('keeps one current analysis when several are created at once (a double click)', async () => {
+    const { browser, horseId, base } = await userWithHorse()
+    const results = await Promise.all(Array.from({ length: 5 }, () => browser.post(base, { analys })))
+    expect(results.map((r) => r.status)).toEqual([201, 201, 201, 201, 201])
+    const rows = await rowsOf(horseId)
+    expect(rows).toHaveLength(5)
+    expect(rows.filter((r) => r.isCurrent)).toHaveLength(1)
+  })
+
+  it('refuses a JSON body larger than an analysis can be, before reading it', async () => {
+    const { browser, base } = await userWithHorse()
+    const res = await browser.post(base, { analys: { ...analys, labb: 'x'.repeat(70 * 1024) } })
+    expect(res.status).toBe(413)
+  })
+
   it('is refused when the domain refuses its values', async () => {
     const { browser, base } = await userWithHorse()
     const res = await browser.post(base, { analys: { ...analys, tsProcent: 0 } })
@@ -262,6 +300,27 @@ describe('correcting the values', () => {
     const res = await browser.request(values, { method: 'PUT', body: { analys, omrakningar: [] } })
     expect(res.status).toBe(200)
     expect(await current(browser, base)).toMatchObject({ id: analysis.id, analys, omrakningar: [] })
+  })
+
+  it('keeps the stored conversion, never the values a client sends for it', async () => {
+    const { browser, analysis, values } = await uploaded()
+    const [stored] = analysis.omrakningar as { amne: string; message: { params: Record<string, number> } }[]
+    const res = await browser.request(values, {
+      method: 'PUT',
+      body: {
+        analys: analysis.analys,
+        omrakningar: [{ ...stored, message: { code: 'conversion.proteinFromCrude', params: { grams: 999 } } }],
+      },
+    })
+    expect(((await res.json()) as AnalysisBody).omrakningar).toEqual([stored])
+  })
+
+  it('moves the sampling date along with a corrected one', async () => {
+    const { browser, horseId, analysis, values } = await uploaded()
+    const analys = { ...analysis.analys, provdatum: '2026-07-01' }
+    await browser.request(values, { method: 'PUT', body: { analys, omrakningar: analysis.omrakningar } })
+    const [row] = await rowsOf(horseId)
+    expect(row.sampledOn).toBe('2026-07-01')
   })
 
   it('keeps no conversion the analysis never had', async () => {

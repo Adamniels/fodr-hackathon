@@ -97,9 +97,16 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
     }
   }
 
+  // One request at a time: a double click would otherwise store the example twice.
+  const [exampleLoading, setExampleLoading] = useState(false)
+  const busy = laddar || exampleLoading
   const loadExample = (example: Grovfoderanalys) => {
     setFel(null)
-    analyses.loadExample(example).catch((e: unknown) => setFel(errorText(e)))
+    setExampleLoading(true)
+    analyses
+      .loadExample(example)
+      .catch((e: unknown) => setFel(errorText(e)))
+      .finally(() => setExampleLoading(false))
   }
 
   const errors = useMemo(() => (analys ? validateAnalysis(analys) : []), [analys])
@@ -127,34 +134,39 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
       <h2>{t('analysis.title', { name: hast.namn })}</h2>
       <p className="ingress">{t('analysis.intro')}</p>
 
-      <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
-        <input
-          type="file"
-          accept="application/pdf,image/png,image/jpeg,image/webp"
-          onChange={(e) => {
-            const fil = e.target.files?.[0]
-            if (fil) void laddaUpp(fil)
-          }}
-          disabled={laddar}
-        />
-        {laddar ? (
-          <span>{t('analysis.reading', { file: filnamn })}</span>
-        ) : (
-          <span>
-            <Trans i18nKey="analysis.choose" components={{ strong: <strong /> }} />
-          </span>
-        )}
-      </label>
-      <div className="exempel">
-        {t('analysis.noReport')}{' '}
-        <button className="lank" onClick={() => loadExample(analysKomplett)}>
-          {t('analysis.exampleComplete')}
-        </button>{' '}
-        ·{' '}
-        <button className="lank" onClick={() => loadExample(analysBas)}>
-          {t('analysis.exampleBasic')}
-        </button>
-      </div>
+      {/* Hidden while the stored analysis could not be read, so an upload never replaces one the page cannot show. */}
+      {!analyses.loadFailed && (
+        <>
+          <label className={`uppladdning ${laddar ? 'laddar' : ''}`}>
+            <input
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp"
+              onChange={(e) => {
+                const fil = e.target.files?.[0]
+                if (fil) void laddaUpp(fil)
+              }}
+              disabled={busy}
+            />
+            {laddar ? (
+              <span>{t('analysis.reading', { file: filnamn })}</span>
+            ) : (
+              <span>
+                <Trans i18nKey="analysis.choose" components={{ strong: <strong /> }} />
+              </span>
+            )}
+          </label>
+          <div className="exempel">
+            {t('analysis.noReport')}{' '}
+            <button className="lank" disabled={busy} onClick={() => loadExample(analysKomplett)}>
+              {t('analysis.exampleComplete')}
+            </button>{' '}
+            ·{' '}
+            <button className="lank" disabled={busy} onClick={() => loadExample(analysBas)}>
+              {t('analysis.exampleBasic')}
+            </button>
+          </div>
+        </>
+      )}
       {fel && (
         <div className="ruta fel" role="alert">
           {fel}

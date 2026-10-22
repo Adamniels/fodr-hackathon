@@ -38,6 +38,20 @@ test('add a horse and it survives reload and another browser context', async ({ 
   await other.close()
 })
 
+test('a change from another device shows when the window is back in focus', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await expect(page.getByText('550 kg', { exact: true })).toBeVisible()
+  // Another device saves a new weight (the same session, through the API).
+  const { horses } = (await (await page.request.get('/api/v1/horses')).json()) as {
+    horses: ({ id: string } & Record<string, unknown>)[]
+  }
+  const { id, ...sixten } = horses[0]
+  expect((await page.request.put(`/api/v1/horses/${id}`, { data: { ...sixten, viktKg: 560 } })).ok()).toBe(true)
+  // The window comes back into view, which is how TanStack Query notices focus.
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange', { bubbles: true })))
+  await expect(page.getByText('560 kg', { exact: true })).toBeVisible()
+})
+
 test('deleting a horse asks first, and cancelling keeps it', async ({ page }) => {
   await createAccountWithHorses(page)
   await page.getByRole('button', { name: 'Ta bort häst' }).click()

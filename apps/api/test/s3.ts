@@ -8,4 +8,5 @@ export const testS3Config = (): Config['s3'] => ({
   bucket: 'fodr-test',
   accessKeyId: process.env.S3_ACCESS_KEY_ID ?? 'fodr',
   secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? 'fodr-dev-secret',
+  createBucket: true,
 })

@@ -1,5 +1,6 @@
 // The workspace steps, one route each under /horses/:horseId (router.tsx). Each reads the workspace state from the
 // outlet context and renders the step component as App.tsx did before the steps had URLs (#21).
+import { useTranslation } from 'react-i18next'
 import { Navigate } from 'react-router'
 import { nyPost } from '@fodr/domain/journal'
 import { newJournalEntryId } from '../storage'
@@ -41,10 +42,11 @@ export function AnalysisRoute() {
 }
 
 export function PlanRoute() {
+  const { t } = useTranslation()
   const { hast, analys, analyses, plan, planOgonblick, addEntry, goTo } = useWorkspace()
   if (!hast) return null
   // Wait for the horse's analysis; without one, the plan has nothing to plan from: back to the analysis.
-  if (analyses.current === undefined) return null
+  if (analyses.current === undefined) return <p role="status">{t('analysis.loading')}</p>
   if (!analys || !plan) return <Navigate to={`/horses/${hast.id}/${STEP_PATH.analys}`} replace />
   if ('errors' in plan) {
     return <InvalidInput errors={plan.errors} onToHorse={() => goTo('hast')} onToAnalysis={() => goTo('analys')} />

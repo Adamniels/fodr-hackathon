@@ -24,8 +24,11 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   const database = createDatabase(config.databaseUrl)
   const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
   const files = createFileStore(config.s3)
-  // In the background, like the database: the API serves everything but uploads while the store is unreachable.
-  files.ensureBucket().catch((err: unknown) => logger.warn({ err }, 'file store unreachable at start'))
+  // A local or test store gets its bucket here, in the background like the database: the API serves everything but
+  // uploads while the store is unreachable.
+  if (config.s3.createBucket) {
+    files.ensureBucket().catch((err: unknown) => logger.warn({ err }, 'could not create the bucket at start'))
+  }
   const app = createApp({
     config,
     logger,

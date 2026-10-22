@@ -2,13 +2,15 @@
 // an analysis of a horse the user is not a member of. Not found and not the user's are the same: undefined (404).
 import { AnalysisSchema, type Analysis, type Values } from '@fodr/contracts/analyses'
 import type { User } from '@fodr/contracts/me'
-import { and, eq, exists, isNotNull } from 'drizzle-orm'
+import { and, eq, exists } from 'drizzle-orm'
 import type { Database } from '../db'
-import { analyses, horseMembers } from '../db/schema'
+import { analyses, horseMembers, horses } from '../db/schema'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 // A sampling date the database can store; anything else the AI read is kept in the values only.
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const sampledOn = (provdatum: string | undefined) =>
+  provdatum && ISO_DATE.test(provdatum) && !Number.isNaN(Date.parse(provdatum)) ? provdatum : null
 
 type Row = typeof analyses.$inferSelect
 
@@ -39,8 +41,6 @@ export interface AnalysisRepository {
     analysisId: string,
     values: Values,
   ): Promise<Analysis | undefined>
-  /** The keys of the horse's stored reports, to delete them with the horse. */
-  fileKeys(user: Pick<User, 'id'>, horseId: string): Promise<string[]>
 }
 
 export function analysisRepository(db: Database['db']): AnalysisRepository {
@@ -70,18 +70,19 @@ export function analysisRepository(db: Database['db']): AnalysisRepository {
     async create(user, horseId, analysis) {
       if (!UUID.test(horseId)) return undefined
       return db.transaction(async (tx) => {
-        // Locks the membership row, so the horse cannot be deleted between this check and the insert.
-        const members = await tx
-          .select({ horseId: horseMembers.horseId })
-          .from(horseMembers)
-          .where(and(eq(horseMembers.horseId, horseId), eq(horseMembers.userId, user.id)))
-          .for('share')
-        if (members.length === 0) return undefined
+        // Locks the horse: two analyses created at once take turns, so the second sees the first as current and
+        // demotes it, and a delete of the horse (horseRepository.remove, which takes the same lock) waits or is waited
+        // for, so it always sees every file it must remove.
+        const locked = await tx
+          .select({ id: horses.id })
+          .from(horses)
+          .where(and(eq(horses.id, horseId), isMember(user, horseId)))
+          .for('update')
+        if (locked.length === 0) return undefined
         await tx
           .update(analyses)
           .set({ isCurrent: false })
           .where(and(eq(analyses.horseId, horseId), eq(analyses.isCurrent, true)))
-        const provdatum = analysis.values.analys.provdatum
         const [row] = await tx
           .insert(analyses)
           .values({
@@ -91,7 +92,7 @@ export function analysisRepository(db: Database['db']): AnalysisRepository {
             values: analysis.values,
             extracted: analysis.extracted ?? null,
             isCurrent: true,
-            sampledOn: provdatum && ISO_DATE.test(provdatum) && !Number.isNaN(Date.parse(provdatum)) ? provdatum : null,
+            sampledOn: sampledOn(analysis.values.analys.provdatum),
           })
           .returning()
         return toAnalysis(row)
@@ -109,21 +110,17 @@ export function analysisRepository(db: Database['db']): AnalysisRepository {
             .for('update')
         ).at(0)
         if (!row) return undefined
-        // A conversion the analysis never had cannot be claimed: only the stored ones may stay.
-        const stored = new Set(row.values.omrakningar.map((o) => o.amne))
-        const kept = { ...values, omrakningar: values.omrakningar.filter((o) => stored.has(o.amne)) }
-        const [updated] = await tx.update(analyses).set({ values: kept }).where(eq(analyses.id, analysisId)).returning()
+        // A conversion is the server's: the client can only drop one (a value the owner typed over), never add one or
+        // change what it says, so the stored entries it still names are kept as stored.
+        const sent = new Set(values.omrakningar.map((o) => o.amne))
+        const kept = { ...values, omrakningar: row.values.omrakningar.filter((o) => sent.has(o.amne)) }
+        const [updated] = await tx
+          .update(analyses)
+          .set({ values: kept, sampledOn: sampledOn(kept.analys.provdatum) })
+          .where(eq(analyses.id, analysisId))
+          .returning()
         return toAnalysis(updated)
       })
-    },
-
-    async fileKeys(user, horseId) {
-      if (!UUID.test(horseId)) return []
-      const rows = await db
-        .select({ key: analyses.fileKey })
-        .from(analyses)
-        .where(and(eq(analyses.horseId, horseId), isNotNull(analyses.fileKey), isMember(user, horseId)))
-      return rows.flatMap((r) => (r.key ? [r.key] : []))
     },
   }
 }

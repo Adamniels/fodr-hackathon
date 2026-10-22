@@ -3,9 +3,9 @@
 // which the routes answer with 404, so IDs cannot be probed.
 import { HorseSchema, type Horse, type HorseProfile } from '@fodr/contracts/horses'
 import type { User } from '@fodr/contracts/me'
-import { and, asc, eq, exists, sql } from 'drizzle-orm'
+import { and, asc, eq, exists, isNotNull, sql } from 'drizzle-orm'
 import type { Database } from '../db'
-import { horseMembers, horses } from '../db/schema'
+import { analyses, horseMembers, horses } from '../db/schema'
 
 // Postgres refuses a malformed UUID with an error; it can only be an ID that names no horse.
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -22,7 +22,8 @@ export interface HorseRepository {
   get(user: Pick<User, 'id'>, id: string): Promise<Horse | undefined>
   create(user: Pick<User, 'id'>, profile: HorseProfile): Promise<Horse>
   update(user: Pick<User, 'id'>, id: string, profile: HorseProfile): Promise<Horse | undefined>
-  remove(user: Pick<User, 'id'>, id: string): Promise<boolean>
+  /** Deletes the horse and everything of it; returns the keys of its stored reports, or undefined when not found. */
+  remove(user: Pick<User, 'id'>, id: string): Promise<string[] | undefined>
 }
 
 export function horseRepository(db: Database['db']): HorseRepository {
@@ -69,12 +70,23 @@ export function horseRepository(db: Database['db']): HorseRepository {
     },
 
     async remove(user, id) {
-      if (!UUID.test(id)) return false
-      const deleted = await db
-        .delete(horses)
-        .where(and(eq(horses.id, id), isMember(user)))
-        .returning({ id: horses.id })
-      return deleted.length > 0
+      if (!UUID.test(id)) return undefined
+      return db.transaction(async (tx) => {
+        // The same lock an analysis takes when it is created (analysisRepository.create), so the keys read here are
+        // every file the horse has: an upload either finished before, or finds the horse gone.
+        const locked = await tx
+          .select({ id: horses.id })
+          .from(horses)
+          .where(and(eq(horses.id, id), isMember(user)))
+          .for('update')
+        if (locked.length === 0) return undefined
+        const files = await tx
+          .select({ key: analyses.fileKey })
+          .from(analyses)
+          .where(and(eq(analyses.horseId, id), isNotNull(analyses.fileKey)))
+        await tx.delete(horses).where(eq(horses.id, id))
+        return files.flatMap((f) => (f.key ? [f.key] : []))
+      })
     },
   }
 }

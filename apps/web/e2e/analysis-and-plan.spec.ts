@@ -90,6 +90,10 @@ test('a file of the wrong type or too large is refused before it is uploaded', a
   const photo = Buffer.alloc(5 * 1024 * 1024 + 1)
   await fileInput(page).setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: photo })
   await expect(page.getByText('Filen är för stor. En PDF får vara högst 20 MB och en bild högst 5 MB.')).toBeVisible()
+  // A PDF has a limit of its own, 20 MB: just over it is refused as well.
+  const pdf = Buffer.alloc(20 * 1024 * 1024 + 1)
+  await fileInput(page).setInputFiles({ name: 'stor.pdf', mimeType: 'application/pdf', buffer: pdf })
+  await expect(page.getByText('Filen är för stor. En PDF får vara högst 20 MB och en bild högst 5 MB.')).toBeVisible()
   expect(uploads).toEqual([])
 })
 

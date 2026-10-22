@@ -48,6 +48,7 @@ export default defineConfig({
         S3_BUCKET: 'fodr-e2e',
         S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? 'fodr',
         S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? 'fodr-dev-secret',
+        S3_CREATE_BUCKET: 'true',
       },
     },
     {
