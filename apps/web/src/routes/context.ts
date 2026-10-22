@@ -26,7 +26,10 @@ export interface WorkspaceContext {
   goTo: (step: Step) => void
   setAnalysis: (analys: Grovfoderanalys | null, omrakningar: Omrakning[]) => void
   updateHorse: (horse: Hastprofil) => void
-  addHorse: (horse: Hastprofil) => void
+  /** Creates a horse and opens its profile. */
+  addHorse: () => void
+  /** Deletes the horse; rejects when the server refused, so the confirmation can say so. */
+  removeHorse: (id: string) => Promise<void>
   addEntry: (horseId: string, entry: Journalpost) => void
 }
 

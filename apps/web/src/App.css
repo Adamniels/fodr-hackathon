@@ -2110,3 +2110,45 @@ label.kryss {
     grid-template-columns: minmax(0, 1fr) auto 70px;
   }
 }
+
+/* The workspace while the horses load, or when they could not be read (#25). */
+.arbetsyta-laddar {
+  max-width: 440px;
+  margin: 80px auto;
+  padding: 0 16px;
+  text-align: center;
+  color: var(--text-2);
+}
+
+/* Where the horse's edits are: saving, saved, or failed with a retry button. */
+.sparstatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin: -8px 0 12px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.atgardsrad .ta-bort {
+  margin-right: auto;
+}
+
+/* A confirmation in a native modal dialog: focus stays in it and Esc closes it. */
+.bekrafta {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  border: none;
+  border-radius: 16px;
+  padding: 28px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+}
+.bekrafta::backdrop {
+  background: rgba(23, 31, 21, 0.45);
+}
+.bekrafta h2 {
+  margin-top: 0;
+}

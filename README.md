@@ -61,6 +61,7 @@ To hide the formatting commit from `git blame`: `git config blame.ignoreRevsFile
 | API | `apps/api/src/` | Hono app (`app.ts`), config from the environment (`config.ts`), problem+json errors, Drizzle (`db.ts`, migrations in `apps/api/drizzle/`) |
 | Auth | `apps/api/src/auth.ts`, `session.ts`, `mail/` | Better Auth at `/api/auth/*` (sign up, verification, login, logout, password reset, magic link), `requireUser` for protected routes, account emails over SMTP (Mailpit locally) |
 | Horses API | `apps/api/src/horses-routes.ts`, `repositories/horses.ts` | `/api/v1/horses`: CRUD for the signed-in user's horses, every query scoped through `horse_members` (ADR 0010) |
+| Web horses | `apps/web/src/horses.ts` | The account's horses on `/api/v1/horses`, edits autosaved when typing pauses; the demo keeps its own in the browser (`demo.ts`, until #29) |
 | Contracts | `packages/contracts/src/` | zod schemas shared by the web app and the API: problem+json, `GET /api/v1/me`, horses |
 | AI | `apps/api/src/ai/` | Reads reports, interprets free text, explains, behind the `AiProvider` interface (`anthropic.ts`). Never calculates |
 | Products | `apps/web/src/data/products.json` | Generated from store data (228 items), not edited by hand |

@@ -1,32 +1,9 @@
-// Horse profiles per user, saved locally in the browser. This is the only file that has to be
-// replaced with API calls when real accounts and a database arrive.
+// The journal and the plan explanations, saved locally in the browser until they move to the API (#27, #28). The
+// horses are on the API since #25 (horses.ts).
 
 import { DEMO_USER } from './demo'
-import { demoHast, demoJournal, ponny } from './data/examples'
+import { demoJournal } from './data/examples'
 import type { Journalpost } from '@fodr/domain/journal'
-import type { Hastprofil } from '@fodr/domain/types'
-
-// v2: the profile gained breed, performance and environment.
-const horsesKey = (userId: string) => `krubba.hastar.v2.${userId}`
-
-export function loadHorses(userId: string): Hastprofil[] {
-  try {
-    const raw = localStorage.getItem(horsesKey(userId))
-    if (raw) return JSON.parse(raw) as Hastprofil[]
-  } catch {
-    // Storage unavailable or corrupt.
-  }
-  // The demo account starts with two horses, new accounts start empty.
-  return userId === DEMO_USER.id ? [demoHast, ponny] : []
-}
-
-export function saveHorses(userId: string, hastar: Hastprofil[]) {
-  try {
-    localStorage.setItem(horsesKey(userId), JSON.stringify(hastar))
-  } catch {
-    // Ignore; the profiles stay in memory for the session.
-  }
-}
 
 /**
  * The ID of a new journal entry. It starts with the time, so entries on the same date keep the order they were
@@ -34,24 +11,6 @@ export function saveHorses(userId: string, hastar: Hastprofil[]) {
  */
 export function newJournalEntryId(): string {
   return `post-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
-
-export function nyHast(): Hastprofil {
-  return {
-    id: `hast-${Date.now()}`,
-    namn: '',
-    alderAr: 10,
-    kon: 'valack',
-    typ: 'normalfodd',
-    viktKg: 500,
-    hull: 5,
-    ridning: { passPerVecka: 4, minuterPerPass: 45, travGaloppMinPerPass: 15 },
-    prestanda: 'fritid',
-    miljo: { hallning: 'box', timmarUtePerDag: 8, klippt: false, tacke: true, lagstaTempC: -5 },
-    halsa: { fang: false, ems: false, ovrigt: '' },
-    grovfoder: { typ: 'hosilage', kgPerDag: 10 },
-    nuvarandeFoder: [],
-  }
 }
 
 // Journal per user: horse ID to entries.

@@ -1,31 +1,93 @@
 import { FOLJDFRAGA, profilMedFoljdfraga } from './fixtures/ai'
 import {
+  clientIpHeaders,
   createAccount,
-  enterDemo,
+  createAccountWithHorses,
   expect,
   goToStep,
   horseList,
-  loadExamplePlan,
+  logIn,
+  showExamplePlan,
   test,
   typeKeyByKey,
 } from './support/helpers'
 
-test('add a horse and it survives reload', async ({ page }) => {
-  await createAccount(page, 'Hästägare', 'agare@example.se')
+// Horse profiles on the API (CF2, #25): every test uses a real account, and the profile is saved on the server.
+
+test('add a horse and it survives reload and another browser context', async ({ page, browser }) => {
+  const account = await createAccount(page, 'Hästägare', 'agare@example.se')
   await page.getByRole('button', { name: 'Lägg till din första häst' }).click()
   await page.getByLabel('Namn').fill('Blixten')
   await page.getByLabel('Vikt (kg)').fill('480')
   await page.getByLabel('Ålder (år)').fill('9')
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
 
   await page.reload()
 
   await expect(horseList(page).getByRole('button', { name: 'Blixten' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Blixten')
   await expect(page.getByText('480 kg', { exact: true })).toBeVisible()
+
+  // Another device: a browser context of its own, with nothing of this one's, logs in to the same account.
+  const other = await browser.newContext({ extraHTTPHeaders: clientIpHeaders() })
+  const otherPage = await other.newPage()
+  await logIn(otherPage, account.email)
+  await expect(horseList(otherPage).getByRole('button', { name: 'Blixten' })).toBeVisible()
+  await expect(otherPage.getByText('480 kg', { exact: true })).toBeVisible()
+  await expect(otherPage.getByLabel('Ålder (år)')).toHaveValue('9')
+  await other.close()
+})
+
+test('deleting a horse asks first, and cancelling keeps it', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await page.getByRole('button', { name: 'Ta bort häst' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Ta bort Sixten?' })
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Avbryt' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Ta bort häst' }).click()
+  await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click()
+  await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeHidden()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pysen')
+
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Pysen')
+  await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeHidden()
+})
+
+test('a failed save keeps the edit and saves it on retry', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await page.route('**/api/v1/horses/*', (route) =>
+    route.request().method() === 'PUT'
+      ? route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' })
+      : route.fallback(),
+  )
+  await page.getByLabel('Namn').fill('Sixten Andra')
+  await expect(page.getByText('Kunde inte spara ändringarna.')).toBeVisible()
+  await expect(page.getByLabel('Namn')).toHaveValue('Sixten Andra')
+
+  await page.unroute('**/api/v1/horses/*')
+  await page.getByRole('button', { name: 'Försök igen' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
+})
+
+test("another account's horse cannot be opened", async ({ page }) => {
+  await createAccountWithHorses(page)
+  const sixtenUrl = page.url()
+  // The verification link of a second account signs the browser in to it.
+  await createAccount(page, 'Någon annan', 'annan@example.se')
+  await page.goto(sixtenUrl)
+  await expect(page).toHaveURL(/\/horses$/)
+  await expect(page.getByRole('button', { name: 'Lägg till din första häst' })).toBeVisible()
+  await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeHidden()
 })
 
 test('choosing a breed sets the type', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   // The type segment exposes no accessible pressed state yet, so the active class is asserted.
   const lattfodd = page.getByRole('button', { name: /^Lättfödd/ })
   await expect(lattfodd).not.toHaveClass(/aktiv/)
@@ -34,7 +96,7 @@ test('choosing a breed sets the type', async ({ page }) => {
 })
 
 test('AI fill sets fields and sensitivities', async ({ page, ai }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await horseList(page).getByRole('button', { name: 'Pysen' }).click()
   await expect(page.getByLabel('Har haft fång')).not.toBeChecked()
 
@@ -50,7 +112,7 @@ test('AI fill sets fields and sensitivities', async ({ page, ai }) => {
 
 test('AI follow-up question round trip', async ({ page, ai }) => {
   ai.respondWith('profil', profilMedFoljdfraga)
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await page.getByLabel('Om hästen och vad den äter i dag').fill('En liter pellets morgon och kväll')
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
@@ -64,7 +126,7 @@ test('AI follow-up question round trip', async ({ page, ai }) => {
 
 test('AI error is shown and the form stays usable', async ({ page, ai }) => {
   ai.respondWith('profil', { fel: 'Testfel' }, 500)
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await page.getByLabel('Om hästen och vad den äter i dag').fill('Något om hästen')
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
@@ -74,7 +136,7 @@ test('AI error is shown and the form stays usable', async ({ page, ai }) => {
 })
 
 test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   const field = page.getByLabel('Kg per dag (som det utfodras)')
   await typeKeyByKey(field, '12.5')
   await expect(field).toHaveValue('12.5')
@@ -87,7 +149,7 @@ test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
 })
 
 test("switching horse leaves the other horse's weight estimate and AI text behind (#109)", async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   await page.getByLabel('Bröstomfång (cm)').fill('180')
   await page.getByLabel('Längd armbåge–sittben (cm)').fill('160')
   await expect(page.getByText(/^Uppskattad vikt/)).toBeVisible()
@@ -100,7 +162,7 @@ test("switching horse leaves the other horse's weight estimate and AI text behin
 })
 
 test('clearing weight is rejected (C2)', async ({ page }) => {
-  await enterDemo(page)
+  await createAccountWithHorses(page)
   const weight = page.getByLabel('Vikt (kg)')
   await expect(weight).toHaveValue('550')
   await weight.fill('')
@@ -112,7 +174,8 @@ test('clearing weight is rejected (C2)', async ({ page }) => {
 })
 
 test('a weight outside the range is shown at the field and stops the plan (C1)', async ({ page }) => {
-  await loadExamplePlan(page)
+  await createAccountWithHorses(page)
+  await showExamplePlan(page)
   await goToStep(page, 'Hästen')
   await page.getByLabel('Vikt (kg)').fill('0')
   await expect(page.getByText('Ange ett värde mellan 50 och 1 200.')).toBeVisible()

@@ -102,7 +102,19 @@
       "analysisNone": "Inte uppladdad än"
     },
     "stepsNav": "Steg",
-    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare."
+    "footnote": "Behov enligt SLU Rapport 289, Utfodringsrekommendationer för häst (2013). Prototyp, ersätter inte veterinär eller foderrådgivare.",
+    "horses": {
+      "loading": "Hämtar dina hästar…",
+      "loadFailed": "Kunde inte hämta dina hästar.",
+      "retry": "Försök igen",
+      "addFailed": "Kunde inte lägga till hästen. Försök igen."
+    },
+    "save": {
+      "saving": "Sparar…",
+      "saved": "Sparat",
+      "failed": "Kunde inte spara ändringarna.",
+      "retry": "Försök igen"
+    }
   },
   "analysis": {
     "title": "Grovfoderanalysen för {{name}}",
@@ -406,6 +418,14 @@
       "interpreting": "Tolkar…",
       "answer": "Svara",
       "fill": "Fyll i med AI"
+    },
+    "delete": {
+      "button": "Ta bort häst",
+      "title": "Ta bort {{name}}?",
+      "body": "Hästens analyser, foderplaner och journal tas också bort. Det går inte att ångra.",
+      "failed": "Kunde inte ta bort hästen. Försök igen.",
+      "cancel": "Avbryt",
+      "confirm": "Ta bort"
     }
   },
   "landing": {

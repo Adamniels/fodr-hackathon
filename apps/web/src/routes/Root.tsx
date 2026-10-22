@@ -3,11 +3,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Outlet } from 'react-router'
-import { authClient, fetchMe } from '../auth-client'
+import { authClient, fetchMe, ME_QUERY_KEY as ME } from '../auth-client'
 import { DEMO_USER, isDemoOpen, setDemoOpen } from '../demo'
 import { SessionContext, type Session } from './session'
-
-const ME = ['me']
 
 export function Root() {
   const queryClient = useQueryClient()
