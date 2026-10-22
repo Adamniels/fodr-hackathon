@@ -173,6 +173,14 @@ test('AI error is shown and the form stays usable', async ({ page, ai }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
 })
 
+test('a used daily AI quota is said on the profile too (#31)', async ({ page, ai }) => {
+  ai.respondWith('profile', problem(429, 'ai.quota_exceeded'), 429)
+  await createAccountWithHorses(page)
+  await page.getByLabel('Om hästen och vad den äter i dag').fill('Något om hästen')
+  await page.getByRole('button', { name: 'Fyll i med AI' }).click()
+  await expect(page.getByText('Du har använt dagens AI-frågor. De fylls på vid midnatt.')).toBeVisible()
+})
+
 test('typing a decimal number key by key keeps it (#50)', async ({ page }) => {
   await createAccountWithHorses(page)
   const field = page.getByLabel('Kg per dag (som det utfodras)')

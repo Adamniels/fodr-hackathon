@@ -11,6 +11,11 @@ from `AI_PRICE_SEK_PER_MTOK_INPUT` and `AI_PRICE_SEK_PER_MTOK_OUTPUT`, so it is 
 against the provider's price list when the model or the exchange rate changes. The budget is about 300 kr per month
 (spec, decision log).
 
+Two gaps make the totals a lower bound. A reply that failed for a reason the provider did not report tokens with (a
+reply that does not match the schema, an error from the SDK itself) is a `failed` row with 0 tokens and 0 kr, though
+the provider may have billed it; many such rows mean something is wrong and the real cost is higher. And a user's rows
+are deleted with the user, so a month's total shrinks when an account is deleted later.
+
 ### Monthly cost
 
 The cost per calendar month in Sweden, with the number of calls and how many failed:
@@ -49,6 +54,7 @@ limit 20;
 ### The daily quota
 
 Each user may make `AI_DAILY_CALLS_PER_USER` calls per calendar day in Sweden; over it every AI call answers 429
-`ai.quota_exceeded` and nothing reaches the model. Calls that reached the model count, failed or not; a call refused
-before it (a malformed request, no API key) does not. A row left `pending` is a call whose result could not be recorded;
+`ai.quota_exceeded` and nothing reaches the model; each refusal is logged as `ai quota used` with its route. Calls that
+may have reached the model count, failed or not, a timeout too; a call refused before it (a malformed request, no API
+key, a key the provider rejects) does not. A row left `pending` is a call whose result could not be recorded;
 it still counts for that day.

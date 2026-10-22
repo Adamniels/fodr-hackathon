@@ -68,6 +68,9 @@ describe('the daily quota', () => {
     expect((await browser.post('/api/v1/ai/profile', { foderText: 42 })).status).toBe(400)
     ai.fail('interpretProfile', new AiProviderError('missing_key'))
     expect((await ask(browser)).status).toBe(503)
+    // A rejected key never reaches a model either: a wrong key must not use up everyone's quota for the day.
+    ai.fail('interpretProfile', new AiProviderError('auth'))
+    expect((await ask(browser)).status).not.toBe(200)
     const rows = await rowsOf(userId)
     expect(rows.map((r) => r.status)).toEqual(['failed'])
   })
@@ -85,6 +88,21 @@ describe('the daily quota', () => {
       })
     }
     expect((await ask(browser)).status).toBe(200)
+  })
+
+  it('counts the calls made since midnight in Sweden, which a UTC day would not', async () => {
+    const { browser, userId } = await user()
+    // Rows from just after today's start in Sweden, which is before the start of the UTC day.
+    for (let i = 0; i < LIMIT; i++) {
+      await database.db.insert(aiUsage).values({
+        userId,
+        route: 'profile',
+        model: 'test-model',
+        status: 'ok',
+        createdAt: sql`(date_trunc('day', now() at time zone 'Europe/Stockholm') at time zone 'Europe/Stockholm') + interval '1 second'`,
+      })
+    }
+    expect((await ask(browser)).status).toBe(429)
   })
 
   it('counts the report reading of an analysis upload, and refuses it over the quota', async () => {
@@ -119,6 +137,16 @@ describe('the usage log', () => {
       // 1000 × 30 + 200 × 150 SEK per million tokens.
       costSek: 0.06,
     })
+  })
+
+  it('records the tokens and cost of a reply the model refused', async () => {
+    const { browser, userId } = await user()
+    ai.fail('interpretProfile', new AiProviderError('refusal', undefined, { inputTokens: 2000, outputTokens: 100 }))
+    await ask(browser)
+    expect(await rowsOf(userId)).toMatchObject([
+      // 2000 × 30 + 100 × 150 SEK per million tokens.
+      { status: 'failed', inputTokens: 2000, outputTokens: 100, costSek: 0.075 },
+    ])
   })
 
   it('goes with its user', async () => {

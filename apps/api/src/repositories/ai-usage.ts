@@ -7,8 +7,9 @@ import { aiUsage } from '../db/schema'
 
 export type AiRoute = (typeof aiUsage.$inferInsert)['route']
 
-// The start of today in Sweden, where the users are: the quota resets at midnight there.
-const startOfSwedishDay = sql`(date_trunc('day', now() at time zone 'Europe/Stockholm') at time zone 'Europe/Stockholm')`
+// The start of today in Sweden, where the users are: the quota resets at midnight there. clock_timestamp(), like the
+// rows' created_at, so a reservation that waited for the lock across midnight counts against the new day.
+const startOfSwedishDay = sql`(date_trunc('day', clock_timestamp() at time zone 'Europe/Stockholm') at time zone 'Europe/Stockholm')`
 
 export interface UsageRepository {
   /** A pending row for the call, or null when the user has made `dailyLimit` calls today already. */
