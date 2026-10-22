@@ -3,6 +3,7 @@
 // problem+json (ADR 0009 note); a failure becomes an AuthError with the code, which the UI turns into text with
 // authErrorText (i18n/auth.ts).
 import { MeResponseSchema, type User } from '@fodr/contracts/me'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 
 /** Better Auth's error code, RATE_LIMITED for a 429 (which has none), or UNKNOWN. */
 export class AuthError extends Error {
@@ -31,8 +32,9 @@ async function post(path: string, body: unknown): Promise<void> {
 }
 
 export const authClient = {
+  // The current beta terms are accepted with the account (#42); the form asks first.
   signUp: (name: string, email: string, password: string) =>
-    post('/sign-up/email', { name, email, password, callbackURL: LINK_TARGET }),
+    post('/sign-up/email', { name, email, password, callbackURL: LINK_TARGET, termsVersion: TERMS_VERSION }),
   signIn: (email: string, password: string) => post('/sign-in/email', { email, password }),
   signOut: () => post('/sign-out', {}),
   sendMagicLink: (email: string) => post('/sign-in/magic-link', { email, callbackURL: LINK_TARGET }),

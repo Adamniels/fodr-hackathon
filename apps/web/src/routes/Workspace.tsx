@@ -19,6 +19,7 @@ import { useCatalogue } from '../products'
 import { isSavedFor, PlanSaveError, useSavedPlans } from '../plans'
 import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
 import { useSession } from './session'
+import { AcceptTerms } from './Legal'
 
 const STEP_OF_PATH = Object.fromEntries(STEPS.map((s) => [STEP_PATH[s], s])) as Record<string, Step>
 
@@ -27,7 +28,11 @@ export function WorkspaceGate() {
   const session = useSession()
   const location = useLocation()
   if (!session.user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  return <AccountWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
+  return (
+    <AcceptTerms>
+      <AccountWorkspace key={session.user.id} user={session.user} logOut={session.logOut} />
+    </AcceptTerms>
+  )
 }
 
 interface WorkspaceProps {
@@ -308,6 +313,12 @@ function Workspace({
               <span>{user.email}</span>
             </span>
           </div>
+          <Link className="sidofalt-lank" to="/villkor">
+            {t('legal.links.terms')}
+          </Link>
+          <Link className="sidofalt-lank" to="/integritet">
+            {t('legal.links.privacy')}
+          </Link>
           {/* Everything the app holds about the account, as a ZIP the browser saves (CF8, #40). */}
           <a className="sidofalt-lank" href="/api/v1/me/export" download>
             {t('app.sidebar.export')}

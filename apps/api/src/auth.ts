@@ -3,6 +3,7 @@
 // Secure when the app is served over https. The magic link plugin and no other: every plugin is attack surface.
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins'
 import { eq, inArray, like, or } from 'drizzle-orm'
@@ -96,7 +97,13 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
     // The admin role (#36, CF9): in the session, so a request knows it without a query; `input: false`, so no sign-up
     // or profile update can set it. Only `npm run admin:grant` changes it (repositories/accounts.ts).
     user: {
-      additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } },
+      additionalFields: {
+        role: { type: 'string', required: false, defaultValue: 'user', input: false },
+        // The beta terms (#42): the version is sent at sign-up and must be the current one (the hook below); the time
+        // is the server's. Neither can be changed through the profile update.
+        termsVersion: { type: 'string', required: false, input: true },
+        termsAcceptedAt: { type: 'date', required: false, input: false },
+      },
       // Deleting an account (#41, CF8): at once, confirmed with the password (the hook below), everything of it removed
       // and a receipt emailed. The horses go first, through ownership, as deleting the user only removes the
       // membership; if the user's own deletion then failed, the account remains without its horses, and the user can
@@ -124,6 +131,14 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
     hooks: {
       // An account is only deleted with its password: Better Auth would otherwise delete it for a recent session alone.
       before: createAuthMiddleware((ctx) => {
+        const fields = (ctx.body ?? {}) as Record<string, unknown>
+        // Signing up accepts the current beta terms (#42); the profile update never changes which were accepted.
+        if (ctx.path === '/sign-up/email' && fields.termsVersion !== TERMS_VERSION) {
+          throw new APIError('BAD_REQUEST', { code: 'TERMS_NOT_ACCEPTED', message: 'Terms not accepted' })
+        }
+        if (ctx.path === '/update-user' && ('termsVersion' in fields || 'termsAcceptedAt' in fields)) {
+          throw new APIError('BAD_REQUEST', { code: 'TERMS_READ_ONLY', message: 'Terms are accepted elsewhere' })
+        }
         if (ctx.path !== '/delete-user') return Promise.resolve()
         const body = ctx.body as { password?: unknown } | undefined
         if (typeof body?.password !== 'string' || body.password === '') {
@@ -153,7 +168,7 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
             if (user.name.length > MAX_NAME_LENGTH) {
               throw new APIError('BAD_REQUEST', { code: 'NAME_TOO_LONG', message: 'Name too long' })
             }
-            return Promise.resolve({ data: user })
+            return Promise.resolve({ data: { ...user, termsAcceptedAt: new Date() } })
           },
         },
       },

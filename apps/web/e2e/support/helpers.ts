@@ -8,9 +8,12 @@ import { promisify } from 'node:util'
 import { test as base, expect, type Locator, type Page, type TestInfo } from '@playwright/test'
 import type { ExplanationRequest } from '@fodr/contracts/ai'
 import type { HorseProfile } from '@fodr/contracts/horses'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { basicReading, completeReading } from '../fixtures/ai'
 import { PYSEN, SIXTEN } from '../fixtures/horses'
+import { eq } from 'drizzle-orm'
 import { createDatabase, type Database } from '../../../api/src/db'
+import { users } from '../../../api/src/db/schema'
 import { seedDemo } from '../../../api/src/seed'
 import { reportWith } from './reports'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
@@ -106,7 +109,13 @@ export interface Account {
 export async function createAccount(page: Page, name: string, email: string): Promise<Account> {
   const account = { email: uniqueEmail(email.split('@')[0]), password: PASSWORD }
   const res = await page.request.post('/api/auth/sign-up/email', {
-    data: { name, email: account.email, password: account.password, callbackURL: '/login' },
+    data: {
+      name,
+      email: account.email,
+      password: account.password,
+      callbackURL: '/login',
+      termsVersion: TERMS_VERSION,
+    },
     headers: { origin: E2E_WEB },
   })
   expect(res.ok(), await res.text()).toBe(true)
@@ -148,6 +157,11 @@ export async function seededAccount(page: Page, email = 'demo@example.se'): Prom
   await logIn(page, account.email)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten')
   return account
+}
+
+/** Puts the account on an older terms version (#42), as an account from before a change of the terms is. */
+export async function setTermsVersion(account: Account, version: string): Promise<void> {
+  await seedDb().update(users).set({ termsVersion: version }).where(eq(users.email, account.email))
 }
 
 /**

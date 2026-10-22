@@ -9,6 +9,7 @@ import { horseRepository } from '../src/repositories/horses'
 import { usageRepository } from '../src/repositories/ai-usage'
 import { productRepository } from '../src/repositories/products'
 import { exportRepository } from '../src/repositories/export'
+import { accountRepository } from '../src/repositories/accounts'
 import { journalRepository } from '../src/repositories/journal'
 import { explanationRepository } from '../src/repositories/explanations'
 import { planRepository } from '../src/repositories/plans'
@@ -62,6 +63,7 @@ export function unitRepositories() {
     usage: usageRepository(db),
     products: productRepository(db),
     exports: exportRepository(db),
+    accounts: accountRepository(db),
   }
 }
 

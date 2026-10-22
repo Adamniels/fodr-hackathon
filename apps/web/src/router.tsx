@@ -9,6 +9,7 @@ import { AnalysisRoute, HorsesIndex, JournalRoute, PlanRoute, ProfileRoute } fro
 import { RouteError, StepNotFound } from './routes/RouteError'
 import { STEP_PATH } from './routes/context'
 import { AdminGate, AdminProductEdit, AdminProductList } from './routes/Admin'
+import { PrivacyPage, TermsPage } from './routes/Legal'
 
 // A route whose own component fails loses the whole page; a step fails inside the workspace, which stays.
 const pageError = <RouteError page />
@@ -23,6 +24,9 @@ export const router = createBrowserRouter([
       { index: true, element: <Landing />, errorElement: pageError },
       { path: 'login', element: <Landing login />, errorElement: pageError },
       { path: 'reset-password', element: <ResetPassword />, errorElement: pageError },
+      // The beta terms and the privacy notice (#42), public.
+      { path: 'villkor', element: <TermsPage />, errorElement: pageError },
+      { path: 'integritet', element: <PrivacyPage />, errorElement: pageError },
       // Product administration (#36, CF9), admins only.
       {
         path: 'admin',

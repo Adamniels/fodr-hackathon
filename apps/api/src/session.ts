@@ -16,8 +16,15 @@ export function requireUser(auth: Auth) {
     })
     for (const cookie of headers.getSetCookie()) c.header('Set-Cookie', cookie, { append: true })
     if (!session) return problem(c, 401, 'auth.unauthenticated')
-    const { id, name, email, emailVerified, role } = session.user
-    c.set('user', { id, name, email, emailVerified, role: role === 'admin' ? 'admin' : 'user' })
+    const { id, name, email, emailVerified, role, termsVersion } = session.user
+    c.set('user', {
+      id,
+      name,
+      email,
+      emailVerified,
+      role: role === 'admin' ? 'admin' : 'user',
+      termsVersion: termsVersion ?? null,
+    })
     await next()
   })
 }

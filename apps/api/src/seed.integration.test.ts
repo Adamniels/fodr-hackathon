@@ -1,6 +1,7 @@
 // The demo account's seed (#29): idempotent, a working login, journal dates counted back from "today", and nothing of
 // any other account touched.
 import { afterAll, describe, expect, it } from 'vitest'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { authApp, client, signedInUser } from '../test/auth-app'
 import { clearMail, linkIn, waitForMail } from '../test/mailpit'
 import { SeedAccountRefused } from './repositories/accounts'
@@ -105,6 +106,7 @@ describe('the seed and accounts that are not its own', () => {
       name: 'Ej verifierad',
       email: opts.email,
       password: opts.password,
+      termsVersion: TERMS_VERSION,
       callbackURL: '/login',
     })
     expect(res.status).toBe(200)

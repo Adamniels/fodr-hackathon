@@ -38,6 +38,7 @@ test('sign up, verify the email from the inbox, and land signed in', async ({ pa
   await dialog.getByLabel('Namn').fill('Ny Användare')
   await dialog.getByLabel('E-post').fill(email)
   await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByLabel('Jag godkänner villkoren och har läst integritetspolicyn').check()
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
   await expect(dialog.getByText(email)).toBeVisible()
@@ -54,6 +55,7 @@ test('a password login before verification asks to verify, and can send the link
   await dialog.getByLabel('Namn').fill('Väntar')
   await dialog.getByLabel('E-post').fill(email)
   await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByLabel('Jag godkänner villkoren och har läst integritetspolicyn').check()
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await waitForMail(email, /Bekräfta/)
 
@@ -206,6 +208,7 @@ test('a verification link signs in to the new account, also in a browser signed 
   await dialog.getByLabel('Namn').fill('Egen Användare')
   await dialog.getByLabel('E-post').fill(email)
   await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByLabel('Jag godkänner villkoren och har läst integritetspolicyn').check()
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
 
@@ -268,6 +271,7 @@ test('a name of only spaces is refused (#23 review)', async ({ page }) => {
   await dialog.getByLabel('Namn').fill('   ')
   await dialog.getByLabel('E-post').fill(uniqueEmail('blank'))
   await dialog.getByLabel('Lösenord').fill(PASSWORD)
+  await dialog.getByLabel('Jag godkänner villkoren och har läst integritetspolicyn').check()
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await expect(dialog.getByText('Skriv ditt namn.')).toBeVisible()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toHaveCount(0)

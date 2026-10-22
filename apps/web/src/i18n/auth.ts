@@ -12,6 +12,7 @@ const KEYS: Record<string, ParseKeys> = {
   RATE_LIMITED: 'auth.errors.RATE_LIMITED',
   NAME_REQUIRED: 'auth.errors.NAME_REQUIRED',
   NAME_TOO_LONG: 'auth.errors.NAME_TOO_LONG',
+  TERMS_NOT_ACCEPTED: 'auth.errors.TERMS_NOT_ACCEPTED',
 }
 
 export function authErrorText(code: string): string {

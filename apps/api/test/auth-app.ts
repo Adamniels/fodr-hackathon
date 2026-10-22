@@ -1,6 +1,7 @@
 // The real app with real auth for integration tests: the test database (inject('databaseUrl')), mail to the Compose
 // Mailpit, and a client that keeps the session cookie like a browser.
 import { Writable } from 'node:stream'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { inject } from 'vitest'
 import { createAuth } from '../src/auth'
 import { createApp } from '../src/app'
@@ -18,6 +19,7 @@ import { planRepository } from '../src/repositories/plans'
 import { databaseCatalogue } from '../src/products'
 import { productRepository } from '../src/repositories/products'
 import { exportRepository } from '../src/repositories/export'
+import { accountRepository } from '../src/repositories/accounts'
 import { createFileStore, type FileStore } from '../src/storage'
 import { fakeAiProvider } from './fake-ai-provider'
 import { linkIn, waitForMail } from './mailpit'
@@ -80,6 +82,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
       usage: usageRepository(database.db),
       products: productRepository(database.db),
       exports: exportRepository(database.db),
+      accounts: accountRepository(database.db),
     },
   })
   return { app, database, logs, ai, files, close: () => database.close() }
@@ -130,6 +133,7 @@ export async function signedInUser(app: ReturnType<typeof authApp>['app'], ip: s
     name: 'Anna',
     email,
     password: 'hemligt-losenord-1',
+    termsVersion: TERMS_VERSION,
     callbackURL: '/horses',
   })
   if (res.status !== 200) throw new Error(`Sign up failed: ${String(res.status)}`)

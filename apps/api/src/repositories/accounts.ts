@@ -2,6 +2,7 @@
 // and password sign-up (ADR 0009): a user, verified, and a credential account holding the scrypt hash of the password.
 import { hashPassword, verifyPassword } from 'better-auth/crypto'
 import { and, eq } from 'drizzle-orm'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import type { Executor } from '../db'
 import { accounts, users } from '../db/schema'
 
@@ -30,10 +31,19 @@ export interface AccountRepository {
    * who proved the address. The CLI's only call (admin-cli.ts).
    */
   setRole(email: string, role: 'user' | 'admin'): Promise<'ok' | 'not_found' | 'unverified'>
+  /** The user accepts the current beta terms (#42). */
+  acceptTerms(userId: string): Promise<void>
 }
 
 export function accountRepository(db: Executor): AccountRepository {
   return {
+    async acceptTerms(userId) {
+      await db
+        .update(users)
+        .set({ termsVersion: TERMS_VERSION, termsAcceptedAt: new Date() })
+        .where(eq(users.id, userId))
+    },
+
     async setRole(email, role) {
       const account = (
         await db
@@ -66,7 +76,14 @@ export function accountRepository(db: Executor): AccountRepository {
       }
       const [user] = await db
         .insert(users)
-        .values({ name, email: normalised, emailVerified: true })
+        // The demo account accepts the current terms, so the seed's user is not asked to (#42).
+        .values({
+          name,
+          email: normalised,
+          emailVerified: true,
+          termsVersion: TERMS_VERSION,
+          termsAcceptedAt: new Date(),
+        })
         .returning({ id: users.id })
       const hashed = await hashPassword(password)
       await db

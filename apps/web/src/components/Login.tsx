@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { AuthError, authClient } from '../auth-client'
 import { authErrorText } from '../i18n/auth'
 
@@ -21,6 +21,7 @@ export function Login({ onLoggedIn, initialMode = 'logIn', linkFailed = false }:
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
+  const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // A mailed link failed: said once, with a way to a new link, until the user does something else.
   const [linkProblem, setLinkProblem] = useState(linkFailed)
@@ -70,6 +71,10 @@ export function Login({ onLoggedIn, initialMode = 'logIn', linkFailed = false }:
     setLinkProblem(false)
     if (mode === 'signUp' && name.trim() === '') {
       setError(authErrorText('NAME_REQUIRED'))
+      return
+    }
+    if (mode === 'signUp' && !consent) {
+      setError(t('legal.consent.required'))
       return
     }
     void run(async () => {
@@ -186,6 +191,21 @@ export function Login({ onLoggedIn, initialMode = 'logIn', linkFailed = false }:
               required
             />
             {mode === 'signUp' && <span className="liten">{t('login.passwordHint')}</span>}
+          </label>
+        )}
+        {mode === 'signUp' && (
+          // The beta terms and the privacy notice (#42), opened beside the form so nothing typed is lost.
+          <label className="falt kryss">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <span>
+              <Trans
+                i18nKey="legal.consent.label"
+                components={{
+                  terms: <a href="/villkor" target="_blank" rel="noreferrer" />,
+                  privacy: <a href="/integritet" target="_blank" rel="noreferrer" />,
+                }}
+              />
+            </span>
           </label>
         )}
         {notVerified && (

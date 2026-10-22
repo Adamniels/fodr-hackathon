@@ -350,6 +350,8 @@ export function PlanStep({
           </ul>
         )}
       </section>
+      {/* On every plan, next to its sources: decision support, with a vet referral (spec section 1, #42). */}
+      <p className="ruta plan-forbehall">{t('legal.disclaimer')}</p>
     </div>
   )
 }

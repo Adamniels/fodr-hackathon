@@ -1,5 +1,6 @@
 // CF1 at API level (#22): every account flow against the real Postgres and Mailpit, through the HTTP API.
 import type { AddressInfo } from 'node:net'
+import { TERMS_VERSION } from '@fodr/contracts/terms'
 import { serve } from '@hono/node-server'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sql } from 'drizzle-orm'
@@ -21,7 +22,16 @@ const PASSWORD = 'hemligt-losenord-1'
 async function verifiedUser() {
   const email = newEmail()
   const browser = newClient()
-  expect((await browser.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD })).status).toBe(200)
+  expect(
+    (
+      await browser.post('/api/auth/sign-up/email', {
+        name: 'Anna',
+        email,
+        password: PASSWORD,
+        termsVersion: TERMS_VERSION,
+      })
+    ).status,
+  ).toBe(200)
   const link = linkIn(await waitForMail(email))
   await browser.request(link.pathname + link.search)
   return { email, browser }
@@ -31,7 +41,12 @@ describe('sign up and email verification', () => {
   it('signs up without a session, sends a verification link, and the link verifies and signs in', async () => {
     const email = newEmail()
     const browser = newClient()
-    const signUp = await browser.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD })
+    const signUp = await browser.post('/api/auth/sign-up/email', {
+      name: 'Anna',
+      email,
+      password: PASSWORD,
+      termsVersion: TERMS_VERSION,
+    })
     expect(signUp.status).toBe(200)
     expect((await browser.request('/api/v1/me')).status).toBe(401)
 
@@ -50,7 +65,12 @@ describe('sign up and email verification', () => {
   it('refuses a password login before the email is verified', async () => {
     const email = newEmail()
     const browser = newClient()
-    await browser.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD })
+    await browser.post('/api/auth/sign-up/email', {
+      name: 'Anna',
+      email,
+      password: PASSWORD,
+      termsVersion: TERMS_VERSION,
+    })
     const login = await browser.post('/api/auth/sign-in/email', { email, password: PASSWORD })
     expect(login.status).toBe(403)
     expect((await browser.request('/api/v1/me')).status).toBe(401)
@@ -85,7 +105,12 @@ describe('password login and logout', () => {
   it('sets the session cookie httpOnly and SameSite=Lax, and Secure only over https', async () => {
     const email = newEmail()
     const browser = newClient()
-    await browser.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD })
+    await browser.post('/api/auth/sign-up/email', {
+      name: 'Anna',
+      email,
+      password: PASSWORD,
+      termsVersion: TERMS_VERSION,
+    })
     const link = linkIn(await waitForMail(email))
     const verify = await browser.request(link.pathname + link.search)
     const session = verify.headers.getSetCookie().find((c) => c.includes('session_token'))
@@ -232,12 +257,14 @@ describe('a sign up for an email that already has an account (#22 review)', () =
       name: 'Ny',
       email: newEmail(),
       password: PASSWORD,
+      termsVersion: TERMS_VERSION,
       callbackURL: '/horses',
     })
     const duplicate = await newClient().post('/api/auth/sign-up/email', {
       name: 'Inkräktare',
       email,
       password: 'inkraktarens-losenord',
+      termsVersion: TERMS_VERSION,
       callbackURL: '/horses',
     })
     expect(duplicate.status).toBe(fresh.status)
@@ -258,6 +285,7 @@ describe('a sign up for an email that already has an account (#22 review)', () =
       name: 'X',
       email,
       password: 'angriparens-losenord',
+      termsVersion: TERMS_VERSION,
       callbackURL: '/horses',
     })
     // The verification mail for the attacker's sign up goes to the owner's mailbox; let it land before clearing.
@@ -265,7 +293,13 @@ describe('a sign up for an email that already has an account (#22 review)', () =
     await clearMail()
 
     const owner = newClient()
-    await owner.post('/api/auth/sign-up/email', { name: 'Anna', email, password: PASSWORD, callbackURL: '/horses' })
+    await owner.post('/api/auth/sign-up/email', {
+      name: 'Anna',
+      email,
+      password: PASSWORD,
+      termsVersion: TERMS_VERSION,
+      callbackURL: '/horses',
+    })
     const mail = await waitForMail(email)
     expect(mail.subject).toMatch(/lösenord/)
     const token = linkIn(mail).pathname.split('/').at(-1)
@@ -318,6 +352,7 @@ describe('the account name (#22 review)', () => {
       name,
       email: newEmail(),
       password: PASSWORD,
+      termsVersion: TERMS_VERSION,
       callbackURL: '/horses',
     })
     expect(res.status).toBe(400)
@@ -330,6 +365,7 @@ describe('the account name (#22 review)', () => {
       name: 'Fodr support logga in via https://evil.example/fodr',
       email,
       password: PASSWORD,
+      termsVersion: TERMS_VERSION,
       callbackURL: '/horses',
     })
     expect((await waitForMail(email)).text).not.toMatch(/evil\.example|Fodr support/)
@@ -362,6 +398,7 @@ describe('logs (#22 review)', () => {
         name: 'a\u0000b',
         email,
         password: PASSWORD,
+        termsVersion: TERMS_VERSION,
         callbackURL: '/horses',
       })
       expect(res.status).toBeGreaterThanOrEqual(400)
