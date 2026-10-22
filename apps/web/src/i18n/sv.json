@@ -82,7 +82,8 @@
       "toLanding": "Till startsidan",
       "logOut": "Logga ut",
       "products": "Produkter",
-      "export": "Exportera mina data"
+      "export": "Exportera mina data",
+      "deleteAccount": "Radera mitt konto"
     },
     "openMenu": "Visa hästar och meny",
     "newHorse": "Ny häst",
@@ -890,5 +891,18 @@
     },
     "retire": "Ta ur sortimentet",
     "restore": "Ta tillbaka i sortimentet"
+  },
+  "account": {
+    "delete": {
+      "title": "Radera ditt konto",
+      "body": "Kontot raderas direkt, tillsammans med dina hästar, analyser och rapporter, foderplaner och journal. Det går inte att ångra.",
+      "exportFirst": "Vill du spara något, ladda ner det först:",
+      "password": "Lösenord",
+      "cancel": "Avbryt",
+      "confirm": "Radera kontot",
+      "wrongPassword": "Fel lösenord.",
+      "failed": "Kontot kunde inte raderas. Försök igen.",
+      "done": "Ditt konto är raderat."
+    }
   }
 }

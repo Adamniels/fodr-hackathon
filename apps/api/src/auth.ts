@@ -3,21 +3,31 @@
 // Secure when the app is served over https. The magic link plugin and no other: every plugin is attack surface.
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins'
-import { eq } from 'drizzle-orm'
+import { eq, inArray, like, or } from 'drizzle-orm'
 import type { Config } from './config'
 import type { Database } from './db'
 import * as schema from './db/schema'
 import type { Logger } from './logger'
 import type { Mailer } from './mail/mailer'
-import { accountExistsMail, magicLinkMail, resetPasswordMail, verificationMail } from './mail/templates'
+import {
+  accountDeletedMail,
+  accountExistsMail,
+  magicLinkMail,
+  resetPasswordMail,
+  verificationMail,
+} from './mail/templates'
+import { horseRepository } from './repositories/horses'
+import type { FileStore } from './storage'
 
 export interface AuthDeps {
   config: Pick<Config, 'betterAuthSecret' | 'betterAuthUrl'>
   database: Database
   mailer: Mailer
   logger: Logger
+  /** Where the reports of a deleted account's horses are removed from (#41). */
+  files: FileStore
 }
 
 const MINUTE = 60
@@ -29,7 +39,7 @@ const MAX_NAME_LENGTH = 100
  */
 export const CLIENT_IP_HEADER = 'x-fodr-client-ip'
 
-export function createAuth({ config, database, mailer, logger }: AuthDeps) {
+export function createAuth({ config, database, mailer, logger, files }: AuthDeps) {
   // Work that touches mail runs without being awaited: a reply that waited for SMTP (or for looking up whether an
   // account exists) would take longer for some emails than others and so reveal which have accounts. A failure is
   // logged by its type only, without the address.
@@ -40,6 +50,22 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
         'auth background task failed',
       )
     })
+  }
+  const horses = horseRepository(database.db)
+  // A deleted account's pending links: a password reset's row holds the user's ID, a login link's the email (#41).
+  // Matched exactly, as an email's underscore would be a wildcard in LIKE.
+  const removePendingLinks = async (user: { id: string; email: string }) => {
+    const rows = await database.db
+      .select({ id: schema.verifications.id, value: schema.verifications.value })
+      .from(schema.verifications)
+      .where(
+        or(
+          eq(schema.verifications.value, user.id),
+          like(schema.verifications.value, `%${user.email.replace(/[\\%_]/g, '\\$&')}%`),
+        ),
+      )
+    const ids = rows.filter((r) => r.value === user.id || emailIn(r.value) === user.email).map((r) => r.id)
+    if (ids.length > 0) await database.db.delete(schema.verifications).where(inArray(schema.verifications.id, ids))
   }
   const userByEmail = async (email: string) => {
     const [user] = await database.db
@@ -69,7 +95,43 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
     telemetry: { enabled: false },
     // The admin role (#36, CF9): in the session, so a request knows it without a query; `input: false`, so no sign-up
     // or profile update can set it. Only `npm run admin:grant` changes it (repositories/accounts.ts).
-    user: { additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } } },
+    user: {
+      additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } },
+      // Deleting an account (#41, CF8): at once, confirmed with the password (the hook below), everything of it removed
+      // and a receipt emailed. The horses go first, through ownership, as deleting the user only removes the
+      // membership; if the user's own deletion then failed, the account remains without its horses, and the user can
+      // try again. The sessions, the login and the memberships go with the user row; the AI usage stays, anonymous (#31).
+      deleteUser: {
+        enabled: true,
+        beforeDelete: async (user) => {
+          for (const id of await horses.ownedBy(user)) {
+            const keys = (await horses.remove(user, id)) ?? []
+            try {
+              await files.remove(keys)
+            } catch (err) {
+              // Nothing refers to the files any more, and their keys hold no personal data: logged, to remove by hand.
+              logger.error({ err, keys }, 'reports of a deleted account remain')
+            }
+          }
+          await removePendingLinks(user)
+        },
+        afterDelete: (user) => {
+          background(() => mailer.send(accountDeletedMail(user.email)))
+          return Promise.resolve()
+        },
+      },
+    },
+    hooks: {
+      // An account is only deleted with its password: Better Auth would otherwise delete it for a recent session alone.
+      before: createAuthMiddleware((ctx) => {
+        if (ctx.path !== '/delete-user') return Promise.resolve()
+        const body = ctx.body as { password?: unknown } | undefined
+        if (typeof body?.password !== 'string' || body.password === '') {
+          throw new APIError('BAD_REQUEST', { code: 'PASSWORD_REQUIRED', message: 'Password required' })
+        }
+        return Promise.resolve()
+      }),
+    },
     // Its own log lines go to pino (ADR 0015), first line only, and never one about a query: those carry the SQL
     // parameters, which hold emails, password hashes or tokens. Its errors go through pino's error serializer.
     logger: {
@@ -143,6 +205,8 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
         '/sign-up/email': { window: MINUTE, max: 5 },
         '/sign-in/magic-link': { window: MINUTE, max: 3 },
         '/request-password-reset': { window: MINUTE, max: 3 },
+        // Deleting the account checks the password (#41): as few guesses as signing in.
+        '/delete-user': { window: MINUTE, max: 5 },
       },
     },
     plugins: [
@@ -163,3 +227,15 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
 }
 
 export type Auth = ReturnType<typeof createAuth>
+
+/** The email in a verification row's JSON value (a login link's), or undefined. */
+function emailIn(value: string): string | undefined {
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return typeof parsed === 'object' && parsed !== null && 'email' in parsed && typeof parsed.email === 'string'
+      ? parsed.email
+      : undefined
+  } catch {
+    return undefined
+  }
+}

@@ -62,7 +62,7 @@ export function authApp(overrides: Partial<Config> = {}, deps: { ai?: AiProvider
     },
   })
   const logger = createLogger('debug', stream)
-  const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
+  const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger, files: deps.files ?? files })
   const app = createApp({
     config,
     logger,

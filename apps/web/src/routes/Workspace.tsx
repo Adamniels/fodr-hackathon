@@ -14,6 +14,7 @@ import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
 import { breedName, formatDate, bodyConditionText, localIsoDate, formatNumber } from '../format'
 import { Wordmark } from '../components/Brand'
+import { DeleteAccount } from '../components/DeleteAccount'
 import { useCatalogue } from '../products'
 import { isSavedFor, PlanSaveError, useSavedPlans } from '../plans'
 import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
@@ -319,6 +320,7 @@ function Workspace({
           <button className="sidofalt-lank" onClick={() => void navigate('/')}>
             {t('app.sidebar.toLanding')}
           </button>
+          <DeleteAccount />
           <button
             className="sidofalt-lank"
             onClick={() => {

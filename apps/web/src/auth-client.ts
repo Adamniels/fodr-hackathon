@@ -39,6 +39,8 @@ export const authClient = {
   sendVerification: (email: string) => post('/send-verification-email', { email, callbackURL: LINK_TARGET }),
   requestPasswordReset: (email: string) => post('/request-password-reset', { email, redirectTo: '/reset-password' }),
   resetPassword: (token: string, newPassword: string) => post('/reset-password', { token, newPassword }),
+  // Deletes the account and everything of it at once; the password confirms it (#41).
+  deleteAccount: (password: string) => post('/delete-user', { password }),
 }
 
 /** The query key of the signed-in user (fetchMe); invalidating it reads the session again. */

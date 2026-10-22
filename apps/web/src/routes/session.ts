@@ -8,6 +8,8 @@ export interface Session {
   /** Reads the session again after a login. */
   refresh: () => Promise<void>
   logOut: () => Promise<void>
+  /** Forgets the account after it was deleted (#41): the server has ended the session already. */
+  accountDeleted: () => void
 }
 
 export const SessionContext = createContext<Session | null>(null)

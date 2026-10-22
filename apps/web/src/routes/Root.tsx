@@ -17,6 +17,15 @@ export function Root() {
   if (me.isPending) return null
 
   const signedIn = me.data ?? null
+  // Nothing of the account stays in memory for whoever uses the browser next.
+  const forget = () => {
+    queryClient.removeQueries({ queryKey: HORSES_QUERY_KEY })
+    queryClient.removeQueries({ queryKey: ANALYSES_QUERY_KEY })
+    queryClient.removeQueries({ queryKey: PLANS_QUERY_KEY })
+    queryClient.removeQueries({ queryKey: JOURNAL_QUERY_KEY })
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_KEY })
+    queryClient.setQueryData(ME, null)
+  }
   const session: Session = {
     user: signedIn,
     refresh: async () => {
@@ -26,18 +35,13 @@ export function Root() {
       if (!signedIn) return
       try {
         await authClient.signOut()
-        // Nothing of the account stays in memory for whoever uses the browser next.
-        queryClient.removeQueries({ queryKey: HORSES_QUERY_KEY })
-        queryClient.removeQueries({ queryKey: ANALYSES_QUERY_KEY })
-        queryClient.removeQueries({ queryKey: PLANS_QUERY_KEY })
-        queryClient.removeQueries({ queryKey: JOURNAL_QUERY_KEY })
-        queryClient.removeQueries({ queryKey: ADMIN_QUERY_KEY })
-        queryClient.setQueryData(ME, null)
+        forget()
       } catch {
         // Sign-out failed (offline, server error): read the session again rather than pretend it ended.
         await queryClient.invalidateQueries({ queryKey: ME })
       }
     },
+    accountDeleted: forget,
   }
   return (
     <SessionContext value={session}>

@@ -1,6 +1,6 @@
 // The public landing page at /, and at /login with the account dialog open. A signed-in visitor to /login goes on to
 // the page a logged-out visitor asked for (WorkspaceGate), or /horses; the mailed links land there signed in.
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LandingPage } from '../components/LandingPage'
@@ -14,8 +14,19 @@ export function Landing({ login = false }: { login?: boolean }) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   // `from`: the page a logged-out visitor asked for; `fromLanding`: the dialog was opened here; `mode`: which form.
-  const state = useLocation().state as { from?: string; fromLanding?: boolean; mode?: LoginMode } | null
+  const state = useLocation().state as {
+    from?: string
+    fromLanding?: boolean
+    mode?: LoginMode
+    /** Sent here after the account was deleted (#41). */
+    accountDeleted?: boolean
+  } | null
   const target = state?.from ?? '/horses'
+  // Said once, and focused so it is read out (#41); the history entry forgets it, so a reload does not say it again.
+  const [accountDeleted] = useState(() => state?.accountDeleted === true)
+  useEffect(() => {
+    if (accountDeleted) void navigate('/', { replace: true, state: null })
+  }, [accountDeleted, navigate])
   // The preview's catalogue from the API (#27); the page shows without it while it loads.
   const catalogue = useCatalogue()
 
@@ -35,6 +46,11 @@ export function Landing({ login = false }: { login?: boolean }) {
 
   return (
     <>
+      {accountDeleted && (
+        <p className="ruta ok konto-raderat" role="status" tabIndex={-1} ref={(p) => p?.focus()}>
+          {t('account.delete.done')}
+        </p>
+      )}
       <LandingPage
         produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}
