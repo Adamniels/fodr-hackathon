@@ -1,7 +1,7 @@
 // AI usage and the daily quota (#31, spec 6.5, ADR 0015) at API level: every call that reaches the model is logged
 // with its tokens and cost and counts against the user's quota; over it, nothing is sent. The provider is a fake; the
 // database is real.
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { authApp, signedInUser } from '../../test/auth-app'
 import { FAKE_USAGE, type FakeAiProvider } from '../../test/fake-ai-provider'
@@ -148,10 +148,12 @@ describe('the usage log', () => {
     ])
   })
 
-  it('goes with its user', async () => {
+  it('stays when its user goes, without the user, as cost history (#41)', async () => {
     const { browser, userId } = await user()
     await ask(browser)
+    const ids = (await rowsOf(userId)).map((r) => r.id)
     await database.db.delete(users).where(eq(users.id, userId))
-    expect(await rowsOf(userId)).toEqual([])
+    const kept = await database.db.select({ userId: aiUsage.userId }).from(aiUsage).where(inArray(aiUsage.id, ids))
+    expect(kept).toEqual([{ userId: null }])
   })
 })

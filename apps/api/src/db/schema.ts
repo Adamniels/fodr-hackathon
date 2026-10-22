@@ -236,14 +236,13 @@ export const journalEntries = pgTable(
 
 // Every call to the AI (#31, ADR 0008, ADR 0015): who made it, for which route, with which model, the tokens it used
 // and its estimated cost. A call reserves its row as pending before it is sent, which the daily quota counts; the row
-// then records how it went. Deleting the user deletes their usage.
+// then records how it went. Deleting the user keeps their usage, anonymous (#41).
 export const aiUsage = pgTable(
   'ai_usage',
   {
     id: id(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    // Kept when the account goes, anonymous, as cost history (#41, decided in #31).
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     route: text('route', { enum: ['analysis', 'profile', 'explanation', 'journal'] }).notNull(),
     model: text('model').notNull(),
     status: text('status', { enum: ['pending', 'ok', 'failed'] }).notNull(),

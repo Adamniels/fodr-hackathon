@@ -14,7 +14,13 @@ export function Landing({ login = false }: { login?: boolean }) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   // `from`: the page a logged-out visitor asked for; `fromLanding`: the dialog was opened here; `mode`: which form.
-  const state = useLocation().state as { from?: string; fromLanding?: boolean; mode?: LoginMode } | null
+  const state = useLocation().state as {
+    from?: string
+    fromLanding?: boolean
+    mode?: LoginMode
+    /** Sent here after the account was deleted (#41). */
+    accountDeleted?: boolean
+  } | null
   const target = state?.from ?? '/horses'
   // The preview's catalogue from the API (#27); the page shows without it while it loads.
   const catalogue = useCatalogue()
@@ -35,6 +41,11 @@ export function Landing({ login = false }: { login?: boolean }) {
 
   return (
     <>
+      {state?.accountDeleted && (
+        <p className="ruta ok konto-raderat" role="status">
+          {t('account.delete.done')}
+        </p>
+      )}
       <LandingPage
         produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}

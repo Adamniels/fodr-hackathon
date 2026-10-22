@@ -66,3 +66,20 @@ export function magicLinkMail(to: string, url: string): Mail {
     ].join('\n'),
   }
 }
+
+/** The receipt for a deleted account (#41, CF8): sent after everything is removed, so it holds no link. */
+export function accountDeletedMail(to: string): Mail {
+  return {
+    to,
+    subject: 'Ditt konto hos Fodr är raderat',
+    text: [
+      'Hej!',
+      '',
+      'Ditt konto hos Fodr är raderat, tillsammans med dina hästar, analyser och rapporter, foderplaner och journal.',
+      '',
+      'Om det inte var du som raderade kontot, svara på det här mejlet.',
+      '',
+      'Fodr',
+    ].join('\n'),
+  }
+}

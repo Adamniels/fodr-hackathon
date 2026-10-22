@@ -3,7 +3,7 @@
 // Secure when the app is served over https. The magic link plugin and no other: every plugin is attack surface.
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins'
 import { eq } from 'drizzle-orm'
 import type { Config } from './config'
@@ -11,13 +11,23 @@ import type { Database } from './db'
 import * as schema from './db/schema'
 import type { Logger } from './logger'
 import type { Mailer } from './mail/mailer'
-import { accountExistsMail, magicLinkMail, resetPasswordMail, verificationMail } from './mail/templates'
+import {
+  accountDeletedMail,
+  accountExistsMail,
+  magicLinkMail,
+  resetPasswordMail,
+  verificationMail,
+} from './mail/templates'
+import { horseRepository } from './repositories/horses'
+import type { FileStore } from './storage'
 
 export interface AuthDeps {
   config: Pick<Config, 'betterAuthSecret' | 'betterAuthUrl'>
   database: Database
   mailer: Mailer
   logger: Logger
+  /** Where the reports of a deleted account's horses are removed from (#41). */
+  files: FileStore
 }
 
 const MINUTE = 60
@@ -29,7 +39,7 @@ const MAX_NAME_LENGTH = 100
  */
 export const CLIENT_IP_HEADER = 'x-fodr-client-ip'
 
-export function createAuth({ config, database, mailer, logger }: AuthDeps) {
+export function createAuth({ config, database, mailer, logger, files }: AuthDeps) {
   // Work that touches mail runs without being awaited: a reply that waited for SMTP (or for looking up whether an
   // account exists) would take longer for some emails than others and so reveal which have accounts. A failure is
   // logged by its type only, without the address.
@@ -41,6 +51,9 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
       )
     })
   }
+  const horses = horseRepository(database.db)
+  // The report keys of an account being deleted, from beforeDelete to afterDelete.
+  const deletedReports = new Map<string, string[]>()
   const userByEmail = async (email: string) => {
     const [user] = await database.db
       .select({ id: schema.users.id })
@@ -69,7 +82,43 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
     telemetry: { enabled: false },
     // The admin role (#36, CF9): in the session, so a request knows it without a query; `input: false`, so no sign-up
     // or profile update can set it. Only `npm run admin:grant` changes it (repositories/accounts.ts).
-    user: { additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } } },
+    user: {
+      additionalFields: { role: { type: 'string', required: false, defaultValue: 'user', input: false } },
+      // Deleting an account (#41, CF8): at once, confirmed with the password (the hook below), everything of it removed
+      // and a receipt emailed. The horses go first, through ownership, as deleting the user only removes the
+      // membership; if the user's own deletion then failed, the account remains without its horses, and the user can
+      // try again. The sessions, the login and the memberships go with the user row; the AI usage stays, anonymous (#31).
+      deleteUser: {
+        enabled: true,
+        beforeDelete: async (user) => {
+          const keys: string[] = []
+          for (const horse of await horses.listFor(user)) keys.push(...((await horses.remove(user, horse.id)) ?? []))
+          deletedReports.set(user.id, keys)
+        },
+        afterDelete: async (user) => {
+          const keys = deletedReports.get(user.id) ?? []
+          deletedReports.delete(user.id)
+          try {
+            await files.remove(keys)
+          } catch (err) {
+            // Nothing refers to the files any more, and their keys hold no personal data: logged, to remove by hand.
+            logger.error({ err, keys }, 'reports of a deleted account remain')
+          }
+          background(() => mailer.send(accountDeletedMail(user.email)))
+        },
+      },
+    },
+    hooks: {
+      // An account is only deleted with its password: Better Auth would otherwise delete it for a recent session alone.
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/delete-user') return
+        const body = ctx.body as { password?: unknown } | undefined
+        if (typeof body?.password !== 'string' || body.password === '') {
+          throw new APIError('BAD_REQUEST', { code: 'PASSWORD_REQUIRED', message: 'Password required' })
+        }
+        await Promise.resolve()
+      }),
+    },
     // Its own log lines go to pino (ADR 0015), first line only, and never one about a query: those carry the SQL
     // parameters, which hold emails, password hashes or tokens. Its errors go through pino's error serializer.
     logger: {

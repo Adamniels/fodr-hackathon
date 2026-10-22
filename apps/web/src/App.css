@@ -2152,3 +2152,9 @@ label.kryss {
   align-items: center;
   gap: 10px;
 }
+
+/* The start page's note after an account was deleted (#41). */
+.konto-raderat {
+  max-width: 960px;
+  margin: 16px auto 0;
+}

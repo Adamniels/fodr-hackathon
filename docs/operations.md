@@ -11,10 +11,10 @@ from `AI_PRICE_SEK_PER_MTOK_INPUT` and `AI_PRICE_SEK_PER_MTOK_OUTPUT`, so it is 
 against the provider's price list when the model or the exchange rate changes. The budget is about 300 kr per month
 (spec, decision log).
 
-Two gaps make the totals a lower bound. A reply that failed for a reason the provider did not report tokens with (a
+One gap makes the totals a lower bound: a reply that failed for a reason the provider did not report tokens with (a
 reply that does not match the schema, an error from the SDK itself) is a `failed` row with 0 tokens and 0 kr, though
-the provider may have billed it; many such rows mean something is wrong and the real cost is higher. And a user's rows
-are deleted with the user, so a month's total shrinks when an account is deleted later.
+the provider may have billed it; many such rows mean something is wrong and the real cost is higher. A deleted
+account's rows stay, without the user (#41), so past totals do not change; the per-user query leaves them out.
 
 ### Monthly cost
 

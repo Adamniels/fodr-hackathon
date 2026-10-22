@@ -46,6 +46,7 @@ export function unitAuth() {
     database: createDatabase(UNIT_CONFIG.databaseUrl),
     mailer: { send: () => Promise.resolve() },
     logger: createLogger('silent'),
+    files: unitFiles,
   })
 }
 

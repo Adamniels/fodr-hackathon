@@ -24,11 +24,14 @@ async function messagesTo(address: string): Promise<MailSummary[]> {
   return messages.filter((m) => m.To.some((to) => to.Address === address))
 }
 
-/** The newest message to the address, waiting for it to arrive (mail is sent without blocking the response). */
-export async function waitForMail(address: string, timeoutMs = 5000): Promise<ReceivedMail> {
+/**
+ * The newest message to the address, or the newest with this subject, waiting for it to arrive (mail is sent without
+ * blocking the response).
+ */
+export async function waitForMail(address: string, timeoutMs = 5000, subject?: string): Promise<ReceivedMail> {
   const deadline = Date.now() + timeoutMs
   for (;;) {
-    const newest = (await messagesTo(address)).at(0)
+    const newest = (await messagesTo(address)).find((m) => subject === undefined || m.Subject === subject)
     if (newest) {
       const res = await fetch(`${MAILPIT}/message/${newest.ID}`)
       const { Subject, Text } = (await res.json()) as { Subject: string; Text: string }

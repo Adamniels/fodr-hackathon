@@ -29,8 +29,8 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
   const logger = createLogger(config.logLevel)
   // The pool connects on the first query, so the API starts (and serves health) while the database is still coming up.
   const database = createDatabase(config.databaseUrl, (err) => logger.warn({ err }, 'idle database connection lost'))
-  const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger })
   const files = createFileStore(config.s3)
+  const auth = createAuth({ config, database, mailer: createSmtpMailer(config), logger, files })
   // A local or test store gets its bucket here, in the background like the database: the API serves everything but
   // uploads while the store is unreachable.
   if (config.s3.createBucket) {

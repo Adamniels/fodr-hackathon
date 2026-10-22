@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { strFromU8, unzipSync } from 'fflate'
-import { createAccountWithHorses, expect, goToStep, test, uploadExample } from './support/helpers'
+import { createAccountWithHorses, expect, goToStep, logIn, test, uploadExample } from './support/helpers'
 
 // My data (CF8): what a user can take with them.
 
@@ -26,4 +26,27 @@ test('the export holds the horses, their analyses with the report, plans and jou
   expect(names.some((n) => n.startsWith(`${sixten}/reports/`) && n.endsWith('.pdf'))).toBe(true)
   expect(JSON.parse(strFromU8(archive[`${sixten}/journal.json`]))).toHaveLength(1)
   expect(names.some((n) => n.startsWith('horses/pysen-'))).toBe(true)
+})
+
+test('deleting my account takes everything, says so, and the account is gone (CF8, #41)', async ({ page }) => {
+  const account = await createAccountWithHorses(page)
+  await goToStep(page, 'Analysen')
+  await uploadExample(page)
+
+  await page.getByRole('button', { name: 'Radera mitt konto' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Radera ditt konto' })
+  await expect(dialog.getByRole('link', { name: 'Exportera mina data' })).toBeVisible()
+  // A wrong password deletes nothing.
+  await dialog.getByLabel('Lösenord').fill('fel-losenord-123')
+  await dialog.getByRole('button', { name: 'Radera kontot' }).click()
+  await expect(dialog.getByRole('alert')).toHaveText('Fel lösenord.')
+
+  await dialog.getByLabel('Lösenord').fill(account.password)
+  await dialog.getByRole('button', { name: 'Radera kontot' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Ditt konto är raderat.' })).toBeVisible()
+
+  // The account is gone: it cannot log in again.
+  await logIn(page, account.email, account.password)
+  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page.getByText('Mina hästar')).toHaveCount(0)
 })
