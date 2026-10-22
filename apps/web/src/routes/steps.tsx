@@ -47,6 +47,7 @@ export function PlanRoute() {
     savedPlan,
     savePlan,
     planSaveError,
+    planInJournal,
     userId,
     produkter,
     catalogueFailed,
@@ -72,13 +73,16 @@ export function PlanRoute() {
   if ('errors' in plan) {
     return <InvalidInput errors={plan.errors} onToHorse={() => goTo('hast')} onToAnalysis={() => goTo('analys')} />
   }
+  // Keyed on the horse: a rewrite of one horse's explanation, failed or under way, is not another horse's (#32).
   return (
     <PlanStep
+      key={hast.id}
       hast={hast}
       analys={analys}
       plan={plan.plan}
       userId={userId}
-      saved={savedPlan ? { id: savedPlan.id, createdAt: savedPlan.createdAt } : undefined}
+      planId={savedPlan?.id}
+      inJournalOn={planInJournal}
       planSaveError={planSaveError}
       onSaveToJournal={async () => {
         await savePlan()

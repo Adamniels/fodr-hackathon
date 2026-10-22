@@ -1,5 +1,6 @@
-// The AI routes on the API (#30): /api/v1/ai/profile and /journal (a plan's explanation is in plans.ts since #32), signed-in only, requests and answers
-// in the shared contracts (@fodr/contracts/ai). The AI only reads and explains; the plan is the domain's (CLAUDE.md).
+// The AI routes on the API (#30): /api/v1/ai/profile and /journal (a plan's explanation is in plans.ts since #32),
+// signed-in only, requests and answers in the shared contracts (@fodr/contracts/ai). The AI only reads and explains;
+// the plan is the domain's (CLAUDE.md).
 import { useQueryClient } from '@tanstack/react-query'
 import {
   JournalResponseSchema,

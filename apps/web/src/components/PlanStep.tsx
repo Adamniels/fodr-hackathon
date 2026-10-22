@@ -11,7 +11,6 @@ import {
   formatDate,
   formatMoney,
   formatNumber,
-  localIsoDate,
   shortNutrientLabel,
 } from '../format'
 import i18n from '../i18n'
@@ -34,7 +33,8 @@ export function PlanStep({
   analys,
   plan,
   userId,
-  saved,
+  planId,
+  inJournalOn,
   planSaveError,
   onSaveToJournal,
 }: {
@@ -43,7 +43,9 @@ export function PlanStep({
   plan: Plan
   userId: string
   /** The saved plan on screen (#27): it is then the server's plan, and its explanation is stored with it (#32). */
-  saved?: { id: string; createdAt: string }
+  planId?: string
+  /** The day (YYYY-MM-DD) the plan on screen was saved to the journal, if it was (#32). */
+  inJournalOn?: string
   /** Why the plan on screen could not be saved when it was shown (#32): then it has no explanation. */
   planSaveError: unknown
   /** Saves the plan and adds it to the journal; rejects when the server refused. */
@@ -65,10 +67,16 @@ export function PlanStep({
   // again; only "Skriv om" writes a new one. Until the plan on screen is saved it is being written, unless the save
   // failed, which is said instead.
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
-  const planExplanation = usePlanExplanation(userId, hast.id, saved?.id, payload)
+  const planExplanation = usePlanExplanation(userId, hast.id, planId, payload)
   const explanation = planSaveError ? null : planExplanation.text
   const explanationError = planSaveError
-    ? t(planSaveError instanceof PlanSaveError ? `plan.saveError.${planSaveError.code}` : 'plan.saveError.failed')
+    ? t(
+        planSaveError instanceof PlanSaveError
+          ? planSaveError.code === 'differs'
+            ? 'plan.explanation.differs'
+            : 'plan.saveError.unsaved'
+          : 'plan.saveError.failed',
+      )
     : planExplanation.error
       ? aiErrorText(planExplanation.error)
       : null
@@ -167,11 +175,7 @@ export function PlanStep({
       <section className="kort">
         <div className="kort-rubrikrad">
           <h3>{t('plan.shopping.title')}</h3>
-          {saved && (
-            <span className="liten">
-              {t('plan.saved', { date: formatDate(localIsoDate(new Date(saved.createdAt))) })}
-            </span>
-          )}
+          {inJournalOn && <span className="liten">{t('plan.saved', { date: formatDate(inJournalOn) })}</span>}
           <button className="knapp sekundar kompakt" disabled={saving} onClick={save}>
             {t('plan.shopping.saveToJournal')}
           </button>

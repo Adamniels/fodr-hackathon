@@ -82,7 +82,7 @@ const canonical = (value: unknown): string =>
 export const PLANS_QUERY_KEY = ['plans']
 const latestKey = (userId: string, horseId: string) => [...PLANS_QUERY_KEY, userId, horseId]
 
-/** The horse's latest saved plan (undefined while it loads), and saving a new one. */
+/** The horse's latest saved plan (undefined while it loads, and when it could not be read), and saving a new one. */
 export function useSavedPlans(userId: string, horseId: string | undefined) {
   const queryClient = useQueryClient()
   const guard = sessionGuard(queryClient)
@@ -105,6 +105,7 @@ export function useSavedPlans(userId: string, horseId: string | undefined) {
   }, [queryClient, userId])
   return {
     latest: horseId === undefined ? null : query.data,
+    loadFailed: query.isError,
     save: async (analysisId: string, journalDatum?: string) => {
       if (horseId === undefined) throw new Error('No horse to save a plan for')
       const saved = await guard(plansApi.save(horseId, analysisId, journalDatum))
@@ -143,7 +144,11 @@ export function usePlanExplanation(
   })
   const rewrite = useMutation({
     mutationFn: () => guard(plansApi.explain(horseId, planId ?? '', request, true)),
-    onSuccess: (explanation) => queryClient.setQueryData(queryKey, explanation),
+    // A text answered after the plans were dropped (logout, the workspace closed) is not put back: it can mention the
+    // horse's health.
+    onSuccess: (explanation) => {
+      if (queryClient.getQueryCache().find({ queryKey, exact: true })) queryClient.setQueryData(queryKey, explanation)
+    },
   })
   // A failure belongs to the visit that saw it: leaving the plan resets a failed read, so a revisit asks again (#21).
   useEffect(

@@ -189,7 +189,7 @@ export const plans = pgTable(
     result: jsonb('result').$type<Plan>().notNull(),
     engineVersion: text('engine_version').notNull(),
     productSetVersion: text('product_set_version').notNull(),
-    createdAt: createdAt(),
+    createdAt: createdInOrder(),
   },
   (table) => [index('plans_horse_id_created_at_idx').on(table.horseId, table.createdAt)],
 )

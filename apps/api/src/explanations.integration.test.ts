@@ -75,6 +75,14 @@ describe('a plan explanation', () => {
     expect(ai.calls).toHaveLength(1)
   })
 
+  it('is written anew for a rewrite asked for while a plain request is being answered', async () => {
+    const { explain } = await savedPlan()
+    // The rewrite must not take the plain request's answer: it asks the model itself.
+    const [, rewrite] = await Promise.all([explain(), explain(true)])
+    expect(rewrite.status).toBe(200)
+    expect(ai.calls).toHaveLength(2)
+  })
+
   it('is replaced when regenerated, and the call counts against the quota', async () => {
     const { browser, read, explain } = await savedPlan()
     await explain()

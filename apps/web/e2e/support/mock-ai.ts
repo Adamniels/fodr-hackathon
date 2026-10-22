@@ -1,8 +1,7 @@
 // Intercepts /api requests in the browser context. The AI routes (/api/v1/ai/profile and /journal, #30) answer from
-// fixtures; any other
-// /api request outside the real backend is aborted and recorded, and the test fixture in helpers.ts fails the test if
-// that happened. The rest of /api/v1 and /api/auth is not intercepted: it belongs to the real backend (ADR 0007,
-// ADR 0009). Report reading (#26) and plan explanations (#32) happen inside the API, with a fake AI there
+// fixtures; any other /api request outside the real backend is aborted and recorded, and the test fixture in helpers.ts
+// fails the test if that happened. The rest of /api/v1 and /api/auth is not intercepted: it belongs to the real backend
+// (ADR 0007, ADR 0009). Report reading (#26) and plan explanations (#32) happen inside the API, with a fake AI there
 // (apps/api/test/e2e-server.ts).
 
 import { expect, type BrowserContext } from '@playwright/test'

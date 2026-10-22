@@ -157,7 +157,11 @@ test('example analysis produces the known plan', async ({ page }) => {
 
 test('saving the plan stores what the server computed, and marks the plan as saved (#27)', async ({ page }) => {
   await loadExamplePlan(page)
-  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+  // The plan step stores the plan it shows (#32); it is marked saved once it is in the journal.
+  await expect(
+    page.getByRole('paragraph').filter({ hasText: e2eExplanationText('Sixten').split('\n')[0] }),
+  ).toBeVisible()
+  await expect(page.getByText(/^Sparad i journalen /)).toHaveCount(0)
   await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
 
   // The journal entry holds the server's plan, with the analysis it was planned from.
@@ -166,20 +170,20 @@ test('saving the plan stores what the server computed, and marks the plan as sav
   await expectGrams(entry, 66)
 
   await goToStep(page, 'Foderplan')
-  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  await expect(page.getByText(/^Sparad i journalen /)).toBeVisible()
   const shoppingRow = (product: string) => page.getByRole('row').filter({ hasText: product })
   await expectGrams(shoppingRow('Krafft Miner Original Pellets 20kg'), 66)
   await expectGrams(shoppingRow('Salt 1,5 kg'), 14)
   await expectMoney(shoppingRow('Totalt utöver grovfodret'), 88)
 
   await page.reload()
-  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  await expect(page.getByText(/^Sparad i journalen /)).toBeVisible()
   // A changed profile is another plan: no longer the saved one.
   await goToStep(page, 'Hästen')
   await page.getByLabel('Vikt (kg)').fill('540')
   await goToStep(page, 'Foderplan')
   await expect(page.getByRole('heading', { name: 'Inköpslista' })).toBeVisible()
-  await expect(page.getByText(/^Sparad /)).toHaveCount(0)
+  await expect(page.getByText(/^Sparad i journalen /)).toHaveCount(0)
 })
 
 test('an edit made just before saving is in the saved plan (#27)', async ({ page }) => {
@@ -199,7 +203,7 @@ test('an edit made just before saving is in the saved plan (#27)', async ({ page
   await expect(page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })).toBeVisible({ timeout: 15_000 })
   // The plan on screen (540 kg) is the saved one, so the edit reached the server before the plan was computed.
   await goToStep(page, 'Foderplan')
-  await expect(page.getByText(/^Sparad /)).toBeVisible()
+  await expect(page.getByText(/^Sparad i journalen /)).toBeVisible()
 })
 
 test('a plan is not saved while an edit has failed to save (#27)', async ({ page }) => {
@@ -272,6 +276,68 @@ test('a failed rewrite shows the error, and a revisit shows the stored text with
   await goToStep(page, 'Foderplan')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
   expect(sent).toHaveLength(asked)
+})
+
+test('a plan whose save failed gets its explanation once it is saved (#32)', async ({ page }) => {
+  // /api/v1 belongs to the real backend: only the plan step's own save of the plan is failed, once.
+  let failed = false
+  await page.route('**/api/v1/horses/*/plans', (route) => {
+    if (route.request().method() !== 'POST' || failed) return route.fallback()
+    failed = true
+    return route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' })
+  })
+  await loadExamplePlan(page)
+  await expect(page.getByText(/^Förklaringen kunde inte hämtas\. Planen kunde inte sparas/)).toBeVisible()
+  await page.getByRole('button', { name: 'Spara planen i journalen' }).click()
+  await expect(page.getByRole('listitem').filter({ hasText: 'Foderplan sparad' })).toBeVisible()
+  await goToStep(page, 'Foderplan')
+  const [first] = e2eExplanationText('Sixten').split('\n')
+  await expect(page.getByRole('paragraph').filter({ hasText: first })).toBeVisible()
+})
+
+test('the plan is explained when its saved plans cannot be read (#32)', async ({ page }) => {
+  await page.route('**/api/v1/horses/*/plans/latest', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' }),
+  )
+  await loadExamplePlan(page)
+  const [first] = e2eExplanationText('Sixten').split('\n')
+  await expect(page.getByRole('paragraph').filter({ hasText: first })).toBeVisible()
+})
+
+test('a failed rewrite stays with its horse (#32)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await showExamplePlan(page)
+  const [pysens] = e2eExplanationText('Pysen').split('\n')
+  await expect(page.getByRole('paragraph').filter({ hasText: pysens })).toBeVisible()
+
+  await horseList(page).getByRole('button', { name: 'Sixten' }).click()
+  await goToStep(page, 'Hästen')
+  await page.getByLabel('Övrigt').fill(explanationMarker(['ok', 'upstream']))
+  await showExamplePlan(page)
+  await expect(
+    page.getByRole('paragraph').filter({ hasText: e2eExplanationText('Sixten').split('\n')[0] }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Skriv om' }).click()
+  await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
+
+  // The plan step stays open for Pysen, with Pysen's explanation rather than Sixten's failure.
+  await horseList(page).getByRole('button', { name: 'Pysen' }).click()
+  await expect(page.getByRole('paragraph').filter({ hasText: pysens })).toBeVisible()
+  await expect(page.getByText('Förklaringen kunde inte hämtas')).toHaveCount(0)
+})
+
+test('a plan saved differently from the one shown says so, and sends nowhere it is not (#32)', async ({ page }) => {
+  // The plan step's save is answered as if a deploy had changed the catalogue meanwhile.
+  await page.route('**/api/v1/horses/*/plans', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback()
+    const response = await route.fetch()
+    const body = (await response.json()) as { plan: { productSetVersion: string } }
+    body.plan.productSetVersion = 'older-catalogue'
+    return route.fulfill({ response, json: body })
+  })
+  await loadExamplePlan(page)
+  await expect(page.getByText(/^Förklaringen kunde inte hämtas\. Planen ändrades medan den sparades/)).toBeVisible()
 })
 
 test.describe('dry matter entry (#50)', () => {

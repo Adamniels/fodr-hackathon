@@ -30,6 +30,8 @@ export interface WorkspaceContext {
   savePlan: () => Promise<void>
   /** Why the plan on screen could not be saved when the plan step showed it (#32), or null. */
   planSaveError: unknown
+  /** The day (YYYY-MM-DD) the plan on screen was saved to the journal, if it was (#32). */
+  planInJournal: string | undefined
   /** The signed-in user, whose caches the steps' queries belong to. */
   userId: string
   planOgonblick: PlanOgonblick | null

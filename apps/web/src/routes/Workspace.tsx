@@ -197,11 +197,18 @@ function Workspace({
   // The entry is dated with the user's own calendar day (C6).
   const savePlan = () => saveShownPlan(localIsoDate())
 
-  // The plan step saves the plan it shows once the horse's saved plans are read, so the plan has an ID for its
-  // explanation (#32, CF6) and every plan shown is reproducible (CF5). Once per preview: a save that failed, or came out
-  // different, is not repeated until the plan on screen changes; the plan step says why there is no explanation.
+  // The plan step saves the plan it shows once the horse's saved plans are read (or could not be: the server does not
+  // store a plan twice), so the plan has an ID for its explanation (#32, CF6) and every plan shown is reproducible (CF5).
+  // Once per preview: a save that failed, or came out different, is not repeated until the plan on screen changes; the
+  // plan step says why there is no explanation, until the plan is saved after all (by the journal button).
   const unsavedPreview =
-    step === 'plan' && preview && 'plan' in preview && !savedPlan && savedPlans.latest !== undefined ? preview : null
+    step === 'plan' &&
+    preview &&
+    'plan' in preview &&
+    !savedPlan &&
+    (savedPlans.latest !== undefined || savedPlans.loadFailed)
+      ? preview
+      : null
   const autoSaved = useRef<unknown>(null)
   const [autoSaveFailure, setAutoSaveFailure] = useState<{ preview: unknown; error: unknown } | null>(null)
   useEffect(() => {
@@ -211,7 +218,17 @@ function Workspace({
     // saveShownPlan reads this render's state, which unsavedPreview is computed from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unsavedPreview])
-  const planSaveError = autoSaveFailure && autoSaveFailure.preview === preview ? autoSaveFailure.error : null
+  const planSaveError = !savedPlan && autoSaveFailure?.preview === preview ? autoSaveFailure.error : null
+  // The day the plan on screen went into the journal, if it did: every plan shown is saved, so "saved" on the page
+  // means saved to the journal (owner, #32).
+  const planInJournal = savedPlan
+    ? journal.entries
+        ?.filter((e) => e.plan?.planId === savedPlan.id)
+        .reduce<string | undefined>(
+          (latest, e) => (latest === undefined || e.datum > latest ? e.datum : latest),
+          undefined,
+        )
+    : undefined
 
   const tillganglig = (s: Step) => (s === 'plan' ? Boolean(hast && analys) : s === 'hast' || Boolean(hast))
   const ras = hast ? hittaRas(hast.ras) : undefined
@@ -233,6 +250,7 @@ function Workspace({
     savedPlan,
     savePlan,
     planSaveError,
+    planInJournal,
     userId: user.id,
     planOgonblick,
     produkter,

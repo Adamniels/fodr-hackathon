@@ -117,9 +117,10 @@ export function planRoutes({
     return explanation === undefined ? planNotFound(c) : c.json({ explanation })
   })
 
-  // The explanations being written, by plan: a request for a plan already being explained (a second render, another
-  // tab) waits for that answer rather than asking the model again. In this process only; a second API instance could
-  // ask once more, and the last answer is the one stored.
+  // The explanations being written, by plan and by whether a new one was asked for: a request for a plan already being
+  // explained the same way (a second render, another tab) waits for that answer, a quota refusal included, rather than
+  // asking the model again; a rewrite never takes the answer of a plain read. In this process only; a second API
+  // instance could ask once more, and the last answer is the one stored.
   const writing = new Map<string, Promise<Explanation | undefined>>()
 
   routes.post('/:planId/explanation', limit(MAX_EXPLAIN_BYTES), async (c) => {
@@ -129,7 +130,8 @@ export function planRoutes({
     const [horse, plan] = [horseId(c), planId(c)]
     // Each request is checked for its own user before it may share an answer.
     if (!(await explanations.canReach(user, horse, plan))) return planNotFound(c)
-    let answer = writing.get(plan)
+    const flight = `${plan}:${body.data.regenerate ? 'new' : 'any'}`
+    let answer = writing.get(flight)
     if (!answer) {
       answer = (async () => {
         if (!body.data.regenerate) {
@@ -138,8 +140,8 @@ export function planRoutes({
         }
         const text = await ai.run(user.id, 'explanation', (provider) => provider.explainPlan(body.data.request))
         return explanations.put(user, horse, plan, { text, model: ai.model })
-      })().finally(() => writing.delete(plan))
-      writing.set(plan, answer)
+      })().finally(() => writing.delete(flight))
+      writing.set(flight, answer)
     }
     try {
       const explanation = await answer

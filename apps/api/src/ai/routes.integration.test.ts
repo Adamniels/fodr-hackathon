@@ -1,5 +1,6 @@
-// The AI routes at API level (#30; the plan explanation is in explanations.integration.test.ts since #32): signed-in users only, requests validated with the shared contracts so only their
-// fields reach the provider, and errors as problem+json codes (ADR 0013). The provider is a fake; auth is real.
+// The AI routes at API level (#30; the plan explanation is in explanations.integration.test.ts since #32): signed-in
+// users only, requests validated with the shared contracts so only their fields reach the provider, and errors as
+// problem+json codes (ADR 0013). The provider is a fake; auth is real.
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { authApp, BASE_URL, signedInUser } from '../../test/auth-app'
 import type { FakeAiProvider } from '../../test/fake-ai-provider'
