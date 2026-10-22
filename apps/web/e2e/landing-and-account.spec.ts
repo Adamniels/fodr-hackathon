@@ -179,10 +179,10 @@ test('settled waits for a request that starts after it is called', async ({ page
   await page.goto('/')
   await page.waitForTimeout(700) // let the harness go quiet first
   await page.evaluate(() => {
-    setTimeout(() => void fetch('/api/forklaring', { method: 'POST', body: '{}' }), 100)
+    setTimeout(() => void fetch('/api/v1/ai/explanation', { method: 'POST', body: '{}' }), 100)
   })
   await ai.settled()
-  expect(ai.calls('forklaring')).toHaveLength(1)
+  expect(ai.calls('explanation')).toHaveLength(1)
 })
 
 test('accounts do not share horses', async ({ page }) => {

@@ -85,8 +85,7 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
   app.route('/api/v1/horses/:horseId/journal', journalRoutes({ auth, ...repositories }))
   app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   app.route('/api/v1/products', productRoutes(catalogue))
-  // The AI routes keep their paths outside /api/v1 until #30 versions them.
-  app.route('/api', aiRoutes(ai, logger))
+  app.route('/api/v1/ai', aiRoutes({ auth, ai, logger }))
 
   if (config.webDistDir) {
     const root = config.webDistDir

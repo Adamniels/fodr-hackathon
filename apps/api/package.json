@@ -18,7 +18,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "tsx --env-file-if-exists=../../.env src/seed-cli.ts"
+    "seed": "tsx --env-file-if-exists=../../.env src/seed-cli.ts",
+    "eval:analysis": "tsx --env-file-if-exists=../../.env scripts/evaluate-analysis-reading.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

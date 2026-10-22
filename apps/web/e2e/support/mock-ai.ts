@@ -1,13 +1,12 @@
-// Intercepts /api requests in the browser context. Known AI routes answer from fixtures; anything else is aborted
-// and recorded, and the test fixture in helpers.ts fails the test if that happened. /api/v1 and /api/auth are not
-// intercepted: they belong to the real backend (ADR 0007, ADR 0009). Report reading happens inside the API since #26
-// (a fake AI there, apps/api/test/e2e-server.ts), so /api/analys is not mocked: a call to it from the browser fails the
-// test. When the AI routes move under /api/v1 (M3), mock them there.
+// Intercepts /api requests in the browser context. The AI routes (/api/v1/ai/*, #30) answer from fixtures; any other
+// /api request outside the real backend is aborted and recorded, and the test fixture in helpers.ts fails the test if
+// that happened. The rest of /api/v1 and /api/auth is not intercepted: it belongs to the real backend (ADR 0007,
+// ADR 0009). Report reading happens inside the API (#26), with a fake AI there (apps/api/test/e2e-server.ts).
 
 import { expect, type BrowserContext } from '@playwright/test'
 import * as fixtures from '../fixtures/ai'
 
-export type AiRoute = 'profil' | 'forklaring' | 'journal'
+export type AiRoute = 'profile' | 'explanation' | 'journal'
 
 export interface AiMock {
   /** Parsed request bodies received on a route, in order. */
@@ -22,11 +21,23 @@ export interface AiMock {
 
 const QUIET_MS = 500
 
-const isBackend = (path: string) => ['/api/v1', '/api/auth'].some((p) => path === p || path.startsWith(`${p}/`))
+/** An error answer as the API sends it (problem+json, ADR 0013), for respondWith. */
+export const problem = (status: number, code: string) => ({
+  type: 'about:blank',
+  title: 'Error',
+  status,
+  code,
+  requestId: 'e2e',
+})
+
+// The AI routes are under /api/v1/ai (#30); the rest of /api/v1 and /api/auth is the real backend.
+const isAi = (path: string) => path.startsWith('/api/v1/ai/')
+const isBackend = (path: string) =>
+  !isAi(path) && ['/api/v1', '/api/auth'].some((p) => path === p || path.startsWith(`${p}/`))
 
 const DEFAULTS: Record<AiRoute, unknown> = {
-  profil: fixtures.profil,
-  forklaring: fixtures.forklaring,
+  profile: fixtures.profil,
+  explanation: fixtures.forklaring,
   journal: fixtures.journal,
 }
 
@@ -48,7 +59,8 @@ export async function mockAi(context: BrowserContext): Promise<AiMock> {
       lastActivity = Date.now()
       try {
         const request = route.request()
-        const name = new URL(request.url()).pathname.slice('/api/'.length)
+        const path = new URL(request.url()).pathname
+        const name = isAi(path) ? path.slice('/api/v1/ai/'.length) : path
         if (!isAiRoute(name) || request.method() !== 'POST') {
           unexpected.push(`${request.method()} ${new URL(request.url()).pathname}`)
           await route.abort()

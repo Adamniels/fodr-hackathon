@@ -8,7 +8,14 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { z } from 'zod'
 import { RASER } from '@fodr/domain/breeds'
 import { INGREDIENSER } from '@fodr/domain/types'
-import { AiProviderError, type AiProvider, type AnalysisFile, type ProfileInput } from './provider'
+import type {
+  ExplanationRequest,
+  JournalRequest,
+  JournalResponse as JournalContract,
+  ProfileRequest,
+  ProfileResponse as ProfileContract,
+} from '@fodr/contracts/ai'
+import { AiProviderError, type AiProvider, type AnalysisFile } from './provider'
 
 const MODEL = 'claude-sonnet-5-5'
 const BREED_IDS = RASER.map((r) => r.id) as [string, ...string[]]
@@ -126,7 +133,7 @@ Du får fritext om hästen (ras, arbete, miljö), vad den äter i dag och om hä
 - Fråga bara om sådant som påverkar foderplanen. Inga följdfrågor om allt är tydligt.
 Svara på svenska.`
 
-async function interpretProfile(client: Anthropic, input: ProfileInput): Promise<ProfileResponse> {
+async function interpretProfile(client: Anthropic, input: ProfileRequest): Promise<ProfileResponse> {
   const text = [
     `Om hästen och vad den äter i dag:\n${input.foderText || '(inget angivet)'}`,
     `Hälsa:\n${input.halsaText || '(inget angivet)'}`,
@@ -160,7 +167,7 @@ Beräkningen är gjord enligt SLU:s utfodringsrekommendationer och är redan kla
 - Inga förkortningar utan förklaring, inga tabeller.
 - Högst 120 ord i högst tre korta stycken: läget i dag, förslaget och varför, och det hästägaren ska tänka på. Hellre färre siffror än fler.`
 
-async function explainPlan(client: Anthropic, payload: unknown): Promise<string> {
+async function explainPlan(client: Anthropic, payload: ExplanationRequest): Promise<string> {
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 4000,
@@ -209,6 +216,13 @@ const JournalSchema = z.object({
 })
 export type JournalResponse = z.infer<typeof JournalSchema>
 
+// Compile-time only: what the model is asked to answer is what the routes' contracts promise the web (#30). One way,
+// since the model's schema is narrower (a breed is one of the registry's IDs, the contract any string).
+type Assignable<From, To> = [From] extends [To] ? true : false
+type Assert<T extends true> = T
+export type ProfileAnswerFitsContract = Assert<Assignable<ProfileResponse, ProfileContract>>
+export type JournalAnswerFitsContract = Assert<Assignable<JournalResponse, JournalContract>>
+
 const JOURNAL_SYSTEM = `Du läser en hästs foderjournal åt ägaren och letar mönster över tid.
 Du får hästens profil, journalposterna i datumordning, trenden som redan är beräknad och den aktuella foderplanen.
 - Koppla iakttagelser till foderbyten eller planändringar nära i tid, men skriv "kan hänga ihop" och aldrig att något orsakat något.
@@ -218,7 +232,7 @@ Du får hästens profil, journalposterna i datumordning, trenden som redan är b
 - Nästa steg ska vara praktiska, till exempel när hästen ska vägas eller vad ägaren ska anteckna.
 Svara på enkel svenska.`
 
-async function analyzeJournal(client: Anthropic, payload: unknown): Promise<JournalResponse> {
+async function analyzeJournal(client: Anthropic, payload: JournalRequest): Promise<JournalResponse> {
   const response = await client.messages.parse({
     model: MODEL,
     max_tokens: 8000,

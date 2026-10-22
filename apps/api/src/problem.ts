@@ -15,6 +15,7 @@ const TITLES = {
   429: 'Too Many Requests',
   500: 'Internal Server Error',
   502: 'Bad Gateway',
+  503: 'Service Unavailable',
 } as const
 
 export function problem(

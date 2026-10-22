@@ -1,12 +1,19 @@
-// Compares the AI reading against the colleague's answer key. Needs the dev server (npm run dev) and an API key.
-// Usage: node scripts/evaluate-analysis-reading.mjs [testdata-v2-dir] [port]
+// Compares the AI reading against the colleague's answer key, calling the provider the API uses directly (#30), so no
+// server is needed. Needs ANTHROPIC_API_KEY in the root .env.
+// Usage: npm run eval:analysis -w apps/api [-- testdata-v2-dir]
 // Costs one API call per file (11). The answer key is computed from unrounded values, so small rounding differences
 // in reports per kg as fed (e.g. copper in B06) are expected.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { createAnthropicProvider } from '../src/ai/anthropic.ts'
+
 const dataDir =
   process.argv[2] ?? new URL('../../../testdata/Testdata-from-other-dev/krubba-testdata-v2', import.meta.url).pathname
-const port = process.argv[3] ?? '5173'
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('ANTHROPIC_API_KEY is not set: add it to the root .env.')
+  process.exit(1)
+}
+const ai = createAnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY })
 const answerKey = JSON.parse(readFileSync(join(dataDir, 'data/facit.json'), 'utf8')).analyser
 const files = [
   ...answerKey.map((a) => ({ id: a.id, file: a.fil, answer: a })),
@@ -26,12 +33,7 @@ async function run(f) {
   const data = readFileSync(join(dataDir, f.file)).toString('base64')
   const mediaType = f.file.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'
   const t0 = Date.now()
-  const res = await fetch(`http://localhost:${port}/api/analys`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ mediaType, base64: data }),
-  })
-  const reply = await res.json()
+  const reply = await ai.readAnalysis({ mediaType, base64: data })
   const seconds = ((Date.now() - t0) / 1000).toFixed(1)
   if (!f.answer) return { id: f.id, seconds, ok: reply.arAnalys === false, detail: `arAnalys=${reply.arAnalys}` }
   const v = f.answer.forvantade_varden_per_kg_ts

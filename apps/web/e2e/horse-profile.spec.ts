@@ -11,6 +11,7 @@ import {
   test,
   typeKeyByKey,
 } from './support/helpers'
+import { problem } from './support/mock-ai'
 
 // Horse profiles on the API (CF2, #25): every test uses a real account, and the profile is saved on the server.
 
@@ -140,14 +141,14 @@ test('AI fill sets fields and sensitivities', async ({ page, ai }) => {
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
   await expect(page.getByLabel('Har haft fång')).toBeChecked()
-  const calls = ai.calls('profil') as { foderText: string; produkter: unknown[] }[]
+  const calls = ai.calls('profile') as { foderText: string; produkter: unknown[] }[]
   expect(calls).toHaveLength(1)
   expect(calls[0].foderText).toContain('hade fång i våras')
   expect(calls[0].produkter.length).toBeGreaterThan(0)
 })
 
 test('AI follow-up question round trip', async ({ page, ai }) => {
-  ai.respondWith('profil', profilMedFoljdfraga)
+  ai.respondWith('profile', profilMedFoljdfraga)
   await createAccountWithHorses(page)
   await page.getByLabel('Om hästen och vad den äter i dag').fill('En liter pellets morgon och kväll')
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
@@ -155,18 +156,19 @@ test('AI follow-up question round trip', async ({ page, ai }) => {
   await page.getByLabel(FOLJDFRAGA).fill('Cirka 600 g')
   await page.getByRole('button', { name: 'Svara' }).click()
 
-  await expect.poll(() => ai.calls('profil').length).toBe(2)
-  const second = ai.calls('profil')[1] as { tidigareSvar: { fraga: string; svar: string }[] }
+  await expect.poll(() => ai.calls('profile').length).toBe(2)
+  const second = ai.calls('profile')[1] as { tidigareSvar: { fraga: string; svar: string }[] }
   expect(second.tidigareSvar).toContainEqual({ fraga: FOLJDFRAGA, svar: 'Cirka 600 g' })
 })
 
 test('AI error is shown and the form stays usable', async ({ page, ai }) => {
-  ai.respondWith('profil', { fel: 'Testfel' }, 500)
+  ai.respondWith('profile', problem(502, 'ai.unavailable'), 502)
   await createAccountWithHorses(page)
   await page.getByLabel('Om hästen och vad den äter i dag').fill('Något om hästen')
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
-  await expect(page.getByText('Testfel')).toBeVisible()
+  // The API's problem code, in the catalogue's words (#30).
+  await expect(page.getByText('AI-tjänsten svarar inte just nu. Försök igen om en stund.')).toBeVisible()
   await page.getByLabel('Namn').fill('Sixten Andra')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
 })

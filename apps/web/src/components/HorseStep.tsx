@@ -1,7 +1,7 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { interpretProfile } from '../api'
+import { aiErrorText, useAi } from '../api'
 import { RASER, hittaRas } from '@fodr/domain/breeds'
 import { BYTESTAKT, standardKanslighet } from '@fodr/domain/transition'
 import { viktFranBrostomfang } from '@fodr/domain/slu'
@@ -543,6 +543,7 @@ function AiFill({
   const [tidigare, setTidigare] = useState<{ fraga: string; svar: string }[]>([])
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
+  const ai = useAi()
 
   async function kor(extraSvar: { fraga: string; svar: string }[] = []) {
     // The button waits for the catalogue.
@@ -551,7 +552,7 @@ function AiFill({
     setFel(null)
     const allaSvar = [...tidigare, ...extraSvar]
     try {
-      const t = await interpretProfile({
+      const t = await ai.interpretProfile({
         foderText,
         halsaText,
         tidigareSvar: allaSvar,
@@ -595,7 +596,7 @@ function AiFill({
       setFragor(t.foljdfragor)
       setSvar({})
     } catch (e) {
-      setFel(e instanceof Error ? e.message : String(e))
+      setFel(aiErrorText(e))
     } finally {
       setLaddar(false)
     }

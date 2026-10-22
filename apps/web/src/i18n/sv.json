@@ -785,5 +785,16 @@
     "toLogIn": "Logga in",
     "invalid": "Länken är ogiltig eller har gått ut.",
     "requestNew": "Be om en ny länk"
+  },
+  "ai": {
+    "errors": {
+      "notConfigured": "AI-tjänsten är inte inställd på servern.",
+      "rateLimited": "Många frågor till AI:n just nu. Vänta en stund och försök igen.",
+      "unavailable": "AI-tjänsten svarar inte just nu. Försök igen om en stund.",
+      "refused": "AI:n avböjde att svara på det här.",
+      "truncated": "Svaret blev avklippt. Försök igen.",
+      "invalid": "Uppgifterna kunde inte skickas till AI:n. Korta texten och försök igen.",
+      "failed": "Något gick fel. Försök igen."
+    }
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trans, useTranslation } from 'react-i18next'
-import { explainPlan } from '../api'
+import { aiErrorText, useAi } from '../api'
 import { monthlyCost, displayName } from '@fodr/domain/intake'
 import type { Balansrad, Plan, Status } from '@fodr/domain/plan'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
@@ -63,6 +63,7 @@ export function PlanStep({
   const payload = useMemo(() => explanationPayload(hast, analys, plan), [hast, analys, plan])
   const payloadFingerprint = useMemo(() => fingerprint(JSON.stringify(payload)), [payload])
   const queryClient = useQueryClient()
+  const { explainPlan } = useAi()
   const queryKey = useMemo(() => ['explanation', hast.id, payloadFingerprint], [hast.id, payloadFingerprint])
   const explanationQuery = useQuery({
     queryKey,
@@ -81,7 +82,7 @@ export function PlanStep({
   // as before: the query keeps the old text as data in both cases.
   const settled = !explanationQuery.isFetching
   const explanation = settled && !explanationQuery.error ? (explanationQuery.data ?? null) : null
-  const explanationError = settled && explanationQuery.error ? explanationQuery.error.message : null
+  const explanationError = settled && explanationQuery.error ? aiErrorText(explanationQuery.error) : null
   // A failure belongs to the visit that saw it: leaving the plan resets a failed query, so a revisit starts again from
   // the saved text (or asks again when there is none), as the remounted component did before (#21).
   useEffect(

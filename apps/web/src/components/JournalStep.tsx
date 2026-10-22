@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { analyzeJournal, type JournalAnalysis } from '../api'
+import type { JournalResponse } from '@fodr/contracts/ai'
+import { aiErrorText, useAi } from '../api'
 import { UnsavedProfileError, type EntryDraft } from '../journal'
 import { beraknaTrend, sorteradePoster, type Journalpost, type PlanOgonblick } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
@@ -301,7 +302,8 @@ function AiAnalysis({
   aktuellPlan: PlanOgonblick | null
 }) {
   const { t } = useTranslation()
-  const [svar, setSvar] = useState<JournalAnalysis | null>(null)
+  const [svar, setSvar] = useState<JournalResponse | null>(null)
+  const { analyzeJournal } = useAi()
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
 
@@ -335,7 +337,7 @@ function AiAnalysis({
         }),
       )
     } catch (e) {
-      setFel(e instanceof Error ? e.message : String(e))
+      setFel(aiErrorText(e))
     } finally {
       setLaddar(false)
     }
