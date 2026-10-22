@@ -26,8 +26,10 @@ export function DeleteAccount() {
       void navigate('/', { replace: true, flushSync: true, state: { accountDeleted: true } })
       session.accountDeleted()
     } catch (e) {
-      setError(e instanceof AuthError && e.code === 'INVALID_PASSWORD' ? 'wrongPassword' : 'failed')
       setBusy(false)
+      // A failure that comes after the dialog was closed is not shown when it opens again.
+      if (!dialog.current?.open) return
+      setError(e instanceof AuthError && e.code === 'INVALID_PASSWORD' ? 'wrongPassword' : 'failed')
     }
   }
 

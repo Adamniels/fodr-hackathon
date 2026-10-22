@@ -47,6 +47,6 @@ test('deleting my account takes everything, says so, and the account is gone (CF
 
   // The account is gone: it cannot log in again.
   await logIn(page, account.email, account.password)
-  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveText('Fel e-postadress eller lösenord.')
   await expect(page.getByText('Mina hästar')).toHaveCount(0)
 })

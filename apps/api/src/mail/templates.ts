@@ -77,8 +77,6 @@ export function accountDeletedMail(to: string): Mail {
       '',
       'Ditt konto hos Fodr är raderat, tillsammans med dina hästar, analyser och rapporter, foderplaner och journal.',
       '',
-      'Om det inte var du som raderade kontot, svara på det här mejlet.',
-      '',
       'Fodr',
     ].join('\n'),
   }

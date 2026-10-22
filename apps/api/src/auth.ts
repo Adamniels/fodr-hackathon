@@ -5,7 +5,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins'
-import { eq } from 'drizzle-orm'
+import { eq, inArray, like, or } from 'drizzle-orm'
 import type { Config } from './config'
 import type { Database } from './db'
 import * as schema from './db/schema'
@@ -52,8 +52,21 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
     })
   }
   const horses = horseRepository(database.db)
-  // The report keys of an account being deleted, from beforeDelete to afterDelete.
-  const deletedReports = new Map<string, string[]>()
+  // A deleted account's pending links: a password reset's row holds the user's ID, a login link's the email (#41).
+  // Matched exactly, as an email's underscore would be a wildcard in LIKE.
+  const removePendingLinks = async (user: { id: string; email: string }) => {
+    const rows = await database.db
+      .select({ id: schema.verifications.id, value: schema.verifications.value })
+      .from(schema.verifications)
+      .where(
+        or(
+          eq(schema.verifications.value, user.id),
+          like(schema.verifications.value, `%${user.email.replace(/[\\%_]/g, '\\$&')}%`),
+        ),
+      )
+    const ids = rows.filter((r) => r.value === user.id || emailIn(r.value) === user.email).map((r) => r.id)
+    if (ids.length > 0) await database.db.delete(schema.verifications).where(inArray(schema.verifications.id, ids))
+  }
   const userByEmail = async (email: string) => {
     const [user] = await database.db
       .select({ id: schema.users.id })
@@ -91,32 +104,32 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
       deleteUser: {
         enabled: true,
         beforeDelete: async (user) => {
-          const keys: string[] = []
-          for (const horse of await horses.listFor(user)) keys.push(...((await horses.remove(user, horse.id)) ?? []))
-          deletedReports.set(user.id, keys)
-        },
-        afterDelete: async (user) => {
-          const keys = deletedReports.get(user.id) ?? []
-          deletedReports.delete(user.id)
-          try {
-            await files.remove(keys)
-          } catch (err) {
-            // Nothing refers to the files any more, and their keys hold no personal data: logged, to remove by hand.
-            logger.error({ err, keys }, 'reports of a deleted account remain')
+          for (const id of await horses.ownedBy(user)) {
+            const keys = (await horses.remove(user, id)) ?? []
+            try {
+              await files.remove(keys)
+            } catch (err) {
+              // Nothing refers to the files any more, and their keys hold no personal data: logged, to remove by hand.
+              logger.error({ err, keys }, 'reports of a deleted account remain')
+            }
           }
+          await removePendingLinks(user)
+        },
+        afterDelete: (user) => {
           background(() => mailer.send(accountDeletedMail(user.email)))
+          return Promise.resolve()
         },
       },
     },
     hooks: {
       // An account is only deleted with its password: Better Auth would otherwise delete it for a recent session alone.
-      before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== '/delete-user') return
+      before: createAuthMiddleware((ctx) => {
+        if (ctx.path !== '/delete-user') return Promise.resolve()
         const body = ctx.body as { password?: unknown } | undefined
         if (typeof body?.password !== 'string' || body.password === '') {
           throw new APIError('BAD_REQUEST', { code: 'PASSWORD_REQUIRED', message: 'Password required' })
         }
-        await Promise.resolve()
+        return Promise.resolve()
       }),
     },
     // Its own log lines go to pino (ADR 0015), first line only, and never one about a query: those carry the SQL
@@ -192,6 +205,8 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
         '/sign-up/email': { window: MINUTE, max: 5 },
         '/sign-in/magic-link': { window: MINUTE, max: 3 },
         '/request-password-reset': { window: MINUTE, max: 3 },
+        // Deleting the account checks the password (#41): as few guesses as signing in.
+        '/delete-user': { window: MINUTE, max: 5 },
       },
     },
     plugins: [
@@ -212,3 +227,15 @@ export function createAuth({ config, database, mailer, logger, files }: AuthDeps
 }
 
 export type Auth = ReturnType<typeof createAuth>
+
+/** The email in a verification row's JSON value (a login link's), or undefined. */
+function emailIn(value: string): string | undefined {
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return typeof parsed === 'object' && parsed !== null && 'email' in parsed && typeof parsed.email === 'string'
+      ? parsed.email
+      : undefined
+  } catch {
+    return undefined
+  }
+}

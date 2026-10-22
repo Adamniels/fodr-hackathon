@@ -19,6 +19,8 @@ const toColumns = ({ namn, ...profile }: HorseProfile) => ({ name: namn, profile
 
 export interface HorseRepository {
   listFor(user: Pick<User, 'id'>): Promise<Horse[]>
+  /** The IDs of the horses the user owns, which deleting the account deletes (#41); a shared horse is its owner's. */
+  ownedBy(user: Pick<User, 'id'>): Promise<string[]>
   get(user: Pick<User, 'id'>, id: string): Promise<Horse | undefined>
   create(user: Pick<User, 'id'>, profile: HorseProfile): Promise<Horse>
   update(user: Pick<User, 'id'>, id: string, profile: HorseProfile): Promise<Horse | undefined>
@@ -39,6 +41,14 @@ export function horseRepository(db: Executor): HorseRepository {
     async listFor(user) {
       const rows = await db.select().from(horses).where(isMember(user)).orderBy(asc(horses.createdAt), asc(horses.id))
       return rows.map(toHorse)
+    },
+
+    async ownedBy(user) {
+      const rows = await db
+        .select({ id: horseMembers.horseId })
+        .from(horseMembers)
+        .where(and(eq(horseMembers.userId, user.id), eq(horseMembers.role, 'owner')))
+      return rows.map((r) => r.id)
     },
 
     async get(user, id) {
