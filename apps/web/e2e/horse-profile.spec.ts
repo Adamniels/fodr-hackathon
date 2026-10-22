@@ -1,4 +1,5 @@
 import { FOLJDFRAGA, profil, profilMedFoljdfraga } from './fixtures/ai'
+import { SIXTEN } from './fixtures/horses'
 import {
   clientIpHeaders,
   createAccount,
@@ -151,10 +152,11 @@ test('a feed the AI names that is not in the catalogue is shown as unknown, and 
   page,
   ai,
 }) => {
-  // As the API answers for a product the model invented: no ID, the name and dose kept (C8).
+  // A product the model invented (C8). The API drops such an ID (routes.integration.test.ts); the page does not take an
+  // ID it does not know as a link either.
   ai.respondWith('profile', {
     ...profil,
-    nuvarandeFoder: [{ produktId: null, namn: 'Hemmablandning', gramPerDag: 200 }],
+    nuvarandeFoder: [{ produktId: 'pa-hittat-123', namn: 'Hemmablandning', gramPerDag: 200 }],
   })
   await createAccountWithHorses(page)
   await page.getByLabel('Om hästen och vad den äter i dag').fill('Får 2 hg hemmablandning om dagen')
@@ -166,6 +168,16 @@ test('a feed the AI names that is not in the catalogue is shown as unknown, and 
   )
   await showExamplePlan(page)
   await expect(page.getByText('"Hemmablandning" finns inte i produktdatabasen och räknas inte med.')).toBeVisible()
+})
+
+test('a saved feed whose product the catalogue does not have is shown as unknown (#33)', async ({ page }) => {
+  // Saved before the API checked the AI's IDs, or a product since taken out of the catalogue.
+  await createAccountWithHorses(page, [
+    { ...SIXTEN, nuvarandeFoder: [{ produktId: 'borttagen-123', namn: 'Gammalt foder', gramPerDag: 100 }] },
+  ])
+  await expect(page.getByRole('combobox', { name: 'Finns inte i produktdatabasen och räknas inte med' })).toHaveValue(
+    'Gammalt foder',
+  )
 })
 
 test('AI follow-up question round trip', async ({ page, ai }) => {

@@ -64,6 +64,7 @@ export function aiRoutes({
   logger: Logger
   catalogue: Catalogue
 }) {
+  // The catalogue is bundled and fixed per build; once products are versioned in the database (#35), read it per request.
   const known = new Set(catalogue.products.map((p) => p.id))
   const routes = new Hono<AppEnv & { Variables: UserVariables }>()
   routes.use(requireUser(auth))

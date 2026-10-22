@@ -478,6 +478,10 @@ function FeedList({
   const foder = hast.nuvarandeFoder
   const satt = (i: number, patch: Partial<(typeof foder)[number]>) =>
     onChange({ ...hast, nuvarandeFoder: foder.map((f, j) => (j === i ? { ...f, ...patch } : f)) })
+  // A feed is linked only to a product the catalogue has, as the plan counts it (#33): an ID saved earlier, or of a
+  // product since taken out, is an unknown feed.
+  const known = new Set(produkter.map((p) => p.id))
+  const isLinked = (f: (typeof foder)[number]) => f.produktId !== null && known.has(f.produktId)
   return (
     <div className="foderlista">
       {/* Searchable list: a name matching a product is linked to it, otherwise it is saved as a custom feed. */}
@@ -494,8 +498,8 @@ function FeedList({
             list="produktnamn"
             placeholder={t('horse.feeds.searchPlaceholder')}
             value={f.namn}
-            className={f.produktId ? '' : 'okand-produkt'}
-            title={f.produktId ? undefined : t('horse.feeds.unknownProduct')}
+            className={isLinked(f) ? '' : 'okand-produkt'}
+            title={isLinked(f) ? undefined : t('horse.feeds.unknownProduct')}
             onChange={(e) => {
               const p = produkter.find((x) => x.namn === e.target.value)
               satt(i, { produktId: p?.id ?? null, namn: e.target.value })
