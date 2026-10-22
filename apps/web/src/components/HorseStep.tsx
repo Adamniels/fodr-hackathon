@@ -17,6 +17,7 @@ import {
   type Prestanda,
   type Produkt,
 } from '@fodr/domain/types'
+import { HORSE_NAME_MAX, HORSE_NOTES_MAX } from '@fodr/contracts/horses'
 import { bodyConditionText, breedName, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
@@ -98,7 +99,7 @@ function ProfileForm({
 
       <div className="grupp">
         <Field label={t('horse.name')}>
-          <input value={hast.namn} onChange={(e) => set({ namn: e.target.value })} />
+          <input value={hast.namn} maxLength={HORSE_NAME_MAX} onChange={(e) => set({ namn: e.target.value })} />
         </Field>
         <Field label={t('horse.age')}>
           <NumberField value={hast.alderAr} error={errorFor('alderAr')} onChange={(v) => set({ alderAr: v })} />
@@ -244,7 +245,11 @@ function ProfileForm({
       <HealthSection halsa={hast.halsa} onChange={(halsa) => set({ halsa })} />
       <FeedChangeSensitivitySection hast={hast} onChange={(bytekanslighet) => set({ bytekanslighet })} />
       <Field label={t('horse.other')}>
-        <input value={hast.halsa.ovrigt} onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })} />
+        <input
+          value={hast.halsa.ovrigt}
+          maxLength={HORSE_NOTES_MAX}
+          onChange={(e) => set({ halsa: { ...hast.halsa, ovrigt: e.target.value } })}
+        />
       </Field>
 
       <div className="atgardsrad">
@@ -575,7 +580,8 @@ function AiFill({
           tandproblem: hast.halsa.tandproblem || t.tandproblem,
           proteinkanslig: hast.halsa.proteinkanslig || t.proteinkanslig,
           undvik: [...new Set([...(hast.halsa.undvik ?? []), ...t.undvik])],
-          ovrigt: t.ovrigt || hast.halsa.ovrigt,
+          // Cut to what the server stores, as the field's own limit does for typed text.
+          ovrigt: (t.ovrigt || hast.halsa.ovrigt).slice(0, HORSE_NOTES_MAX),
         },
       })
       setTidigare(allaSvar)

@@ -113,7 +113,8 @@
       "saving": "Sparar…",
       "saved": "Sparat",
       "failed": "Kunde inte spara ändringarna.",
-      "retry": "Försök igen"
+      "retry": "Försök igen",
+      "refused": "Ändringarna kunde inte sparas eftersom något värde inte godtas. Kontrollera fälten."
     }
   },
   "analysis": {
@@ -422,7 +423,7 @@
     "delete": {
       "button": "Ta bort häst",
       "title": "Ta bort {{name}}?",
-      "body": "Hästens analyser, foderplaner och journal tas också bort. Det går inte att ångra.",
+      "body": "Allt som sparats för hästen, som journalen, tas också bort. Det går inte att ångra.",
       "failed": "Kunde inte ta bort hästen. Försök igen.",
       "cancel": "Avbryt",
       "confirm": "Ta bort"

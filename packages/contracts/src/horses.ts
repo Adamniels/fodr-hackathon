@@ -7,8 +7,12 @@ import { INGREDIENSER, type Hastprofil } from '@fodr/domain/types'
 
 const number = z.number()
 
+/** The longest name and health note the server accepts; the form stops typing there. */
+export const HORSE_NAME_MAX = 100
+export const HORSE_NOTES_MAX = 2000
+
 export const HorseProfileSchema = z.object({
-  namn: z.string().max(100),
+  namn: z.string().max(HORSE_NAME_MAX),
   alderAr: number,
   kon: z.enum(['sto', 'valack', 'hingst']),
   typ: z.enum(['lattfodd', 'normalfodd', 'svarfodd']),
@@ -38,7 +42,7 @@ export const HorseProfileSchema = z.object({
     tandproblem: z.boolean().optional(),
     proteinkanslig: z.boolean().optional(),
     undvik: z.array(z.enum(INGREDIENSER)).max(INGREDIENSER.length).optional(),
-    ovrigt: z.string().max(2000),
+    ovrigt: z.string().max(HORSE_NOTES_MAX),
   }),
   bytekanslighet: z.enum(['tal', 'normal', 'kanslig']).optional(),
   grovfoder: z.object({ typ: z.enum(['hosilage', 'ho']), kgPerDag: number }),

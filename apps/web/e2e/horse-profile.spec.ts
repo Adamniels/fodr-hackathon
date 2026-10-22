@@ -59,6 +59,7 @@ test('deleting a horse asks first, and cancelling keeps it', async ({ page }) =>
 
 test('a failed save keeps the edit and saves it on retry', async ({ page }) => {
   await createAccountWithHorses(page)
+  // /api/v1 belongs to the real backend and is otherwise never intercepted; only a stubbed answer can make a save fail.
   await page.route('**/api/v1/horses/*', (route) =>
     route.request().method() === 'PUT'
       ? route.fulfill({ status: 500, contentType: 'application/problem+json', body: '{}' })
@@ -72,6 +73,27 @@ test('a failed save keeps the edit and saves it on retry', async ({ page }) => {
   await page.getByRole('button', { name: 'Försök igen' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
   await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
+})
+
+test('an edit the server refuses says so and offers no retry', async ({ page }) => {
+  await createAccountWithHorses(page)
+  // As above: a stubbed answer, since the form itself never sends a value the server refuses.
+  await page.route('**/api/v1/horses/*', (route) =>
+    route.request().method() === 'PUT'
+      ? route.fulfill({ status: 400, contentType: 'application/problem+json', body: '{}' })
+      : route.fallback(),
+  )
+  await page.getByLabel('Namn').fill('Sixten Andra')
+  await expect(page.getByText(/kunde inte sparas eftersom något värde inte godtas/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Försök igen' })).toBeHidden()
+})
+
+test('an edit made just before logging out is saved', async ({ page }) => {
+  const account = await createAccountWithHorses(page)
+  await page.getByLabel('Namn').fill('Sixten Andra')
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  await logIn(page, account.email)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
 })
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
@@ -81,6 +81,7 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
   const [menyOppen, setMenyOppen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [addFailed, setAddFailed] = useState(false)
+  const title = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -140,9 +141,11 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
   }
   // The deleted horse leaves the list, and its URL then sends to /horses (below). Its journal is kept in the browser
   // until #28, so it is removed here; its analysis and plan are not stored yet (#26, #27).
+  // Focus moves to the page title, as the dialog that held it goes away with the profile.
   const removeHorse = async (id: string) => {
     await horses.remove(id)
     setJournal((j) => Object.fromEntries(Object.entries(j).filter(([hastId]) => hastId !== id)))
+    requestAnimationFrame(() => title.current?.focus())
   }
   const addEntry = (hastId: string, post: Journalpost) =>
     setJournal((j) => ({ ...j, [hastId]: [...(j[hastId] ?? []), post] }))
@@ -217,11 +220,6 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
             </button>
           </li>
         </ul>
-        {addFailed && (
-          <p className="ruta fel" role="alert">
-            {t('app.horses.addFailed')}
-          </p>
-        )}
 
         <div className="sidofalt-fot">
           <div className="konto">
@@ -266,7 +264,15 @@ function Workspace({ user, logOut, horses }: WorkspaceProps & { horses: HorseSto
           <div className="sid-ikon" aria-hidden>
             {initial(hast)}
           </div>
-          <h1 className="sid-titel">{hast?.namn || t('app.newHorse')}</h1>
+          <h1 className="sid-titel" ref={title} tabIndex={-1}>
+            {hast?.namn || t('app.newHorse')}
+          </h1>
+          {/* In the page rather than the sidebar, which is closed on a phone when the welcome card adds the horse. */}
+          {addFailed && (
+            <p className="ruta fel" role="alert">
+              {t('app.horses.addFailed')}
+            </p>
+          )}
           {hast && <SaveStatus state={horses.saveState(hast.id)} onRetry={() => horses.retrySave(hast.id)} />}
 
           {hast && (

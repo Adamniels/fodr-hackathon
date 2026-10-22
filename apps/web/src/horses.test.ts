@@ -107,12 +107,75 @@ describe('AutoSaver', () => {
     expect(flushed).toBe(true)
   })
 
-  it('sends waiting edits with keepalive when the page is left', () => {
+  it('sends waiting edits with keepalive when the page is left, and reports how it went', async () => {
     const { calls, save } = heldSaves()
     const saver = new AutoSaver(save, onState, 600)
     saver.schedule(horse('a', 'Sixten'))
     saver.flushOnExit()
+    await vi.advanceTimersByTimeAsync(0)
     expect(calls.map((c) => [c.horse.namn, c.keepalive])).toEqual([['Sixten', true]])
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(states.a).toBe('saved')
+  })
+
+  it("leaving the page sends a horse's waiting edit only after its save on the way", async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Six'))
+    await vi.advanceTimersByTimeAsync(600)
+    saver.schedule(horse('a', 'Sixten'))
+    saver.flushOnExit()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => c.horse.namn)).toEqual(['Six'])
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => [c.horse.namn, c.keepalive])).toEqual([
+      ['Six', false],
+      ['Sixten', true],
+    ])
+  })
+
+  it('flush sends a failed edit once more', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Sixten'))
+    await vi.advanceTimersByTimeAsync(600)
+    calls[0].reject(new Error('500'))
+    await vi.advanceTimersByTimeAsync(0)
+    void saver.flush()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => c.horse.namn)).toEqual(['Sixten', 'Sixten'])
+  })
+
+  it('tells an edit the server refuses from one that may pass later, and never sends it again by itself', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600, (e) => e instanceof Error && e.message === '400')
+    saver.schedule(horse('a', 'Sixten'))
+    await vi.advanceTimersByTimeAsync(600)
+    calls[0].reject(new Error('400'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(states.a).toBe('refused')
+    void saver.flush()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls).toHaveLength(1)
+  })
+
+  it('is busy while an edit waits, travels or has failed', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    expect(saver.busy()).toBe(false)
+    saver.schedule(horse('a', 'Sixten'))
+    expect(saver.busy()).toBe(true)
+    await vi.advanceTimersByTimeAsync(600)
+    expect(saver.busy()).toBe(true)
+    calls[0].reject(new Error('500'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(saver.busy()).toBe(true)
+    saver.retry('a')
+    calls[1].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(saver.busy()).toBe(false)
   })
 
   it('drops the waiting and failed edits of a deleted horse', async () => {

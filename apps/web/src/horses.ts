@@ -67,32 +67,44 @@ export function newHorseProfile(): HorseProfile {
   }
 }
 
-/** Where a horse's edits are: on their way to the server, saved, or failed and kept for a retry. */
-export type SaveState = 'saving' | 'saved' | 'failed'
+/**
+ * Where a horse's edits are: on their way to the server, saved, failed and kept for a retry, or refused by the server
+ * as invalid, which a retry cannot change.
+ */
+export type SaveState = 'saving' | 'saved' | 'failed' | 'refused'
 
 /**
  * Saves each horse's latest edit once the edits pause for `delayMs`. One save per horse is in flight at a time, and
  * the next one sends the newest edit, so an older edit can never reach the server after a newer one. A failed edit is
- * kept for retry() unless a newer edit, which holds its changes too, is waiting.
+ * kept for retry() unless a newer edit, which holds its changes too, is waiting. `refused` tells a failure no retry can
+ * fix (the server called the edit invalid) from one that may pass later.
  */
 export class AutoSaver {
   private readonly waiting = new Map<string, Hastprofil>()
-  private readonly failed = new Map<string, Hastprofil>()
+  private readonly failed = new Map<string, { horse: Hastprofil; refused: boolean }>()
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly inFlight = new Map<string, Promise<void>>()
 
   private readonly save: (horse: Hastprofil, keepalive: boolean) => Promise<void>
   private readonly onState: (id: string, state: SaveState) => void
   private readonly delayMs: number
+  private readonly refused: (error: unknown) => boolean
 
   constructor(
     save: (horse: Hastprofil, keepalive: boolean) => Promise<void>,
     onState: (id: string, state: SaveState) => void,
     delayMs = 600,
+    refused: (error: unknown) => boolean = () => false,
   ) {
     this.save = save
     this.onState = onState
     this.delayMs = delayMs
+    this.refused = refused
+  }
+
+  /** Whether any edit is waiting, on its way, or failed: the server may not hold what the page shows. */
+  busy(): boolean {
+    return this.waiting.size > 0 || this.inFlight.size > 0 || this.failed.size > 0
   }
 
   schedule(horse: Hastprofil): void {
@@ -107,27 +119,43 @@ export class AutoSaver {
   }
 
   retry(id: string): void {
-    const horse = this.failed.get(id)
-    if (!horse) return
+    const failed = this.failed.get(id)
+    if (!failed) return
     this.failed.delete(id)
-    this.waiting.set(id, horse)
+    this.waiting.set(id, failed.horse)
     this.onState(id, 'saving')
     this.send(id)
   }
 
-  /** Sends every waiting edit now; resolves when every save has settled, failed or not. */
+  /**
+   * Sends every waiting edit now, and once more every failed one that a retry could fix; resolves when every save has
+   * settled, failed or not.
+   */
   async flush(): Promise<void> {
+    for (const [id, failed] of this.failed) if (!failed.refused) this.retry(id)
     for (const id of [...this.waiting.keys()]) this.send(id)
     await Promise.all(this.inFlight.values())
   }
 
-  /** The page is being left: sends every waiting edit with keepalive, without waiting for an answer. */
+  /**
+   * The page is being left: sends every waiting edit with keepalive, without waiting for an answer. A horse with a save
+   * on its way sends after it, so the order holds if the page lives that long. The answers still set the state, for a
+   * page that comes back from the back/forward cache.
+   */
   flushOnExit(): void {
     for (const [id, horse] of this.waiting) {
       clearTimeout(this.timers.get(id))
       this.timers.delete(id)
       this.waiting.delete(id)
-      void this.save(horse, true).catch(() => undefined)
+      const sent = (this.inFlight.get(id) ?? Promise.resolve()).then(() => this.save(horse, true))
+      const settled = sent.then(
+        () => this.settle(id),
+        (e: unknown) => {
+          if (!this.waiting.has(id)) this.failed.set(id, { horse, refused: this.refused(e) })
+          this.settle(id)
+        },
+      )
+      this.inFlight.set(id, settled)
     }
   }
 
@@ -152,15 +180,21 @@ export class AutoSaver {
         this.timers.delete(id)
         try {
           await this.save(horse, false)
-        } catch {
-          if (!this.waiting.has(id)) this.failed.set(id, horse)
+        } catch (e) {
+          if (!this.waiting.has(id)) this.failed.set(id, { horse, refused: this.refused(e) })
         }
       }
-      this.inFlight.delete(id)
-      if (this.failed.has(id)) this.onState(id, 'failed')
-      else this.onState(id, 'saved')
+      this.settle(id)
     }
     this.inFlight.set(id, run())
+  }
+
+  private settle(id: string): void {
+    this.inFlight.delete(id)
+    // A newer edit came in meanwhile: its own timer sends it.
+    if (this.waiting.has(id)) return
+    const failed = this.failed.get(id)
+    this.onState(id, failed ? (failed.refused ? 'refused' : 'failed') : 'saved')
   }
 }
 
@@ -177,19 +211,20 @@ export interface HorseStore {
   flush: () => Promise<void>
 }
 
-const horsesKey = (userId: string) => ['horses', userId]
+/** The query key of every account's horses, removed when the workspace closes or the user logs out. */
+export const HORSES_QUERY_KEY = ['horses']
+const horsesKey = (userId: string) => [...HORSES_QUERY_KEY, userId]
+
+// The saves a closed workspace sent on its way, per user: a workspace opened again reads the horses after them, so it
+// never shows a list from before its own edits.
+const closing = new Map<string, Promise<void>>()
+
+const refusedByServer = (e: unknown) => e instanceof HorseApiError && [400, 413, 415].includes(e.status)
 
 /** The account's horses: undefined while loading, null when the read failed. */
 export function useApiHorses(userId: string): { store: HorseStore | undefined | null; reload: () => void } {
   const queryClient = useQueryClient()
   const key = horsesKey(userId)
-  const query = useQuery({
-    queryKey: key,
-    queryFn: horsesApi.list,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    retry: false,
-  })
   const [states, setStates] = useState<Record<string, SaveState>>({})
   // An expired session answers 401: the session is read again, and the workspace gate sends to /login.
   const guard = async <T>(request: Promise<T>): Promise<T> => {
@@ -205,18 +240,40 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
       new AutoSaver(
         (horse, keepalive) => guard(horsesApi.update(horse, keepalive)),
         (id, state) => setStates((s) => ({ ...s, [id]: state })),
+        600,
+        refusedByServer,
       ),
   )
+  // Read when the workspace opens, and again when the window regains focus (changes from another device), but only
+  // while every edit here is saved: a list read meanwhile would replace edits the server does not have yet.
+  const query = useQuery({
+    queryKey: key,
+    queryFn: async () => {
+      await closing.get(userId)
+      return guard(horsesApi.list())
+    },
+    staleTime: Infinity,
+    refetchOnWindowFocus: () => !saver.busy(),
+    retry: false,
+  })
 
-  // Leaving the page sends what is waiting; leaving the workspace (the landing page) sends it at once.
+  // Leaving the page sends what is waiting, and asks first while an edit is not saved. Leaving the workspace (the
+  // landing page, logging out, an ended session) sends it at once and drops the cached horses, health notes included,
+  // so a workspace opened again shows what the server holds, never an edit that only looked saved.
   useEffect(() => {
     const onPageHide = () => saver.flushOnExit()
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saver.busy()) e.preventDefault()
+    }
     window.addEventListener('pagehide', onPageHide)
+    window.addEventListener('beforeunload', onBeforeUnload)
     return () => {
       window.removeEventListener('pagehide', onPageHide)
-      void saver.flush()
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      closing.set(userId, saver.flush())
+      queryClient.removeQueries({ queryKey: horsesKey(userId) })
     }
-  }, [saver])
+  }, [saver, userId, queryClient])
 
   if (query.isPending) return { store: undefined, reload: () => undefined }
   if (query.isError) return { store: null, reload: () => void query.refetch() }
