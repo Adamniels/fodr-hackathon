@@ -22,3 +22,7 @@ CF4 requires the original report (PDF or photo, a few MB) to be stored with the 
 
 - The API needs a body size limit that fits the documented upload limit (set in the M2 slice).
 - Locally SeaweedFS serves the bucket (ADR 0006; MinIO until 2026-10-21, when its images could no longer be pulled, #18).
+
+## Notes
+
+- 2026-10-22 (#26): the limits are 20 MB for a PDF and 5 MB for a photo (PNG, JPEG, WebP), the most the AI accepts for an image (owner). They are checked in the browser before upload and again in the API, which reads the type from the file's own bytes; the API's body limit is the largest file plus the multipart framing. The bucket is created at start when it is missing, for the local and test stores. Downloading the original (presigned URLs) is not built yet; export (#40) is its first user. SeaweedFS gives each bucket volumes of its own, so compose.yaml raises its volume limit to hold the dev, integration and e2e buckets.

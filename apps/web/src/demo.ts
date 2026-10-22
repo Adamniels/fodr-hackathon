@@ -2,7 +2,11 @@
 // in localStorage as before the real accounts. The demo button opens it; #29 removes it together with the example data.
 import { useEffect, useState } from 'react'
 import type { User } from '@fodr/contracts/me'
+import { tillGrovfoderanalys } from '@fodr/domain/analysis'
 import type { Hastprofil } from '@fodr/domain/types'
+import type { AnalysisStore, StoredAnalysis } from './analyses'
+import { ApiError } from './api-v1'
+import { fileToBase64, readAnalysis } from './api'
 import { demoHast, ponny } from './data/examples'
 import { newHorseProfile, type HorseStore } from './horses'
 
@@ -78,6 +82,39 @@ export function useDemoHorses(): HorseStore {
     saveState: () => undefined,
     retrySave: () => undefined,
     flush: () => Promise.resolve(),
+  }
+}
+
+/**
+ * The demo's analyses, one per horse, in memory only as before the API (#26): the report is read through the AI route
+ * and converted here, as the API does for an account. Gone on reload, like the demo's analysis always was.
+ */
+export function useDemoAnalysis(horseId: string | undefined): AnalysisStore {
+  const [analyses, setAnalyses] = useState<Record<string, StoredAnalysis>>({})
+  const set = (analysis: StoredAnalysis) => {
+    if (horseId !== undefined) setAnalyses((all) => ({ ...all, [horseId]: analysis }))
+  }
+  return {
+    current: horseId === undefined ? null : (analyses[horseId] ?? null),
+    loadFailed: false,
+    reload: () => undefined,
+    upload: async (file) => {
+      const reading = await readAnalysis(await fileToBase64(file))
+      const result = tillGrovfoderanalys(reading)
+      // The same refusal the API gives an account (422 with the domain's code).
+      if ('error' in result) throw new ApiError(422, result.error.code)
+      set({ analys: result.analys, omrakningar: result.omrakningar, anmarkningar: reading.anmarkningar })
+    },
+    loadExample: (analys) => {
+      set({ analys, omrakningar: [], anmarkningar: [] })
+      return Promise.resolve()
+    },
+    correct: (analys, omrakningar) => {
+      const analysis = horseId === undefined ? undefined : analyses[horseId]
+      if (analysis) set({ ...analysis, analys, omrakningar })
+    },
+    saveState: undefined,
+    retrySave: () => undefined,
   }
 }
 

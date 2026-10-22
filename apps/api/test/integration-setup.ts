@@ -3,7 +3,9 @@
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import type { TestProject } from 'vitest/node'
+import { createFileStore } from '../src/storage'
 import { recreateDatabase } from './database'
+import { testS3Config } from './s3'
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -19,4 +21,5 @@ export default async function setup(project: TestProject) {
   const adminUrl = process.env.DATABASE_URL ?? 'postgres://fodr:fodr@127.0.0.1:5432/fodr'
   const testUrl = await recreateDatabase(adminUrl, TEST_DATABASE)
   project.provide('databaseUrl', testUrl)
+  await createFileStore(testS3Config()).ensureBucket()
 }

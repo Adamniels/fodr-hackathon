@@ -1,22 +1,49 @@
 import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { fileToBase64, readAnalysis } from '../api'
+import type { TFunction } from 'i18next'
+import { ANALYSIS_FILE_LIMITS } from '@fodr/contracts/analyses'
 import { analysBas, analysKomplett } from '../data/examples'
-import { tillGrovfoderanalys, type Omrakning } from '@fodr/domain/analysis'
+import { reportProblem, type AnalysisStore } from '../analyses'
+import { ApiError } from '../api-v1'
+import type { AnalysisErrorMessage } from '@fodr/domain/messages'
 import { hittaSchablon } from '@fodr/domain/forage'
 import type { NutrientKey, NutrientValues } from '@fodr/domain/nutrients'
 import { validateAnalysis, type AnalysisField } from '@fodr/domain/validation'
 import type { Grovfoderanalys, Hastprofil } from '@fodr/domain/types'
-import { analysisUnit, nutrientLabel, formatDate } from '../format'
+import { analysisUnit, nutrientLabel, formatDate, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
+import { SaveStatus } from './SaveStatus'
 
 interface Props {
   hast: Hastprofil
-  analys: Grovfoderanalys | null
-  omrakningar: Omrakning[]
-  onAnalysisChange: (a: Grovfoderanalys, o: Omrakning[]) => void
+  /** The horse's analysis (#26): from the API for an account, in memory for the demo. */
+  analyses: AnalysisStore
   onNext: () => void
+}
+
+const MB = 1024 * 1024
+
+// The API's problem codes for a report it would not read or store, and the text for each (ADR 0013, ADR 0014).
+const DOMAIN_CODES = new Set<string>(['analysis.notAnAnalysis', 'analysis.missingDryMatter'])
+
+function uploadErrorText(code: string | undefined, t: TFunction): string {
+  if (code && DOMAIN_CODES.has(code)) return domainText({ code, params: {} } as AnalysisErrorMessage)
+  switch (code) {
+    case 'analysis.unsupported_type':
+      return t('analysis.upload.unsupportedType')
+    case 'analysis.too_large':
+      return t('analysis.upload.tooLarge', {
+        pdf: formatNumber(ANALYSIS_FILE_LIMITS['application/pdf'] / MB, 0),
+        image: formatNumber(ANALYSIS_FILE_LIMITS['image/png'] / MB, 0),
+      })
+    case 'ai.rate_limited':
+      return t('analysis.upload.aiBusy')
+    case 'ai.unavailable':
+      return t('analysis.upload.aiUnavailable')
+    default:
+      return t('analysis.upload.failed')
+  }
 }
 
 const SHOWN_NUTRIENTS: NutrientKey[] = [
@@ -37,31 +64,42 @@ const SHOWN_NUTRIENTS: NutrientKey[] = [
   'se',
 ]
 
-export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNext }: Props) {
+export function AnalysisStep({ hast, analyses, onNext }: Props) {
   const { t } = useTranslation()
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
-  const [anmarkningar, setAnmarkningar] = useState<string[]>([])
   const [filnamn, setFilnamn] = useState<string | null>(null)
+  const analys = analyses.current?.analys ?? null
+  const omrakningar = analyses.current?.omrakningar ?? []
+  const anmarkningar = analyses.current?.anmarkningar ?? []
+  const onAnalysisChange = analyses.correct
+
+  // An API failure becomes text from its code; the demo's AI route sends its own text (until #29).
+  const errorText = (e: unknown) =>
+    e instanceof ApiError ? uploadErrorText(e.code, t) : e instanceof Error ? e.message : String(e)
 
   async function laddaUpp(fil: File) {
-    setLaddar(true)
     setFel(null)
+    // Refused before upload (CF4); the API checks the type and size again.
+    const problem = reportProblem(fil)
+    if (problem) {
+      setFel(uploadErrorText(problem, t))
+      return
+    }
+    setLaddar(true)
     setFilnamn(fil.name)
     try {
-      const utlast = await readAnalysis(await fileToBase64(fil))
-      const result = tillGrovfoderanalys(utlast)
-      if ('error' in result) {
-        setFel(domainText(result.error))
-        return
-      }
-      setAnmarkningar(utlast.anmarkningar)
-      onAnalysisChange(result.analys, result.omrakningar)
+      await analyses.upload(fil)
     } catch (e) {
-      setFel(e instanceof Error ? e.message : String(e))
+      setFel(errorText(e))
     } finally {
       setLaddar(false)
     }
+  }
+
+  const loadExample = (example: Grovfoderanalys) => {
+    setFel(null)
+    analyses.loadExample(example).catch((e: unknown) => setFel(errorText(e)))
   }
 
   const errors = useMemo(() => (analys ? validateAnalysis(analys) : []), [analys])
@@ -109,18 +147,32 @@ export function AnalysisStep({ hast, analys, omrakningar, onAnalysisChange, onNe
       </label>
       <div className="exempel">
         {t('analysis.noReport')}{' '}
-        <button className="lank" onClick={() => onAnalysisChange(analysKomplett, [])}>
+        <button className="lank" onClick={() => loadExample(analysKomplett)}>
           {t('analysis.exampleComplete')}
         </button>{' '}
         ·{' '}
-        <button className="lank" onClick={() => onAnalysisChange(analysBas, [])}>
+        <button className="lank" onClick={() => loadExample(analysBas)}>
           {t('analysis.exampleBasic')}
         </button>
       </div>
-      {fel && <div className="ruta fel">{fel}</div>}
+      {fel && (
+        <div className="ruta fel" role="alert">
+          {fel}
+        </div>
+      )}
+      {analyses.current === undefined && <p role="status">{t('analysis.loading')}</p>}
+      {analyses.loadFailed && (
+        <div className="ruta fel" role="alert">
+          {t('analysis.loadFailed')}{' '}
+          <button className="lank" onClick={analyses.reload}>
+            {t('analysis.retry')}
+          </button>
+        </div>
+      )}
 
       {analys && (
         <>
+          <SaveStatus state={analyses.saveState} onRetry={analyses.retrySave} />
           <div className="analyshuvud">
             <span>{t(analys.typ === 'hosilage' ? 'roughageTitle.hosilage' : 'roughageTitle.ho')}</span>
             {analys.labb && <span>{analys.labb}</span>}

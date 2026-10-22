@@ -34,6 +34,11 @@ describe('the API process', () => {
       SMTP_HOST: 'localhost',
       SMTP_PORT: '1025',
       MAIL_FROM: 'Fodr <no-reply@fodr.test>',
+      // Nothing listens there: the API starts without its file store and says so in the log.
+      S3_ENDPOINT: 'http://127.0.0.1:1',
+      S3_BUCKET: 'fodr',
+      S3_ACCESS_KEY_ID: 'fodr',
+      S3_SECRET_ACCESS_KEY: 'fodr-dev-secret',
     })
     const port = await new Promise<number>((resolve, reject) => {
       api.child.stdout.on('data', () => {

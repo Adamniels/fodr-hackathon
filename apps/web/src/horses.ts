@@ -5,33 +5,11 @@
 // write their result into the cache instead.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { ME_QUERY_KEY } from './auth-client'
+import { callApi, refusedByServer, sessionGuard } from './api-v1'
 import { HorseListSchema, HorseProfileSchema, HorseSchema, type HorseProfile } from '@fodr/contracts/horses'
-import { ProblemSchema } from '@fodr/contracts/problem'
 import type { Hastprofil } from '@fodr/domain/types'
 
-/** A failed call to the horses API, with the problem code when the server sent one (ADR 0013). */
-export class HorseApiError extends Error {
-  readonly status: number
-  readonly code: string | undefined
-
-  constructor(status: number, code: string | undefined) {
-    super(code ?? `HTTP ${String(status)}`)
-    this.name = 'HorseApiError'
-    this.status = status
-    this.code = code
-  }
-}
-
-async function call(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`/api/v1/horses${path}`, {
-    ...init,
-    headers: init.body === undefined ? undefined : { 'Content-Type': 'application/json' },
-  })
-  if (res.ok) return res
-  const problem = ProblemSchema.safeParse(await res.json().catch(() => null))
-  throw new HorseApiError(res.status, problem.success ? problem.data.code : undefined)
-}
+const call = (path: string, init?: RequestInit) => callApi(`/horses${path}`, init)
 
 // The profile without the ID, which goes in the URL; the schema drops it, as it drops any field not in the contract.
 const profileOf = (horse: Hastprofil): HorseProfile => HorseProfileSchema.parse(horse)
@@ -74,24 +52,24 @@ export function newHorseProfile(): HorseProfile {
 export type SaveState = 'saving' | 'saved' | 'failed' | 'refused'
 
 /**
- * Saves each horse's latest edit once the edits pause for `delayMs`. One save per horse is in flight at a time, and
- * the next one sends the newest edit, so an older edit can never reach the server after a newer one. A failed edit is
+ * Saves each horse's latest edit (or any record's, by its id) once the edits pause for `delayMs`. One save per horse is
+ * in flight at a time, and the next one sends the newest edit, so an older edit can never reach the server after a newer one. A failed edit is
  * kept for retry() unless a newer edit, which holds its changes too, is waiting. `refused` tells a failure no retry can
  * fix (the server called the edit invalid) from one that may pass later.
  */
-export class AutoSaver {
-  private readonly waiting = new Map<string, Hastprofil>()
-  private readonly failed = new Map<string, { horse: Hastprofil; refused: boolean }>()
+export class AutoSaver<T extends { id: string } = Hastprofil> {
+  private readonly waiting = new Map<string, T>()
+  private readonly failed = new Map<string, { horse: T; refused: boolean }>()
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly inFlight = new Map<string, Promise<void>>()
 
-  private readonly save: (horse: Hastprofil, keepalive: boolean) => Promise<void>
+  private readonly save: (horse: T, keepalive: boolean) => Promise<void>
   private readonly onState: (id: string, state: SaveState) => void
   private readonly delayMs: number
   private readonly refused: (error: unknown) => boolean
 
   constructor(
-    save: (horse: Hastprofil, keepalive: boolean) => Promise<void>,
+    save: (horse: T, keepalive: boolean) => Promise<void>,
     onState: (id: string, state: SaveState) => void,
     delayMs = 600,
     refused: (error: unknown) => boolean = () => false,
@@ -107,7 +85,7 @@ export class AutoSaver {
     return this.waiting.size > 0 || this.inFlight.size > 0 || this.failed.size > 0
   }
 
-  schedule(horse: Hastprofil): void {
+  schedule(horse: T): void {
     this.waiting.set(horse.id, horse)
     this.failed.delete(horse.id)
     clearTimeout(this.timers.get(horse.id))
@@ -173,7 +151,7 @@ export class AutoSaver {
     // A save in flight sends the newest waiting edit when it is done.
     if (this.inFlight.has(id)) return
     const run = async () => {
-      let horse: Hastprofil | undefined
+      let horse: T | undefined
       while ((horse = this.waiting.get(id))) {
         this.waiting.delete(id)
         clearTimeout(this.timers.get(id))
@@ -219,22 +197,12 @@ const horsesKey = (userId: string) => [...HORSES_QUERY_KEY, userId]
 // never shows a list from before its own edits.
 const closing = new Map<string, Promise<void>>()
 
-const refusedByServer = (e: unknown) => e instanceof HorseApiError && [400, 413, 415].includes(e.status)
-
 /** The account's horses: undefined while loading, null when the read failed. */
 export function useApiHorses(userId: string): { store: HorseStore | undefined | null; reload: () => void } {
   const queryClient = useQueryClient()
   const key = horsesKey(userId)
   const [states, setStates] = useState<Record<string, SaveState>>({})
-  // An expired session answers 401: the session is read again, and the workspace gate sends to /login.
-  const guard = async <T>(request: Promise<T>): Promise<T> => {
-    try {
-      return await request
-    } catch (e) {
-      if (e instanceof HorseApiError && e.status === 401) void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
-      throw e
-    }
-  }
+  const guard = sessionGuard(queryClient)
   const [saver] = useState(
     () =>
       new AutoSaver(

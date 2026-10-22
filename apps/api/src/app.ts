@@ -9,8 +9,11 @@ import type { AiProvider } from './ai/provider'
 import type { Config } from './config'
 import type { Logger } from './logger'
 import { CLIENT_IP_HEADER, type Auth } from './auth'
+import { analysisRoutes } from './analyses-routes'
 import { horseRoutes } from './horses-routes'
+import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
+import type { FileStore } from './storage'
 import { resolveClientIp } from './client-ip'
 import { problem } from './problem'
 import { requireUser } from './session'
@@ -20,7 +23,8 @@ export interface AppDeps {
   logger: Logger
   ai: AiProvider
   auth: Auth
-  repositories: { horses: HorseRepository }
+  files: FileStore
+  repositories: { horses: HorseRepository; analyses: AnalysisRepository }
 }
 
 export type AppEnv = { Variables: RequestIdVariables }
@@ -28,7 +32,7 @@ export type AppEnv = { Variables: RequestIdVariables }
 // A password reset token is part of Better Auth's path (/api/auth/reset-password/<token>); it never reaches the logs.
 const loggedPath = (path: string) => path.replace(/^(\/api\/auth\/reset-password\/)[^/]+/, '$1[redacted]')
 
-export function createApp({ config, logger, ai, auth, repositories }: AppDeps): Hono<AppEnv> {
+export function createApp({ config, logger, ai, auth, files, repositories }: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
 
   // X-Request-Id on every response; a valid incoming ID (from a proxy) is kept, anything else is replaced.
@@ -60,7 +64,9 @@ export function createApp({ config, logger, ai, auth, repositories }: AppDeps): 
     return auth.handler(new Request(c.req.raw, { headers }))
   })
   app.get('/api/v1/me', requireUser(auth), (c) => c.json(MeResponseSchema.parse({ user: c.get('user') })))
-  app.route('/api/v1/horses', horseRoutes(auth, repositories.horses))
+  // Before the horse routes, whose body limit (64 KB) would otherwise refuse an uploaded report.
+  app.route('/api/v1/horses/:horseId/analyses', analysisRoutes({ auth, ai, files, logger, ...repositories }))
+  app.route('/api/v1/horses', horseRoutes({ auth, files, logger, ...repositories }))
   // The AI routes keep their paths outside /api/v1 until #30 versions them.
   app.route('/api', aiRoutes(ai, logger))
 

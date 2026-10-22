@@ -8,6 +8,10 @@ const VALID = {
   SMTP_HOST: 'localhost',
   SMTP_PORT: '1025',
   MAIL_FROM: 'Fodr <no-reply@fodr.local>',
+  S3_ENDPOINT: 'http://localhost:8333',
+  S3_BUCKET: 'fodr',
+  S3_ACCESS_KEY_ID: 'fodr',
+  S3_SECRET_ACCESS_KEY: 'fodr-dev-secret',
 }
 const AUTH_AND_MAIL = {
   betterAuthSecret: VALID.BETTER_AUTH_SECRET,
@@ -18,6 +22,13 @@ const AUTH_AND_MAIL = {
   smtpPassword: undefined,
   mailFrom: VALID.MAIL_FROM,
   clientIpHeader: undefined,
+  s3: {
+    endpoint: VALID.S3_ENDPOINT,
+    region: 'us-east-1',
+    bucket: 'fodr',
+    accessKeyId: 'fodr',
+    secretAccessKey: VALID.S3_SECRET_ACCESS_KEY,
+  },
 }
 
 describe('parseConfig', () => {
@@ -90,11 +101,21 @@ describe('parseConfig', () => {
     if (!result.ok) expect(result.message).not.toMatch(/secret-password/)
   })
 
-  it('requires the auth and mail settings (#22)', () => {
+  it('requires the auth, mail and file store settings (#22, #26)', () => {
     const result = parseConfig({ DATABASE_URL: VALID.DATABASE_URL })
     expect(result.ok).toBe(false)
     if (!result.ok) {
-      for (const name of ['BETTER_AUTH_SECRET', 'BETTER_AUTH_URL', 'SMTP_HOST', 'SMTP_PORT', 'MAIL_FROM']) {
+      for (const name of [
+        'BETTER_AUTH_SECRET',
+        'BETTER_AUTH_URL',
+        'SMTP_HOST',
+        'SMTP_PORT',
+        'MAIL_FROM',
+        'S3_ENDPOINT',
+        'S3_BUCKET',
+        'S3_ACCESS_KEY_ID',
+        'S3_SECRET_ACCESS_KEY',
+      ]) {
         expect(result.message).toMatch(new RegExp(`${name} is required`))
       }
     }
