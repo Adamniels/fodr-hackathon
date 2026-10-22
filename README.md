@@ -1,6 +1,6 @@
 # Fodr (Krubba)
 
-Upload a roughage analysis, describe the horse, and get a feeding plan following SLU Rapport 289: products, grams per day and cost per month. Started as a hackathon proof of concept; now being built towards a closed beta.
+Upload a roughage analysis, describe the horse, and get a feeding plan following SLU Rapport 289: products, grams per day and cost per month. Started as a hackathon proof of concept; now being built into a foundation for its first real users.
 
 - What we build and what done means: [`docs/spec.md`](docs/spec.md)
 - State of the codebase and known findings: [`docs/audit.md`](docs/audit.md)

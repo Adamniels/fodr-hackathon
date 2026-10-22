@@ -147,7 +147,7 @@ export function createAuth({ config, database, mailer, logger }: AuthDeps) {
     },
     plugins: [
       magicLink({
-        // Login only (owner, #22): sign up stays email and password, one path with a password and a verified email.
+        // Login only (owner, #22): sign-up stays email and password with a verified email, so there is one sign-up path.
         // The reply is the same either way; a link only goes to an email that has an account.
         disableSignUp: true,
         sendMagicLink: ({ email, url }) => {

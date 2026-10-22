@@ -1,4 +1,4 @@
-# Roadmap: from today to the closed beta
+# Roadmap: from today to the beta
 
 Status: accepted 2026-10-16. Every slice is an issue on the [Fodr project board](https://github.com/users/Adamniels/projects/6), grouped by [milestone](https://github.com/Adamniels/fodr-hackathon/milestones). **The issue is the source of truth** for scope, acceptance criteria and the e2e tests that must stay green; this file is the overview.
 
@@ -81,7 +81,7 @@ Deployed in the EU, observable, accessible, GDPR-ready, and the first beta users
 
 | Slice | Issue | Type | Title | Depends on |
 |---|---|---|---|---|
-| M5-01 | [#39](https://github.com/Adamniels/fodr-hackathon/issues/39) | dropped | ~~invite-only sign up~~: sign-up stays open (owner, 2026-10-22; spec decision log) | |
+| M5-01 | [#39](https://github.com/Adamniels/fodr-hackathon/issues/39) | feature | ~~invite-only sign-up~~ dropped: sign-up stays open (owner, 2026-10-22; spec decision log) | M2-06 ([#23](https://github.com/Adamniels/fodr-hackathon/issues/23)) |
 | M5-02 | [#40](https://github.com/Adamniels/fodr-hackathon/issues/40) | feature | export my data (CF8) | M2-11 ([#28](https://github.com/Adamniels/fodr-hackathon/issues/28)) |
 | M5-03 | [#41](https://github.com/Adamniels/fodr-hackathon/issues/41) | feature | delete my account (CF8) | M2-11 ([#28](https://github.com/Adamniels/fodr-hackathon/issues/28)) |
 | M5-04 | [#42](https://github.com/Adamniels/fodr-hackathon/issues/42) | feature | privacy notice, beta terms and plan disclaimers | M2-04 ([#21](https://github.com/Adamniels/fodr-hackathon/issues/21)) |
@@ -100,7 +100,7 @@ M2  01 → 02 → 03        04 (after M1-05)
          02 → 05 → 06 (+04) → 07 → 08 → 09 → 10 → 11 → 12
 M3  01 → 02  03  04  05
 M4  01 → 02 → 03   01 → 04
-M5  07 any time · 01 02 03 04 05 06 → 08 → 09
+M5  07 any time · 02 03 04 05 06 → 08 → 09
 ```
 
 Within a milestone, slices without a dependency between them can be worked in parallel by the two of us.

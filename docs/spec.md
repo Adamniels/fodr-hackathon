@@ -1,4 +1,4 @@
-# Spec: from hackathon PoC to closed beta
+# Spec: from hackathon PoC to beta
 
 Status: draft for review. Date: 2026-10-15. Owners: the two person team.
 Inputs: `docs/audit.md` (current state), the phase 2 interview (2026-10-15), `malbild.md` (original PoC goal).
@@ -7,7 +7,7 @@ This document says **what** we build and **what done means**. **How** (framework
 
 ## 1. Goal
 
-Turn the hackathon proof of concept into a web app that is robust enough for a **closed beta** with 10 to 50 real horse owners in Sweden, and a foundation we can keep building on.
+Turn the hackathon proof of concept into a web app that is robust enough for its first real users, horse owners in Sweden (about 10 to 50 expected at first; how and when it launches is decided later), and a foundation we can keep building on.
 
 The product's core stays the same: an owner uploads a roughage analysis and describes the horse; the app produces a feeding plan following SLU Rapport 289, with products, grams per day and cost per month. AI reads, asks and explains. **The code calculates; the AI never does.**
 
@@ -211,4 +211,4 @@ After the beta: English translation, sharing, stable views, social login, paymen
 | 2026-10-15 | Spec, ADRs and conventions in the repo; slices in the GitHub Project | Everything in a roadmap file |
 | 2026-10-15 | Delete `app/scratchverify/`, tracked `.DS_Store`, move pitch PDF out of the repo | Keep them |
 | 2026-10-16 | Milestones aligned with the roadmap: C4, report storage and the seed script move to M2 (needed for M2's CF4 criterion and demo removal), C8 to M3, invite only sign up added to M5 | Keep the original milestone table |
-| 2026-10-22 | Open sign-up for everyone instead of an invite-only closed beta; #39 dropped. The current work is the foundation: launch, access and payment are decided later (owner) | Invite-only sign up (2026-10-16) |
+| 2026-10-22 | Open sign-up for everyone instead of an invite-only closed beta; #39 dropped. The current work is the foundation: launch, access and payment are decided later (owner). The per-user AI quota (#31) does not cap the total AI cost; revisit with the launch decision | Invite-only closed beta (2026-10-15, 2026-10-16) |
