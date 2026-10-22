@@ -33,8 +33,10 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    # Well above a normal run (under 100 s).
-    timeout-minutes: 15
+    # A normal run takes about 10 minutes, most of it the tests. The job's limit leaves room for a slow package
+    # mirror (#146: the browser's system packages once took 8 minutes), so slowness makes a slow job, not a cancelled
+    # one; each step below has its own limit, so a hang fails at the step that hangs.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -46,14 +48,25 @@ jobs:
       # Started first so the image pulls overlap the installs, then waited for.
       - run: docker compose up -d
       - run: npm ci
+      # The browser itself is cached by the Playwright version it belongs to; its system packages still come from apt,
+      # whose mirror is the step's slow part when it is slow (#146).
+      - id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
       - run: docker compose up --wait --wait-timeout 180
       - run: bash scripts/dev/check-services.sh
       # The API against the Compose Postgres (#19); the tests create and migrate their own database.
       - run: npm run test:integration
+        timeout-minutes: 5
       - if: failure()
         run: docker compose ps -a && docker compose logs --no-color
       - run: npm run test:e2e
+        timeout-minutes: 15
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
