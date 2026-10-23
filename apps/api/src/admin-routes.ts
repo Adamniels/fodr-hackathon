@@ -1,7 +1,7 @@
-// Product administration (#36, CF9): /api/v1/admin/products (the contract is in @fodr/contracts/admin). Admins only:
-// anyone else, signed out or not, gets the same 404 an unknown route gives, so the routes are not seen to exist. Every
-// write goes through the product repository, which makes a new product set, so the catalogue the API serves and plans
-// with changes on the next request (products.ts).
+// Product administration (#36, CF9): /api/v1/admin/products (the contract is in @fodr/contracts/admin), and the test
+// error (#43). Admins only: anyone else, signed out or not, gets the same 404 an unknown route gives, so the routes are
+// not seen to exist. Every write goes through the product repository, which makes a new product set, so the catalogue
+// the API serves and plans with changes on the next request (products.ts).
 import { AdminProductSchema, ProductInputSchema, type AdminProduct } from '@fodr/contracts/admin'
 import { z } from 'zod'
 import { Hono } from 'hono'
@@ -71,6 +71,14 @@ export function adminRoutes({ auth, products }: { auth: Auth; products: ProductR
       return product ? c.json({ product: toAdminProduct(product) }) : productNotFound(c)
     })
   }
+
+  // The admin's check that error tracking works where it runs (#43): this fails on purpose, so the error is reported to
+  // Sentry like any unexpected one, with its request ID. JSON only, like every write (ADR 0013).
+  routes.post('/test-error', async (c) => {
+    const body = await parseJson(c, z.object({}).strict())
+    if (!body.ok) return body.response
+    throw new Error('Test error requested by an admin')
+  })
 
   return routes
 }

@@ -104,3 +104,31 @@ npm run admin:revoke -- anna@example.se
 The API applies it to the account's next request; the web app shows the admin link, or hides it, once the page is reloaded. Every save is a new product version and a new product set, so new
 plans use it at once and saved plans keep the set they were computed from. A product an admin has written is never
 changed by `products:import` again.
+
+## Error tracking
+
+Unexpected errors go to Sentry in its EU region (#43, ADR 0015): the API's 500s and crashes, and in the browser
+uncaught errors, pages that failed to render and failed API calls. A report carries the error, the release (the commit),
+the environment, the request ID, the route and the user's ID; nothing else about the user
+(`packages/contracts/src/error-scrubbing.ts`).
+Expected failures (a refused request, the AI unavailable) are only logged. Without a DSN nothing is sent, as in
+development and the tests.
+
+Setting it up, once per environment:
+
+1. Create a Sentry organization in the **EU region** (Frankfurt), with two projects: one for the API (Node.js) and one
+   for the web app (React). If the free plan does not offer the EU region, GlitchTip (hosted in Germany) takes the same
+   SDKs and DSNs (ADR 0015).
+2. In each project's security and privacy settings, turn on the data scrubber and **Prevent Storing of IP Addresses**,
+   so the browser's connection address is not kept either.
+3. Build the image with the web app's DSN, which the browser bundle carries (it is public by design), and the
+   environment both apps name (`production` by default):
+   `docker build --build-arg GIT_SHA=... --build-arg SENTRY_DSN_WEB=... --build-arg SENTRY_ENVIRONMENT=... -t fodr .`
+   The browser's environment is fixed in the image, so build one image per environment rather than promoting one.
+4. Give the API its DSN at runtime: `SENTRY_DSN` (`SENTRY_ENVIRONMENT` overrides the image's, for the API only).
+
+To check it, sign in as an admin and press **Skicka testfel** at the bottom of `/admin/products`. The page shows a
+request ID; within a minute both projects have an event tagged `request_id` with that value: "Test error requested by an
+admin" in the API's, "http.internal_error" in the web app's.
+
+Stack traces from the browser stay minified until the deployment pipeline uploads source maps (#46).

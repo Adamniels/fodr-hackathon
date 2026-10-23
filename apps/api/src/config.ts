@@ -85,6 +85,10 @@ const EnvSchema = z.object({
     .enum(['true', 'false'], { error: 'must be true or false' })
     .default('false')
     .transform((v) => v === 'true'),
+  // Error tracking (#43, ADR 0015): the API's Sentry project in the EU region. Unset, no error leaves the process, as
+  // in development and the tests. The environment names where the report comes from.
+  SENTRY_DSN: z.url({ protocol: /^https$/, error: 'must be an https:// URL' }).optional(),
+  SENTRY_ENVIRONMENT: z.string().min(1).default('development'),
 })
 
 export interface Config {
@@ -111,6 +115,7 @@ export interface Config {
     secretAccessKey: string
     createBucket: boolean
   }
+  errorTracking: { dsn: string | undefined; environment: string }
 }
 
 export type ConfigResult = { ok: true; config: Config } | { ok: false; message: string }
@@ -157,6 +162,7 @@ export function parseConfig(env: Record<string, string | undefined>): ConfigResu
         secretAccessKey: parsed.S3_SECRET_ACCESS_KEY,
         createBucket: parsed.S3_CREATE_BUCKET,
       },
+      errorTracking: { dsn: parsed.SENTRY_DSN, environment: parsed.SENTRY_ENVIRONMENT },
     },
   }
 }

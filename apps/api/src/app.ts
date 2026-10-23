@@ -3,6 +3,7 @@ import { getConnInfo } from '@hono/node-server/conninfo'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono, type Context } from 'hono'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
+import { routePath } from 'hono/route'
 import { MeResponseSchema } from '@fodr/contracts/me'
 import { AcceptTermsSchema } from '@fodr/contracts/terms'
 import { aiRoutes } from './ai/routes'
@@ -11,6 +12,7 @@ import { createMeteredAi } from './ai/metered'
 import type { UsageRepository } from './repositories/ai-usage'
 import type { Config } from './config'
 import type { Logger } from './logger'
+import type { ErrorReporter } from './error-reporting'
 import { CLIENT_IP_HEADER, type Auth } from './auth'
 import { analysisRoutes } from './analyses-routes'
 import { horseRoutes } from './horses-routes'
@@ -31,11 +33,12 @@ import type { HorseRepository } from './repositories/horses'
 import type { FileStore } from './storage'
 import { resolveClientIp } from './client-ip'
 import { problem } from './problem'
-import { requireUser } from './session'
+import { requireUser, type UserVariables } from './session'
 
 export interface AppDeps {
   config: Config
   logger: Logger
+  errors: ErrorReporter
   ai: AiProvider
   auth: Auth
   files: FileStore
@@ -58,7 +61,7 @@ export type AppEnv = { Variables: RequestIdVariables }
 // A password reset token is part of Better Auth's path (/api/auth/reset-password/<token>); it never reaches the logs.
 const loggedPath = (path: string) => path.replace(/^(\/api\/auth\/reset-password\/)[^/]+/, '$1[redacted]')
 
-export function createApp({ config, logger, ai, auth, files, catalogue, repositories }: AppDeps): Hono<AppEnv> {
+export function createApp({ config, logger, errors, ai, auth, files, catalogue, repositories }: AppDeps): Hono<AppEnv> {
   // Every model call counts against the user's daily quota and is logged with its cost (#31).
   const metered = createMeteredAi({ ai, usage: repositories.usage, config: config.ai, logger })
   const app = new Hono<AppEnv>()
@@ -146,7 +149,11 @@ export function createApp({ config, logger, ai, auth, files, catalogue, reposito
 
   app.notFound((c) => problem(c, 404, 'http.not_found'))
   app.onError((err, c) => {
-    logger.error({ requestId: c.get('requestId'), err }, 'unexpected error')
+    const requestId = c.get('requestId')
+    logger.error({ requestId, err }, 'unexpected error')
+    // The user, when the route had read the session before it failed: an ID, never more (#43).
+    const userId = (c.var as Partial<UserVariables>).user?.id
+    errors.report(err, { requestId, ...(userId && { userId }), route: routePath(c) })
     return problem(c, 500, 'http.internal_error')
   })
   return app

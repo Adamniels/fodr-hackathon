@@ -21,7 +21,7 @@ adminUrl.pathname = '/fodr'
 const harness = authApp({
   databaseUrl: await recreateDatabase(adminUrl.href, 'fodr_test_admin', { withCatalogue: true }),
 })
-const { app, database } = harness
+const { app, database, errors } = harness
 afterAll(harness.close)
 const accounts = accountRepository(database.db)
 const products = productRepository(database.db)
@@ -323,5 +323,42 @@ describe('a saved plan when a product it uses is edited', () => {
     expect(next.id).not.toBe(saved.plan.id)
     expect(next.productSetVersion).not.toBe(saved.plan.productSetVersion)
     expect(kept(next)).toBe(400)
+  })
+})
+
+// The admin's check that error tracking reaches Sentry (#43): a test error on the server, reported like any other.
+describe('the test error', () => {
+  const path = '/api/v1/admin/test-error'
+
+  it('answers 404 to a signed-out caller and to a signed-in user who is no admin, and reports nothing', async () => {
+    errors.reports.length = 0
+    const { browser } = await signedInUser(app, nextIp())
+    expect((await app.request(`${BASE_URL}${path}`, { method: 'POST' })).status).toBe(404)
+    expect((await browser.post(path, {})).status).toBe(404)
+    expect(errors.reports).toEqual([])
+  })
+
+  it('fails with 500 for an admin and is reported with its request ID and the admin', async () => {
+    errors.reports.length = 0
+    const signedIn = await admin()
+    const res = await signedIn.browser.post(path, {})
+    expect(res.status).toBe(500)
+    const me = (await (await signedIn.browser.request('/api/v1/me')).json()) as { user: { id: string } }
+    expect(errors.reports).toHaveLength(1)
+    expect(errors.reports[0]?.context).toEqual({
+      requestId: res.headers.get('X-Request-Id'),
+      userId: me.user.id,
+      route: path,
+    })
+    expect(String(errors.reports[0]?.error)).toMatch(/test error/i)
+  })
+
+  it('takes only JSON, as every write (CSRF, ADR 0013)', async () => {
+    errors.reports.length = 0
+    const signedIn = await admin()
+    const form = new FormData()
+    form.set('x', '1')
+    expect((await signedIn.browser.upload(path, form)).status).toBe(415)
+    expect(errors.reports).toEqual([])
   })
 })

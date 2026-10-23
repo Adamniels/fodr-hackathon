@@ -4,6 +4,7 @@
 // authErrorText (i18n/auth.ts).
 import { MeResponseSchema, type User } from '@fodr/contracts/me'
 import { TERMS_VERSION } from '@fodr/contracts/terms'
+import { reportError } from './error-reporting'
 
 /** Better Auth's error code, RATE_LIMITED for a 429 (which has none), or UNKNOWN. */
 export class AuthError extends Error {
@@ -14,6 +15,11 @@ export class AuthError extends Error {
     this.name = 'AuthError'
     this.code = code
   }
+}
+
+// The account routes failed unexpectedly (#43); their answers on purpose (a wrong password) are below 500.
+const reportFailure = (error: AuthError, res: Response, path: string) => {
+  reportError(error, { requestId: res.headers.get('X-Request-Id') ?? undefined, path })
 }
 
 // Where the mailed links land: signed in, /login sends on to /horses; with ?error, /login says the link failed.
@@ -28,7 +34,9 @@ async function post(path: string, body: unknown): Promise<void> {
   if (res.ok) return
   if (res.status === 429) throw new AuthError('RATE_LIMITED')
   const data = (await res.json().catch(() => ({}))) as { code?: unknown }
-  throw new AuthError(typeof data.code === 'string' ? data.code : 'UNKNOWN')
+  const error = new AuthError(typeof data.code === 'string' ? data.code : 'UNKNOWN')
+  if (res.status >= 500) reportFailure(error, res, `/api/auth${path}`)
+  throw error
 }
 
 export const authClient = {
@@ -52,6 +60,10 @@ export const ME_QUERY_KEY = ['me']
 export async function fetchMe(): Promise<User | null> {
   const res = await fetch('/api/v1/me')
   if (res.status === 401) return null
-  if (!res.ok) throw new AuthError('UNKNOWN')
+  if (!res.ok) {
+    const error = new AuthError('UNKNOWN')
+    if (res.status >= 500) reportFailure(error, res, '/api/v1/me')
+    throw error
+  }
   return MeResponseSchema.parse(await res.json()).user
 }

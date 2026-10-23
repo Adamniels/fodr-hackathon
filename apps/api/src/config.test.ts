@@ -33,6 +33,7 @@ const AUTH_AND_MAIL = {
     secretAccessKey: VALID.S3_SECRET_ACCESS_KEY,
     createBucket: false,
   },
+  errorTracking: { dsn: undefined, environment: 'development' },
 }
 
 describe('parseConfig', () => {
@@ -116,6 +117,21 @@ describe('parseConfig', () => {
     const wrong = parseConfig({ ...VALID, S3_CREATE_BUCKET: 'ja' })
     expect(wrong.ok).toBe(false)
     if (!wrong.ok) expect(wrong.message).toMatch(/S3_CREATE_BUCKET must be true or false/)
+  })
+
+  it('sends errors only with a DSN, from the environment it is told (#43)', () => {
+    const on = parseConfig({
+      ...VALID,
+      SENTRY_DSN: 'https://abc123@o1.ingest.de.sentry.io/2',
+      SENTRY_ENVIRONMENT: 'production',
+    })
+    expect(on.ok && on.config.errorTracking).toEqual({
+      dsn: 'https://abc123@o1.ingest.de.sentry.io/2',
+      environment: 'production',
+    })
+    const wrong = parseConfig({ ...VALID, SENTRY_DSN: 'abc123' })
+    expect(wrong.ok).toBe(false)
+    if (!wrong.ok) expect(wrong.message).toMatch(/SENTRY_DSN must be an https:\/\/ URL/)
   })
 
   it('reads the AI settings, and requires the prices (#31)', () => {

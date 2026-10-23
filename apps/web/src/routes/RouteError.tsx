@@ -1,7 +1,9 @@
 // The error boundary of every route (router.tsx): an unknown address shows a not-found page, anything else that
-// fails to render a generic error with a way back, instead of a blank page.
+// fails to render a generic error with a way back, instead of a blank page, and is reported (#43).
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
+import { reportError } from '../error-reporting'
 
 /**
  * `page` for a route whose boundary replaces the whole page; nested boundaries render inside the workspace, which
@@ -9,7 +11,12 @@ import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
  */
 export function RouteError({ page = false }: { page?: boolean }) {
   const error = useRouteError()
-  return <ErrorContent page={page} notFound={isRouteErrorResponse(error) && error.status === 404} />
+  const notFound = isRouteErrorResponse(error) && error.status === 404
+  // A page that failed to render is a bug to know about (#43); an address that does not exist is not.
+  useEffect(() => {
+    if (!notFound) reportError(error)
+  }, [error, notFound])
+  return <ErrorContent page={page} notFound={notFound} />
 }
 
 /** A page that does not exist for this visitor (the admin pages for anyone else, #36): the not-found page. */

@@ -411,3 +411,34 @@ describe('logs (#22 review)', () => {
     }
   })
 })
+
+// Better Auth answers its own routes and catches their errors, so they never reach the app's onError (#43).
+describe('error reports from the account routes', () => {
+  it('reports an unexpected failure, here the database out of reach', async () => {
+    const broken = authApp({ databaseUrl: 'postgres://fodr:fodr@127.0.0.1:1/unreachable' })
+    try {
+      const res = await client(broken.app, '10.43.0.1').post('/api/auth/sign-in/email', {
+        email: newEmail(),
+        password: PASSWORD,
+      })
+      expect(res.status).toBe(500)
+      expect(broken.errors.reports).toHaveLength(1)
+    } finally {
+      await broken.close()
+    }
+  })
+
+  it('reports no answer it gives on purpose: a wrong password', async () => {
+    const harness = authApp()
+    try {
+      const res = await client(harness.app, '10.43.0.2').post('/api/auth/sign-in/email', {
+        email: newEmail(),
+        password: PASSWORD,
+      })
+      expect(res.status).toBe(401)
+      expect(harness.errors.reports).toEqual([])
+    } finally {
+      await harness.close()
+    }
+  })
+})
