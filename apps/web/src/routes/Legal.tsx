@@ -8,6 +8,7 @@ import { Link } from 'react-router'
 import { PRIVACY_UPDATED, TERMS_VERSION } from '@fodr/contracts/terms'
 import { ApiError } from '../api-v1'
 import { DeleteAccount } from '../components/DeleteAccount'
+import { LogOutFailed } from '../components/LogOutFailed'
 import { formatDate } from '../format'
 import { useAcceptTerms } from '../terms'
 import { useSession } from './session'
@@ -99,6 +100,7 @@ export function AcceptTerms({ children }: { children: React.ReactNode }) {
       </form>
       {/* Not accepting must not trap anyone: their data and their account stay theirs (GDPR, #42 review). */}
       <h2>{t('legal.consent.otherwise')}</h2>
+      <LogOutFailed />
       <div className="atgardsrad">
         <a className="sidofalt-lank" href="/api/v1/me/export" download>
           {t('app.sidebar.export')}

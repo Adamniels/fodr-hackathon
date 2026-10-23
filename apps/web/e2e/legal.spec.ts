@@ -82,6 +82,29 @@ test('the new-terms screen still lets a user leave: export, delete or log out', 
   await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
 })
 
+test('a failed log out on the new-terms screen says so, and logging out again ends the session (#169)', async ({
+  page,
+}) => {
+  const account = await createAccountWithHorses(page)
+  await setTermsVersion(account, '2020-01-01')
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Nya villkor' })).toBeVisible()
+  // /api/auth belongs to the real backend and is otherwise never intercepted; only a stubbed answer can make the
+  // sign-out fail.
+  await page.route('**/api/auth/sign-out', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
+  )
+  await page.getByRole('button', { name: 'Logga ut' }).click()
+  const failed = page.getByRole('alert').filter({ hasText: 'Utloggningen misslyckades' })
+  await expect(failed).toContainText('Du är fortfarande inloggad.')
+  await expect(page.getByRole('heading', { name: 'Nya villkor' })).toBeVisible()
+  await expectAccessible(page, 'failed log out on the new-terms screen')
+
+  await page.unroute('**/api/auth/sign-out')
+  await failed.getByRole('button', { name: 'Försök igen' }).click()
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+})
+
 test('the product administration waits for the new terms too', async ({ page }) => {
   const account = await createAccountWithHorses(page)
   await grantAdmin(page, account)

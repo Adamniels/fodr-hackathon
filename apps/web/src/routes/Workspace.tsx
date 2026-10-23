@@ -383,10 +383,12 @@ function Workspace({
               // Should the page be left before they settle, the session ends at once instead: on a shared computer an
               // ended session matters more than a save it may overtake. Once only, also for a page that comes back from
               // the back/forward cache.
-              let signedOut: Promise<void> | undefined
+              let signingOut = false
               const signOut = () => {
                 window.removeEventListener('pagehide', signOut)
-                signedOut ??= logOut()
+                if (signingOut) return
+                signingOut = true
+                void logOut()
               }
               window.addEventListener('pagehide', signOut)
               // The landing page renders first, so the gate never sees the session end and sends to /login.

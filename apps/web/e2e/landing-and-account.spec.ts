@@ -180,6 +180,32 @@ test('a failed log out says the session is still signed in, and logging out agai
   await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
 })
 
+test('a log out the server carried out but answered with an error is not said later, to anyone who logs in (#169)', async ({
+  page,
+}) => {
+  const account = await createAccount(page, 'Halvt Utloggad', 'halvt@example.se')
+  // /api/auth belongs to the real backend and is otherwise never intercepted: the sign-out reaches it and ends the
+  // session, and only its answer is replaced, as when the response is lost on the way back.
+  await page.route('**/api/auth/sign-out', async (route) => {
+    await route.fetch()
+    await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+  })
+  const signedOut = page.waitForResponse('**/api/auth/sign-out')
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  await signedOut
+  await page.unroute('**/api/auth/sign-out')
+  // All in the same page from here, as in a tab that stays open: a page load would forget anything the app kept.
+  await page.getByRole('button', { name: 'Logga in', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  await dialog.getByLabel('E-post').fill(account.email)
+  await dialog.getByLabel('Lösenord').fill(account.password)
+  await dialog.getByRole('button', { name: 'Logga in', exact: true }).click()
+  await expect(horseList(page).getByText('Halvt Utloggad')).toBeVisible()
+  await horseList(page).getByRole('button', { name: 'Till startsidan' }).click()
+  await expect(page.getByRole('button', { name: 'Fortsätt som Halvt Utloggad' })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
 test('the password is checked: a wrong one is refused', async ({ page }) => {
   const account = await createAccount(page, 'Rätt Lösen', 'losen@example.se')
   await horseList(page).getByRole('button', { name: 'Logga ut' }).click()

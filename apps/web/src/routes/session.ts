@@ -8,7 +8,7 @@ export interface Session {
   /** Reads the session again after a login. */
   refresh: () => Promise<void>
   logOut: () => Promise<void>
-  /** The last sign-out failed (offline, server error), so the session is still signed in (#169). */
+  /** The signed-in user's last log out failed (offline, server error), so the session is still signed in (#169). */
   logOutFailed: boolean
   /** Forgets the account after it was deleted (#41): the server has ended the session already. */
   accountDeleted: () => void

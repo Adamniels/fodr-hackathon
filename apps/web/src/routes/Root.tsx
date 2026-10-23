@@ -15,12 +15,15 @@ export function Root() {
   const queryClient = useQueryClient()
   // A failed read (the API down) counts as signed out.
   const me = useQuery({ queryKey: ME, queryFn: fetchMe, retry: false, staleTime: Infinity })
-  const [logOutFailed, setLogOutFailed] = useState(false)
+  // Whose log out failed: said only to that user while still signed in, and forgotten on a login, so nobody else who
+  // signs in in this tab, nor the same user after a log out the server did carry out, is told of it.
+  const [logOutFailedFor, setLogOutFailedFor] = useState<string | null>(null)
   if (me.isPending) return null
 
   const signedIn = me.data ?? null
   // Nothing of the account stays in memory for whoever uses the browser next.
   const forget = () => {
+    setLogOutFailedFor(null)
     queryClient.removeQueries({ queryKey: HORSES_QUERY_KEY })
     queryClient.removeQueries({ queryKey: ANALYSES_QUERY_KEY })
     queryClient.removeQueries({ queryKey: PLANS_QUERY_KEY })
@@ -31,22 +34,23 @@ export function Root() {
   const session: Session = {
     user: signedIn,
     refresh: async () => {
+      setLogOutFailedFor(null)
       await queryClient.invalidateQueries({ queryKey: ME })
     },
     logOut: async () => {
       if (!signedIn) return
+      setLogOutFailedFor(null)
       try {
         await authClient.signOut()
-        setLogOutFailed(false)
         forget()
       } catch {
         // Sign-out failed (offline, server error): read the session again rather than pretend it ended, and say so, as
         // the page may already look logged out (#169).
-        setLogOutFailed(true)
+        setLogOutFailedFor(signedIn.id)
         await queryClient.invalidateQueries({ queryKey: ME })
       }
     },
-    logOutFailed,
+    logOutFailed: signedIn !== null && logOutFailedFor === signedIn.id,
     accountDeleted: forget,
   }
   return (

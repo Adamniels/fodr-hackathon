@@ -2188,8 +2188,8 @@ label.kryss {
   gap: 10px;
 }
 
-/* The start page's note after an account was deleted (#41). */
-.konto-raderat {
+/* A notice at the top of the landing page: the account was deleted (#41), a log out failed (#169). */
+.startsida-besked {
   max-width: 960px;
   margin: 16px auto 0;
 }
