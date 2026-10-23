@@ -43,10 +43,10 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
-    # A normal run takes about 10 minutes, half of it setup and half the shard's tests. The job's limit leaves room for
-    # a slow package mirror (#146: the browser's system packages once took 8 minutes), so slowness makes a slow job,
-    # not a cancelled one; the steps that wait on the network or run long have limits of their own, so a hang fails at
-    # that step.
+    # A normal run takes about 8 minutes: one of setup, 6 to 7 of the shard's tests, and in the last shard a minute of
+    # integration tests (measured on #167's PR). The job's limit leaves room for a slow package mirror (#146: the
+    # browser's system packages have taken 8 to 10 minutes), so slowness makes a slow job, not a cancelled one; the
+    # steps that wait on the network or run long have limits of their own, so a hang fails at that step.
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
