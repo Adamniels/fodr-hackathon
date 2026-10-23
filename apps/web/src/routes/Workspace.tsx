@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
@@ -20,6 +20,14 @@ import { isSavedFor, PlanSaveError, useSavedPlans } from '../plans'
 import { STEP_PATH, STEPS, type Step, type WorkspaceContext } from './context'
 import { useSession } from './session'
 import { AcceptTerms } from './Legal'
+
+/** Where the sidebar becomes a drawer opened by the menu button (App.css, the workspace's 900 px breakpoint). */
+const MENU_AS_DRAWER = '(max-width: 900px)'
+const subscribeToDrawer = (onChange: () => void) => {
+  const drawer = window.matchMedia(MENU_AS_DRAWER)
+  drawer.addEventListener('change', onChange)
+  return () => drawer.removeEventListener('change', onChange)
+}
 
 const STEP_OF_PATH = Object.fromEntries(STEPS.map((s) => [STEP_PATH[s], s])) as Record<string, Step>
 
@@ -112,6 +120,33 @@ function Workspace({
   const [adding, setAdding] = useState(false)
   const [addFailed, setAddFailed] = useState(false)
   const title = useRef<HTMLHeadingElement>(null)
+  const closeMenuButton = useRef<HTMLButtonElement>(null)
+  const menuButton = useRef<HTMLButtonElement>(null)
+  // On a phone the menu is a drawer over the page (#44): focus moves into it, the page under it is inert, Escape closes
+  // it, and focus goes back to the menu button. A window widened past the drawer's width closes it, so the page is
+  // never left inert beside an always shown sidebar.
+  // Closed, the drawer is off the screen: inert, so neither Tab nor a screen reader goes into it.
+  const menuIsDrawer = useSyncExternalStore(subscribeToDrawer, () => window.matchMedia(MENU_AS_DRAWER).matches)
+  useEffect(() => {
+    if (!menyOppen) return
+    closeMenuButton.current?.focus()
+    const drawer = window.matchMedia(MENU_AS_DRAWER)
+    // Escape in a dialog opened from the menu (deleting the account) closes that dialog only.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) setMenyOppen(false)
+    }
+    const onResize = () => {
+      if (!drawer.matches) setMenyOppen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    drawer.addEventListener('change', onResize)
+    const button = menuButton.current
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      drawer.removeEventListener('change', onResize)
+      button?.focus()
+    }
+  }, [menyOppen])
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -272,10 +307,11 @@ function Workspace({
 
   return (
     <div className={`arbetsyta ${menyOppen ? 'meny-oppen' : ''}`}>
-      <aside className="sidofalt" aria-label={t('app.sidebar.label')}>
+      <aside className="sidofalt" aria-label={t('app.sidebar.label')} inert={menuIsDrawer && !menyOppen}>
         <div className="sidofalt-topp">
           <Wordmark />
           <button
+            ref={closeMenuButton}
             className="sidofalt-stang"
             aria-label={t('app.sidebar.closeMenu')}
             onClick={() => setMenyOppen(false)}
@@ -292,14 +328,18 @@ function Workspace({
                 aria-current={h.id === hast?.id ? 'page' : undefined}
                 onClick={() => selectHorse(h.id)}
               >
-                <span className="hast-ikon">{initial(h)}</span>
+                <span className="hast-ikon" aria-hidden>
+                  {initial(h)}
+                </span>
                 <span className="hastrad-namn">{h.namn || t('app.sidebar.unnamedHorse')}</span>
               </button>
             </li>
           ))}
           <li>
             <button className="hastrad ny" disabled={adding} onClick={() => void addHorse()}>
-              <span className="hast-ikon">+</span>
+              <span className="hast-ikon" aria-hidden>
+                +
+              </span>
               <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
           </li>
@@ -307,7 +347,9 @@ function Workspace({
 
         <div className="sidofalt-fot">
           <div className="konto">
-            <span className="konto-ikon">{user.name.slice(0, 1).toUpperCase()}</span>
+            <span className="konto-ikon" aria-hidden>
+              {user.name.slice(0, 1).toUpperCase()}
+            </span>
             <span className="konto-text">
               <b>{user.name}</b>
               <span>{user.email}</span>
@@ -348,9 +390,14 @@ function Workspace({
       </aside>
       <div className="meny-skugga" onClick={() => setMenyOppen(false)} aria-hidden />
 
-      <div className="sidan">
+      <div className="sidan" inert={menyOppen}>
         <header className="mobilrad">
-          <button className="menyknapp" aria-label={t('app.openMenu')} onClick={() => setMenyOppen(true)}>
+          <button
+            ref={menuButton}
+            className="menyknapp"
+            aria-label={t('app.openMenu')}
+            onClick={() => setMenyOppen(true)}
+          >
             <span />
             <span />
             <span />
@@ -358,9 +405,10 @@ function Workspace({
           <span className="mobilrad-titel">{hast?.namn || t('common.brand')}</span>
         </header>
 
-        <div className="omslag" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} role="img" aria-label="" />
+        <div className="omslag" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} aria-hidden />
 
-        <div className="sidinnehall">
+        {/* The horse's page: its name, facts, steps and the step itself; the sidebar and the phone's bar are around it. */}
+        <main className="sidinnehall">
           <div className="sid-ikon" aria-hidden>
             {initial(hast)}
           </div>
@@ -429,11 +477,13 @@ function Workspace({
             ))}
           </nav>
 
-          <main className="stegyta">
+          <div className="stegyta">
             <Outlet context={context} />
-          </main>
-          <p className="fotnot">{t('app.footnote')}</p>
-        </div>
+          </div>
+          <footer>
+            <p className="fotnot">{t('app.footnote')}</p>
+          </footer>
+        </main>
       </div>
     </div>
   )

@@ -12,7 +12,8 @@
   --sidofalt: #f5f3ee;
   --text: #1f1e1b;
   --text-2: #5c5a54;
-  --text-3: #8a877f;
+  /* At least 4.5:1 on every background it is used on (WCAG 2.2 AA, #44). */
+  --text-3: #6b6861;
   --linje: #e6e3dc;
   --linje-2: #efede8;
   --skog: #1f2b1e;
@@ -24,6 +25,7 @@
   --markering: #f7e3c4;
   --falt-bg: #ffffff;
   --falt-kant: #d6d2c8;
+  /* The glow around a focused field, whose border turns --gron; the ring elsewhere is --gron itself (3:1, #44). */
   --fokus: rgba(47, 93, 58, 0.25);
   --ok: #2b6a39;
   --ok-bg: #eaf3ec;
@@ -57,7 +59,9 @@
 }
 html {
   scroll-behavior: smooth;
+  /* A field that gets focus is scrolled clear of the sticky step tabs above and the sticky save bar below (#44). */
   scroll-padding-top: 80px;
+  scroll-padding-bottom: 96px;
 }
 body {
   margin: 0;
@@ -80,7 +84,7 @@ a {
   color: var(--gron);
 }
 :focus-visible {
-  outline: 3px solid var(--fokus);
+  outline: 3px solid var(--gron);
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {

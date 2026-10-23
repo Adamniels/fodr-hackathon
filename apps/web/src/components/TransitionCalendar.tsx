@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { BYTESTAKT, type Injustering, type Injusteringsrad } from '@fodr/domain/transition'
 import { addDays, localIsoDate, parseIsoDate, formatNumber } from '../format'
 import i18n, { locale } from '../i18n'
+import { TableScroll } from './TableScroll'
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
@@ -202,32 +203,34 @@ export function TransitionCalendar({ injustering, hastNamn }: { injustering: Inj
 
       <details className="bortvalda">
         <summary>{t('calendar.fullSchedule')}</summary>
-        <table className="tabell">
-          <thead>
-            <tr>
-              <th>{t('calendar.perDay')}</th>
-              <th className="hoger">{t('calendar.today')}</th>
-              {steg.map((x, i) => (
-                <th key={x.nr} className="hoger">
-                  {stegDatum(i).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' })}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rader.map((r) => (
-              <tr key={rowName(r)}>
-                <td>{rowName(r)}</td>
-                <td className="hoger">{amountText(r, r.fran)}</td>
-                {r.perSteg.map((v, i) => (
-                  <td key={i} className="hoger">
-                    {amountText(r, v)}
-                  </td>
+        <TableScroll label={t('calendar.fullSchedule')}>
+          <table className="tabell">
+            <thead>
+              <tr>
+                <th>{t('calendar.perDay')}</th>
+                <th className="hoger">{t('calendar.today')}</th>
+                {steg.map((x, i) => (
+                  <th key={x.nr} className="hoger">
+                    {stegDatum(i).toLocaleDateString(locale(), { day: 'numeric', month: 'numeric' })}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rader.map((r) => (
+                <tr key={rowName(r)}>
+                  <td>{rowName(r)}</td>
+                  <td className="hoger">{amountText(r, r.fran)}</td>
+                  {r.perSteg.map((v, i) => (
+                    <td key={i} className="hoger">
+                      {amountText(r, v)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       </details>
 
       <div className="ruta varn">

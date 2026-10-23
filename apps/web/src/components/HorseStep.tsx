@@ -138,6 +138,7 @@ function ProfileForm({
             <button
               key={id}
               className={hast.typ === id ? 'aktiv' : ''}
+              aria-pressed={hast.typ === id}
               onClick={() => set({ typ: id })}
               title={t(`horse.type.${id}.hint`)}
             >
@@ -406,6 +407,7 @@ function HealthSection({ halsa, onChange }: { halsa: Halsa; onChange: (h: Halsa)
               key={i}
               type="button"
               className={`chip-val ${undvik.includes(i) ? 'aktiv' : ''}`}
+              aria-pressed={undvik.includes(i)}
               onClick={() =>
                 onChange({ ...halsa, undvik: undvik.includes(i) ? undvik.filter((x) => x !== i) : [...undvik, i] })
               }
@@ -432,8 +434,12 @@ function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; on
       : t('horse.sensitivity.hintDefault')
   return (
     <>
-      <Field label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hint={hint} group>
-        <div className="segment" role="radiogroup" aria-label={t('horse.sensitivity.groupLabel')}>
+      <Field
+        label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })}
+        hint={hint}
+        group="radiogroup"
+      >
+        <div className="segment">
           {KANSLIGHETSORDNING.map((k) => {
             const takt = BYTESTAKT[k]
             return (
@@ -482,6 +488,7 @@ function FeedList({
   // product since taken out, is an unknown feed.
   const known = new Set(produkter.map((p) => p.id))
   const isLinked = (f: (typeof foder)[number]) => f.produktId !== null && known.has(f.produktId)
+  const feedId = useId()
   return (
     <div className="foderlista">
       {/* Searchable list: a name matching a product is linked to it, otherwise it is saved as a custom feed. */}
@@ -492,33 +499,49 @@ function FeedList({
           </option>
         ))}
       </datalist>
-      {foder.map((f, i) => (
-        <div className="foderrad" key={i}>
-          <input
-            list="produktnamn"
-            placeholder={t('horse.feeds.searchPlaceholder')}
-            value={f.namn}
-            className={isLinked(f) ? '' : 'okand-produkt'}
-            title={isLinked(f) ? undefined : t('horse.feeds.unknownProduct')}
-            onChange={(e) => {
-              const p = produkter.find((x) => x.namn === e.target.value)
-              satt(i, { produktId: p?.id ?? null, namn: e.target.value })
-            }}
-          />
-          <NumberField
-            value={f.gramPerDag}
-            error={errorFor(`nuvarandeFoder.${i}.gramPerDag`)}
-            onChange={(v) => satt(i, { gramPerDag: v })}
-          />
-          <span className="enhet">{t('horse.feeds.gramsPerDay')}</span>
-          <button
-            className="lank"
-            onClick={() => onChange({ ...hast, nuvarandeFoder: foder.filter((_, j) => j !== i) })}
-          >
-            {t('horse.feeds.remove')}
-          </button>
-        </div>
-      ))}
+      {foder.map((f, i) => {
+        const n = formatNumber(i + 1, 0)
+        // Said in text and read out with the field, not by its colour alone (#44).
+        const unknown = !isLinked(f)
+        const unknownId = `${feedId}-unknown-${String(i)}`
+        return (
+          <div className="foderrad" key={i}>
+            <input
+              list="produktnamn"
+              placeholder={t('horse.feeds.searchPlaceholder')}
+              aria-label={t('horse.feeds.feedLabel', { n })}
+              aria-describedby={unknown ? unknownId : undefined}
+              value={f.namn}
+              className={unknown ? 'okand-produkt' : ''}
+              onChange={(e) => {
+                const p = produkter.find((x) => x.namn === e.target.value)
+                satt(i, { produktId: p?.id ?? null, namn: e.target.value })
+              }}
+            />
+            <NumberField
+              value={f.gramPerDag}
+              label={t('horse.feeds.gramsLabel', { n })}
+              error={errorFor(`nuvarandeFoder.${i}.gramPerDag`)}
+              onChange={(v) => satt(i, { gramPerDag: v })}
+            />
+            <span className="enhet" aria-hidden>
+              {t('horse.feeds.gramsPerDay')}
+            </span>
+            <button
+              className="lank"
+              aria-label={t('horse.feeds.removeLabel', { n })}
+              onClick={() => onChange({ ...hast, nuvarandeFoder: foder.filter((_, j) => j !== i) })}
+            >
+              {t('horse.feeds.remove')}
+            </button>
+            {unknown && (
+              <span id={unknownId} className="foderrad-okand">
+                {t('horse.feeds.unknownProduct')}
+              </span>
+            )}
+          </div>
+        )
+      })}
       <button
         className="lank"
         onClick={() =>
@@ -665,17 +688,28 @@ function Field({
 }: {
   label: string
   hint?: string
-  group?: boolean
+  /** Buttons rather than one field: a group named by the label, or a radiogroup when they are a single choice. */
+  group?: boolean | 'radiogroup'
   children: React.ReactNode
 }) {
-  // A button group must not sit inside <label>, or a click on the label activates the first button.
-  const Tag = group ? 'div' : 'label'
-  return (
-    <Tag className="falt">
-      <span className="falt-label">{label}</span>
+  const labelId = useId()
+  // A button group must not sit inside <label>, or a click on the label activates the first button; it is a named
+  // group instead, so its buttons are read out with what they choose (#44).
+  const content = (
+    <>
+      <span className="falt-label" id={group ? labelId : undefined}>
+        {label}
+      </span>
       {children}
       {hint && <span className="falt-hjalp">{hint}</span>}
-    </Tag>
+    </>
+  )
+  return group ? (
+    <div className="falt" role={group === 'radiogroup' ? 'radiogroup' : 'group'} aria-labelledby={labelId}>
+      {content}
+    </div>
+  ) : (
+    <label className="falt">{content}</label>
   )
 }
 
@@ -684,13 +718,16 @@ function NumberField({
   error,
   onChange,
   needsMinusKey,
+  label,
 }: {
   value: number
   error?: string
   onChange: (v: number) => void
   needsMinusKey?: boolean
+  /** The accessible name, for a field outside a <label> (a feed row). */
+  label?: string
 }) {
-  return <DecimalInput value={value} error={error} onChange={onChange} needsMinusKey={needsMinusKey} />
+  return <DecimalInput value={value} error={error} onChange={onChange} needsMinusKey={needsMinusKey} label={label} />
 }
 
 type ErrorFor = (field: ProfileField) => string | undefined

@@ -17,6 +17,7 @@ import i18n from '../i18n'
 import { domainText } from '../i18n/domain'
 import { PlanSaveError, usePlanExplanation } from '../plans'
 import { TransitionCalendar } from './TransitionCalendar'
+import { TableScroll } from './TableScroll'
 
 const STATUS_CLASS: Record<Status, string> = {
   brist: 'brist',
@@ -100,7 +101,7 @@ export function PlanStep({
     <div className="plan">
       <header className="plan-topp">
         <h2>{t('plan.title', { name: hast.namn })}</h2>
-        <div className="kostnadsrad" aria-label={t('plan.costLabel')}>
+        <div className="kostnadsrad" role="group" aria-label={t('plan.costLabel')}>
           <span className="kostnadsrad-belopp">{t('units.perMonth', { amount: formatMoney(totalNy) })}</span>
           {plan.nulageKostnadPerManad > 0 && (
             <span className={`kostnadsrad-jmf ${besparing >= 0 ? 'ok' : ''}`}>
@@ -186,62 +187,64 @@ export function PlanStep({
           </p>
         )}
         {inkop.length > 0 ? (
-          <table className="tabell lista">
-            <thead>
-              <tr>
-                <th>{t('plan.shopping.product')}</th>
-                <th className="dolj-smal">{t('plan.shopping.storeAndPrice')}</th>
-                <th className="hoger">{t('plan.shopping.perDay')}</th>
-                <th className="hoger">{t('plan.shopping.perMonth')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inkop.map((p) => (
-                <tr key={p.produkt.id}>
-                  <td>
-                    <strong>{displayName(p.produkt)}</strong>
-                    {ersatter(p.produkt.id) && (
-                      <span className="liten ersatter">
-                        {t('plan.shopping.replaces', { products: ersatter(p.produkt.id) })}
-                      </span>
-                    )}
-                    {p.produkt.dosKalla && (
-                      <span className="liten" title={p.produkt.antaganden.join(' ')}>
-                        {t('plan.shopping.manufacturerDose', { dose: p.produkt.dosKalla })}
-                      </span>
-                    )}
-                  </td>
-                  <td className="liten-cell dolj-smal">
-                    {p.produkt.url ? (
-                      <a href={p.produkt.url} target="_blank" rel="noreferrer">
-                        {p.produkt.butik}
-                      </a>
-                    ) : (
-                      p.produkt.butik
-                    )}{' '}
-                    {t('plan.shopping.price', {
-                      price: formatMoney(p.produkt.prisKr),
-                      kg: formatNumber(p.produkt.forpackningKg),
-                    })}
-                  </td>
-                  <td className="hoger">{t('units.g', { value: doseGrams(p.gramPerDag) })}</td>
-                  <td className="hoger">{formatMoney(monthlyCost(p.produkt, p.gramPerDag))}</td>
+          <TableScroll label={t('plan.shopping.title')}>
+            <table className="tabell lista">
+              <thead>
+                <tr>
+                  <th>{t('plan.shopping.product')}</th>
+                  <th className="dolj-smal">{t('plan.shopping.storeAndPrice')}</th>
+                  <th className="hoger">{t('plan.shopping.perDay')}</th>
+                  <th className="hoger">{t('plan.shopping.perMonth')}</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={2} className="dolj-smal">
-                  {t('plan.shopping.totalBeyondRoughage')}
-                </td>
-                <td className="visa-smal">{t('plan.shopping.total')}</td>
-                <td />
-                <td className="hoger">
-                  <strong>{formatMoney(totalNy)}</strong>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                {inkop.map((p) => (
+                  <tr key={p.produkt.id}>
+                    <td>
+                      <strong>{displayName(p.produkt)}</strong>
+                      {ersatter(p.produkt.id) && (
+                        <span className="liten ersatter">
+                          {t('plan.shopping.replaces', { products: ersatter(p.produkt.id) })}
+                        </span>
+                      )}
+                      {p.produkt.dosKalla && (
+                        <span className="liten" title={p.produkt.antaganden.join(' ')}>
+                          {t('plan.shopping.manufacturerDose', { dose: p.produkt.dosKalla })}
+                        </span>
+                      )}
+                    </td>
+                    <td className="liten-cell dolj-smal">
+                      {p.produkt.url ? (
+                        <a href={p.produkt.url} target="_blank" rel="noreferrer">
+                          {p.produkt.butik}
+                        </a>
+                      ) : (
+                        p.produkt.butik
+                      )}{' '}
+                      {t('plan.shopping.price', {
+                        price: formatMoney(p.produkt.prisKr),
+                        kg: formatNumber(p.produkt.forpackningKg),
+                      })}
+                    </td>
+                    <td className="hoger">{t('units.g', { value: doseGrams(p.gramPerDag) })}</td>
+                    <td className="hoger">{formatMoney(monthlyCost(p.produkt, p.gramPerDag))}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={2} className="dolj-smal">
+                    {t('plan.shopping.totalBeyondRoughage')}
+                  </td>
+                  <td className="visa-smal">{t('plan.shopping.total')}</td>
+                  <td />
+                  <td className="hoger">
+                    <strong>{formatMoney(totalNy)}</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </TableScroll>
         ) : plan.urvalshinder ? null : (
           <p>{t('plan.shopping.none')}</p>
         )}
@@ -298,6 +301,7 @@ export function PlanStep({
                 const text = domainText(k.text)
                 return (
                   <div key={text} className={`kvalitet-rad ${k.niva}`}>
+                    {k.niva === 'varning' && <span className="kvalitet-niva">{t('plan.warning')}</span>}
                     <span>{text}</span>
                     <span className="liten">{domainText(k.kalla)}</span>
                   </div>
@@ -325,6 +329,7 @@ export function PlanStep({
             <div className="kvalitet">
               {plan.grovfoderkvalitet.map((f) => (
                 <div key={f.rubrik.code} className={`kvalitet-rad ${f.niva}`}>
+                  {f.niva === 'varning' && <span className="kvalitet-niva">{t('plan.warning')}</span>}
                   <strong>{domainText(f.rubrik)}</strong>
                   <span>{domainText(f.text)}</span>
                   <span className="liten">{domainText(f.kalla)}</span>
@@ -360,44 +365,46 @@ function BalanceTable({ rader }: { rader: Balansrad[] }) {
   const { t } = useTranslation()
   const visade = rader.filter((r) => r.status !== 'ej_krav' && r.behovMin !== undefined)
   return (
-    <table className="tabell">
-      <thead>
-        <tr>
-          <th>{t('plan.balance.nutrient')}</th>
-          <th className="hoger">{t('plan.balance.requirementColumn')}</th>
-          <th className="hoger">{t('plan.balance.intake')}</th>
-          <th className="hoger">{t('plan.balance.max')}</th>
-          <th>{t('plan.balance.statusColumn')}</th>
-          <th>{t('plan.balance.source')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {visade.map((r) => {
-          return (
-            <tr key={r.amne}>
-              <td>{nutrientLabel(r.amne)}</td>
-              <td className="hoger">
-                {formatNumber(r.behovMin)} {nutrientUnit(r.amne)}
-              </td>
-              <td className="hoger">
-                {r.status === 'okand' ? '–' : `${formatNumber(r.intag)} ${nutrientUnit(r.amne)}`}
-              </td>
-              <td className="hoger liten">{r.behovMax !== undefined ? formatNumber(r.behovMax) : ''}</td>
-              <td>
-                <span className={`chip ${STATUS_CLASS[r.status]}`}>{t(`plan.status.${r.status}`)}</span>
-              </td>
-              <td className="kalla">
-                {r.kalla === 'schablon'
-                  ? t('plan.balance.sourceEstimated')
-                  : r.kalla === 'okand'
-                    ? t('plan.balance.sourceNotAnalysed')
-                    : t('plan.balance.sourceAnalysis')}
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <TableScroll label={t('plan.balance.title')}>
+      <table className="tabell">
+        <thead>
+          <tr>
+            <th>{t('plan.balance.nutrient')}</th>
+            <th className="hoger">{t('plan.balance.requirementColumn')}</th>
+            <th className="hoger">{t('plan.balance.intake')}</th>
+            <th className="hoger">{t('plan.balance.max')}</th>
+            <th>{t('plan.balance.statusColumn')}</th>
+            <th>{t('plan.balance.source')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visade.map((r) => {
+            return (
+              <tr key={r.amne}>
+                <td>{nutrientLabel(r.amne)}</td>
+                <td className="hoger">
+                  {formatNumber(r.behovMin)} {nutrientUnit(r.amne)}
+                </td>
+                <td className="hoger">
+                  {r.status === 'okand' ? '–' : `${formatNumber(r.intag)} ${nutrientUnit(r.amne)}`}
+                </td>
+                <td className="hoger liten">{r.behovMax !== undefined ? formatNumber(r.behovMax) : ''}</td>
+                <td>
+                  <span className={`chip ${STATUS_CLASS[r.status]}`}>{t(`plan.status.${r.status}`)}</span>
+                </td>
+                <td className="kalla">
+                  {r.kalla === 'schablon'
+                    ? t('plan.balance.sourceEstimated')
+                    : r.kalla === 'okand'
+                      ? t('plan.balance.sourceNotAnalysed')
+                      : t('plan.balance.sourceAnalysis')}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </TableScroll>
   )
 }
 

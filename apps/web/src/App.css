@@ -635,6 +635,7 @@
 }
 .bocklista li::before {
   content: '✓';
+  content: '✓' / '';
   position: absolute;
   left: 0;
   top: 1px;
@@ -671,6 +672,7 @@
 }
 .fragelista summary::after {
   content: '+';
+  content: '+' / '';
   font-size: 26px;
   font-weight: 400;
   color: var(--text-3);
@@ -734,24 +736,29 @@
 }
 
 /* Inloggningsdialog */
-.dialog-bakgrund {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(23, 31, 21, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 16px;
+/* The native dialog only frames and centres the box; the box has the padding, so a click on the frame is the backdrop. */
+.dialog-ram {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  /* Scrolls when taller than the screen (a phone on its side, 400 % zoom), as the page behind it is inert (#44). */
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
   animation: tona 0.2s ease;
+}
+.dialog-ram::backdrop {
+  background: rgba(23, 31, 21, 0.45);
 }
 .dialog {
   position: relative;
-  width: 100%;
-  max-width: 440px;
   background: var(--panel);
+  color: var(--text);
   border-radius: 16px;
   padding: 32px 28px 24px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
 }
 .dialog-stang {
   position: absolute;
@@ -1005,6 +1012,10 @@
   border-bottom: 1px solid var(--linje);
   overflow-x: auto;
   scrollbar-width: none;
+}
+/* Inside the tab: the bar scrolls sideways, which clips a ring drawn outside it (#44). */
+.flikar button:focus-visible {
+  outline-offset: -3px;
 }
 .flikar::-webkit-scrollbar {
   display: none;
@@ -1311,14 +1322,19 @@ input.smal {
   min-height: 40px;
   padding: 6px 10px;
 }
-.falt input:focus,
+/* As specific as the fields' own rule above, or its grey border wins; a solid green ring of 2 px with the glow outside
+   it, at least 3:1 against the page (#44). */
+.falt input:not([type='checkbox']):not([type='range']):focus,
 .falt select:focus,
 .falt textarea:focus,
 .foderrad input:focus,
 input.smal:focus {
-  outline: none;
+  /* Transparent, but drawn in forced colours (Windows high contrast), where the box shadow is not. */
+  outline: 2px solid transparent;
   border-color: var(--gron);
-  box-shadow: 0 0 0 3px var(--fokus);
+  box-shadow:
+    0 0 0 1px var(--gron),
+    0 0 0 4px var(--fokus);
 }
 .falt textarea {
   resize: vertical;
@@ -1409,6 +1425,11 @@ label.kryss {
 .foderrad input.okand-produkt {
   border-color: var(--varn);
   background: var(--varn-bg);
+}
+.foderrad-okand {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: var(--varn);
 }
 .enhet {
   color: var(--text-2);
@@ -1525,8 +1546,11 @@ label.kryss {
 .ruta.varn {
   background: var(--varn-bg);
 }
+/* The marks below are drawn, not read out (#44): the text says what they mark. The first content is for browsers
+   without alternative text for generated content, which ignore the second. */
 .ruta.varn::before {
   content: '!';
+  content: '!' / '';
   background: #c77d0a;
 }
 .ruta.fel {
@@ -1535,6 +1559,7 @@ label.kryss {
 }
 .ruta.fel::before {
   content: '!';
+  content: '!' / '';
   background: var(--brist);
 }
 
@@ -1641,11 +1666,12 @@ label.kryss {
 .tabell.lista td {
   padding: 12px 8px;
 }
-@media (max-width: 700px) {
-  .tabell {
-    display: block;
-    overflow-x: auto;
-  }
+.tabell-rulla {
+  overflow-x: auto;
+}
+/* Inside what it marks: the box clips a ring drawn outside, as on a link in the first column. */
+.tabell-rulla :focus-visible {
+  outline-offset: -3px;
 }
 
 .chip {
@@ -1755,9 +1781,10 @@ label.kryss {
   color: var(--text-2);
   animation: puls-text 1.2s ease-in-out infinite;
 }
+/* Between two greys that both keep 4.5:1, so the text is readable at every moment of the pulse (#44). */
 @keyframes puls-text {
   50% {
-    opacity: 0.4;
+    color: var(--text-3);
   }
 }
 .miljo {
@@ -1790,6 +1817,14 @@ label.kryss {
 }
 .kvalitet-rad.varning {
   background: var(--varn-bg);
+}
+/* The level in words, so a warning is not told by its background alone (#44). */
+.kvalitet-niva {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--varn);
 }
 
 .chips {

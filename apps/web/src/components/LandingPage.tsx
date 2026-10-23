@@ -50,194 +50,196 @@ export function LandingPage({ produkter, loggedInAs, onGetStarted, onLogIn }: Pr
         </div>
       </header>
 
-      <section className="start-hero">
-        <p className="overrubrik">{t('landing.hero.eyebrow')}</p>
-        <h1>
-          <Trans i18nKey="landing.hero.title" components={{ mark: <span className="markering" /> }} />
-        </h1>
-        <p className="start-ingress">{t('landing.hero.intro')}</p>
-        <div className="start-knappar">
-          <button className="knapp stor" onClick={onGetStarted}>
-            {loggedInAs ? t('landing.continueAs', { name: loggedInAs }) : t('landing.getStarted')}
-          </button>
-          <a className="knapp stor sekundar" href="#sa-funkar">
-            {t('landing.hero.seeHow')}
-          </a>
-        </div>
-        <p className="start-not">{t('landing.hero.note')}</p>
-        {produkter && <ProductPreview produkter={produkter} />}
-      </section>
-
-      <p className="kallrad">
-        <Trans i18nKey="landing.sourceLine" components={{ strong: <strong /> }} />
-      </p>
-
-      <section className="fotoband" style={{ backgroundImage: 'url(/bilder/tre-hastar.webp)' }}>
-        <div className="fotoband-text">
-          <h2>{t('landing.photoBand.title')}</h2>
-          <p>{t('landing.photoBand.text')}</p>
-        </div>
-      </section>
-
-      <section className="siffror" aria-label={t('landing.figures.label')}>
-        <p className="siffror-rubrik">{t('landing.figures.title')}</p>
-        <div className="siffror-rad">
-          <div>
-            <strong>{formatNumber(FIGURES.hastar, 0)}</strong>
-            <span>{t('landing.figures.horsesText')}</span>
+      <main>
+        <section className="start-hero">
+          <p className="overrubrik">{t('landing.hero.eyebrow')}</p>
+          <h1>
+            <Trans i18nKey="landing.hero.title" components={{ mark: <span className="markering" /> }} />
+          </h1>
+          <p className="start-ingress">{t('landing.hero.intro')}</p>
+          <div className="start-knappar">
+            <button className="knapp stor" onClick={onGetStarted}>
+              {loggedInAs ? t('landing.continueAs', { name: loggedInAs }) : t('landing.getStarted')}
+            </button>
+            <a className="knapp stor sekundar" href="#sa-funkar">
+              {t('landing.hero.seeHow')}
+            </a>
           </div>
-          <div>
-            <strong>{t('units.percent', { value: formatNumber(FIGURES.hosilageProcent, 0) })}</strong>
-            <span>{t('landing.figures.haylageText')}</span>
-          </div>
-          <div>
-            <strong>
-              {t('landing.figures.analysisCost', {
-                min: formatNumber(FIGURES.analysKostnadKr.min, 0),
-                max: formatNumber(FIGURES.analysKostnadKr.max, 0),
-              })}
-            </strong>
-            <span>{t('landing.figures.analysisCostText')}</span>
-          </div>
-        </div>
-        <p className="siffror-kalla">{t('landing.figures.sources')}</p>
-      </section>
+          <p className="start-not">{t('landing.hero.note')}</p>
+          {produkter && <ProductPreview produkter={produkter} />}
+        </section>
 
-      <section className="start-sektion" id="sa-funkar">
-        <p className="overrubrik">{t('landing.steps.eyebrow')}</p>
-        <h2 className="sektion-rubrik">{t('landing.steps.title')}</h2>
-        <div className="stegkort">
-          <article className="stegkort-kort">
-            <span className="stegkort-nr">1</span>
-            <h3>{t('landing.steps.horseTitle')}</h3>
-            <p>{t('landing.steps.horseText')}</p>
-            <div className="stegkort-bild" style={{ backgroundImage: 'url(/bilder/palomino.webp)' }} />
-          </article>
-          <article className="stegkort-kort">
-            <span className="stegkort-nr">2</span>
-            <h3>{t('landing.steps.analysisTitle')}</h3>
-            <p>{t('landing.steps.analysisText')}</p>
-            <div className="stegkort-utsnitt" aria-hidden>
-              <div className="utsnitt-rad">
-                <span>{t('landing.steps.sample.dryMatter')}</span>
-                <b>{t('units.percent', { value: formatNumber(SAMPLE_ANALYSIS.tsProcent, 1) })}</b>
-              </div>
-              <div className="utsnitt-rad">
-                <span>{t('landing.steps.sample.energy')}</span>
-                <b>
-                  {t('units.quantity', {
-                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.energi, 1),
-                    unit: nutrientUnit('energi'),
-                  })}
-                </b>
-              </div>
-              <div className="utsnitt-rad">
-                <span>{t('landing.steps.sample.protein')}</span>
-                <b>
-                  {t('units.quantity', {
-                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.smbRp, 1),
-                    unit: nutrientUnit('smbRp'),
-                  })}
-                </b>
-              </div>
-              <div className="utsnitt-rad">
-                <span>{t('landing.steps.sample.sugar')}</span>
-                <b>
-                  {t('units.quantity', {
-                    value: formatNumber(SAMPLE_ANALYSIS.perKgTs.socker, 1),
-                    unit: nutrientUnit('socker'),
-                  })}
-                </b>
-              </div>
-              <div className="utsnitt-rad saknas">
-                <span>{t('landing.steps.sample.selenium')}</span>
-                <b>{t('landing.steps.sample.missing')}</b>
-              </div>
+        <p className="kallrad">
+          <Trans i18nKey="landing.sourceLine" components={{ strong: <strong /> }} />
+        </p>
+
+        <section className="fotoband" style={{ backgroundImage: 'url(/bilder/tre-hastar.webp)' }}>
+          <div className="fotoband-text">
+            <h2>{t('landing.photoBand.title')}</h2>
+            <p>{t('landing.photoBand.text')}</p>
+          </div>
+        </section>
+
+        <section className="siffror" aria-label={t('landing.figures.label')}>
+          <p className="siffror-rubrik">{t('landing.figures.title')}</p>
+          <div className="siffror-rad">
+            <div>
+              <strong>{formatNumber(FIGURES.hastar, 0)}</strong>
+              <span>{t('landing.figures.horsesText')}</span>
             </div>
-          </article>
-          <article className="stegkort-kort">
-            <span className="stegkort-nr">3</span>
-            <h3>{t('landing.steps.planTitle')}</h3>
-            <p>{t('landing.steps.planText')}</p>
-            <div className="stegkort-bild" style={{ backgroundImage: 'url(/bilder/hohack.webp)' }} />
-          </article>
-        </div>
-
-        <div className="formagor">
-          <div>
-            <b>{t('landing.features.emsTitle')}</b>
-            <span>{t('landing.features.emsText')}</span>
+            <div>
+              <strong>{t('units.percent', { value: formatNumber(FIGURES.hosilageProcent, 0) })}</strong>
+              <span>{t('landing.figures.haylageText')}</span>
+            </div>
+            <div>
+              <strong>
+                {t('landing.figures.analysisCost', {
+                  min: formatNumber(FIGURES.analysKostnadKr.min, 0),
+                  max: formatNumber(FIGURES.analysKostnadKr.max, 0),
+                })}
+              </strong>
+              <span>{t('landing.figures.analysisCostText')}</span>
+            </div>
           </div>
-          <div>
-            <b>{t('landing.features.neutralTitle')}</b>
-            <span>{t('landing.features.neutralText')}</span>
-          </div>
-          <div>
-            <b>{t('landing.features.journalTitle')}</b>
-            <span>{t('landing.features.journalText')}</span>
-          </div>
-          <div>
-            <b>{t('landing.features.swedishTitle')}</b>
-            <span>{t('landing.features.swedishText')}</span>
-          </div>
-        </div>
-      </section>
+          <p className="siffror-kalla">{t('landing.figures.sources')}</p>
+        </section>
 
-      <section className="start-sektion tvadelad" id="trovardigt">
-        <div>
-          <p className="overrubrik">{t('landing.trust.eyebrow')}</p>
-          <h2 className="sektion-rubrik">{t('landing.trust.title')}</h2>
-          <p className="brodtext">{t('landing.trust.text')}</p>
-          <ul className="bocklista">
-            <li>{t('landing.trust.source')}</li>
-            <li>{t('landing.trust.missing')}</li>
-            <li>{t('landing.trust.vet')}</li>
-          </ul>
-        </div>
-        <div
-          className="tvadelad-bild"
-          style={{ backgroundImage: 'url(/bilder/nosar.webp)' }}
-          role="img"
-          aria-label={t('landing.trust.imageLabel')}
-        />
-      </section>
+        <section className="start-sektion" id="sa-funkar">
+          <p className="overrubrik">{t('landing.steps.eyebrow')}</p>
+          <h2 className="sektion-rubrik">{t('landing.steps.title')}</h2>
+          <div className="stegkort">
+            <article className="stegkort-kort">
+              <span className="stegkort-nr">1</span>
+              <h3>{t('landing.steps.horseTitle')}</h3>
+              <p>{t('landing.steps.horseText')}</p>
+              <div className="stegkort-bild" style={{ backgroundImage: 'url(/bilder/palomino.webp)' }} />
+            </article>
+            <article className="stegkort-kort">
+              <span className="stegkort-nr">2</span>
+              <h3>{t('landing.steps.analysisTitle')}</h3>
+              <p>{t('landing.steps.analysisText')}</p>
+              <div className="stegkort-utsnitt" aria-hidden>
+                <div className="utsnitt-rad">
+                  <span>{t('landing.steps.sample.dryMatter')}</span>
+                  <b>{t('units.percent', { value: formatNumber(SAMPLE_ANALYSIS.tsProcent, 1) })}</b>
+                </div>
+                <div className="utsnitt-rad">
+                  <span>{t('landing.steps.sample.energy')}</span>
+                  <b>
+                    {t('units.quantity', {
+                      value: formatNumber(SAMPLE_ANALYSIS.perKgTs.energi, 1),
+                      unit: nutrientUnit('energi'),
+                    })}
+                  </b>
+                </div>
+                <div className="utsnitt-rad">
+                  <span>{t('landing.steps.sample.protein')}</span>
+                  <b>
+                    {t('units.quantity', {
+                      value: formatNumber(SAMPLE_ANALYSIS.perKgTs.smbRp, 1),
+                      unit: nutrientUnit('smbRp'),
+                    })}
+                  </b>
+                </div>
+                <div className="utsnitt-rad">
+                  <span>{t('landing.steps.sample.sugar')}</span>
+                  <b>
+                    {t('units.quantity', {
+                      value: formatNumber(SAMPLE_ANALYSIS.perKgTs.socker, 1),
+                      unit: nutrientUnit('socker'),
+                    })}
+                  </b>
+                </div>
+                <div className="utsnitt-rad saknas">
+                  <span>{t('landing.steps.sample.selenium')}</span>
+                  <b>{t('landing.steps.sample.missing')}</b>
+                </div>
+              </div>
+            </article>
+            <article className="stegkort-kort">
+              <span className="stegkort-nr">3</span>
+              <h3>{t('landing.steps.planTitle')}</h3>
+              <p>{t('landing.steps.planText')}</p>
+              <div className="stegkort-bild" style={{ backgroundImage: 'url(/bilder/hohack.webp)' }} />
+            </article>
+          </div>
 
-      <section className="start-sektion smal" id="fragor">
-        <p className="overrubrik">{t('landing.faq.eyebrow')}</p>
-        <h2 className="sektion-rubrik">{t('landing.faq.title')}</h2>
-        <div className="fragelista">
-          <details>
-            <summary>{t('landing.faq.labsQ')}</summary>
-            <p>{t('landing.faq.labsA')}</p>
-          </details>
-          <details>
-            <summary>{t('landing.faq.mineralsQ')}</summary>
-            <p>{t('landing.faq.mineralsA')}</p>
-          </details>
-          <details>
-            <summary>{t('landing.faq.vetQ')}</summary>
-            <p>{t('landing.faq.vetA')}</p>
-          </details>
-          <details>
-            <summary>{t('landing.faq.sellQ')}</summary>
-            <p>{t('landing.faq.sellA')}</p>
-          </details>
-          <details>
-            <summary>{t('landing.faq.storageQ')}</summary>
-            <p>{t('landing.faq.storageA')}</p>
-          </details>
-        </div>
-      </section>
+          <div className="formagor">
+            <div>
+              <b>{t('landing.features.emsTitle')}</b>
+              <span>{t('landing.features.emsText')}</span>
+            </div>
+            <div>
+              <b>{t('landing.features.neutralTitle')}</b>
+              <span>{t('landing.features.neutralText')}</span>
+            </div>
+            <div>
+              <b>{t('landing.features.journalTitle')}</b>
+              <span>{t('landing.features.journalText')}</span>
+            </div>
+            <div>
+              <b>{t('landing.features.swedishTitle')}</b>
+              <span>{t('landing.features.swedishText')}</span>
+            </div>
+          </div>
+        </section>
 
-      <section className="avslut" style={{ backgroundImage: 'url(/bilder/bete-island.webp)' }}>
-        <div className="avslut-inre">
-          <h2>{t('landing.closing.title')}</h2>
-          <p>{t('landing.closing.text')}</p>
-          <button className="knapp stor ljus" onClick={onGetStarted}>
-            {loggedInAs ? t('landing.openApp') : t('landing.getStarted')}
-          </button>
-        </div>
-      </section>
+        <section className="start-sektion tvadelad" id="trovardigt">
+          <div>
+            <p className="overrubrik">{t('landing.trust.eyebrow')}</p>
+            <h2 className="sektion-rubrik">{t('landing.trust.title')}</h2>
+            <p className="brodtext">{t('landing.trust.text')}</p>
+            <ul className="bocklista">
+              <li>{t('landing.trust.source')}</li>
+              <li>{t('landing.trust.missing')}</li>
+              <li>{t('landing.trust.vet')}</li>
+            </ul>
+          </div>
+          <div
+            className="tvadelad-bild"
+            style={{ backgroundImage: 'url(/bilder/nosar.webp)' }}
+            role="img"
+            aria-label={t('landing.trust.imageLabel')}
+          />
+        </section>
+
+        <section className="start-sektion smal" id="fragor">
+          <p className="overrubrik">{t('landing.faq.eyebrow')}</p>
+          <h2 className="sektion-rubrik">{t('landing.faq.title')}</h2>
+          <div className="fragelista">
+            <details>
+              <summary>{t('landing.faq.labsQ')}</summary>
+              <p>{t('landing.faq.labsA')}</p>
+            </details>
+            <details>
+              <summary>{t('landing.faq.mineralsQ')}</summary>
+              <p>{t('landing.faq.mineralsA')}</p>
+            </details>
+            <details>
+              <summary>{t('landing.faq.vetQ')}</summary>
+              <p>{t('landing.faq.vetA')}</p>
+            </details>
+            <details>
+              <summary>{t('landing.faq.sellQ')}</summary>
+              <p>{t('landing.faq.sellA')}</p>
+            </details>
+            <details>
+              <summary>{t('landing.faq.storageQ')}</summary>
+              <p>{t('landing.faq.storageA')}</p>
+            </details>
+          </div>
+        </section>
+
+        <section className="avslut" style={{ backgroundImage: 'url(/bilder/bete-island.webp)' }}>
+          <div className="avslut-inre">
+            <h2>{t('landing.closing.title')}</h2>
+            <p>{t('landing.closing.text')}</p>
+            <button className="knapp stor ljus" onClick={onGetStarted}>
+              {loggedInAs ? t('landing.openApp') : t('landing.getStarted')}
+            </button>
+          </div>
+        </section>
+      </main>
 
       <footer className="start-fot">
         <Wordmark />
@@ -263,14 +265,16 @@ function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const total = poster.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
 
   return (
-    <div className="produktbild" aria-label={t('landing.preview.label')}>
-      <div className="produktbild-ram">
+    // One picture to a screen reader (#44): a drawing of the app, whose sidebar and steps would otherwise be heard as a
+    // second app inside the landing page. Its content is hidden as well, as not every browser leaves an image's out.
+    <div className="produktbild" role="img" aria-label={t('landing.preview.label')}>
+      <div className="produktbild-ram" aria-hidden>
         <i />
         <i />
         <i />
         <span>{t('landing.preview.address')}</span>
       </div>
-      <div className="produktbild-yta">
+      <div className="produktbild-yta" aria-hidden>
         <aside className="pb-sido">
           <b>{t('landing.preview.horses')}</b>
           <span className="pb-hast vald">
