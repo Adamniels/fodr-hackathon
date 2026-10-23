@@ -76,15 +76,16 @@ jobs:
         timeout-minutes: 15
       - run: docker compose up --wait --wait-timeout 180
       - run: bash scripts/dev/check-services.sh
-      # The API against the Compose Postgres (#19); the tests create and migrate their own database. In the first
-      # shard only, which has the services up already; it is not split.
-      - if: matrix.shard == 1
+      # The API against the Compose Postgres (#19); the tests create and migrate their own database. Not split: in the
+      # last shard only, which Playwright gives no more tests than the first.
+      - if: matrix.shard == strategy.job-total
         run: npm run test:integration
         timeout-minutes: 5
-      - if: failure()
-        run: docker compose ps -a && docker compose logs --no-color
       - run: npm run test:e2e -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         timeout-minutes: 15
+      # After the tests, so the services' logs are there for an integration or an e2e failure alike.
+      - if: failure()
+        run: docker compose ps -a && docker compose logs --no-color
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
@@ -93,7 +94,8 @@ jobs:
           retention-days: 7
 
   # One check for the whole suite, named as the job was before the split, so a rule or a habit that waits for `e2e`
-  # keeps working: it fails unless every shard passed, also when one was cancelled or skipped.
+  # keeps working: it fails unless every shard passed, also when one was cancelled or skipped. always(), not
+  # !cancelled(): a skipped check counts as passed, so this job must run and fail when the shards did not finish.
   e2e:
     needs: e2e-shard
     if: always()
