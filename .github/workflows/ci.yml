@@ -31,11 +31,22 @@ jobs:
       # The agent scripts' offline tests (fake gh, no GitHub calls), so a broken script fails the PR (#64).
       - run: npm run test:scripts
 
-  e2e:
+  # The e2e suite in two shards, each a job of its own with its own Compose services and database (#167). The runner
+  # gives Playwright one worker, where a local run has several, so the suite's time here is the sum of its tests: with
+  # the axe check on every test (#44) it outgrew one job's step limit. Playwright splits the shards test by test
+  # (fullyParallel in playwright.config.ts), so they stay even as the suite grows.
+  e2e-shard:
+    name: e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
-    # A normal run takes about 10 minutes, most of it the tests. The job's limit leaves room for a slow package
-    # mirror (#146: the browser's system packages once took 8 minutes), so slowness makes a slow job, not a cancelled
-    # one; the steps that wait on the network or run long have limits of their own, so a hang fails at that step.
+    strategy:
+      # Both shards finish, so one run shows every failing test.
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    # A normal run takes about 10 minutes, half of it setup and half the shard's tests. The job's limit leaves room for
+    # a slow package mirror (#146: the browser's system packages once took 8 minutes), so slowness makes a slow job,
+    # not a cancelled one; the steps that wait on the network or run long have limits of their own, so a hang fails at
+    # that step.
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
@@ -65,19 +76,33 @@ jobs:
         timeout-minutes: 15
       - run: docker compose up --wait --wait-timeout 180
       - run: bash scripts/dev/check-services.sh
-      # The API against the Compose Postgres (#19); the tests create and migrate their own database.
-      - run: npm run test:integration
+      # The API against the Compose Postgres (#19); the tests create and migrate their own database. In the first
+      # shard only, which has the services up already; it is not split.
+      - if: matrix.shard == 1
+        run: npm run test:integration
         timeout-minutes: 5
       - if: failure()
         run: docker compose ps -a && docker compose logs --no-color
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         timeout-minutes: 15
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: apps/web/playwright-report
           retention-days: 7
+
+  # One check for the whole suite, named as the job was before the split, so a rule or a habit that waits for `e2e`
+  # keeps working: it fails unless every shard passed, also when one was cancelled or skipped.
+  e2e:
+    needs: e2e-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: test "$SHARDS" = success
+        env:
+          SHARDS: ${{ needs.e2e-shard.result }}
 
   image:
     runs-on: ubuntu-latest
