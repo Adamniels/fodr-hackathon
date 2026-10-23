@@ -265,14 +265,16 @@ function ProductPreview({ produkter }: { produkter: Produkt[] }) {
   const total = poster.reduce((s, p) => s + monthlyCost(p.produkt, p.gramPerDag), 0)
 
   return (
-    <div className="produktbild" aria-label={t('landing.preview.label')}>
-      <div className="produktbild-ram">
+    // One picture to a screen reader (#44): a drawing of the app, whose sidebar and steps would otherwise be heard as a
+    // second app inside the landing page. Its content is hidden as well, as not every browser leaves an image's out.
+    <div className="produktbild" role="img" aria-label={t('landing.preview.label')}>
+      <div className="produktbild-ram" aria-hidden>
         <i />
         <i />
         <i />
         <span>{t('landing.preview.address')}</span>
       </div>
-      <div className="produktbild-yta">
+      <div className="produktbild-yta" aria-hidden>
         <aside className="pb-sido">
           <b>{t('landing.preview.horses')}</b>
           <span className="pb-hast vald">

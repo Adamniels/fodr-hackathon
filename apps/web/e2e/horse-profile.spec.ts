@@ -188,6 +188,21 @@ test('an ingredient to avoid says whether it is chosen, not by colour alone (#44
   await expect(avoid.getByRole('button', { name: 'melass', pressed: false })).toBeVisible()
 })
 
+test('the horse type says which one is chosen, not by colour alone (#44)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  const type = page.getByRole('group', { name: 'Typ' })
+  await expect(type.getByRole('button', { name: /^Normalfödd/, pressed: true })).toBeVisible()
+  await type.getByRole('button', { name: /^Lättfödd/ }).click()
+  await expect(type.getByRole('button', { name: /^Lättfödd/, pressed: true })).toBeVisible()
+  await expect(type.getByRole('button', { name: /^Normalfödd/, pressed: false })).toBeVisible()
+})
+
+test('the horse list reads each horse by its name, without its drawn initial (#44)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await expect(horseList(page).getByRole('button', { name: 'Sixten', exact: true })).toBeVisible()
+  await expect(horseList(page).getByRole('button', { name: 'Pysen', exact: true })).toBeVisible()
+})
+
 async function expectUnknownFeed(page: Page, label: string, name: string) {
   const unknown = 'Finns inte i produktdatabasen och räknas inte med'
   const feed = page.getByRole('combobox', { name: label, exact: true })

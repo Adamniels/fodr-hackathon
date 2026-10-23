@@ -635,6 +635,7 @@
 }
 .bocklista li::before {
   content: '✓';
+  content: '✓' / '';
   position: absolute;
   left: 0;
   top: 1px;
@@ -671,6 +672,7 @@
 }
 .fragelista summary::after {
   content: '+';
+  content: '+' / '';
   font-size: 26px;
   font-weight: 400;
   color: var(--text-3);
@@ -1540,8 +1542,11 @@ label.kryss {
 .ruta.varn {
   background: var(--varn-bg);
 }
+/* The marks below are drawn, not read out (#44): the text says what they mark. The first content is for browsers
+   without alternative text for generated content, which ignore the second. */
 .ruta.varn::before {
   content: '!';
+  content: '!' / '';
   background: #c77d0a;
 }
 .ruta.fel {
@@ -1550,6 +1555,7 @@ label.kryss {
 }
 .ruta.fel::before {
   content: '!';
+  content: '!' / '';
   background: var(--brist);
 }
 

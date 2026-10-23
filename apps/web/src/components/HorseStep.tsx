@@ -138,6 +138,7 @@ function ProfileForm({
             <button
               key={id}
               className={hast.typ === id ? 'aktiv' : ''}
+              aria-pressed={hast.typ === id}
               onClick={() => set({ typ: id })}
               title={t(`horse.type.${id}.hint`)}
             >

@@ -35,6 +35,15 @@ test('the account dialog keeps focus inside, closes on Escape and gives focus ba
   await expect(page.getByRole('button', { name: 'Logga in', exact: true })).toBeFocused()
 })
 
+test('the product preview on the landing page is one picture to a screen reader, not a second app (#44)', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await expect(page.getByRole('img', { name: 'Exempel på en foderplan i Fodr' })).toBeVisible()
+  // Its sidebar and steps are drawn, not real: no landmark or list of the app's is heard on the landing page.
+  await expect(page.getByRole('complementary')).toHaveCount(0)
+})
+
 test('the landing page offers getting started, which opens sign-up, and login (#29)', async ({ page }) => {
   await page.goto('/')
   await expect(landingHeading(page)).toBeVisible()

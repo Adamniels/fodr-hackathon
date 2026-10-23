@@ -320,14 +320,18 @@ function Workspace({
                 aria-current={h.id === hast?.id ? 'page' : undefined}
                 onClick={() => selectHorse(h.id)}
               >
-                <span className="hast-ikon">{initial(h)}</span>
+                <span className="hast-ikon" aria-hidden>
+                  {initial(h)}
+                </span>
                 <span className="hastrad-namn">{h.namn || t('app.sidebar.unnamedHorse')}</span>
               </button>
             </li>
           ))}
           <li>
             <button className="hastrad ny" disabled={adding} onClick={() => void addHorse()}>
-              <span className="hast-ikon">+</span>
+              <span className="hast-ikon" aria-hidden>
+                +
+              </span>
               <span className="hastrad-namn">{t('app.sidebar.addHorse')}</span>
             </button>
           </li>
@@ -335,7 +339,9 @@ function Workspace({
 
         <div className="sidofalt-fot">
           <div className="konto">
-            <span className="konto-ikon">{user.name.slice(0, 1).toUpperCase()}</span>
+            <span className="konto-ikon" aria-hidden>
+              {user.name.slice(0, 1).toUpperCase()}
+            </span>
             <span className="konto-text">
               <b>{user.name}</b>
               <span>{user.email}</span>
