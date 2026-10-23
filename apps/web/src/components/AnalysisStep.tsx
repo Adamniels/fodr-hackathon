@@ -13,6 +13,7 @@ import { analysisUnit, nutrientLabel, formatDate, formatNumber } from '../format
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
 import { SaveStatus } from './SaveStatus'
+import { TableScroll } from './TableScroll'
 
 interface Props {
   hast: Hastprofil
@@ -188,49 +189,51 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
               {t('units.perKgDm', { unit: 'g' })}
             </label>
           </div>
-          <table className="tabell">
-            <thead>
-              <tr>
-                <th>{t('analysis.columns.nutrient')}</th>
-                <th>{t('analysis.columns.value')}</th>
-                <th>{t('analysis.columns.unit')}</th>
-                <th>{t('analysis.columns.source')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SHOWN_NUTRIENTS.map((k) => {
-                const v = analys.perKgTs[k]
-                const omr = omrakningar.find((o) => o.amne === k)
-                const schablon = hittaSchablon(analys.typ, k)
-                return (
-                  <tr key={k} className={v === undefined ? 'saknas' : ''}>
-                    <td>{nutrientLabel(k)}</td>
-                    <td>
-                      <DecimalInput
-                        className="smal"
-                        value={v}
-                        placeholder="–"
-                        label={nutrientLabel(k)}
-                        error={errorFor(`perKgTs.${k}`)}
-                        onChange={(n) => andra(k, n)}
-                        onClear={() => andra(k, undefined)}
-                      />
-                    </td>
-                    <td className="enhet">{analysisUnit(k)}</td>
-                    <td className="kalla">
-                      {v !== undefined
-                        ? omr
-                          ? domainText(omr.message)
-                          : t('analysis.source.report')
-                        : schablon
-                          ? t('analysis.source.estimated', { source: domainText(schablon.kalla) })
-                          : t('analysis.source.missing')}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <TableScroll label={t('analysis.tableLabel')}>
+            <table className="tabell">
+              <thead>
+                <tr>
+                  <th>{t('analysis.columns.nutrient')}</th>
+                  <th>{t('analysis.columns.value')}</th>
+                  <th>{t('analysis.columns.unit')}</th>
+                  <th>{t('analysis.columns.source')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {SHOWN_NUTRIENTS.map((k) => {
+                  const v = analys.perKgTs[k]
+                  const omr = omrakningar.find((o) => o.amne === k)
+                  const schablon = hittaSchablon(analys.typ, k)
+                  return (
+                    <tr key={k} className={v === undefined ? 'saknas' : ''}>
+                      <td>{nutrientLabel(k)}</td>
+                      <td>
+                        <DecimalInput
+                          className="smal"
+                          value={v}
+                          placeholder="–"
+                          label={nutrientLabel(k)}
+                          error={errorFor(`perKgTs.${k}`)}
+                          onChange={(n) => andra(k, n)}
+                          onClear={() => andra(k, undefined)}
+                        />
+                      </td>
+                      <td className="enhet">{analysisUnit(k)}</td>
+                      <td className="kalla">
+                        {v !== undefined
+                          ? omr
+                            ? domainText(omr.message)
+                            : t('analysis.source.report')
+                          : schablon
+                            ? t('analysis.source.estimated', { source: domainText(schablon.kalla) })
+                            : t('analysis.source.missing')}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </TableScroll>
           {anmarkningar.length > 0 && (
             <div className="ruta varn">
               <strong>{t('analysis.toCheck')}</strong>

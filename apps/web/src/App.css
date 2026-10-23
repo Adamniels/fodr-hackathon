@@ -1008,6 +1008,10 @@
   overflow-x: auto;
   scrollbar-width: none;
 }
+/* Inside the tab: the bar scrolls sideways, which clips a ring drawn outside it (#44). */
+.flikar button:focus-visible {
+  outline-offset: -3px;
+}
 .flikar::-webkit-scrollbar {
   display: none;
 }
@@ -1313,14 +1317,18 @@ input.smal {
   min-height: 40px;
   padding: 6px 10px;
 }
-.falt input:focus,
+/* As specific as the fields' own rule above, or its grey border wins; a solid green ring of 2 px with the glow outside
+   it, at least 3:1 against the page (#44). */
+.falt input:not([type='checkbox']):not([type='range']):focus,
 .falt select:focus,
 .falt textarea:focus,
 .foderrad input:focus,
 input.smal:focus {
   outline: none;
   border-color: var(--gron);
-  box-shadow: 0 0 0 3px var(--fokus);
+  box-shadow:
+    0 0 0 1px var(--gron),
+    0 0 0 4px var(--fokus);
 }
 .falt textarea {
   resize: vertical;
@@ -1648,11 +1656,8 @@ label.kryss {
 .tabell.lista td {
   padding: 12px 8px;
 }
-@media (max-width: 700px) {
-  .tabell {
-    display: block;
-    overflow-x: auto;
-  }
+.tabell-rulla {
+  overflow-x: auto;
 }
 
 .chip {

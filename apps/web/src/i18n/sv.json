@@ -132,6 +132,7 @@
     "sampled": "Prov {{date}}",
     "dryMatter": "Torrsubstans",
     "ash": "Aska",
+    "tableLabel": "Värden i analysen",
     "columns": {
       "nutrient": "Ämne",
       "value": "Värde",

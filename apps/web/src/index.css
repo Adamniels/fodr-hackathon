@@ -59,7 +59,9 @@
 }
 html {
   scroll-behavior: smooth;
+  /* A field that gets focus is scrolled clear of the sticky step tabs above and the sticky save bar below (#44). */
   scroll-padding-top: 80px;
+  scroll-padding-bottom: 96px;
 }
 body {
   margin: 0;

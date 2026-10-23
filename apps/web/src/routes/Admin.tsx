@@ -13,6 +13,7 @@ import { formatDate, formatMoney, formatNumber, localIsoDate, nutrientLabel } fr
 import { AcceptTerms } from './Legal'
 import { PageNotFound } from './RouteError'
 import { useSession } from './session'
+import { TableScroll } from '../components/TableScroll'
 
 const CATEGORIES = ProductDataSchema.shape.kategori.options
 const DECLARATIONS = ProductDataSchema.shape.naringsdata.options
@@ -66,40 +67,42 @@ export function AdminProductList() {
           {t('admin.loadFailed')}
         </p>
       ) : (
-        <table className="tabell lista">
-          <caption className="liten">
-            {t('admin.count', { count: shown.length, formatted: formatNumber(shown.length) })}
-          </caption>
-          <thead>
-            <tr>
-              <th>{t('admin.columns.name')}</th>
-              <th>{t('admin.columns.store')}</th>
-              <th>{t('admin.columns.category')}</th>
-              <th className="hoger">{t('admin.columns.price')}</th>
-              <th>{t('admin.columns.selectable')}</th>
-              <th>{t('admin.columns.checked')}</th>
-              <th>{t('admin.columns.verified')}</th>
-              <th>{t('admin.columns.status')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((p) => (
-              <tr key={p.id}>
-                <td>
-                  <Link to={p.id}>{p.data.namn}</Link>
-                  {p.editedByAdmin && <span className="liten"> {t('admin.editedByAdmin')}</span>}
-                </td>
-                <td>{p.data.butik}</td>
-                <td>{t(`admin.category.${p.data.kategori}`)}</td>
-                <td className="hoger">{formatMoney(p.data.prisKr)}</td>
-                <td>{t(p.data.iUrval ? 'admin.yes' : 'admin.no')}</td>
-                <td>{t(p.data.deklarationKontrollerad ? 'admin.yes' : 'admin.no')}</td>
-                <td>{p.verifiedOn ? formatDate(p.verifiedOn) : ''}</td>
-                <td>{t(p.retired ? 'admin.retired' : 'admin.active')}</td>
+        <TableScroll label={t('admin.title')}>
+          <table className="tabell lista">
+            <caption className="liten">
+              {t('admin.count', { count: shown.length, formatted: formatNumber(shown.length) })}
+            </caption>
+            <thead>
+              <tr>
+                <th>{t('admin.columns.name')}</th>
+                <th>{t('admin.columns.store')}</th>
+                <th>{t('admin.columns.category')}</th>
+                <th className="hoger">{t('admin.columns.price')}</th>
+                <th>{t('admin.columns.selectable')}</th>
+                <th>{t('admin.columns.checked')}</th>
+                <th>{t('admin.columns.verified')}</th>
+                <th>{t('admin.columns.status')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {shown.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <Link to={p.id}>{p.data.namn}</Link>
+                    {p.editedByAdmin && <span className="liten"> {t('admin.editedByAdmin')}</span>}
+                  </td>
+                  <td>{p.data.butik}</td>
+                  <td>{t(`admin.category.${p.data.kategori}`)}</td>
+                  <td className="hoger">{formatMoney(p.data.prisKr)}</td>
+                  <td>{t(p.data.iUrval ? 'admin.yes' : 'admin.no')}</td>
+                  <td>{t(p.data.deklarationKontrollerad ? 'admin.yes' : 'admin.no')}</td>
+                  <td>{p.verifiedOn ? formatDate(p.verifiedOn) : ''}</td>
+                  <td>{t(p.retired ? 'admin.retired' : 'admin.active')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       )}
       <ErrorTrackingCheck />
     </>
