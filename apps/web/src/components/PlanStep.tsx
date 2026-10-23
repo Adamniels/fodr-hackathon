@@ -101,7 +101,7 @@ export function PlanStep({
     <div className="plan">
       <header className="plan-topp">
         <h2>{t('plan.title', { name: hast.namn })}</h2>
-        <div className="kostnadsrad" aria-label={t('plan.costLabel')}>
+        <div className="kostnadsrad" role="group" aria-label={t('plan.costLabel')}>
           <span className="kostnadsrad-belopp">{t('units.perMonth', { amount: formatMoney(totalNy) })}</span>
           {plan.nulageKostnadPerManad > 0 && (
             <span className={`kostnadsrad-jmf ${besparing >= 0 ? 'ok' : ''}`}>

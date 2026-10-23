@@ -35,6 +35,23 @@ test('the account dialog keeps focus inside, closes on Escape and gives focus ba
   await expect(page.getByRole('button', { name: 'Logga in', exact: true })).toBeFocused()
 })
 
+test('the account dialog closes on a click on the backdrop, not when selecting text ends there (#44)', async ({
+  page,
+}) => {
+  const dialog = await openDialog(page)
+  const box = await dialog.getByLabel('E-post').boundingBox()
+  if (!box) throw new Error('no e-mail field')
+  await dialog.getByLabel('E-post').fill('anna@example.se')
+  // Pressed in the field, let go over the backdrop in the corner.
+  await page.mouse.move(box.x + 10, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(5, 5)
+  await page.mouse.up()
+  await expect(dialog.getByLabel('E-post')).toHaveValue('anna@example.se')
+  await page.mouse.click(5, 5)
+  await expect(dialog).toHaveCount(0)
+})
+
 test('the product preview on the landing page is one picture to a screen reader, not a second app (#44)', async ({
   page,
 }) => {

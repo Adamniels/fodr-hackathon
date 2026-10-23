@@ -76,6 +76,7 @@ export function Landing({ login = false }: { login?: boolean }) {
  */
 function AccountDialog({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null)
+  const pressedBackdrop = useRef(false)
   useEffect(() => {
     const element = dialog.current
     if (!element) return
@@ -96,9 +97,13 @@ function AccountDialog({ label, onClose, children }: { label: string; onClose: (
         e.preventDefault()
         onClose()
       }}
-      // The box inside fills the dialog, so a click on the dialog itself is a click on the backdrop.
+      // The box inside fills the dialog, so a click on the dialog itself is a click on the backdrop. Only one that also
+      // started there: selecting text in a field and letting go outside it is not.
+      onMouseDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget && pressedBackdrop.current) onClose()
       }}
     >
       <div className="dialog">{children}</div>

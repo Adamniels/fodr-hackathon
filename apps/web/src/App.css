@@ -740,10 +740,14 @@
 .dialog-ram {
   width: calc(100% - 32px);
   max-width: 440px;
+  /* Scrolls when taller than the screen (a phone on its side, 400 % zoom), as the page behind it is inert (#44). */
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
   padding: 0;
   border: none;
+  border-radius: 16px;
   background: transparent;
-  overflow: visible;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
   animation: tona 0.2s ease;
 }
 .dialog-ram::backdrop {
@@ -755,7 +759,6 @@
   color: var(--text);
   border-radius: 16px;
   padding: 32px 28px 24px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
 }
 .dialog-stang {
   position: absolute;
@@ -1326,7 +1329,8 @@ input.smal {
 .falt textarea:focus,
 .foderrad input:focus,
 input.smal:focus {
-  outline: none;
+  /* Transparent, but drawn in forced colours (Windows high contrast), where the box shadow is not. */
+  outline: 2px solid transparent;
   border-color: var(--gron);
   box-shadow:
     0 0 0 1px var(--gron),
@@ -1664,6 +1668,10 @@ label.kryss {
 }
 .tabell-rulla {
   overflow-x: auto;
+}
+/* Inside what it marks: the box clips a ring drawn outside, as on a link in the first column. */
+.tabell-rulla :focus-visible {
+  outline-offset: -3px;
 }
 
 .chip {

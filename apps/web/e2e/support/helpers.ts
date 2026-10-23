@@ -88,7 +88,7 @@ export const test = base.extend<{ ai: AiMock; accessible: null }, { seedDatabase
   accessible: [
     async ({ page }, provide, testInfo) => {
       await provide(null)
-      if (testInfo.status === testInfo.expectedStatus && page.url() !== 'about:blank') {
+      if (testInfo.status === 'passed' && page.url() !== 'about:blank') {
         await expectAccessible(page, 'final page')
       }
     },

@@ -203,6 +203,13 @@ test('the horse list reads each horse by its name, without its drawn initial (#4
   await expect(horseList(page).getByRole('button', { name: 'Pysen', exact: true })).toBeVisible()
 })
 
+test('the transition sensitivity is one group of choices, named by its question (#44)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  const choices = page.getByRole('radiogroup', { name: /^Känslighet för foderbyten: hur reagerar Sixten/ })
+  await expect(choices.getByRole('radio', { name: /^Känslig/, checked: true })).toBeVisible()
+  await expect(page.getByRole('group', { name: /^Känslighet för foderbyten/ })).toHaveCount(0)
+})
+
 async function expectUnknownFeed(page: Page, label: string, name: string) {
   const unknown = 'Finns inte i produktdatabasen och räknas inte med'
   const feed = page.getByRole('combobox', { name: label, exact: true })

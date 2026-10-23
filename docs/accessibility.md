@@ -42,6 +42,9 @@ axe is ever wrong about an element, the exclusion goes next to it, with the reas
 |---|---|
 | The account dialog keeps focus in it, closes on Escape and gives focus back | `landing-and-account.spec.ts` |
 | The phone menu keeps focus while open, closes on Escape and gives focus back | `small-screen.spec.ts` |
+| The closed phone menu is out of reach of the keyboard; Escape in a dialog opened from it closes the dialog only | `small-screen.spec.ts` |
+| The account dialog scrolls at 400 % zoom (320×256), and closes on a backdrop click but not when a selection ends there | `small-screen.spec.ts`, `landing-and-account.spec.ts` |
+| A single choice is one radiogroup named by its question; the plan's cost line is a named group | `horse-profile.spec.ts`, `analysis-and-plan.spec.ts` |
 | Toggle buttons say whether they are pressed ("Typ", "Undvik ingredienser") | `horse-profile.spec.ts` |
 | An unknown product is said in text and read with its field | `horse-profile.spec.ts`, `admin-products.spec.ts` |
 | A warning in the plan is said in words, not by colour alone | `analysis-and-plan.spec.ts` |
@@ -95,6 +98,20 @@ covered every core flow:
 - The "Typ" buttons didn't say which was chosen. Horse buttons were read with their drawn initial ("S Sixten"). Warning
   marks were read as "!".
 
+Found by the fresh review in #44, and fixed:
+- **The closed phone menu.** It stayed in the tab order while off the screen, so focus disappeared. It is now inert
+  while closed.
+- **Escape in a dialog opened from the menu.** It closed the menu too. It now closes the dialog only.
+- **The account dialog at 400 % zoom.** At 320×256 it couldn't scroll, so sign-up was out of reach (1.4.10). It now
+  scrolls itself.
+- **A selection ending on the backdrop.** Selecting text in a field and letting go over the backdrop closed the dialog.
+  Only a press that starts on the backdrop closes it now.
+- **Field focus in forced colours.** It showed nothing in Windows high contrast. Fields now have a transparent outline,
+  which forced colours draws.
+- **Links in tables.** Their focus ring was clipped. It is now drawn inside the link.
+- **Doubled groups.** The transition sensitivity sat in two nested labelled groups, now one radiogroup. The plan's cost
+  line had a label on an element that can't carry one.
+
 Found earlier in #44 by the automated checks:
 - **Text contrast.** `--text-3` was 3.2 to 3.6:1, and the loading pulse faded text to 3.8:1.
 - **Focus ring.** It was 25 % alpha, about 1.4:1.
@@ -110,7 +127,8 @@ Found earlier in #44 by the automated checks:
 **Checked and found right:**
 - Focus never escapes an open dialog, and every focus stop draws an indicator. Most are a 3 px green outline, and fields
   get a green border and ring.
-- Focus order follows the visual order on every page.
+- **Focus order follows the visual order,** with one deliberate exception. The account dialog's close button is drawn
+  in the top corner but comes last, so focus starts in the form.
 - No page scrolls sideways at 320 or 640 px.
 - The account dialog starts in its form.
 
@@ -125,3 +143,12 @@ VoiceOver on macOS and iOS is #165, with its checklist.
   through the account dialog's switch. That path works, so it isn't a WCAG failure, but it is a detour for a returning
   user.
 - **Native date inputs** look and behave as each browser draws them. Their accessibility is the browser's.
+- **Table scroll boxes.** Every table's box is focusable and a named region, also on a wide screen where it doesn't
+  scroll. That makes one extra tab stop per table, the price of reaching it by keyboard on a phone without measuring
+  overflow.
+- **Coverage at a scroll position.** axe checks each page from its top, so a target covered only at some scroll position
+  (under a sticky bar) is not caught by it. The journal's date input was flagged that way while the test was mid
+  scroll. The manual pass checks that focus is never covered, and `scroll-padding` keeps a focused field clear of the
+  sticky bars.
+- **The radio buttons for the transition sensitivity** move with Tab, not with the arrow keys of the ARIA radio
+  pattern. This was there before #44.

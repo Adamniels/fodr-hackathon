@@ -425,7 +425,6 @@
     },
     "sensitivity": {
       "label": "Känslighet för foderbyten: hur reagerar {{name}} när fodret ändras?",
-      "groupLabel": "Känslighet för foderbyten",
       "hintChosen": "Styr hur många dagar planen tar på sig att byta till det nya fodret.",
       "hintDefault": "Förvalt utifrån hälsan ovan. Ändra om du vet bättre.",
       "hintDefaultSensitive": "Förvalt utifrån hälsan ovan (fång, EMS, PPID, magsår eller PSSM ger alltid ett långsamt byte). Ändra om du vet bättre.",

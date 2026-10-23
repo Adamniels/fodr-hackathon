@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import '../App.css'
@@ -23,6 +23,11 @@ import { AcceptTerms } from './Legal'
 
 /** Where the sidebar becomes a drawer opened by the menu button (App.css, the workspace's 900 px breakpoint). */
 const MENU_AS_DRAWER = '(max-width: 900px)'
+const subscribeToDrawer = (onChange: () => void) => {
+  const drawer = window.matchMedia(MENU_AS_DRAWER)
+  drawer.addEventListener('change', onChange)
+  return () => drawer.removeEventListener('change', onChange)
+}
 
 const STEP_OF_PATH = Object.fromEntries(STEPS.map((s) => [STEP_PATH[s], s])) as Record<string, Step>
 
@@ -120,12 +125,15 @@ function Workspace({
   // On a phone the menu is a drawer over the page (#44): focus moves into it, the page under it is inert, Escape closes
   // it, and focus goes back to the menu button. A window widened past the drawer's width closes it, so the page is
   // never left inert beside an always shown sidebar.
+  // Closed, the drawer is off the screen: inert, so neither Tab nor a screen reader goes into it.
+  const menuIsDrawer = useSyncExternalStore(subscribeToDrawer, () => window.matchMedia(MENU_AS_DRAWER).matches)
   useEffect(() => {
     if (!menyOppen) return
     closeMenuButton.current?.focus()
     const drawer = window.matchMedia(MENU_AS_DRAWER)
+    // Escape in a dialog opened from the menu (deleting the account) closes that dialog only.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenyOppen(false)
+      if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) setMenyOppen(false)
     }
     const onResize = () => {
       if (!drawer.matches) setMenyOppen(false)
@@ -299,7 +307,7 @@ function Workspace({
 
   return (
     <div className={`arbetsyta ${menyOppen ? 'meny-oppen' : ''}`}>
-      <aside className="sidofalt" aria-label={t('app.sidebar.label')}>
+      <aside className="sidofalt" aria-label={t('app.sidebar.label')} inert={menuIsDrawer && !menyOppen}>
         <div className="sidofalt-topp">
           <Wordmark />
           <button

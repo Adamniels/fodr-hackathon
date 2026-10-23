@@ -434,8 +434,12 @@ function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; on
       : t('horse.sensitivity.hintDefault')
   return (
     <>
-      <Field label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })} hint={hint} group>
-        <div className="segment" role="radiogroup" aria-label={t('horse.sensitivity.groupLabel')}>
+      <Field
+        label={t('horse.sensitivity.label', { name: hast.namn || t('common.theHorse') })}
+        hint={hint}
+        group="radiogroup"
+      >
+        <div className="segment">
           {KANSLIGHETSORDNING.map((k) => {
             const takt = BYTESTAKT[k]
             return (
@@ -684,7 +688,8 @@ function Field({
 }: {
   label: string
   hint?: string
-  group?: boolean
+  /** Buttons rather than one field: a group named by the label, or a radiogroup when they are a single choice. */
+  group?: boolean | 'radiogroup'
   children: React.ReactNode
 }) {
   const labelId = useId()
@@ -700,7 +705,7 @@ function Field({
     </>
   )
   return group ? (
-    <div className="falt" role="group" aria-labelledby={labelId}>
+    <div className="falt" role={group === 'radiogroup' ? 'radiogroup' : 'group'} aria-labelledby={labelId}>
       {content}
     </div>
   ) : (

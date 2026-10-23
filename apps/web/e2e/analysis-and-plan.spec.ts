@@ -566,13 +566,15 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
   })
 })
 
-// #106: the grid was sized in milliseconds, so the 25-hour day in October added an empty week.
 test('a warning in the plan is said in words, not by its colour alone (#44)', async ({ page }) => {
   await loadExamplePlan(page)
+  // The cost line is a named group, its label not dropped on a plain element (#44).
+  await expect(page.getByRole('group', { name: 'Kostnad per månad' })).toContainText('kr/mån')
   // Sixten's plan has two warnings (his pellets and the wet haylage) and two notes, which carry no such word.
   await expect(page.getByText('Varning', { exact: true })).toHaveCount(2)
 })
 
+// #106: the grid was sized in milliseconds, so the 25-hour day in October added an empty week.
 test('a period across a clock change shows only its own weeks (#106)', async ({ page }) => {
   await loadExamplePlan(page)
   const kalender = page.getByRole('group', { name: 'Kalender för foderbytet' })

@@ -57,6 +57,48 @@ test('the menu on a small phone keeps focus while open, and Escape closes it (#4
   await expect(menuButton).toBeFocused()
 })
 
+test('the closed menu on a small phone is out of reach of the keyboard (#44)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await page.getByRole('button', { name: 'Visa hästar och meny' }).focus()
+  // Drawn off the screen while closed: Tab back from the menu button or from the top never lands in it.
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press('Shift+Tab')
+    expect(
+      await page.evaluate(() => document.activeElement?.closest('aside') != null),
+      `Shift+Tab ${String(i + 1)}`,
+    ).toBe(false)
+  }
+})
+
+test('Escape in a dialog opened from the menu closes the dialog only (#44)', async ({ page }) => {
+  // No sliding, so a menu that closed is off the screen at once rather than on its way out.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await createAccountWithHorses(page)
+  await page.getByRole('button', { name: 'Visa hästar och meny' }).click()
+  const menu = page.getByRole('complementary', { name: 'Hästar' })
+  await menu.getByRole('button', { name: 'Radera mitt konto' }).click()
+  await expect(page.getByRole('dialog', { name: 'Radera ditt konto' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Radera ditt konto' })).toHaveCount(0)
+  await expect(menu).toBeInViewport()
+  await expect(menu.getByRole('button', { name: 'Radera mitt konto' })).toBeFocused()
+})
+
+test('the account dialog scrolls at 400 % zoom, so all of it can be reached (#44)', async ({ page }) => {
+  // A 1280 x 1024 screen at 400 %.
+  await page.setViewportSize({ width: 320, height: 256 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Kom igång' }).first().click()
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  // Taller than the screen here, so it must scroll itself: the page behind it is inert and does not.
+  const reachable = await dialog.evaluate(
+    (d) => d.scrollHeight <= d.clientHeight || ['auto', 'scroll'].includes(getComputedStyle(d).overflowY),
+  )
+  expect(reachable, 'the dialog fits or scrolls').toBe(true)
+  await dialog.getByRole('button', { name: 'Har du redan ett konto? Logga in' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Logga in på Fodr' })).toBeVisible()
+})
+
 test('the analysis and the plan fit a small phone', async ({ page }) => {
   await createAccountWithHorses(page)
   await showExamplePlan(page)
