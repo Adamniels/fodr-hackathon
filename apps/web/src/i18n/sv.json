@@ -300,6 +300,7 @@
       "tooLittle": "för lite {{nutrients}}",
       "todayAnd": ", och "
     },
+    "warning": "Varning",
     "health": {
       "title": "Anpassat efter {{name}}s hälsa",
       "excluded": "{{n}} produkter valdes bort"
@@ -433,7 +434,10 @@
       "searchPlaceholder": "Sök produkt, t.ex. Krafft",
       "unknownProduct": "Finns inte i produktdatabasen och räknas inte med",
       "gramsPerDay": "g/dag",
+      "feedLabel": "Foder {{n}}",
+      "gramsLabel": "Gram per dag, foder {{n}}",
       "remove": "Ta bort",
+      "removeLabel": "Ta bort foder {{n}}",
       "add": "+ Lägg till foder"
     },
     "ai": {

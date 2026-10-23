@@ -1,6 +1,7 @@
 // CF1 in the browser against the real API (#23): sign up with verification, log in and out, a wrong password,
 // magic link and password reset, with the mail read from Mailpit.
 import { createAccount, expect, horseList, logIn, PASSWORD, seededAccount, seedWithCli, test } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 import { E2E_WEB, linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
 
 const landingHeading = (page: import('@playwright/test').Page) =>
@@ -13,6 +14,26 @@ async function openDialog(page: import('@playwright/test').Page) {
   await expect(dialog).toBeVisible()
   return dialog
 }
+
+test('the account dialog keeps focus inside, closes on Escape and gives focus back (#44)', async ({ page }) => {
+  const dialog = await openDialog(page)
+  await expectAccessible(page, 'account dialog')
+  // The page behind is out of reach: Tab moves among the dialog's controls (or out to the browser), never behind it.
+  const focusIsBehind = () =>
+    page.evaluate(() => {
+      const focused = document.activeElement
+      return focused !== null && focused !== document.body && focused.closest('[role="dialog"], dialog') === null
+    })
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press('Tab')
+    expect(await focusIsBehind(), `focus after ${String(i + 1)} Tab`).toBe(false)
+  }
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('button', { name: 'Logga in', exact: true })).toBeFocused()
+})
 
 test('the landing page offers getting started, which opens sign-up, and login (#29)', async ({ page }) => {
   await page.goto('/')
@@ -36,12 +57,14 @@ test('sign up, verify the email from the inbox, and land signed in', async ({ pa
   const dialog = await openDialog(page)
   await dialog.getByRole('button', { name: 'Ny här? Skapa konto' }).click()
   await dialog.getByLabel('Namn').fill('Ny Användare')
+  await expectAccessible(page, 'sign-up form')
   await dialog.getByLabel('E-post').fill(email)
   await dialog.getByLabel('Lösenord').fill(PASSWORD)
   await dialog.getByLabel('Jag godkänner villkoren och har läst integritetspolicyn').check()
   await dialog.getByRole('button', { name: 'Skapa konto', exact: true }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
   await expect(dialog.getByText(email)).toBeVisible()
+  await expectAccessible(page, 'mail sent')
 
   await page.goto(linkIn(await waitForMail(email, /Bekräfta/)))
   await expect(horseList(page).getByText('Ny Användare')).toBeVisible()
@@ -62,6 +85,7 @@ test('a password login before verification asks to verify, and can send the link
   await logIn(page, email)
   const loginDialog = page.getByRole('dialog', { name: 'Logga in' })
   await expect(loginDialog.getByText('Bekräfta din e-postadress först')).toBeVisible()
+  await expectAccessible(page, 'login before verification')
   await expect(horseList(page)).toHaveCount(0)
   const before = await mailCount(email)
   await loginDialog.getByRole('button', { name: 'Skicka länken igen' }).click()
@@ -86,6 +110,7 @@ test('the password is checked: a wrong one is refused', async ({ page }) => {
 
   await logIn(page, account.email, 'fel-losenord-999')
   await expect(page.getByText('Fel e-postadress eller lösenord.')).toBeVisible()
+  await expectAccessible(page, 'wrong password')
   await expect(horseList(page)).toHaveCount(0)
 })
 
@@ -114,6 +139,7 @@ test('reset a forgotten password from the inbox: the new one works, the old one 
 
   const dialog = await openDialog(page)
   await dialog.getByRole('button', { name: 'Glömt lösenordet?' }).click()
+  await expectAccessible(page, 'forgotten password form')
   await dialog.getByLabel('E-post').fill(account.email)
   await dialog.getByRole('button', { name: 'Skicka länk för nytt lösenord' }).click()
   await expect(dialog.getByRole('heading', { name: 'Kolla din e-post' })).toBeVisible()
@@ -121,6 +147,7 @@ test('reset a forgotten password from the inbox: the new one works, the old one 
   const resetLink = linkIn(await waitForMail(account.email, /lösenord/))
   await page.goto(resetLink)
   await expect(page.getByRole('heading', { name: 'Välj ett nytt lösenord' })).toBeVisible()
+  await expectAccessible(page, 'new password page')
   await page.getByLabel('Nytt lösenord').fill('nytt-losenord-456')
   await page.getByRole('button', { name: 'Spara lösenordet' }).click()
   await expect(page.getByText('Lösenordet är bytt.')).toBeVisible()

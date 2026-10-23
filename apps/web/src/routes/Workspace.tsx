@@ -358,9 +358,10 @@ function Workspace({
           <span className="mobilrad-titel">{hast?.namn || t('common.brand')}</span>
         </header>
 
-        <div className="omslag" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} role="img" aria-label="" />
+        <div className="omslag" style={{ backgroundImage: 'url(/bilder/nosar.webp)' }} aria-hidden />
 
-        <div className="sidinnehall">
+        {/* The horse's page: its name, facts, steps and the step itself; the sidebar and the phone's bar are around it. */}
+        <main className="sidinnehall">
           <div className="sid-ikon" aria-hidden>
             {initial(hast)}
           </div>
@@ -429,11 +430,13 @@ function Workspace({
             ))}
           </nav>
 
-          <main className="stegyta">
+          <div className="stegyta">
             <Outlet context={context} />
-          </main>
-          <p className="fotnot">{t('app.footnote')}</p>
-        </div>
+          </div>
+          <footer>
+            <p className="fotnot">{t('app.footnote')}</p>
+          </footer>
+        </main>
       </div>
     </div>
   )

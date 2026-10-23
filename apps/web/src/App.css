@@ -734,21 +734,23 @@
 }
 
 /* Inloggningsdialog */
-.dialog-bakgrund {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(23, 31, 21, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 16px;
+/* The native dialog only frames and centres the box; the box has the padding, so a click on the frame is the backdrop. */
+.dialog-ram {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
   animation: tona 0.2s ease;
+}
+.dialog-ram::backdrop {
+  background: rgba(23, 31, 21, 0.45);
 }
 .dialog {
   position: relative;
-  width: 100%;
-  max-width: 440px;
   background: var(--panel);
+  color: var(--text);
   border-radius: 16px;
   padding: 32px 28px 24px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
@@ -1410,6 +1412,11 @@ label.kryss {
   border-color: var(--varn);
   background: var(--varn-bg);
 }
+.foderrad-okand {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: var(--varn);
+}
 .enhet {
   color: var(--text-2);
   font-size: 15px;
@@ -1755,9 +1762,10 @@ label.kryss {
   color: var(--text-2);
   animation: puls-text 1.2s ease-in-out infinite;
 }
+/* Between two greys that both keep 4.5:1, so the text is readable at every moment of the pulse (#44). */
 @keyframes puls-text {
   50% {
-    opacity: 0.4;
+    color: var(--text-3);
   }
 }
 .miljo {
@@ -1790,6 +1798,14 @@ label.kryss {
 }
 .kvalitet-rad.varning {
   background: var(--varn-bg);
+}
+/* The level in words, so a warning is not told by its background alone (#44). */
+.kvalitet-niva {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--varn);
 }
 
 .chips {

@@ -16,6 +16,7 @@ import {
   typeKeyByKey,
   uploadExample,
 } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 import { reportWith } from './support/reports'
 import type { Locator, Page } from '@playwright/test'
 
@@ -135,6 +136,7 @@ test('a corrected value is saved, an invalid one is not (CF4)', async ({ page })
   })
   await page.getByLabel('Torrsubstans').fill('150')
   await expect(page.getByText('Ändringen sparas när alla värden är giltiga.')).toBeVisible()
+  await expectAccessible(page, 'invalid analysis value')
   // Longer than the autosave pause, so a save that was going to be sent has been.
   await page.waitForTimeout(1000)
   expect(saves.filter((body) => body.includes('"tsProcent":150'))).toEqual([])
@@ -235,6 +237,7 @@ test('the plan explanation is written for the saved plan once, and read back aft
   const [first, second] = e2eExplanationText('Sixten').split('\n')
   await expect(paragraphs.filter({ hasText: first })).toBeVisible()
   await expect(paragraphs.filter({ hasText: second })).toBeVisible()
+  await expectAccessible(page, 'plan with its explanation')
   // Dev mode runs effects twice (React StrictMode), so the first visit may ask twice; the API writes it once.
   const asked = sent.length
   expect(asked).toBeGreaterThan(0)
@@ -258,6 +261,7 @@ async function planWithExplanations(page: Page, steps: Parameters<typeof explana
 test('explanation failure keeps the plan usable', async ({ page }) => {
   await planWithExplanations(page, ['upstream'])
   await expect(page.getByText('Förklaringen kunde inte hämtas')).toBeVisible()
+  await expectAccessible(page, 'failed explanation')
   await expect(page.getByRole('row').filter({ hasText: 'Salt 1,5 kg' })).toBeVisible()
 })
 
@@ -488,6 +492,7 @@ test('analysis values: text is refused, a cleared value is missing (C2)', async 
   await page.getByRole('textbox', { name: 'Kalcium (Ca)' }).blur()
   await expect(page.getByRole('textbox', { name: 'Kalcium (Ca)' })).toHaveValue('')
   await expect(page.getByRole('row', { name: /^Kalcium/ })).toContainText('Saknas, uppskattas')
+  await expectAccessible(page, 'missing analysis value')
 })
 
 test('the plan explanation gets grams as the page shows them (#103)', async ({ page }) => {
@@ -562,12 +567,19 @@ test.describe('the transition calendar across horses and plans (#109)', () => {
 })
 
 // #106: the grid was sized in milliseconds, so the 25-hour day in October added an empty week.
+test('a warning in the plan is said in words, not by its colour alone (#44)', async ({ page }) => {
+  await loadExamplePlan(page)
+  // Sixten's plan has two warnings (his pellets and the wet haylage) and two notes, which carry no such word.
+  await expect(page.getByText('Varning', { exact: true })).toHaveCount(2)
+})
+
 test('a period across a clock change shows only its own weeks (#106)', async ({ page }) => {
   await loadExamplePlan(page)
   const kalender = page.getByRole('group', { name: 'Kalender för foderbytet' })
   // Sixten is sensitive: 14 days, Monday 19 October to Sunday 1 November, across the change on 25 October.
   await page.getByLabel('Första dagen').fill('2026-10-19')
   await expect(kalender.getByText('1', { exact: true })).toBeVisible()
+  await expectAccessible(page, 'transition calendar')
   await expect(kalender.getByText('8', { exact: true })).toHaveCount(0)
   // Across the change to summer time (28 March 2027): Monday 22 March to Sunday 4 April.
   await page.getByLabel('Första dagen').fill('2027-03-22')
@@ -599,6 +611,7 @@ test('infeasible plan is not shown as no supplements (C3)', async ({ page }) => 
   const reason = 'Grovfodret ger redan mer selen än SLU:s maxgräns'
   await expect(page.getByText(reason)).toBeVisible()
   await expect(page.getByText('Inga tillskott behövs utöver grovfodret.')).toBeHidden()
+  await expectAccessible(page, 'infeasible plan')
   // The explanation reads the reason among the warnings, so it cannot say that no supplements are needed.
   await expect.poll(() => sent.length).toBeGreaterThan(0)
   expect(sent[0].request.varningar.some((v) => v.startsWith(reason))).toBe(true)

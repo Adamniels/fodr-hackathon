@@ -10,6 +10,7 @@ import {
   showExamplePlan,
   test,
 } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 
 /** The account's journal in a browser context of its own, with nothing of the first one's: what the server holds. */
 async function journalElsewhere(browser: Browser, email: string): Promise<Page> {
@@ -63,6 +64,7 @@ test('a journal entry needs a date and a weight within the limits (#107)', async
   // A weight that is not a number says so, instead of being dropped silently.
   await page.getByLabel('Vikt (kg)').fill('abc')
   await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeVisible()
+  await expectAccessible(page, 'journal entry with errors')
   await page.getByLabel('Vikt (kg)').fill('545,5')
   await expect(page.getByText('Skriv ett tal, till exempel 12,5.')).toBeHidden()
   await expect(add).toBeEnabled()

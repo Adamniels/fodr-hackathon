@@ -1,4 +1,5 @@
 import { createAccountWithHorses, expect, grantAdmin, test } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 
 // Product administration (CF9, #36). Each test works on a product of its own, so the catalogue the other tests plan
 // with never changes under them.
@@ -35,8 +36,9 @@ test('an admin creates a product, edits it, finds it in a feed list, and retires
   // The catalogue the workspace plans with has it: typed into a feed row, it is a known product.
   await page.goto('/horses')
   await page.getByRole('button', { name: '+ Lägg till foder' }).click()
-  await page.getByPlaceholder('Sök produkt, t.ex. Krafft').last().fill(name)
-  await expect(page.getByRole('combobox', { name: UNKNOWN })).toHaveCount(0)
+  const feed = page.getByRole('combobox', { name: /^Foder \d+$/ }).last()
+  await feed.fill(name)
+  await expect(page.getByText(UNKNOWN)).toHaveCount(0)
 
   // Retired, it leaves the catalogue: the same row is now an unknown feed.
   await page.goto('/admin/products')
@@ -45,7 +47,8 @@ test('an admin creates a product, edits it, finds it in a feed list, and retires
   await page.getByRole('button', { name: 'Ta ur sortimentet' }).click()
   await expect(page.getByText('Utgått')).toBeVisible()
   await page.goto('/horses')
-  await expect(page.getByRole('combobox', { name: UNKNOWN })).toHaveValue(name)
+  await expect(feed).toHaveValue(name)
+  await expect(feed).toHaveAccessibleDescription(UNKNOWN)
 })
 
 test('the form stops a product without a name, or with half a dose, and says why', async ({ page }) => {
@@ -59,6 +62,7 @@ test('the form stops a product without a name, or with half a dose, and says why
   await expect(page.getByRole('alert').filter({ hasText: 'Rätta de markerade fälten.' })).toBeVisible()
   await expect(page.getByText('Ange ett namn.')).toBeVisible()
   await expect(page.getByText('Ange både minsta och högsta dos.')).toBeVisible()
+  await expectAccessible(page, 'product form with errors')
   // Nothing was sent: still the new product's form.
   await expect(page).toHaveURL(/\/admin\/products\/new$/)
 })

@@ -8,6 +8,7 @@ import {
   showExamplePlan,
   test,
 } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 import { uniqueEmail } from './support/mailpit'
 
 // The beta terms, the privacy notice and the plan disclaimer (#42).
@@ -60,6 +61,7 @@ test('an account on older terms accepts the new ones before the workspace', asyn
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Nya villkor' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 1, name: 'Sixten' })).toHaveCount(0)
+  await expectAccessible(page, 'new terms screen')
   await page.getByLabel(CONSENT).check()
   await page.getByRole('button', { name: 'Godkänn och fortsätt' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Sixten' })).toBeVisible()

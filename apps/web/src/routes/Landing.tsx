@@ -1,6 +1,6 @@
 // The public landing page at /, and at /login with the account dialog open. A signed-in visitor to /login goes on to
 // the page a logged-out visitor asked for (WorkspaceGate), or /horses; the mailed links land there signed in.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LandingPage } from '../components/LandingPage'
@@ -58,25 +58,50 @@ export function Landing({ login = false }: { login?: boolean }) {
         onLogIn={() => void navigate('/login', { state: { fromLanding: true } })}
       />
       {login && (
-        <div className="dialog-bakgrund" onClick={close}>
-          <div
-            className="dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('login.dialogLabel')}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className="dialog-stang" aria-label={t('common.close')} onClick={close}>
-              ×
-            </button>
-            <Login
-              onLoggedIn={() => void session.refresh()}
-              initialMode={state?.mode}
-              linkFailed={params.has('error')}
-            />
-          </div>
-        </div>
+        <AccountDialog label={t('login.dialogLabel')} onClose={close}>
+          <Login onLoggedIn={() => void session.refresh()} initialMode={state?.mode} linkFailed={params.has('error')} />
+          {/* After the form, so focus starts in it; shown in the corner. */}
+          <button className="dialog-stang" aria-label={t('common.close')} onClick={close}>
+            ×
+          </button>
+        </AccountDialog>
       )}
     </>
+  )
+}
+
+/**
+ * The account dialog as a native modal (#44): focus stays in it, the page behind is inert, and Escape or a click on
+ * the backdrop closes it like its close button. Closing gives focus back to what had it when the dialog opened.
+ */
+function AccountDialog({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const element = dialog.current
+    if (!element) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    element.showModal()
+    return () => {
+      element.close()
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [])
+  return (
+    <dialog
+      ref={dialog}
+      className="dialog-ram"
+      aria-label={label}
+      onCancel={(e) => {
+        // The route closes it, so history keeps track (close).
+        e.preventDefault()
+        onClose()
+      }}
+      // The box inside fills the dialog, so a click on the dialog itself is a click on the backdrop.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="dialog">{children}</div>
+    </dialog>
   )
 }

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { strFromU8, unzipSync } from 'fflate'
 import { createAccountWithHorses, expect, goToStep, logIn, test, uploadExample } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 
 // My data (CF8): what a user can take with them.
 
@@ -40,6 +41,7 @@ test('deleting my account takes everything, says so, and the account is gone (CF
   await dialog.getByLabel('Lösenord').fill('fel-losenord-123')
   await dialog.getByRole('button', { name: 'Radera kontot' }).click()
   await expect(dialog.getByRole('alert')).toHaveText('Fel lösenord.')
+  await expectAccessible(page, 'delete account dialog with an error')
 
   await dialog.getByLabel('Lösenord').fill(account.password)
   await dialog.getByRole('button', { name: 'Radera kontot' }).click()

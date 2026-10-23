@@ -298,6 +298,7 @@ export function PlanStep({
                 const text = domainText(k.text)
                 return (
                   <div key={text} className={`kvalitet-rad ${k.niva}`}>
+                    {k.niva === 'varning' && <span className="kvalitet-niva">{t('plan.warning')}</span>}
                     <span>{text}</span>
                     <span className="liten">{domainText(k.kalla)}</span>
                   </div>
@@ -325,6 +326,7 @@ export function PlanStep({
             <div className="kvalitet">
               {plan.grovfoderkvalitet.map((f) => (
                 <div key={f.rubrik.code} className={`kvalitet-rad ${f.niva}`}>
+                  {f.niva === 'varning' && <span className="kvalitet-niva">{t('plan.warning')}</span>}
                   <strong>{domainText(f.rubrik)}</strong>
                   <span>{domainText(f.text)}</span>
                   <span className="liten">{domainText(f.kalla)}</span>

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { FOLJDFRAGA, profil, profilMedFoljdfraga } from './fixtures/ai'
 import { SIXTEN } from './fixtures/horses'
 import {
@@ -12,6 +13,7 @@ import {
   test,
   typeKeyByKey,
 } from './support/helpers'
+import { expectAccessible } from './support/accessibility'
 import { problem } from './support/mock-ai'
 
 // Horse profiles on the API (CF2, #25): every test uses a real account, and the profile is saved on the server.
@@ -59,6 +61,7 @@ test('deleting a horse asks first, and cancelling keeps it', async ({ page }) =>
   await page.getByRole('button', { name: 'Ta bort häst' }).click()
   const dialog = page.getByRole('dialog', { name: 'Ta bort Sixten?' })
   await expect(dialog).toBeVisible()
+  await expectAccessible(page, 'delete horse dialog')
   await dialog.getByRole('button', { name: 'Avbryt' }).click()
   await expect(dialog).toBeHidden()
   await expect(horseList(page).getByRole('button', { name: 'Sixten' })).toBeVisible()
@@ -162,10 +165,8 @@ test('a feed the AI names that is not in the catalogue is shown as unknown, and 
   await page.getByLabel('Om hästen och vad den äter i dag').fill('Får 2 hg hemmablandning om dagen')
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
-  // The field's title, its accessible name here, says the feed is not in the product database.
-  await expect(page.getByRole('combobox', { name: 'Finns inte i produktdatabasen och räknas inte med' })).toHaveValue(
-    'Hemmablandning',
-  )
+  // Said in text next to the field, and read out with it, not by colour alone (#44).
+  await expectUnknownFeed(page, 'Foder 1', 'Hemmablandning')
   await showExamplePlan(page)
   await expect(page.getByText('"Hemmablandning" finns inte i produktdatabasen och räknas inte med.')).toBeVisible()
 })
@@ -175,10 +176,25 @@ test('a saved feed whose product the catalogue does not have is shown as unknown
   await createAccountWithHorses(page, [
     { ...SIXTEN, nuvarandeFoder: [{ produktId: 'borttagen-123', namn: 'Gammalt foder', gramPerDag: 100 }] },
   ])
-  await expect(page.getByRole('combobox', { name: 'Finns inte i produktdatabasen och räknas inte med' })).toHaveValue(
-    'Gammalt foder',
-  )
+  await expectUnknownFeed(page, 'Foder 1', 'Gammalt foder')
 })
+
+test('an ingredient to avoid says whether it is chosen, not by colour alone (#44)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  const avoid = page.getByRole('group', { name: 'Undvik ingredienser' })
+  await expect(avoid.getByRole('button', { name: 'soja', pressed: false })).toBeVisible()
+  await avoid.getByRole('button', { name: 'soja' }).click()
+  await expect(avoid.getByRole('button', { name: 'soja', pressed: true })).toBeVisible()
+  await expect(avoid.getByRole('button', { name: 'melass', pressed: false })).toBeVisible()
+})
+
+async function expectUnknownFeed(page: Page, label: string, name: string) {
+  const unknown = 'Finns inte i produktdatabasen och räknas inte med'
+  const feed = page.getByRole('combobox', { name: label, exact: true })
+  await expect(feed).toHaveValue(name)
+  await expect(feed).toHaveAccessibleDescription(unknown)
+  await expect(page.getByText(unknown)).toBeVisible()
+}
 
 test('AI follow-up question round trip', async ({ page, ai }) => {
   ai.respondWith('profile', profilMedFoljdfraga)
@@ -187,6 +203,7 @@ test('AI follow-up question round trip', async ({ page, ai }) => {
   await page.getByRole('button', { name: 'Fyll i med AI' }).click()
 
   await page.getByLabel(FOLJDFRAGA).fill('Cirka 600 g')
+  await expectAccessible(page, 'AI follow-up question')
   await page.getByRole('button', { name: 'Svara' }).click()
 
   await expect.poll(() => ai.calls('profile').length).toBe(2)
@@ -202,6 +219,7 @@ test('AI error is shown and the form stays usable', async ({ page, ai }) => {
 
   // The API's problem code, in the catalogue's words (#30).
   await expect(page.getByText('AI-tjänsten svarar inte just nu. Försök igen om en stund.')).toBeVisible()
+  await expectAccessible(page, 'AI error')
   await page.getByLabel('Namn').fill('Sixten Andra')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sixten Andra')
 })
@@ -260,6 +278,7 @@ test('a weight outside the range is shown at the field and stops the plan (C1)',
   await expect(page.getByText('Ange ett värde mellan 50 och 1 200.')).toBeVisible()
   await goToStep(page, 'Foderplan')
   await expect(page.getByRole('heading', { name: 'Foderplanen kan inte räknas fram' })).toBeVisible()
+  await expectAccessible(page, 'plan that cannot be computed')
   await expect(page.getByText('Vikt (kg): Ange ett värde mellan 50 och 1 200.')).toBeVisible()
   await page.getByRole('button', { name: 'Till hästen' }).click()
   await expect(page.getByLabel('Vikt (kg)')).toHaveValue('0')

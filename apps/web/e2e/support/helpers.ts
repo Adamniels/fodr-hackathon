@@ -15,6 +15,7 @@ import { eq } from 'drizzle-orm'
 import { createDatabase, type Database } from '../../../api/src/db'
 import { users } from '../../../api/src/db/schema'
 import { seedDemo } from '../../../api/src/seed'
+import { expectAccessible } from './accessibility'
 import { reportWith } from './reports'
 import { E2E_WEB, linkIn, uniqueEmail, waitForMail } from './mailpit'
 import { mockAi, type AiMock } from './mock-ai'
@@ -56,7 +57,7 @@ const SEED_TODAY = FIXED_NOW.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sto
 /** The client IP header of the running test, for a browser context the test opens itself. */
 export const clientIpHeaders = (): Record<string, string> => ({ 'x-e2e-client-ip': clientIpFor(base.info()) })
 
-export const test = base.extend<{ ai: AiMock }, { seedDatabase: null }>({
+export const test = base.extend<{ ai: AiMock; accessible: null }, { seedDatabase: null }>({
   // Closes the seed's database pool, if a test of this worker opened it, when the worker ends.
   seedDatabase: [
     // eslint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this destructuring
@@ -79,6 +80,17 @@ export const test = base.extend<{ ai: AiMock }, { seedDatabase: null }>({
       const ai = await mockAi(context)
       await use(ai)
       expect(ai.unexpected(), 'unmocked /api requests').toEqual([])
+    },
+    { auto: true },
+  ],
+  // Every test's final page passes axe (#44). Only after a pass: a failed test's page shows its own failure, and a
+  // test that ends on a blank page has nothing of Fodr's to check.
+  accessible: [
+    async ({ page }, provide, testInfo) => {
+      await provide(null)
+      if (testInfo.status === testInfo.expectedStatus && page.url() !== 'about:blank') {
+        await expectAccessible(page, 'final page')
+      }
     },
     { auto: true },
   ],
