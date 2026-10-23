@@ -25,11 +25,12 @@ const reportFailure = (error: AuthError, res: Response, path: string) => {
 // Where the mailed links land: signed in, /login sends on to /horses; with ?error, /login says the link failed.
 const LINK_TARGET = '/login'
 
-async function post(path: string, body: unknown): Promise<void> {
+async function post(path: string, body: unknown, keepalive = false): Promise<void> {
   const res = await fetch(`/api/auth${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    keepalive,
   })
   if (res.ok) return
   if (res.status === 429) throw new AuthError('RATE_LIMITED')
@@ -44,7 +45,8 @@ export const authClient = {
   signUp: (name: string, email: string, password: string) =>
     post('/sign-up/email', { name, email, password, callbackURL: LINK_TARGET, termsVersion: TERMS_VERSION }),
   signIn: (email: string, password: string) => post('/sign-in/email', { email, password }),
-  signOut: () => post('/sign-out', {}),
+  // keepalive: once sent, the sign-out completes even if the page is left at once (#169).
+  signOut: () => post('/sign-out', {}, true),
   sendMagicLink: (email: string) => post('/sign-in/magic-link', { email, callbackURL: LINK_TARGET }),
   sendVerification: (email: string) => post('/send-verification-email', { email, callbackURL: LINK_TARGET }),
   requestPasswordReset: (email: string) => post('/request-password-reset', { email, redirectTo: '/reset-password' }),

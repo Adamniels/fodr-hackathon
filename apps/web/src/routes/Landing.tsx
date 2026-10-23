@@ -51,6 +51,14 @@ export function Landing({ login = false }: { login?: boolean }) {
           {t('account.delete.done')}
         </p>
       )}
+      {session.user && session.logOutFailed && (
+        <div className="ruta fel konto-raderat" role="alert">
+          {t('account.logOutFailed.text')}{' '}
+          <button className="lank" onClick={() => void session.logOut()}>
+            {t('account.logOutFailed.retry')}
+          </button>
+        </div>
+      )}
       <LandingPage
         produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}

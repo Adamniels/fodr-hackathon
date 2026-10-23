@@ -108,6 +108,35 @@ describe('AutoSaver', () => {
     expect(flushed).toBe(true)
   })
 
+  it('flush with keepalive sends waiting edits so they outlive the page (#169)', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Sixten'))
+    let flushed = false
+    void saver.flush(true).then(() => (flushed = true))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => [c.horse.namn, c.keepalive])).toEqual([['Sixten', true]])
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(flushed).toBe(true)
+  })
+
+  it('after a flush with keepalive, an edit waiting behind a save on its way goes with keepalive too (#169)', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Six'))
+    await vi.advanceTimersByTimeAsync(600)
+    saver.schedule(horse('a', 'Sixten'))
+    void saver.flush(true)
+    await vi.advanceTimersByTimeAsync(0)
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => [c.horse.namn, c.keepalive])).toEqual([
+      ['Six', false],
+      ['Sixten', true],
+    ])
+  })
+
   it('sends waiting edits with keepalive when the page is left, and reports how it went', async () => {
     const { calls, save } = heldSaves()
     const saver = new AutoSaver(save, onState, 600)

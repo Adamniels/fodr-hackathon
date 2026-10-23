@@ -1,6 +1,7 @@
 // The root route: reads the session from the API (TanStack Query, ADR 0012) and provides it to every route. Nothing
 // renders until the first answer, so a signed-in user is never sent to /login on a reload.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Outlet } from 'react-router'
 import { authClient, fetchMe, ME_QUERY_KEY as ME } from '../auth-client'
 import { ANALYSES_QUERY_KEY } from '../analyses'
@@ -14,6 +15,7 @@ export function Root() {
   const queryClient = useQueryClient()
   // A failed read (the API down) counts as signed out.
   const me = useQuery({ queryKey: ME, queryFn: fetchMe, retry: false, staleTime: Infinity })
+  const [logOutFailed, setLogOutFailed] = useState(false)
   if (me.isPending) return null
 
   const signedIn = me.data ?? null
@@ -35,12 +37,16 @@ export function Root() {
       if (!signedIn) return
       try {
         await authClient.signOut()
+        setLogOutFailed(false)
         forget()
       } catch {
-        // Sign-out failed (offline, server error): read the session again rather than pretend it ended.
+        // Sign-out failed (offline, server error): read the session again rather than pretend it ended, and say so, as
+        // the page may already look logged out (#169).
+        setLogOutFailed(true)
         await queryClient.invalidateQueries({ queryKey: ME })
       }
     },
+    logOutFailed,
     accountDeleted: forget,
   }
   return (

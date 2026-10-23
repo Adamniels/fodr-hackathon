@@ -377,11 +377,21 @@ function Workspace({
           <button
             className="sidofalt-lank"
             onClick={() => {
-              // Edits still waiting are sent before the session ends, which would refuse them.
-              const saved = horses.flush()
+              // Edits still waiting are sent before the session ends, which would refuse them, with keepalive so they
+              // outlive the page (#169).
+              const saved = Promise.all([horses.flush(true), analyses.flush(true)])
+              // Should the page be left before they settle, the session ends at once instead: on a shared computer an
+              // ended session matters more than a save it may overtake. Once only, also for a page that comes back from
+              // the back/forward cache.
+              let signedOut: Promise<void> | undefined
+              const signOut = () => {
+                window.removeEventListener('pagehide', signOut)
+                signedOut ??= logOut()
+              }
+              window.addEventListener('pagehide', signOut)
               // The landing page renders first, so the gate never sees the session end and sends to /login.
               void navigate('/', { flushSync: true })
-              void saved.then(logOut)
+              void saved.then(signOut)
             }}
           >
             {t('app.sidebar.logOut')}
