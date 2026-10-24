@@ -166,7 +166,8 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
           )}
         </label>
       )}
-      {!analyses.loadFailed && !manual && (
+      {/* Not while a report is being read: it would replace the analysis typed in meanwhile. */}
+      {!analyses.loadFailed && !manual && !laddar && (
         <p className="liten">
           {t('analysis.manual.offer')} {manualButton}
         </p>
@@ -178,8 +179,11 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
       )}
       {manual && !analyses.loadFailed && (
         <ManualAnalysisForm
-          roughage={hast.grovfoder.typ}
-          onCancel={() => setManual(false)}
+          grovfodertyp={hast.grovfoder.typ}
+          onCancel={() => {
+            setManual(false)
+            heading.current?.focus()
+          }}
           onSave={async (entered) => {
             await analyses.enter(entered)
             setManual(false)

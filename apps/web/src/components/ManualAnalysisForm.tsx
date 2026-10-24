@@ -1,19 +1,18 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ANALYSIS_LAB_MAX } from '@fodr/contracts/analyses'
 import { validateAnalysis } from '@fodr/domain/validation'
 import type { Grovfoderanalys, Grovfodertyp } from '@fodr/domain/types'
+import { ApiError } from '../api-v1'
 import { parseDecimal } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
 
 const TYPES: Grovfodertyp[] = ['hosilage', 'ho']
 
-/** The longest lab name the contract accepts (GrovfoderanalysSchema). */
-const LAB_MAX = 200
-
 interface Props {
   /** The roughage the horse eats, which the form starts from. */
-  roughage: Grovfodertyp
+  grovfodertyp: Grovfodertyp
   /** Stores the analysis; rejects when the server does not. */
   onSave: (analys: Grovfoderanalys) => Promise<void>
   onCancel: () => void
@@ -25,23 +24,24 @@ interface Props {
  * table takes the nutrients once it is stored, so every value has one place to be typed and checked. Nothing typed
  * there is missing, never 0.
  */
-export function ManualAnalysisForm({ roughage, onSave, onCancel }: Props) {
+export function ManualAnalysisForm({ grovfodertyp, onSave, onCancel }: Props) {
   const { t } = useTranslation()
   const titleId = useId()
   const typeName = useId()
-  const firstType = useRef<HTMLInputElement>(null)
+  const choice = useRef<HTMLInputElement>(null)
   const dryMatter = useRef<HTMLInputElement>(null)
-  const [typ, setTyp] = useState(roughage)
+  const [typ, setTyp] = useState(grovfodertyp)
   const [tsProcent, setTsProcent] = useState<number | undefined>()
   const [labb, setLabb] = useState('')
   const [provdatum, setProvdatum] = useState('')
   // Whether saving was tried: a dry matter not given is said only then, not while the form is still being filled in.
   const [tried, setTried] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failure, setFailure] = useState<'failed' | 'horseGone'>()
 
-  // Opened from a link that goes away, so focus starts on the form's first field.
-  useEffect(() => firstType.current?.focus(), [])
+  // Opened from a link that goes away, so focus starts on the form's first field, at the checked choice as the arrow
+  // keys and Tab would.
+  useEffect(() => choice.current?.focus(), [])
 
   const analys: Grovfoderanalys | undefined =
     tsProcent === undefined
@@ -59,7 +59,7 @@ export function ManualAnalysisForm({ roughage, onSave, onCancel }: Props) {
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setTried(true)
-    setFailed(false)
+    setFailure(undefined)
     // Text that is no number keeps the last number the field reported (DecimalInput): Enter in it saves nothing.
     const typed = dryMatter.current?.value.trim() ?? ''
     if (!analys || refused || (typed !== '' && parseDecimal(typed) === undefined)) {
@@ -70,8 +70,9 @@ export function ManualAnalysisForm({ roughage, onSave, onCancel }: Props) {
     try {
       // On success the step shows the stored analysis, and this form goes away.
       await onSave(analys)
-    } catch {
-      setFailed(true)
+    } catch (e) {
+      // A horse deleted on another device: trying again cannot help.
+      setFailure(e instanceof ApiError && e.code === 'horse.not_found' ? 'horseGone' : 'failed')
       setSaving(false)
     }
   }
@@ -83,10 +84,10 @@ export function ManualAnalysisForm({ roughage, onSave, onCancel }: Props) {
       <fieldset className="falt">
         <legend className="falt-label">{t('analysis.manual.roughage')}</legend>
         <div className="segment">
-          {TYPES.map((k, i) => (
+          {TYPES.map((k) => (
             <label key={k}>
               <input
-                ref={i === 0 ? firstType : undefined}
+                ref={k === typ ? choice : undefined}
                 type="radio"
                 name={typeName}
                 checked={typ === k}
@@ -110,16 +111,16 @@ export function ManualAnalysisForm({ roughage, onSave, onCancel }: Props) {
         </label>
         <label className="falt">
           <span className="falt-label">{t('analysis.manual.lab')}</span>
-          <input value={labb} maxLength={LAB_MAX} onChange={(e) => setLabb(e.target.value)} />
+          <input value={labb} maxLength={ANALYSIS_LAB_MAX} onChange={(e) => setLabb(e.target.value)} />
         </label>
         <label className="falt">
           <span className="falt-label">{t('analysis.manual.sampled')}</span>
           <input type="date" value={provdatum} onChange={(e) => setProvdatum(e.target.value)} />
         </label>
       </div>
-      {failed && (
+      {failure && (
         <div className="ruta fel" role="alert">
-          {t('analysis.manual.failed')}
+          {t(`analysis.manual.${failure}`)}
         </div>
       )}
       <div className="atgardsrad">

@@ -183,7 +183,8 @@
       "sampled": "Provdatum (valfritt)",
       "save": "Spara och fyll i värden",
       "cancel": "Avbryt",
-      "failed": "Analysen kunde inte sparas. Försök igen."
+      "failed": "Analysen kunde inte sparas. Försök igen.",
+      "horseGone": "Hästen finns inte längre, så analysen kunde inte sparas."
     },
     "upload": {
       "unsupportedType": "Välj en PDF eller en bild (PNG, JPEG eller WebP).",

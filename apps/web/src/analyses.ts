@@ -221,16 +221,22 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
   const store = (analysis: Analysis) => {
     if (horseId !== undefined && !closed.current) queryClient.setQueryData(analysisKey(userId, horseId), analysis)
   }
+  // A new analysis (an upload, values typed in) replaces what a read still on its way would bring, the horse's earlier
+  // analysis or none, so that read is cancelled first (#145 review).
+  const replace = async (analysis: Analysis) => {
+    if (horseId !== undefined) await queryClient.cancelQueries({ queryKey: analysisKey(userId, horseId) })
+    store(analysis)
+  }
 
   return {
     current,
     loadFailed: query.isError,
     reload: () => void query.refetch(),
     upload: async (file) => {
-      if (horseId !== undefined) store(known(await guard(analysesApi.upload(horseId, file))))
+      if (horseId !== undefined) await replace(known(await guard(analysesApi.upload(horseId, file))))
     },
     enter: async (analys) => {
-      if (horseId !== undefined) store(known(await guard(analysesApi.create(horseId, analys))))
+      if (horseId !== undefined) await replace(known(await guard(analysesApi.create(horseId, analys))))
     },
     correct: (analys, omrakningar) => {
       const analysis = query.data
