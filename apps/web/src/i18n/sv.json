@@ -172,6 +172,19 @@
     },
     "toCheck": "Att kontrollera:",
     "toPlan": "Räkna fram foderplan →",
+    "manual": {
+      "offer": "Går rapporten inte att läsa, eller har du den på papper?",
+      "open": "Fyll i värdena själv",
+      "title": "Fyll i analysen själv",
+      "intro": "Ange grovfodret och torrsubstansen från din analys. Näringsvärdena fyller du sedan i tabellen; det du lämnar tomt räknas som saknat, aldrig som noll.",
+      "roughage": "Grovfoder",
+      "dryMatter": "Torrsubstans (%)",
+      "lab": "Labb (valfritt)",
+      "sampled": "Provdatum (valfritt)",
+      "save": "Spara och fyll i värden",
+      "cancel": "Avbryt",
+      "failed": "Analysen kunde inte sparas. Försök igen."
+    },
     "upload": {
       "unsupportedType": "Välj en PDF eller en bild (PNG, JPEG eller WebP).",
       "tooLarge": "Filen är för stor. En PDF får vara högst {{pdf}} MB och en bild högst {{image}} MB.",

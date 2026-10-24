@@ -258,6 +258,14 @@ describe('an analysis without a file', () => {
     expect(ai.calls).toEqual([])
   })
 
+  it('keeps the lab and sample date typed in with it (#145)', async () => {
+    const { browser, base } = await userWithHorse()
+    const typedIn = { typ: 'hosilage', tsProcent: 55, perKgTs: {}, labb: 'Eget labb', provdatum: '2026-09-14' }
+    const res = await browser.post(base, { analys: typedIn })
+    expect(res.status).toBe(201)
+    expect(await current(browser, base)).toMatchObject({ analys: typedIn, hasFile: false })
+  })
+
   it("is 404 for another user's horse", async () => {
     const { base } = await userWithHorse()
     const { browser: other } = await signedInUser(app, nextIp())

@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useState, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseDecimal } from '../format'
 
@@ -24,6 +24,7 @@ export function DecimalInput({
   placeholder,
   label,
   needsMinusKey = false,
+  ref,
 }: {
   value: number | undefined
   onChange: (value: number) => void
@@ -34,6 +35,8 @@ export function DecimalInput({
   /** The accessible name, for a field outside a <label> (the analysis table). */
   label?: string
   needsMinusKey?: boolean
+  /** The input, for a form that moves focus to a refused field. */
+  ref?: Ref<HTMLInputElement>
 }) {
   const { t } = useTranslation()
   const messageId = useId()
@@ -61,6 +64,7 @@ export function DecimalInput({
   return (
     <>
       <input
+        ref={ref}
         className={className}
         inputMode={needsMinusKey ? 'text' : 'decimal'}
         value={draft}

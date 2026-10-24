@@ -1,8 +1,9 @@
 // Each horse's current analysis on the API (#26, CF4), read with TanStack Query (ADR 0012) per horse, so switching
 // horse shows that horse's own analysis (audit C4). A report is uploaded to the API, which reads it with the AI and
-// stores it; corrections are saved by an AutoSaver once the typing pauses, and only when the domain accepts every
-// value (an invalid correction stays on the page with its message and is never sent). As with the horses, the cached
-// analyses are dropped when the workspace closes.
+// stores it; values typed in by hand (#145) are stored the same way, without a report. Corrections are saved by an
+// AutoSaver once the typing pauses, and only when the domain accepts every value (an invalid correction stays on the
+// page with its message and is never sent). As with the horses, the cached analyses are dropped when the workspace
+// closes.
 //
 // A correction names the version of the server's copy it was based on (#140, ADR 0017). As for the horses, each
 // analysis's version is kept beside the cache, not read from it: a correction can still be on its way after the
@@ -57,6 +58,8 @@ export interface AnalysisStore {
   reload: () => void
   /** Reads and stores the report; rejects with an ApiError when it cannot. */
   upload: (file: File) => Promise<void>
+  /** Stores values typed in by hand, with no report, as the current analysis (#145); rejects as upload does. */
+  enter: (analys: Grovfoderanalys) => Promise<void>
   correct: (analys: Grovfoderanalys, omrakningar: Omrakning[]) => void
   saveState: AnalysisSaveState | undefined
   retrySave: () => void
@@ -85,6 +88,10 @@ export const analysesApi = {
     form.set('file', file)
     return AnalysisSchema.parse(await (await callApi(base(horseId), { method: 'POST', body: form })).json())
   },
+  create: async (horseId: string, analys: Grovfoderanalys): Promise<Analysis> =>
+    AnalysisSchema.parse(
+      await (await callApi(base(horseId), { method: 'POST', body: JSON.stringify({ analys }) })).json(),
+    ),
   // The correction of the copy read at `version`; keepalive lets the request outlive the page, for the save sent when
   // the page is left.
   updateValues: async (
@@ -221,6 +228,9 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     reload: () => void query.refetch(),
     upload: async (file) => {
       if (horseId !== undefined) store(known(await guard(analysesApi.upload(horseId, file))))
+    },
+    enter: async (analys) => {
+      if (horseId !== undefined) store(known(await guard(analysesApi.create(horseId, analys))))
     },
     correct: (analys, omrakningar) => {
       const analysis = query.data

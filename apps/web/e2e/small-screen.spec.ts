@@ -106,6 +106,9 @@ test('the analysis and the plan fit a small phone', async ({ page }) => {
   await expectReflows(page, 'plan')
   await goToStep(page, 'Analysen')
   await expectReflows(page, 'analysis')
+  await page.getByRole('button', { name: 'Fyll i värdena själv' }).click()
+  await expect(page.getByRole('form', { name: 'Fyll i analysen själv' })).toBeVisible()
+  await expectReflows(page, 'manual analysis form')
 })
 
 test('the journal fits a small phone', async ({ page }) => {
