@@ -9,6 +9,7 @@ import { z } from 'zod'
 import type { Omrakning } from '@fodr/domain/analysis'
 import { NUTRIENT_KEYS, type NutrientKey } from '@fodr/domain/nutrients'
 import type { Grovfoderanalys } from '@fodr/domain/types'
+import { VersionSchema } from './version'
 
 /** The largest report the API accepts, by type (CF4). An image above 5 MB is more than the AI accepts (ADR 0011). */
 export const ANALYSIS_FILE_LIMITS = {
@@ -55,6 +56,8 @@ export const AnalysisSchema = ValuesSchema.extend({
   /** Whether the original report is stored (an example has none). */
   hasFile: z.boolean(),
   createdAt: z.iso.datetime({ offset: true }),
+  /** Raised by every correction; a correction names the one its copy was read at (#140, ADR 0017). */
+  version: VersionSchema,
 })
 
 export const CurrentAnalysisSchema = z.object({ analysis: AnalysisSchema.nullable() })

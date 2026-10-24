@@ -49,8 +49,12 @@ test('a change from another device shows when the window is back in focus', asyn
   const { horses } = (await (await page.request.get('/api/v1/horses')).json()) as {
     horses: ({ id: string } & Record<string, unknown>)[]
   }
-  const { id, ...sixten } = horses[0]
-  expect((await page.request.put(`/api/v1/horses/${id}`, { data: { ...sixten, viktKg: 560 } })).ok()).toBe(true)
+  const { id, version, ...sixten } = horses[0]
+  const res = await page.request.put(`/api/v1/horses/${id}`, {
+    data: { ...sixten, viktKg: 560 },
+    headers: { 'If-Match': `"${String(version)}"` },
+  })
+  expect(res.ok()).toBe(true)
   // The window comes back into view, which is how TanStack Query notices focus.
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange', { bubbles: true })))
   await expect(page.getByText('560 kg', { exact: true })).toBeVisible()

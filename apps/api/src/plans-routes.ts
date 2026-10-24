@@ -3,6 +3,7 @@
 // (ADR 0004), and records the build and catalogue versions; the browser's preview is never trusted. Signed-in users
 // only; data only through the repositories, which take the user (ADR 0010). A saved plan's AI explanation is stored with
 // it (#32, CF6): written once, read back on every later visit, and written again only on request.
+import { withoutVersion } from '@fodr/contracts/horses'
 import { ExplainPlanSchema, SavePlanSchema } from '@fodr/contracts/plans'
 import { skapaPlan } from '@fodr/domain/plan'
 import { validateJournalEntry } from '@fodr/domain/validation'
@@ -80,8 +81,9 @@ export function planRoutes({
       }
     }
     const user = c.get('user')
-    const horse = await horses.get(user, horseId(c))
-    if (!horse) return horseNotFound(c)
+    const stored = await horses.get(user, horseId(c))
+    if (!stored) return horseNotFound(c)
+    const horse = withoutVersion(stored)
     const analysis = await analyses.get(user, horse.id, body.data.analysisId)
     if (!analysis) return problem(c, 404, 'analysis.not_found')
 

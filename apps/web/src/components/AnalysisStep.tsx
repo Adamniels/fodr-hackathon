@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { ANALYSIS_FILE_LIMITS } from '@fodr/contracts/analyses'
@@ -12,6 +12,8 @@ import type { Hastprofil } from '@fodr/domain/types'
 import { analysisUnit, nutrientLabel, formatDate, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
+import { analysisChanges } from '../conflict-fields'
+import { ChangedElsewhere } from './ChangedElsewhere'
 import { SaveStatus } from './SaveStatus'
 import { TableScroll } from './TableScroll'
 
@@ -68,6 +70,8 @@ const SHOWN_NUTRIENTS: NutrientKey[] = [
 
 export function AnalysisStep({ hast, analyses, onNext }: Props) {
   const { t } = useTranslation()
+  // Where focus goes when a choice in the conflict notice takes its buttons away (#140).
+  const heading = useRef<HTMLHeadingElement>(null)
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
   const [filnamn, setFilnamn] = useState<string | null>(null)
@@ -120,7 +124,9 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
 
   return (
     <section className="kort">
-      <h2>{t('analysis.title', { name: hast.namn })}</h2>
+      <h2 ref={heading} tabIndex={-1}>
+        {t('analysis.title', { name: hast.namn })}
+      </h2>
       <p className="ingress">{t('analysis.intro')}</p>
 
       {/* Hidden while the stored analysis could not be read, so an upload never replaces one the page cannot show. */}
@@ -162,6 +168,15 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
       {analys && (
         <>
           <SaveStatus state={analyses.saveState} onRetry={analyses.retrySave} />
+          {analyses.conflict && (
+            <ChangedElsewhere
+              title={t('conflict.analysis')}
+              changes={analysisChanges(analys, analyses.conflict.analys)}
+              onTakeTheirs={analyses.takeTheirs}
+              onKeepMine={analyses.conflict.canKeepMine ? analyses.keepMine : undefined}
+              onChosen={() => heading.current?.focus()}
+            />
+          )}
           <div className="analyshuvud">
             <span>{t(analys.typ === 'hosilage' ? 'roughageTitle.hosilage' : 'roughageTitle.ho')}</span>
             {analys.labb && <span>{analys.labb}</span>}

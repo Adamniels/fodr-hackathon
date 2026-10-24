@@ -71,6 +71,7 @@ All data and files stay in the EU. Locally, Postgres, SeaweedFS (S3) and Mailpit
 | [0014](adr/0014-i18n-message-codes.md) | i18n: message codes and react-i18next |
 | [0015](adr/0015-config-secrets-observability.md) | Configuration, secrets and observability |
 | [0016](adr/0016-swedish-domain-names-english-technical-names.md) | Swedish names for the domain, English names for the software |
+| [0017](adr/0017-optimistic-concurrency-for-record-edits.md) | Optimistic concurrency for record edits |
 
 ## Refactor or rebuild, per area
 

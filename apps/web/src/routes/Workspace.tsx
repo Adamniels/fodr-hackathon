@@ -8,7 +8,9 @@ import { skapaPlan } from '@fodr/domain/plan'
 import { UnsavedProfileError, useApiJournal, type JournalStore } from '../journal'
 import { useApiHorses, type HorseStore } from '../horses'
 import { useApiAnalysis, type AnalysisStore } from '../analyses'
+import { ChangedElsewhere } from '../components/ChangedElsewhere'
 import { SaveStatus } from '../components/SaveStatus'
+import { horseChanges } from '../conflict-fields'
 import { ogonblickAvPlan } from '@fodr/domain/journal'
 import { hittaRas } from '@fodr/domain/breeds'
 import type { User } from '@fodr/contracts/me'
@@ -163,6 +165,8 @@ function Workspace({
   }, [])
   const horseId = horseMatch?.params.horseId
   const hast = horseId === undefined ? undefined : hastar.find((h) => h.id === horseId)
+  // The server's copy, while a save of this horse is refused as based on an older one (#140).
+  const theirs = hast && horses.conflict(hast.id)
   // An account with no horses has only the profile step, at /horses.
   const step: Step = (stepMatch?.params.step && STEP_OF_PATH[stepMatch.params.step]) || 'hast'
 
@@ -434,6 +438,15 @@ function Workspace({
             </p>
           )}
           {hast && <SaveStatus state={horses.saveState(hast.id)} onRetry={() => horses.retrySave(hast.id)} />}
+          {hast && theirs && (
+            <ChangedElsewhere
+              title={t('conflict.horse')}
+              changes={horseChanges(hast, theirs)}
+              onTakeTheirs={() => horses.takeTheirs(hast.id)}
+              onKeepMine={() => horses.keepMine(hast.id)}
+              onChosen={() => title.current?.focus()}
+            />
+          )}
 
           {hast && (
             <dl className="egenskaper">

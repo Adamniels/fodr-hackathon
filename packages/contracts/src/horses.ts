@@ -4,6 +4,7 @@
 // plan with it (validateProfile, owner, #24). The check at the end makes a drift from Hastprofil a compile error.
 import { z } from 'zod'
 import { INGREDIENSER, type Hastprofil } from '@fodr/domain/types'
+import { VersionSchema } from './version'
 
 const number = z.number()
 
@@ -51,11 +52,14 @@ export const HorseProfileSchema = z.object({
     .max(50),
 })
 
-export const HorseSchema = HorseProfileSchema.extend({ id: z.uuid() })
+export const HorseSchema = HorseProfileSchema.extend({ id: z.uuid(), version: VersionSchema })
 export const HorseListSchema = z.object({ horses: z.array(HorseSchema) })
 
 export type HorseProfile = z.infer<typeof HorseProfileSchema>
 export type Horse = z.infer<typeof HorseSchema>
+
+/** The horse as the domain has it: its version is the record's (#140), never an input to a plan. */
+export const withoutVersion = (horse: Horse): Hastprofil => HorseSchema.omit({ version: true }).parse(horse)
 
 // Compile-time only: the schema is exactly the domain's profile without its ID. Strict identity, which also tells a
 // missing optional field apart (mutual assignability would not); Assert fails to compile unless it gets true.

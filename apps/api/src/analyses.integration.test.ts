@@ -292,6 +292,9 @@ describe('an analysis without a file', () => {
   })
 })
 
+// A correction of the analysis as first read (#140): an uploaded analysis starts at version 1.
+const FIRST_VERSION = { 'if-match': '"1"' }
+
 describe('correcting the values', () => {
   async function uploaded() {
     const user = await userWithHorse()
@@ -302,7 +305,11 @@ describe('correcting the values', () => {
   it('saves corrected values, dropping the conversion of a value the owner typed', async () => {
     const { browser, base, analysis, values } = await uploaded()
     const analys = { ...analysis.analys, perKgTs: { ...analysis.analys.perKgTs, smbRp: 99 } }
-    const res = await browser.request(values, { method: 'PUT', body: { analys, omrakningar: [] } })
+    const res = await browser.request(values, {
+      method: 'PUT',
+      headers: FIRST_VERSION,
+      body: { analys, omrakningar: [] },
+    })
     expect(res.status).toBe(200)
     expect(await current(browser, base)).toMatchObject({ id: analysis.id, analys, omrakningar: [] })
   })
@@ -312,6 +319,7 @@ describe('correcting the values', () => {
     const [stored] = analysis.omrakningar as { amne: string; message: { params: Record<string, number> } }[]
     const res = await browser.request(values, {
       method: 'PUT',
+      headers: FIRST_VERSION,
       body: {
         analys: analysis.analys,
         omrakningar: [{ ...stored, message: { code: 'conversion.proteinFromCrude', params: { grams: 999 } } }],
@@ -323,7 +331,11 @@ describe('correcting the values', () => {
   it('moves the sampling date along with a corrected one', async () => {
     const { browser, horseId, analysis, values } = await uploaded()
     const analys = { ...analysis.analys, provdatum: '2026-07-01' }
-    await browser.request(values, { method: 'PUT', body: { analys, omrakningar: analysis.omrakningar } })
+    await browser.request(values, {
+      method: 'PUT',
+      headers: FIRST_VERSION,
+      body: { analys, omrakningar: analysis.omrakningar },
+    })
     const [row] = await rowsOf(horseId)
     expect(row.sampledOn).toBe('2026-07-01')
   })
@@ -332,6 +344,7 @@ describe('correcting the values', () => {
     const { browser, analysis, values } = await uploaded()
     const res = await browser.request(values, {
       method: 'PUT',
+      headers: FIRST_VERSION,
       body: {
         analys: analysis.analys,
         omrakningar: [
@@ -350,6 +363,7 @@ describe('correcting the values', () => {
     const { browser, base, analysis, values } = await uploaded()
     const res = await browser.request(values, {
       method: 'PUT',
+      headers: FIRST_VERSION,
       body: { analys: { ...analysis.analys, ...change }, omrakningar: [] },
     })
     expect(res.status).toBe(400)
@@ -361,6 +375,7 @@ describe('correcting the values', () => {
     const { browser, analysis, values } = await uploaded()
     const res = await browser.request(values, {
       method: 'PUT',
+      headers: FIRST_VERSION,
       body: { analys: { ...analysis.analys, tsProcent: 'fyrtio' }, omrakningar: [] },
     })
     expect(res.status).toBe(400)
@@ -370,14 +385,62 @@ describe('correcting the values', () => {
     const { analysis, values } = await uploaded()
     const { browser: other } = await signedInUser(app, nextIp())
     const body = { analys: analysis.analys, omrakningar: [] }
-    expect((await other.request(values, { method: 'PUT', body })).status).toBe(404)
+    expect((await other.request(values, { method: 'PUT', headers: FIRST_VERSION, body })).status).toBe(404)
 
     const { browser, base: otherHorse } = await userWithHorse()
     const mine = (await (await browser.upload(otherHorse, form(PDF))).json()) as AnalysisBody
     const second = await browser.post('/api/v1/horses', SIXTEN)
     const { id } = (await second.json()) as { id: string }
-    const res = await browser.request(`/api/v1/horses/${id}/analyses/${mine.id}/values`, { method: 'PUT', body })
+    const res = await browser.request(`/api/v1/horses/${id}/analyses/${mine.id}/values`, {
+      method: 'PUT',
+      headers: FIRST_VERSION,
+      body,
+    })
     expect(res.status).toBe(404)
+  })
+})
+
+describe('a correction based on an older copy (#140)', () => {
+  async function uploaded() {
+    const user = await userWithHorse()
+    const analysis = (await (await user.browser.upload(user.base, form(PDF))).json()) as AnalysisBody & {
+      version: number
+    }
+    return { ...user, analysis, values: `${user.base}/${analysis.id}/values` }
+  }
+  const correct = (analys: unknown, version: number | undefined) => ({
+    method: 'PUT',
+    body: { analys, omrakningar: [] },
+    headers: version === undefined ? undefined : { 'if-match': `"${String(version)}"` },
+  })
+
+  it('raises the version with every correction, and refuses one of an older copy with a 412', async () => {
+    const { browser, base, analysis, values } = await uploaded()
+    expect(analysis.version).toBe(1)
+    const first = { ...analysis.analys, tsProcent: 50 }
+    const saved = await browser.request(values, correct(first, 1))
+    expect(saved.status).toBe(200)
+    expect(saved.headers.get('ETag')).toBe('"2"')
+    expect(await saved.json()).toMatchObject({ version: 2 })
+
+    const stale = await browser.request(values, correct({ ...analysis.analys, tsProcent: 60 }, 1))
+    expect(stale.status).toBe(412)
+    expect(await stale.json()).toMatchObject({ code: 'analysis.changed' })
+    expect(await current(browser, base)).toMatchObject({ version: 2, analys: first })
+  })
+
+  it('refuses a correction that names no version with a 428', async () => {
+    const { browser, analysis, values } = await uploaded()
+    const res = await browser.request(values, correct(analysis.analys, undefined))
+    expect(res.status).toBe(428)
+    expect(await res.json()).toMatchObject({ code: 'request.precondition_required' })
+  })
+
+  it("answers another user's analysis with a 404, whatever the version", async () => {
+    const { analysis, values } = await uploaded()
+    const { browser: other } = await signedInUser(app, nextIp())
+    for (const version of [1, 2])
+      expect((await other.request(values, correct(analysis.analys, version))).status).toBe(404)
   })
 })
 

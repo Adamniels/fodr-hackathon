@@ -14,7 +14,8 @@ type Row = typeof horses.$inferSelect
 
 // The server's ID and name last, so nothing stored in the jsonb can replace them; parsed on the way out too, since jsonb
 // is only as safe as its schema (ADR 0008).
-export const toHorse = (row: Row): Horse => HorseSchema.parse({ ...row.profile, id: row.id, namn: row.name })
+export const toHorse = (row: Row): Horse =>
+  HorseSchema.parse({ ...row.profile, id: row.id, namn: row.name, version: row.version })
 const toColumns = ({ namn, ...profile }: HorseProfile) => ({ name: namn, profile })
 
 export interface HorseRepository {
@@ -23,7 +24,16 @@ export interface HorseRepository {
   ownedBy(user: Pick<User, 'id'>): Promise<string[]>
   get(user: Pick<User, 'id'>, id: string): Promise<Horse | undefined>
   create(user: Pick<User, 'id'>, profile: HorseProfile): Promise<Horse>
-  update(user: Pick<User, 'id'>, id: string, profile: HorseProfile): Promise<Horse | undefined>
+  /**
+   * Replaces the profile when the horse is still at `version` (#140, ADR 0017), raising it; 'changed' when the horse has
+   * moved on since that copy was read, undefined when not found.
+   */
+  update(
+    user: Pick<User, 'id'>,
+    id: string,
+    profile: HorseProfile,
+    version: number,
+  ): Promise<Horse | 'changed' | undefined>
   /** Deletes the horse and everything of it; returns the keys of its stored reports, or undefined when not found. */
   remove(user: Pick<User, 'id'>, id: string): Promise<string[] | undefined>
 }
@@ -37,7 +47,18 @@ export function horseRepository(db: Executor): HorseRepository {
         .where(and(eq(horseMembers.horseId, horses.id), eq(horseMembers.userId, user.id))),
     )
 
+  async function get(user: Pick<User, 'id'>, id: string) {
+    if (!UUID.test(id)) return undefined
+    const rows = await db
+      .select()
+      .from(horses)
+      .where(and(eq(horses.id, id), isMember(user)))
+    return rows.map(toHorse).at(0)
+  }
+
   return {
+    get,
+
     async listFor(user) {
       const rows = await db.select().from(horses).where(isMember(user)).orderBy(asc(horses.createdAt), asc(horses.id))
       return rows.map(toHorse)
@@ -51,15 +72,6 @@ export function horseRepository(db: Executor): HorseRepository {
       return rows.map((r) => r.id)
     },
 
-    async get(user, id) {
-      if (!UUID.test(id)) return undefined
-      const rows = await db
-        .select()
-        .from(horses)
-        .where(and(eq(horses.id, id), isMember(user)))
-      return rows.map(toHorse).at(0)
-    },
-
     async create(user, profile) {
       return db.transaction(async (tx) => {
         const [row] = await tx.insert(horses).values(toColumns(profile)).returning()
@@ -68,15 +80,19 @@ export function horseRepository(db: Executor): HorseRepository {
       })
     },
 
-    async update(user, id, profile) {
+    async update(user, id, profile, version) {
       if (!UUID.test(id)) return undefined
+      // The version is checked in the write itself, so of two saves of one copy only the first is written.
       const rows = await db
         .update(horses)
         // The database's clock, like created_at.
-        .set({ ...toColumns(profile), updatedAt: sql`now()` })
-        .where(and(eq(horses.id, id), isMember(user)))
+        .set({ ...toColumns(profile), version: sql`${horses.version} + 1`, updatedAt: sql`now()` })
+        .where(and(eq(horses.id, id), eq(horses.version, version), isMember(user)))
         .returning()
-      return rows.map(toHorse).at(0)
+      const updated = rows.map(toHorse).at(0)
+      if (updated) return updated
+      // Nothing written: the horse is not the user's (or gone), or it has moved on since the copy was read.
+      return (await get(user, id)) ? 'changed' : undefined
     },
 
     async remove(user, id) {

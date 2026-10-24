@@ -45,6 +45,7 @@ Every flow below must work against the real backend with no mocks. Each flow has
 - A logged in user can create, edit and delete horses. Changes are saved on the server and visible after reload and on another device.
 - Every numeric field is validated: required fields cannot be empty, and values outside the documented range (for example weight, age at least 3, body condition 1 to 9, roughage kg per day) are shown with a message next to the field and stop the plan, which the engine refuses to calculate (`validateProfile`). The server refuses wrong types and missing fields; a value out of range is saved as a draft, so typing is never lost (owner, 2026-10-21, #24). Clearing a field never silently becomes 0.
 - Deleting a horse asks for confirmation and removes its analyses, plans and journal.
+- An edit based on an older copy than the server holds (the horse changed on another device) is never saved over the newer one: the user is told what differs and takes the saved copy or keeps their own (owner, 2026-10-24, #140, ADR 0017).
 
 ### CF3. AI profile fill
 
@@ -60,6 +61,7 @@ Every flow below must work against the real backend with no mocks. Each flow has
 - Extracted values are shown with their source (analysis, converted, estimated, missing) and can be corrected. Invalid corrections (non numbers, negatives, dry matter outside 1 to 100 %) are rejected.
 - A document that is not a feed analysis is rejected with a message, and nothing is saved.
 - The analysis survives reload, and switching horse shows that horse's own analysis (fixes audit C4).
+- A correction based on an older copy of the analysis is never saved over the newer one, as for a horse in CF2 (#140).
 
 ### CF5. Feeding plan
 
@@ -212,3 +214,4 @@ After the beta: English translation, sharing, stable views, social login, paymen
 | 2026-10-15 | Delete `app/scratchverify/`, tracked `.DS_Store`, move pitch PDF out of the repo | Keep them |
 | 2026-10-16 | Milestones aligned with the roadmap: C4, report storage and the seed script move to M2 (needed for M2's CF4 criterion and demo removal), C8 to M3, invite only sign up added to M5 | Keep the original milestone table |
 | 2026-10-22 | Open sign-up for everyone instead of an invite-only closed beta; #39 dropped. The current work is the foundation: launch, access and payment are decided later (owner). The per-user AI quota (#31) does not cap the total AI cost; revisit with the launch decision | Invite-only closed beta (2026-10-15, 2026-10-16) |
+| 2026-10-24 | An edit of a horse or an analysis based on an older copy is refused (version and If-Match, 412) and the user chooses between the saved copy and their own (#140, ADR 0017) | Last write wins; per-field merging; automatic merge asking only on overlap |

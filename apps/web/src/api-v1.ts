@@ -21,12 +21,14 @@ export class ApiError extends Error {
   }
 }
 
-/** A request to /api/v1<path>; a JSON body is sent as such, a form with its own multipart type. */
+/**
+ * A request to /api/v1<path>; a JSON body is sent as such, a form with its own multipart type, and the caller's own
+ * headers (If-Match, #140) as given.
+ */
 export async function callApi(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`/api/v1${path}`, {
-    ...init,
-    headers: typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : undefined,
-  })
+  const headers = new Headers(init.headers)
+  if (typeof init.body === 'string') headers.set('Content-Type', 'application/json')
+  const res = await fetch(`/api/v1${path}`, { ...init, headers })
   if (res.ok) return res
   const problem = ProblemSchema.safeParse(await res.json().catch(() => null))
   const error = new ApiError(
@@ -41,6 +43,9 @@ export async function callApi(path: string, init: RequestInit = {}): Promise<Res
   }
   throw error
 }
+
+/** Whether the server refused a save because its copy changed since the page read it (#140, ADR 0017). */
+export const changedOnServer = (e: unknown) => e instanceof ApiError && e.status === 412
 
 /** Whether the server refused the request as invalid, which sending it again cannot change. */
 export const refusedByServer = (e: unknown) => e instanceof ApiError && [400, 413, 415].includes(e.status)

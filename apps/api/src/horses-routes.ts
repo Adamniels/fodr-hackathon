@@ -6,6 +6,7 @@ import { bodyLimit } from 'hono/body-limit'
 import type { AppEnv } from './app'
 import type { Auth } from './auth'
 import type { Logger } from './logger'
+import { etag, expectedVersion } from './precondition'
 import { problem } from './problem'
 import type { HorseRepository } from './repositories/horses'
 import { requireUser, type UserVariables } from './session'
@@ -38,14 +39,18 @@ export function horseRoutes({ auth, files, logger, horses }: HorseRouteDeps) {
 
   routes.get('/:id', async (c) => {
     const horse = await horses.get(c.get('user'), c.req.param('id'))
-    return horse ? c.json(horse) : notFound(c)
+    return horse ? c.json(horse, 200, { ETag: etag(horse.version) }) : notFound(c)
   })
 
+  // A save of the copy read at the version If-Match names; a save of an older copy is refused (#140, ADR 0017).
   routes.put('/:id', async (c) => {
+    const expected = expectedVersion(c)
+    if (!expected.ok) return expected.response
     const body = await parseJson(c, HorseProfileSchema)
     if (!body.ok) return body.response
-    const horse = await horses.update(c.get('user'), c.req.param('id'), body.data)
-    return horse ? c.json(horse) : notFound(c)
+    const horse = await horses.update(c.get('user'), c.req.param('id'), body.data, expected.version)
+    if (horse === 'changed') return problem(c, 412, 'horse.changed')
+    return horse ? c.json(horse, 200, { ETag: etag(horse.version) }) : notFound(c)
   })
 
   routes.delete('/:id', async (c) => {
