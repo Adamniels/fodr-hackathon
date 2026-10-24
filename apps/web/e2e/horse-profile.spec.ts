@@ -208,6 +208,75 @@ test('the transition sensitivity is one group of choices, named by its question 
   const choices = page.getByRole('radiogroup', { name: /^Känslighet för foderbyten: hur reagerar Sixten/ })
   await expect(choices.getByRole('radio', { name: /^Känslig/, checked: true })).toBeVisible()
   await expect(page.getByRole('group', { name: /^Känslighet för foderbyten/ })).toHaveCount(0)
+  // Each choice is read with what it means and how long its transition takes (#170).
+  await expect(choices.getByRole('radio')).toHaveCount(3)
+  await expect(choices.getByRole('radio', { checked: true })).toHaveCount(1)
+  await expect(
+    choices.getByRole('radio', { name: /^Tål byten bra ?Har aldrig reagerat på nytt foder\. Bytet tar \d+ dagar\.$/ }),
+  ).toBeVisible()
+})
+
+test('the transition sensitivity is one Tab stop, on its checked choice (#170)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  const choices = page.getByRole('radiogroup', { name: /^Känslighet för foderbyten/ })
+  const kanslig = choices.getByRole('radio', { name: /^Känslig/ })
+  await page.getByRole('button', { name: 'betfiber' }).focus()
+  await page.keyboard.press('Tab')
+  await expect(kanslig).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByLabel('Övrigt')).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(kanslig).toBeFocused()
+})
+
+test('the arrow keys move the transition sensitivity, wrapping at the ends, and the choice is saved (#170)', async ({
+  page,
+}) => {
+  await createAccountWithHorses(page)
+  const choices = page.getByRole('radiogroup', { name: /^Känslighet för foderbyten/ })
+  const choice = (name: RegExp) => choices.getByRole('radio', { name })
+  const expectChosen = async (name: RegExp) => {
+    await expect(choice(name)).toBeChecked()
+    await expect(choice(name)).toBeFocused()
+  }
+  await choice(/^Känslig/).focus()
+
+  await page.keyboard.press('ArrowRight')
+  await expectChosen(/^Tål byten bra/)
+  await page.keyboard.press('ArrowDown')
+  await expectChosen(/^Som de flesta/)
+  await page.keyboard.press('ArrowLeft')
+  await expectChosen(/^Tål byten bra/)
+  await page.keyboard.press('ArrowUp')
+  await expectChosen(/^Känslig/)
+  await page.keyboard.press('ArrowLeft')
+  await expectChosen(/^Som de flesta/)
+  await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
+
+  await page.reload()
+  await expect(choice(/^Som de flesta/)).toBeChecked()
+  await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
+})
+
+test('clicking the transition sensitivity that is set by the health records it as chosen (#170)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await expect(page.getByText(/^Förvalt utifrån hälsan ovan/)).toBeVisible()
+  await page.getByRole('radio', { name: /^Känslig/, checked: true }).click()
+  await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
+})
+
+test('a group of choices is described by its hint (#170)', async ({ page }) => {
+  await createAccountWithHorses(page)
+  await expect(page.getByRole('group', { name: 'Typ' })).toHaveAccessibleDescription(
+    /^Påverkar underhållsbehovet med upp till 10 %/,
+  )
+  await expect(page.getByRole('radiogroup', { name: /^Känslighet för foderbyten/ })).toHaveAccessibleDescription(
+    /^Förvalt utifrån hälsan ovan \(fång/,
+  )
 })
 
 async function expectUnknownFeed(page: Page, label: string, name: string) {

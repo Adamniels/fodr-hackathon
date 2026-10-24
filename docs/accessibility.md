@@ -46,6 +46,8 @@ axe is ever wrong about an element, the exclusion goes next to it, with the reas
 | The account dialog scrolls at 400 % zoom (320×256), and closes on a backdrop click but not when a selection ends there | `small-screen.spec.ts`, `landing-and-account.spec.ts` |
 | A single choice is one radiogroup named by its question; the plan's cost line is a named group | `horse-profile.spec.ts`, `analysis-and-plan.spec.ts` |
 | Toggle buttons say whether they are pressed ("Typ", "Undvik ingredienser") | `horse-profile.spec.ts` |
+| The transition sensitivity is one Tab stop on its checked choice, and the arrow keys move the choice, wrapping at the ends (native radios, #170) | `horse-profile.spec.ts` |
+| A group of choices is described by its hint ("Typ", the transition sensitivity) | `horse-profile.spec.ts` |
 | An unknown product is said in text and read with its field | `horse-profile.spec.ts`, `admin-products.spec.ts` |
 | A warning in the plan is said in words, not by colour alone | `analysis-and-plan.spec.ts` |
 | The landing page's product preview is one picture to a screen reader | `landing-and-account.spec.ts` |
@@ -150,5 +152,3 @@ VoiceOver on macOS and iOS is #165, with its checklist.
   (under a sticky bar) is not caught by it. The journal's date input was flagged that way while the test was mid
   scroll. The manual pass checks that focus is never covered, and `scroll-padding` keeps a focused field clear of the
   sticky bars.
-- **The radio buttons for the transition sensitivity** move with Tab, not with the arrow keys of the ARIA radio
-  pattern. This was there before #44.

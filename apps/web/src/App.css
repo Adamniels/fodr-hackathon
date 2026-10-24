@@ -1359,7 +1359,11 @@ input[type='checkbox'] {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
-.segment button {
+/* A choice is a button ("Typ", a toggle) or a native radio (the transition sensitivity, #170), whose card is the span
+   beside an invisible input covering it, styled through sibling selectors because the build targets browsers
+   without :has(). */
+.segment button,
+.segment label > span {
   min-height: 60px;
   border: 1px solid var(--falt-kant);
   background: var(--falt-bg);
@@ -1373,18 +1377,38 @@ input[type='checkbox'] {
   font-weight: 600;
   font-size: 16px;
 }
-.segment button small {
+.segment button small,
+.segment label > span small {
   font-weight: 400;
   color: var(--text-2);
   font-size: 14px;
 }
-.segment button:hover {
+.segment button:hover,
+.segment label:hover > span {
   border-color: var(--text-3);
 }
-.segment button.aktiv {
+.segment button.aktiv,
+.segment input:checked + span {
   border-color: var(--gron);
   background: var(--gron-bg);
   box-shadow: inset 0 0 0 1px var(--gron);
+}
+.segment label {
+  position: relative;
+  display: grid;
+}
+.segment input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segment input:focus-visible + span {
+  outline: 3px solid var(--gron);
+  outline-offset: 2px;
 }
 @media (max-width: 600px) {
   .segment {

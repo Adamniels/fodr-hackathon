@@ -425,6 +425,7 @@ const KANSLIGHETSORDNING: Bytekanslighet[] = ['tal', 'normal', 'kanslig']
 
 function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; onChange: (k: Bytekanslighet) => void }) {
   const { t } = useTranslation()
+  const name = useId()
   const forval = standardKanslighet(hast.halsa)
   const selected = hast.bytekanslighet ?? forval
   const hint = hast.bytekanslighet
@@ -443,20 +444,19 @@ function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; on
           {KANSLIGHETSORDNING.map((k) => {
             const takt = BYTESTAKT[k]
             return (
-              <button
-                key={k}
-                type="button"
-                role="radio"
-                aria-checked={selected === k}
-                className={selected === k ? 'aktiv' : ''}
-                onClick={() => onChange(k)}
-              >
-                {t(`transitionPace.${k}.name`)}
-                <small>
-                  {t(`transitionPace.${k}.description`)}{' '}
-                  {t('horse.sensitivity.duration', { days: formatNumber(takt.dagar, 0) })}
-                </small>
-              </button>
+              // Native radios sharing one name: the browser makes the group one Tab stop and moves the choice with
+              // the arrow keys (#170). The choice is taken on click, which an arrow key or Space fires too, because a
+              // change event never fires for the checked radio, and clicking the choice set by the health records it.
+              <label key={k}>
+                <input type="radio" name={name} checked={selected === k} readOnly onClick={() => onChange(k)} />
+                <span>
+                  {t(`transitionPace.${k}.name`)}
+                  <small>
+                    {t(`transitionPace.${k}.description`)}{' '}
+                    {t('horse.sensitivity.duration', { days: formatNumber(takt.dagar, 0) })}
+                  </small>
+                </span>
+              </label>
             )
           })}
         </div>
@@ -693,19 +693,29 @@ function Field({
   children: React.ReactNode
 }) {
   const labelId = useId()
+  const hintId = useId()
   // A button group must not sit inside <label>, or a click on the label activates the first button; it is a named
-  // group instead, so its buttons are read out with what they choose (#44).
+  // group instead, so its buttons are read out with what they choose (#44), and its hint is its description (#170).
   const content = (
     <>
       <span className="falt-label" id={group ? labelId : undefined}>
         {label}
       </span>
       {children}
-      {hint && <span className="falt-hjalp">{hint}</span>}
+      {hint && (
+        <span className="falt-hjalp" id={group ? hintId : undefined}>
+          {hint}
+        </span>
+      )}
     </>
   )
   return group ? (
-    <div className="falt" role={group === 'radiogroup' ? 'radiogroup' : 'group'} aria-labelledby={labelId}>
+    <div
+      className="falt"
+      role={group === 'radiogroup' ? 'radiogroup' : 'group'}
+      aria-labelledby={labelId}
+      aria-describedby={hint ? hintId : undefined}
+    >
       {content}
     </div>
   ) : (
