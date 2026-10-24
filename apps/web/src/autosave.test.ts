@@ -208,6 +208,79 @@ describe('AutoSaver', () => {
     expect(saver.busy()).toBe(false)
   })
 
+  describe('a save refused as based on an older copy (#140)', () => {
+    const conflict = new Error('412')
+    const conflicted = (e: unknown) => e === conflict
+    const saverWith = (save: (h: Hastprofil, keepalive: boolean) => Promise<void>) =>
+      new AutoSaver(save, onState, 600, () => false, conflicted)
+
+    it('is a conflict, kept for the user to decide, never sent again by a flush or on leaving the page', async () => {
+      const { calls, save } = heldSaves()
+      const saver = saverWith(save)
+      saver.schedule(horse('a', 'Sixten II'))
+      await vi.advanceTimersByTimeAsync(600)
+      calls[0].reject(conflict)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(states.a).toBe('conflict')
+      expect(saver.busy()).toBe(true)
+      void saver.flush()
+      saver.flushOnExit()
+      await vi.advanceTimersByTimeAsync(600)
+      expect(calls).toHaveLength(1)
+    })
+
+    it('holds a newer edit with the conflict instead of sending it, and retry sends the newest', async () => {
+      const { calls, save } = heldSaves()
+      const saver = saverWith(save)
+      saver.schedule(horse('a', 'Six'))
+      await vi.advanceTimersByTimeAsync(600)
+      saver.schedule(horse('a', 'Sixt'))
+      calls[0].reject(conflict)
+      await vi.advanceTimersByTimeAsync(600)
+      expect(calls).toHaveLength(1)
+      expect(states.a).toBe('conflict')
+
+      saver.schedule(horse('a', 'Sixten'))
+      await vi.advanceTimersByTimeAsync(600)
+      expect(calls).toHaveLength(1)
+      expect(states.a).toBe('conflict')
+
+      saver.retry('a')
+      await vi.advanceTimersByTimeAsync(0)
+      expect(calls.map((c) => c.horse.namn)).toEqual(['Six', 'Sixten'])
+      calls[1].resolve()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(states.a).toBe('saved')
+    })
+
+    it('drop gives the edit up, as when the page takes the copy the server holds', async () => {
+      const { calls, save } = heldSaves()
+      const saver = saverWith(save)
+      saver.schedule(horse('a', 'Sixten II'))
+      await vi.advanceTimersByTimeAsync(600)
+      calls[0].reject(conflict)
+      await vi.advanceTimersByTimeAsync(0)
+      saver.drop('a')
+      expect(states.a).toBe('saved')
+      expect(saver.busy()).toBe(false)
+      saver.retry('a')
+      await vi.advanceTimersByTimeAsync(0)
+      expect(calls).toHaveLength(1)
+    })
+  })
+
+  it('tells whether one record is busy', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Sixten'))
+    expect(saver.busy('a')).toBe(true)
+    expect(saver.busy('b')).toBe(false)
+    await vi.advanceTimersByTimeAsync(600)
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(saver.busy('a')).toBe(false)
+  })
+
   it('drops the waiting and failed edits of a deleted horse', async () => {
     const { calls, save } = heldSaves()
     const saver = new AutoSaver(save, onState, 600)

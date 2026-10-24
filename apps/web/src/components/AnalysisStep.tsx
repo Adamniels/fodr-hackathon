@@ -12,6 +12,8 @@ import type { Hastprofil } from '@fodr/domain/types'
 import { analysisUnit, nutrientLabel, formatDate, formatNumber } from '../format'
 import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
+import { analysisChanges } from '../conflict-fields'
+import { ChangedElsewhere } from './ChangedElsewhere'
 import { SaveStatus } from './SaveStatus'
 import { TableScroll } from './TableScroll'
 
@@ -162,6 +164,14 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
       {analys && (
         <>
           <SaveStatus state={analyses.saveState} onRetry={analyses.retrySave} />
+          {analyses.conflict && (
+            <ChangedElsewhere
+              title={t('conflict.analysis')}
+              changes={analysisChanges(analys, analyses.conflict.analys)}
+              onTakeTheirs={analyses.takeTheirs}
+              onKeepMine={analyses.conflict.canKeepMine ? analyses.keepMine : undefined}
+            />
+          )}
           <div className="analyshuvud">
             <span>{t(analys.typ === 'hosilage' ? 'roughageTitle.hosilage' : 'roughageTitle.ho')}</span>
             {analys.labb && <span>{analys.labb}</span>}

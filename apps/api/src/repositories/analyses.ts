@@ -22,6 +22,7 @@ export const toAnalysis = (row: Row): Analysis =>
     anmarkningar: row.extracted?.anmarkningar ?? [],
     hasFile: row.fileKey !== null,
     createdAt: row.createdAt.toISOString(),
+    version: row.version,
   })
 
 export interface NewAnalysis {
@@ -37,12 +38,17 @@ export interface AnalysisRepository {
   get(user: Pick<User, 'id'>, horseId: string, analysisId: string): Promise<Analysis | undefined>
   /** Saves the analysis as the horse's current one; undefined when the horse is not the user's (or is gone). */
   create(user: Pick<User, 'id'>, horseId: string, analysis: NewAnalysis): Promise<Analysis | undefined>
+  /**
+   * Replaces the values when the analysis is still at `version` (#140, ADR 0017), raising it; 'changed' when it has
+   * moved on since that copy was read, undefined when not found.
+   */
   updateValues(
     user: Pick<User, 'id'>,
     horseId: string,
     analysisId: string,
     values: Values,
-  ): Promise<Analysis | undefined>
+    version: number,
+  ): Promise<Analysis | 'changed' | undefined>
 }
 
 export function analysisRepository(db: Executor): AnalysisRepository {
@@ -110,7 +116,7 @@ export function analysisRepository(db: Executor): AnalysisRepository {
       })
     },
 
-    async updateValues(user, horseId, analysisId, values) {
+    async updateValues(user, horseId, analysisId, values, version) {
       if (!UUID.test(horseId) || !UUID.test(analysisId)) return undefined
       return db.transaction(async (tx) => {
         const row = (
@@ -121,13 +127,15 @@ export function analysisRepository(db: Executor): AnalysisRepository {
             .for('update')
         ).at(0)
         if (!row) return undefined
+        // Checked under the lock, so of two corrections of one copy only the first is written.
+        if (row.version !== version) return 'changed' as const
         // A conversion is the server's: the client can only drop one (a value the owner typed over), never add one or
         // change what it says, so the stored entries it still names are kept as stored.
         const sent = new Set(values.omrakningar.map((o) => o.amne))
         const kept = { ...values, omrakningar: row.values.omrakningar.filter((o) => sent.has(o.amne)) }
         const [updated] = await tx
           .update(analyses)
-          .set({ values: kept, sampledOn: sampledOn(kept.analys.provdatum) })
+          .set({ values: kept, sampledOn: sampledOn(kept.analys.provdatum), version: row.version + 1 })
           .where(eq(analyses.id, analysisId))
           .returning()
         return toAnalysis(updated)

@@ -88,13 +88,20 @@ describe('saving a plan', () => {
       engineVersion: 'test-build',
       productSetVersion: served.version,
     })
+    // The profile as the domain has it: the horse's version (#140) is the record's, not an input to the plan.
+    expect(saved.inputs.profil).toEqual({ ...SIXTEN, id: horse.id })
     expect(await (await browser.request(`${path}/latest`)).json()).toEqual({ plan: saved })
   })
 
   it('returns the newest as the latest', async () => {
     const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
     await browser.post(path, { analysisId: analysis.id })
-    await browser.request(`/api/v1/horses/${horse.id}`, { method: 'PUT', body: { ...SIXTEN, viktKg: 560 } })
+    const changed = await browser.request(`/api/v1/horses/${horse.id}`, {
+      method: 'PUT',
+      body: { ...SIXTEN, viktKg: 560 },
+      headers: { 'if-match': '"1"' },
+    })
+    expect(changed.status).toBe(200)
     const second = ((await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody })
       .plan
     const latest = (await (await browser.request(`${path}/latest`)).json()) as { plan: SavedPlanBody }
@@ -109,6 +116,21 @@ describe('saving a plan', () => {
     expect(again.status).toBe(200)
     expect(((await again.json()) as { plan: SavedPlanBody }).plan).toEqual(first.plan)
     expect(await database.db.select().from(plans).where(eq(plans.horseId, horse.id))).toHaveLength(1)
+  })
+
+  it('reuses the latest plan after a save that changed nothing of the profile (#140)', async () => {
+    // A save raises the horse's version even when it sends the same profile; the plan's inputs are the profile only.
+    const { browser, horse, analysis, plans: path } = await horseWithAnalysis()
+    const first = (await (await browser.post(path, { analysisId: analysis.id })).json()) as { plan: SavedPlanBody }
+    const same = await browser.request(`/api/v1/horses/${horse.id}`, {
+      method: 'PUT',
+      body: SIXTEN,
+      headers: { 'if-match': '"1"' },
+    })
+    expect(same.status).toBe(200)
+    const again = await browser.post(path, { analysisId: analysis.id })
+    expect(again.status).toBe(200)
+    expect(((await again.json()) as { plan: SavedPlanBody }).plan).toEqual(first.plan)
   })
 
   it('saves a new plan when the build or the catalogue that computed the latest one differs (#32)', async () => {

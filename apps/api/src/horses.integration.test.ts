@@ -14,13 +14,15 @@ const user = () => signedInUser(app, nextIp())
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type Browser = Awaited<ReturnType<typeof user>>['browser']
-const put = (browser: Browser, path: string, body: unknown) => browser.request(path, { method: 'PUT', body })
+// A save of the copy read at `version` (#140): every horse a test creates starts at 1.
+const put = (browser: Browser, path: string, body: unknown, version = 1) =>
+  browser.request(path, { method: 'PUT', body, headers: { 'if-match': `"${String(version)}"` } })
 const remove = (browser: Browser, path: string) => browser.request(path, { method: 'DELETE' })
 
 async function createHorse(browser: Browser, profile: unknown = SIXTEN) {
   const res = await browser.post('/api/v1/horses', profile)
   expect(res.status).toBe(201)
-  return (await res.json()) as { id: string } & Record<string, unknown>
+  return (await res.json()) as { id: string; version: number } & Record<string, unknown>
 }
 
 describe('horses of one user', () => {
@@ -28,7 +30,7 @@ describe('horses of one user', () => {
     const { browser } = await user()
     const horse = await createHorse(browser)
     expect(horse.id).toMatch(UUID)
-    expect(horse).toEqual({ id: horse.id, ...SIXTEN })
+    expect(horse).toEqual({ id: horse.id, version: 1, ...SIXTEN })
   })
 
   it('lists, reads, replaces and deletes', async () => {
@@ -45,8 +47,12 @@ describe('horses of one user', () => {
     const changed = { ...SIXTEN, viktKg: 545, namn: 'Sixten II' }
     const replaced = await put(browser, `/api/v1/horses/${sixten.id}`, changed)
     expect(replaced.status).toBe(200)
-    expect(await replaced.json()).toEqual({ id: sixten.id, ...changed })
-    expect(await (await browser.request(`/api/v1/horses/${sixten.id}`)).json()).toEqual({ id: sixten.id, ...changed })
+    expect(await replaced.json()).toEqual({ id: sixten.id, version: 2, ...changed })
+    expect(await (await browser.request(`/api/v1/horses/${sixten.id}`)).json()).toEqual({
+      id: sixten.id,
+      version: 2,
+      ...changed,
+    })
 
     expect((await remove(browser, `/api/v1/horses/${sixten.id}`)).status).toBe(204)
     expect((await browser.request(`/api/v1/horses/${sixten.id}`)).status).toBe(404)
@@ -223,4 +229,74 @@ describe('request bodies (#24 review)', () => {
       expect(await res.json()).toMatchObject({ code: 'validation.invalid', errors: [{ path: '' }] })
     },
   )
+})
+
+describe('a save based on an older copy (#140)', () => {
+  const path = (id: string) => `/api/v1/horses/${id}`
+
+  it('raises the version with every save, and says it as the ETag', async () => {
+    const { browser } = await user()
+    const horse = await createHorse(browser)
+    expect(horse.version).toBe(1)
+    const saved = await put(browser, path(horse.id), { ...SIXTEN, viktKg: 545 }, 1)
+    expect(saved.status).toBe(200)
+    expect(saved.headers.get('ETag')).toBe('"2"')
+    expect(await saved.json()).toMatchObject({ version: 2, viktKg: 545 })
+    const read = await browser.request(path(horse.id))
+    expect(read.headers.get('ETag')).toBe('"2"')
+    expect(await read.json()).toMatchObject({ version: 2 })
+  })
+
+  it('refuses a save of an older copy with a 412, and keeps the newer one', async () => {
+    const { browser } = await user()
+    const horse = await createHorse(browser)
+    expect((await put(browser, path(horse.id), { ...SIXTEN, viktKg: 545 }, 1)).status).toBe(200)
+    const stale = await put(browser, path(horse.id), { ...SIXTEN, namn: 'Sixten II' }, 1)
+    expect(stale.status).toBe(412)
+    expect(stale.headers.get('Content-Type')).toBe('application/problem+json')
+    expect(await stale.json()).toMatchObject({ code: 'horse.changed' })
+    expect(await (await browser.request(path(horse.id))).json()).toMatchObject({
+      version: 2,
+      namn: 'Sixten',
+      viktKg: 545,
+    })
+  })
+
+  it('lets only one of two saves of the same copy through', async () => {
+    const { browser } = await user()
+    const horse = await createHorse(browser)
+    const statuses = await Promise.all([
+      put(browser, path(horse.id), { ...SIXTEN, viktKg: 545 }, 1),
+      put(browser, path(horse.id), { ...SIXTEN, namn: 'Sixten II' }, 1),
+    ]).then((all) => all.map((r) => r.status).sort())
+    expect(statuses).toEqual([200, 412])
+    expect(await (await browser.request(path(horse.id))).json()).toMatchObject({ version: 2 })
+  })
+
+  it('refuses a save that names no version with a 428', async () => {
+    const { browser } = await user()
+    const horse = await createHorse(browser)
+    const res = await browser.request(path(horse.id), { method: 'PUT', body: SIXTEN })
+    expect(res.status).toBe(428)
+    expect(await res.json()).toMatchObject({ code: 'request.precondition_required' })
+  })
+
+  it.each(['*', 'W/"1"', '"1", "2"', '"ett"', '1'])('refuses the If-Match %s with a 400', async (ifMatch) => {
+    const { browser } = await user()
+    const horse = await createHorse(browser)
+    const res = await browser.request(path(horse.id), { method: 'PUT', body: SIXTEN, headers: { 'if-match': ifMatch } })
+    expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({ code: 'request.invalid_precondition' })
+  })
+
+  it("answers another user's horse with a 404, whatever the version", async () => {
+    const a = await user()
+    const horse = await createHorse(a.browser)
+    const b = await user()
+    for (const version of [1, 2]) {
+      const res = await put(b.browser, path(horse.id), SIXTEN, version)
+      expect(res.status).toBe(404)
+      expect(await res.json()).toMatchObject({ code: 'horse.not_found' })
+    }
+  })
 })

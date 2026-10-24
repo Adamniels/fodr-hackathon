@@ -3,6 +3,11 @@
 // stores it; corrections are saved by an AutoSaver once the typing pauses, and only when the domain accepts every
 // value (an invalid correction stays on the page with its message and is never sent). As with the horses, the cached
 // analyses are dropped when the workspace closes.
+//
+// A correction names the version of the server's copy it was based on (#140, ADR 0017): the cached analysis's own
+// `version`, which moves only when the cache takes the server's copy or a correction's answer. A correction refused
+// because the server's copy moved on is a conflict: the page reads the current analysis, and the user takes it or
+// keeps their own.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -17,7 +22,8 @@ import {
 import type { Omrakning } from '@fodr/domain/analysis'
 import type { Grovfoderanalys } from '@fodr/domain/types'
 import { validateAnalysis } from '@fodr/domain/validation'
-import { callApi, refusedByServer, sessionGuard } from './api-v1'
+import { ifMatch } from '@fodr/contracts/version'
+import { callApi, changedOnServer, refusedByServer, sessionGuard } from './api-v1'
 import { AutoSaver, type SaveState } from './autosave'
 
 /** Why a report cannot be uploaded, checked in the browser before any request (CF4); the API checks again. */
@@ -56,6 +62,15 @@ export interface AnalysisStore {
   flush: (keepalive?: boolean) => Promise<void>
   /** Whether a correction is waiting, on its way, failed, or held back as invalid. */
   hasUnsaved: () => boolean
+  /**
+   * While a correction is refused as based on an older copy (#140): the server's current analysis, and whether the
+   * page's corrections can still be saved over it (not when it is another analysis, a report read since).
+   */
+  conflict: { analys: Grovfoderanalys; canKeepMine: boolean } | undefined
+  /** Takes the server's current analysis into the page, giving up the corrections. */
+  takeTheirs: () => void
+  /** Saves the page's corrections over the server's, now that the user has seen it. */
+  keepMine: () => void
 }
 
 const base = (horseId: string) => `/horses/${horseId}/analyses`
@@ -68,10 +83,25 @@ export const analysesApi = {
     form.set('file', file)
     return AnalysisSchema.parse(await (await callApi(base(horseId), { method: 'POST', body: form })).json())
   },
-  // keepalive lets the request outlive the page, for the save sent when the page is left.
-  updateValues: async (horseId: string, analysisId: string, values: Values, keepalive = false): Promise<void> => {
-    await callApi(`${base(horseId)}/${analysisId}/values`, { method: 'PUT', body: JSON.stringify(values), keepalive })
-  },
+  // The correction of the copy read at `version`; keepalive lets the request outlive the page, for the save sent when
+  // the page is left.
+  updateValues: async (
+    horseId: string,
+    analysisId: string,
+    values: Values,
+    version: number,
+    keepalive = false,
+  ): Promise<Analysis> =>
+    AnalysisSchema.parse(
+      await (
+        await callApi(`${base(horseId)}/${analysisId}/values`, {
+          method: 'PUT',
+          body: JSON.stringify(values),
+          headers: ifMatch(version),
+          keepalive,
+        })
+      ).json(),
+    ),
 }
 
 /** The query key of every account's analyses, removed when the workspace closes or the user logs out. */
@@ -93,13 +123,37 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
   const guard = sessionGuard(queryClient)
   const [states, setStates] = useState<Record<string, SaveState>>({})
   const [invalid, setInvalid] = useState<Record<string, boolean>>({})
+  // The server's current analysis, per analysis whose correction it refused as based on an older copy.
+  const [conflicts, setConflicts] = useState<Partial<Record<string, Analysis>>>({})
   const [saver] = useState(
     () =>
       new AutoSaver<Correction>(
-        (c, keepalive) => guard(analysesApi.updateValues(c.horseId, c.id, c.values, keepalive)),
+        async (c, keepalive) => {
+          const cacheKey = analysisKey(userId, c.horseId)
+          const cached = queryClient.getQueryData<Analysis | null>(cacheKey)
+          // The cache holds the analysis the correction is of, with the version it was read at.
+          if (cached?.id !== c.id) throw new Error(`no version of analysis ${c.id}`)
+          try {
+            const saved = await guard(analysesApi.updateValues(c.horseId, c.id, c.values, cached.version, keepalive))
+            // Only into a cached copy of this analysis: after the workspace closed there is none, and an updater that
+            // returns undefined writes nothing.
+            queryClient.setQueryData<Analysis | null>(cacheKey, (a) =>
+              a?.id === c.id ? { ...a, version: saved.version } : a,
+            )
+          } catch (e) {
+            // The server's copy moved on: read it for the user's choice. A read that fails, or finds no analysis,
+            // leaves a plain failure, whose retry meets the conflict again.
+            if (changedOnServer(e)) {
+              const theirs = await guard(analysesApi.current(c.horseId))
+              if (theirs) setConflicts((s) => ({ ...s, [c.id]: theirs }))
+            }
+            throw e
+          }
+        },
         (id, state) => setStates((s) => ({ ...s, [id]: state })),
         600,
         refusedByServer,
+        changedOnServer,
       ),
   )
   const key = analysisKey(userId, horseId ?? '')
@@ -143,6 +197,7 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
   }, [saver, userId, queryClient])
 
   const current = horseId === undefined ? null : query.isPending ? undefined : (query.data ?? null)
+  const theirs = query.data && states[query.data.id] === 'conflict' ? conflicts[query.data.id] : undefined
   const store = (analysis: Analysis) => {
     if (horseId !== undefined && !closed.current) queryClient.setQueryData(analysisKey(userId, horseId), analysis)
   }
@@ -169,5 +224,18 @@ export function useApiAnalysis(userId: string, horseId: string | undefined): Ana
     },
     flush: (keepalive) => saver.flush(keepalive),
     hasUnsaved: () => saver.busy() || (query.data ? validateAnalysis(query.data.analys).length > 0 : false),
+    conflict: theirs && { analys: theirs.analys, canKeepMine: theirs.id === query.data?.id },
+    takeTheirs: () => {
+      if (!query.data || !theirs) return
+      store(theirs)
+      setInvalid((s) => ({ ...s, [theirs.id]: false }))
+      saver.drop(query.data.id)
+    },
+    keepMine: () => {
+      const mine = query.data
+      if (!mine || theirs?.id !== mine.id) return
+      store({ ...mine, version: theirs.version })
+      saver.retry(mine.id)
+    },
   }
 }

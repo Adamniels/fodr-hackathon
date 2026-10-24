@@ -116,13 +116,32 @@
       "failed": "Kunde inte spara ändringarna.",
       "retry": "Försök igen",
       "refused": "Ändringarna kunde inte sparas eftersom något värde inte godtas. Kontrollera fälten.",
-      "invalid": "Ändringen sparas när alla värden är giltiga."
+      "invalid": "Ändringen sparas när alla värden är giltiga.",
+      "conflict": "Ändrad på en annan enhet"
     },
     "catalogue": {
       "loading": "Hämtar produkterna…",
       "loadFailed": "Kunde inte hämta produkterna.",
       "retry": "Försök igen"
     }
+  },
+  "conflict": {
+    "horse": "Hästen har ändrats på en annan enhet.",
+    "analysis": "Analysen har ändrats på en annan enhet.",
+    "intro": "Dina senaste ändringar är inte sparade. Det här skiljer:",
+    "change": "{{field}}: sparat {{theirs}}, ditt {{mine}}",
+    "takeTheirs": "Använd de nya",
+    "keepMine": "Behåll mina",
+    "none": "inget värde",
+    "empty": "tomt",
+    "yes": "ja",
+    "no": "nej",
+    "workLevel": "Arbetsnivå",
+    "sensitivity": "Känslighet för foderbyten",
+    "feeds": "Foder i dag",
+    "feed": "{{name}} {{grams}} g",
+    "lab": "Labb",
+    "sampled": "Provdatum"
   },
   "analysis": {
     "title": "Grovfoderanalysen för {{name}}",

@@ -104,9 +104,9 @@ export function client(app: ReturnType<typeof authApp>['app'], ip: string, baseU
   const cookies = new Map<string, string>()
   async function request(
     path: string,
-    init: { method?: string; body?: unknown; form?: FormData } = {},
+    init: { method?: string; body?: unknown; form?: FormData; headers?: Record<string, string> } = {},
   ): Promise<Response> {
-    const headers: Record<string, string> = { 'x-forwarded-for': ip, origin: baseUrl }
+    const headers: Record<string, string> = { ...init.headers, 'x-forwarded-for': ip, origin: baseUrl }
     // A form sets its own multipart content type, with the boundary.
     if (init.body !== undefined) headers['content-type'] = 'application/json'
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join('; ')

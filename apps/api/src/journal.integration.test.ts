@@ -73,8 +73,26 @@ describe('journal entries', () => {
     })
     expect(res.status).toBe(201)
     const { horse: updated } = (await res.json()) as { horse: { viktKg: number; hull: number } }
-    expect(updated).toMatchObject({ viktKg: 540, hull: 6 })
-    expect(await (await browser.request(`/api/v1/horses/${horseId}`)).json()).toMatchObject({ viktKg: 540, hull: 6 })
+    // A write like a save (#140): a device whose copy is from before it can no longer save over it.
+    expect(updated).toMatchObject({ viktKg: 540, hull: 6, version: 2 })
+    expect(await (await browser.request(`/api/v1/horses/${horseId}`)).json()).toMatchObject({
+      viktKg: 540,
+      hull: 6,
+      version: 2,
+    })
+    const stale = await browser.request(`/api/v1/horses/${horseId}`, {
+      method: 'PUT',
+      body: SIXTEN,
+      headers: { 'if-match': '"1"' },
+    })
+    expect(stale.status).toBe(412)
+  })
+
+  it('leaves the version as it was when the entry changes nothing of the profile (#140)', async () => {
+    const { browser, horseId, journal } = await horse()
+    await browser.post(journal, { datum: '2026-10-15', text: 'Bara en rad', updateProfile: true })
+    await browser.post(journal, { datum: '2026-10-15', viktKg: 540, text: '', updateProfile: false })
+    expect(await (await browser.request(`/api/v1/horses/${horseId}`)).json()).toMatchObject({ version: 1 })
   })
 
   it('refuses values the domain refuses, and writes nothing, the profile neither', async () => {

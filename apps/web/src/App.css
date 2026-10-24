@@ -1584,6 +1584,12 @@ label.kryss {
 .ruta.varn {
   background: var(--varn-bg);
 }
+/* A choice inside a box (#140): under its text, not at the end of a form. */
+.ruta .atgardsrad {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
 /* The marks below are drawn, not read out (#44): the text says what they mark. The first content is for browsers
    without alternative text for generated content, which ignore the second. */
 .ruta.varn::before {

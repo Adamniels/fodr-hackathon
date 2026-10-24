@@ -18,6 +18,7 @@ import { AiProviderError, type AiProvider } from './ai/provider'
 import type { AppEnv } from './app'
 import type { Auth } from './auth'
 import type { Logger } from './logger'
+import { etag, expectedVersion } from './precondition'
 import { problem } from './problem'
 import type { AnalysisRepository } from './repositories/analyses'
 import type { HorseRepository } from './repositories/horses'
@@ -156,13 +157,23 @@ export function analysisRoutes({ origin, auth, ai, files, logger, horses, analys
     }
   }
 
+  // A correction of the copy read at the version If-Match names; one of an older copy is refused (#140, ADR 0017).
   routes.put('/:analysisId/values', async (c) => {
+    const expected = expectedVersion(c)
+    if (!expected.ok) return expected.response
     const body = await parseJson(c, ValuesSchema)
     if (!body.ok) return body.response
     const invalid = refused(c, body.data.analys)
     if (invalid) return invalid
-    const analysis = await analyses.updateValues(c.get('user'), horseId(c), c.req.param('analysisId'), body.data)
-    return analysis ? c.json(analysis) : problem(c, 404, 'analysis.not_found')
+    const analysis = await analyses.updateValues(
+      c.get('user'),
+      horseId(c),
+      c.req.param('analysisId'),
+      body.data,
+      expected.version,
+    )
+    if (analysis === 'changed') return problem(c, 412, 'analysis.changed')
+    return analysis ? c.json(analysis, 200, { ETag: etag(analysis.version) }) : problem(c, 404, 'analysis.not_found')
   })
 
   return routes

@@ -133,6 +133,8 @@ export const horses = pgTable('horses', {
   id: id(),
   name: text('name').notNull(),
   profile: jsonb('profile').$type<Omit<HorseProfile, 'namn'>>().notNull(),
+  // Raised by every write of the profile, so a save of an older copy is refused (#140, ADR 0017).
+  version: integer('version').notNull().default(1),
   createdAt: createdInOrder(),
   updatedAt: updatedAt(),
 })
@@ -174,6 +176,8 @@ export const analyses = pgTable(
     extracted: jsonb('extracted').$type<{ anmarkningar: string[] } & Record<string, unknown>>(),
     isCurrent: boolean('is_current').notNull(),
     sampledOn: date('sampled_on', { mode: 'string' }),
+    // Raised by every correction, so a correction of an older copy is refused (#140, ADR 0017).
+    version: integer('version').notNull().default(1),
     createdAt: createdAt(),
   },
   (table) => [

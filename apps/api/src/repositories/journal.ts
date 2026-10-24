@@ -89,7 +89,8 @@ export function journalRepository(db: Executor): JournalRepository {
           }
           const [updated] = await tx
             .update(horses)
-            .set({ profile, updatedAt: sql`now()` })
+            // A write of the profile like a save, so a copy from before it can no longer be saved over it (#140).
+            .set({ profile, version: locked.version + 1, updatedAt: sql`now()` })
             .where(eq(horses.id, horseId))
             .returning()
           horse = toHorse(updated)
