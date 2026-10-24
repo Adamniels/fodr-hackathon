@@ -25,3 +25,7 @@ Errors today are `{ fel: string }` with raw exception messages, invalid JSON bec
 
 - Error codes become part of the contracts in `packages/contracts` and are tested like any other output.
 - Unexpected errors are logged with the request ID (ADR 0015), so a user report can be traced.
+
+## Notes
+
+- 2026-10-24 (#140): a save of an older copy than the server holds is a 412 (`horse.changed`, `analysis.changed`) and a replacing PUT without `If-Match` a 428 (`request.precondition_required`), following HTTP's own semantics for preconditions rather than 409 (ADR 0017).
