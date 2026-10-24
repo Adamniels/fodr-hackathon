@@ -102,24 +102,13 @@ export class AutoSaver<T extends { id: string }> {
 
   /**
    * The page is being left: sends every waiting edit with keepalive, without waiting for an answer. A record with a save
-   * on its way sends after it, so the order holds if the page lives that long. The answers still set the state, for a
-   * page that comes back from the back/forward cache.
+   * on its way sends after it, through the same loop as any save, so the order holds if the page lives that long and a
+   * page shown again from the back/forward cache never has two saves of a record on their way (#140 review). The
+   * answers still set the state. Saves stay keepalive from then on, as after a flush with keepalive.
    */
   flushOnExit(): void {
-    for (const [id, record] of this.waiting) {
-      clearTimeout(this.timers.get(id))
-      this.timers.delete(id)
-      this.waiting.delete(id)
-      const sent = (this.inFlight.get(id) ?? Promise.resolve()).then(() => this.save(record, true))
-      const settled = sent.then(
-        () => this.settle(id),
-        (e: unknown) => {
-          this.fail(id, record, e)
-          this.settle(id)
-        },
-      )
-      this.inFlight.set(id, settled)
-    }
+    this.keepalive = true
+    for (const id of [...this.waiting.keys()]) this.send(id)
   }
 
   /** The record is deleted: its waiting and failed edits are dropped. */

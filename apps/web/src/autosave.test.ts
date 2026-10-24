@@ -166,6 +166,29 @@ describe('AutoSaver', () => {
     ])
   })
 
+  it('after the page was left and shown again, a new edit waits for the save sent on leaving (#140 review)', async () => {
+    const { calls, save } = heldSaves()
+    const saver = new AutoSaver(save, onState, 600)
+    saver.schedule(horse('a', 'Six'))
+    await vi.advanceTimersByTimeAsync(600)
+    saver.schedule(horse('a', 'Sixten'))
+    saver.flushOnExit()
+    calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => c.horse.namn)).toEqual(['Six', 'Sixten'])
+
+    // Back from the back/forward cache: an edit while the save sent on leaving is still on its way.
+    saver.schedule(horse('a', 'Sixtena'))
+    await vi.advanceTimersByTimeAsync(600)
+    expect(calls).toHaveLength(2)
+    calls[1].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls.map((c) => c.horse.namn)).toEqual(['Six', 'Sixten', 'Sixtena'])
+    calls[2].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(states.a).toBe('saved')
+  })
+
   it('flush sends a failed edit once more', async () => {
     const { calls, save } = heldSaves()
     const saver = new AutoSaver(save, onState, 600)

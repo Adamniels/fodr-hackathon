@@ -444,6 +444,7 @@ function Workspace({
               changes={horseChanges(hast, theirs)}
               onTakeTheirs={() => horses.takeTheirs(hast.id)}
               onKeepMine={() => horses.keepMine(hast.id)}
+              onChosen={() => title.current?.focus()}
             />
           )}
 

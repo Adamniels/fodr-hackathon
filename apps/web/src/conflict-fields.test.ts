@@ -67,6 +67,9 @@ describe('the changes a conflict notice shows (#140)', () => {
       { field: 'Har haft fång', theirs: 'nej', mine: 'ja' },
       { field: 'Känslighet för foderbyten', theirs: 'Tål byten bra', mine: 'inget värde' },
     ])
+    expect(horseChanges(FULL, { ...FULL, arbetsniva: 'hart' })).toEqual([
+      { field: 'Arbetsnivå', theirs: 'Hårt arbete', mine: 'Lätt arbete' },
+    ])
   })
 
   it('shows the feeds of today as one value', () => {

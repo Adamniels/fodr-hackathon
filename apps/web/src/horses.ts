@@ -21,6 +21,7 @@ import {
   type HorseProfile,
 } from '@fodr/contracts/horses'
 import { ifMatch } from '@fodr/contracts/version'
+import { changedFields } from './changes'
 import type { Hastprofil } from '@fodr/domain/types'
 
 const call = (path: string, init?: RequestInit) => callApi(`/horses${path}`, init)
@@ -124,12 +125,16 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
             const saved = await guard(horsesApi.update(horse, version, keepalive))
             versions.set(horse.id, saved.version)
           } catch (e) {
+            if (!changedOnServer(e)) throw e
             // The server's copy moved on: read it for the user's choice. A read that fails leaves a plain failure,
             // whose retry meets the conflict again.
-            if (changedOnServer(e)) {
-              const theirs = await guard(horsesApi.get(horse.id))
-              setConflicts((c) => ({ ...c, [horse.id]: theirs }))
+            const theirs = await guard(horsesApi.get(horse.id))
+            // The same edit made on the other device: the server holds what this save sends, so it is saved.
+            if (changedFields(horse, withoutVersion(theirs)).length === 0) {
+              versions.set(horse.id, theirs.version)
+              return
             }
+            setConflicts((c) => ({ ...c, [horse.id]: theirs }))
             throw e
           }
         },
@@ -149,7 +154,12 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
       await closing.get(userId)
       const horses = await guard(horsesApi.list())
       const cached = queryClient.getQueryData<Hastprofil[]>(key)
-      return saver.busy() && cached ? cached : horses.map(known)
+      if (saver.busy() && cached) return cached
+      // A read that left before a save was answered brings a copy from before it: the page keeps its own (#140 review).
+      return horses.map((horse) => {
+        const own = cached?.find((h) => h.id === horse.id)
+        return own && (versions.get(horse.id) ?? 0) > horse.version ? own : known(horse)
+      })
     },
     staleTime: 0,
     refetchOnWindowFocus: () => !saver.busy(),
@@ -203,10 +213,12 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
       retrySave: (id) => saver.retry(id),
       flush: (keepalive) => saver.flush(keepalive),
       hasUnsaved: () => saver.busy(),
-      // An edit on its way or waiting keeps the version it was based on: sent with the newer one, it would undo the
-      // update unseen; with its own, it meets the update as a conflict.
+      // While an edit of the horse is waiting or on its way, the page keeps its copy and the version it was based on:
+      // the edit then meets the update as a conflict, which lists it, instead of the page showing one copy and saving
+      // another (#140 review).
       apply: (horse) => {
-        const hast = saver.busy(horse.id) ? withoutVersion(horse) : known(horse)
+        if (saver.busy(horse.id)) return
+        const hast = known(horse)
         setHorses((horses) => horses.map((h) => (h.id === horse.id ? hast : h)))
       },
       conflict: (id) => {
@@ -218,12 +230,14 @@ export function useApiHorses(userId: string): { store: HorseStore | undefined | 
         if (!theirs) return
         const hast = known(theirs)
         setHorses((horses) => horses.map((h) => (h.id === id ? hast : h)))
+        setConflicts((c) => ({ ...c, [id]: undefined }))
         saver.drop(id)
       },
       keepMine: (id) => {
         const theirs = conflicts[id]
         if (!theirs) return
         versions.set(id, theirs.version)
+        setConflicts((c) => ({ ...c, [id]: undefined }))
         saver.retry(id)
       },
     },

@@ -137,6 +137,13 @@
     "yes": "ja",
     "no": "nej",
     "workLevel": "Arbetsnivå",
+    "workLevels": {
+      "ingen": "Inget arbete",
+      "latt": "Lätt arbete",
+      "medel": "Medelarbete",
+      "hart": "Hårt arbete",
+      "mycket_hart": "Mycket hårt arbete"
+    },
     "sensitivity": "Känslighet för foderbyten",
     "feeds": "Foder i dag",
     "feed": "{{name}} {{grams}} g",

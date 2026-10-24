@@ -58,8 +58,8 @@ const HORSE_FIELDS: Record<string, Field> = {
   'ridning.passPerVecka': { label: 'horse.sessionsPerWeek' },
   'ridning.minuterPerPass': { label: 'horse.minutesPerSession' },
   'ridning.travGaloppMinPerPass': { label: 'horse.trotCanter' },
-  // Not in the form: set only through the API, shown by its code.
-  arbetsniva: { label: 'conflict.workLevel' },
+  // Not in the form: set only through the API.
+  arbetsniva: { label: 'conflict.workLevel', show: choice('conflict.workLevels') },
   prestanda: { label: 'horse.discipline', show: choice('horse.performance') },
   'miljo.hallning': { label: 'horse.environment.housing', show: choice('horse.environment') },
   'miljo.timmarUtePerDag': { label: 'horse.environment.hoursOut' },
