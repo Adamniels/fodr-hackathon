@@ -269,6 +269,48 @@ test('clicking the transition sensitivity that is set by the health records it a
   await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
 })
 
+test('pressing Space on the transition sensitivity that is set by the health records it as chosen (#170)', async ({
+  page,
+}) => {
+  await createAccountWithHorses(page)
+  await page.getByRole('radio', { name: /^Känslig/, checked: true }).focus()
+  await page.keyboard.press('Space')
+  await expect(page.getByText('Styr hur många dagar planen tar på sig att byta till det nya fodret.')).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Sparat' })).toBeVisible()
+})
+
+test('in forced colours, the chosen choice still looks chosen (#170)', async ({ page }) => {
+  await page.emulateMedia({ forcedColors: 'active' })
+  await createAccountWithHorses(page)
+  // Forced colours keeps no background or shadow, so the chosen card must differ in what it does keep. A visual state
+  // has no accessible alternative to read, so this reads the computed border of the card: the button itself for
+  // "Typ", and for a radio the card drawn beside its invisible input.
+  const border = (el: Element) => {
+    const s = getComputedStyle(el)
+    return `${s.borderTopWidth} ${s.borderTopColor}`
+  }
+  const type = page.getByRole('group', { name: 'Typ' })
+  const pressed = await type.getByRole('button', { pressed: true }).evaluate(border)
+  const unpressed = await type.getByRole('button', { pressed: false }).first().evaluate(border)
+  expect(pressed).not.toBe(unpressed)
+
+  const choices = page.getByRole('radiogroup', { name: /^Känslighet för foderbyten/ })
+  // Each function runs in the page on its own, so this one cannot call border().
+  const card = (el: Element) => {
+    const drawn = el.nextElementSibling
+    if (!drawn) throw new Error('The radio has no card beside it')
+    const s = getComputedStyle(drawn)
+    return `${s.borderTopWidth} ${s.borderTopColor}`
+  }
+  const checked = await choices.getByRole('radio', { checked: true }).evaluate(card)
+  const unchecked = await choices.getByRole('radio', { checked: false }).first().evaluate(card)
+  expect(checked).not.toBe(unchecked)
+
+  // axe judges contrast on the page's own colours, as WCAG does, and misreads them under forced colours (it flagged
+  // the black on white "AI" badge), so the final page is checked with forced colours off.
+  await page.emulateMedia({ forcedColors: 'none' })
+})
+
 test('a group of choices is described by its hint (#170)', async ({ page }) => {
   await createAccountWithHorses(page)
   await expect(page.getByRole('group', { name: 'Typ' })).toHaveAccessibleDescription(

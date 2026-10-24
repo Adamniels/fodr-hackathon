@@ -445,10 +445,20 @@ function FeedChangeSensitivitySection({ hast, onChange }: { hast: Hastprofil; on
             const takt = BYTESTAKT[k]
             return (
               // Native radios sharing one name: the browser makes the group one Tab stop and moves the choice with
-              // the arrow keys (#170). The choice is taken on click, which an arrow key or Space fires too, because a
-              // change event never fires for the checked radio, and clicking the choice set by the health records it.
+              // the arrow keys (#170). The choice is taken on click, which an arrow key fires too, rather than on
+              // change, which never fires for the checked radio: clicking the choice set by the health records it.
+              // Space on the checked radio fires no click, so it records it here, as a button did.
               <label key={k}>
-                <input type="radio" name={name} checked={selected === k} readOnly onClick={() => onChange(k)} />
+                <input
+                  type="radio"
+                  name={name}
+                  checked={selected === k}
+                  readOnly
+                  onClick={() => onChange(k)}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' && selected === k) onChange(k)
+                  }}
+                />
                 <span>
                   {t(`transitionPace.${k}.name`)}
                   <small>

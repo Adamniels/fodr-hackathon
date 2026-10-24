@@ -48,6 +48,7 @@ axe is ever wrong about an element, the exclusion goes next to it, with the reas
 | Toggle buttons say whether they are pressed ("Typ", "Undvik ingredienser") | `horse-profile.spec.ts` |
 | The transition sensitivity is one Tab stop on its checked choice, and the arrow keys move the choice, wrapping at the ends (native radios, #170) | `horse-profile.spec.ts` |
 | A group of choices is described by its hint ("Typ", the transition sensitivity) | `horse-profile.spec.ts` |
+| In forced colours the chosen card of "Typ" and of the transition sensitivity still looks chosen, and Space on the checked sensitivity records it | `horse-profile.spec.ts` |
 | An unknown product is said in text and read with its field | `horse-profile.spec.ts`, `admin-products.spec.ts` |
 | A warning in the plan is said in words, not by colour alone | `analysis-and-plan.spec.ts` |
 | The landing page's product preview is one picture to a screen reader | `landing-and-account.spec.ts` |
