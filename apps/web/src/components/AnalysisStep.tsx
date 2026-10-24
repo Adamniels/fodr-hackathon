@@ -14,6 +14,7 @@ import { domainText } from '../i18n/domain'
 import { DecimalInput } from './DecimalInput'
 import { analysisChanges } from '../conflict-fields'
 import { ChangedElsewhere } from './ChangedElsewhere'
+import { ManualAnalysisForm } from './ManualAnalysisForm'
 import { SaveStatus } from './SaveStatus'
 import { TableScroll } from './TableScroll'
 
@@ -70,21 +71,36 @@ const SHOWN_NUTRIENTS: NutrientKey[] = [
 
 export function AnalysisStep({ hast, analyses, onNext }: Props) {
   const { t } = useTranslation()
-  // Where focus goes when a choice in the conflict notice takes its buttons away (#140).
+  // Where focus goes when a choice in the conflict notice takes its buttons away (#140), and after an analysis is typed
+  // in by hand (#145).
   const heading = useRef<HTMLHeadingElement>(null)
   const [laddar, setLaddar] = useState(false)
   const [fel, setFel] = useState<string | null>(null)
   const [filnamn, setFilnamn] = useState<string | null>(null)
+  // Whether the form for typing the values in by hand is open (#145).
+  const [manual, setManual] = useState(false)
   const analys = analyses.current?.analys ?? null
   const omrakningar = analyses.current?.omrakningar ?? []
   const anmarkningar = analyses.current?.anmarkningar ?? []
   const onAnalysisChange = analyses.correct
+
+  const openManual = () => {
+    setFel(null)
+    setManual(true)
+  }
+  // Offered under the upload and with every upload error: a report that cannot be read is no dead end (#145).
+  const manualButton = (
+    <button type="button" className="lank" onClick={openManual}>
+      {t('analysis.manual.open')}
+    </button>
+  )
 
   // An API failure becomes text from its code; anything else (the network) the general failure.
   const errorText = (e: unknown) => uploadErrorText(e instanceof ApiError ? e.code : undefined, t)
 
   async function laddaUpp(fil: File) {
     setFel(null)
+    setManual(false)
     // Refused before upload (CF4); the API checks the type and size again.
     const problem = reportProblem(fil)
     if (problem) {
@@ -150,10 +166,30 @@ export function AnalysisStep({ hast, analyses, onNext }: Props) {
           )}
         </label>
       )}
+      {/* Not while a report is being read: it would replace the analysis typed in meanwhile. */}
+      {!analyses.loadFailed && !manual && !laddar && (
+        <p className="liten">
+          {t('analysis.manual.offer')} {manualButton}
+        </p>
+      )}
       {fel && (
         <div className="ruta fel" role="alert">
-          {fel}
+          {fel} {manualButton}
         </div>
+      )}
+      {manual && !analyses.loadFailed && (
+        <ManualAnalysisForm
+          grovfodertyp={hast.grovfoder.typ}
+          onCancel={() => {
+            setManual(false)
+            heading.current?.focus()
+          }}
+          onSave={async (entered) => {
+            await analyses.enter(entered)
+            setManual(false)
+            heading.current?.focus()
+          }}
+        />
       )}
       {analyses.current === undefined && <p role="status">{t('analysis.loading')}</p>}
       {analyses.loadFailed && (

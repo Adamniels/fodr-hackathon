@@ -60,6 +60,7 @@ Every flow below must work against the real backend with no mocks. Each flow has
 - The original file is stored with the analysis. An analysis belongs to exactly one horse; a horse can have several analyses over time, and one is marked current.
 - Extracted values are shown with their source (analysis, converted, estimated, missing) and can be corrected. Invalid corrections (non numbers, negatives, dry matter outside 1 to 100 %) are rejected.
 - A document that is not a feed analysis is rejected with a message, and nothing is saved.
+- A user without a readable report types the values in by hand: roughage type and dry matter (lab and sample date optional) make the horse's current analysis, without a file, and the rest is entered and checked in the same table as a read report, a value left empty being missing. The upload and every upload error offer it (#145).
 - The analysis survives reload, and switching horse shows that horse's own analysis (fixes audit C4).
 - A correction based on an older copy of the analysis is never saved over the newer one, as for a horse in CF2 (#140).
 

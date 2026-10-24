@@ -22,11 +22,14 @@ export const ANALYSIS_FILE_LIMITS = {
 export type AnalysisMediaType = keyof typeof ANALYSIS_FILE_LIMITS
 export const ANALYSIS_MEDIA_TYPES = Object.keys(ANALYSIS_FILE_LIMITS) as AnalysisMediaType[]
 
+/** The longest lab name an analysis keeps. */
+export const ANALYSIS_LAB_MAX = 200
+
 const nutrientKey = z.enum(NUTRIENT_KEYS as [NutrientKey, ...NutrientKey[]])
 
 export const GrovfoderanalysSchema = z.object({
   typ: z.enum(['hosilage', 'ho']),
-  labb: z.string().max(200).optional(),
+  labb: z.string().max(ANALYSIS_LAB_MAX).optional(),
   provdatum: z.string().max(40).optional(),
   tsProcent: z.number(),
   askaGPerKgTs: z.number().optional(),

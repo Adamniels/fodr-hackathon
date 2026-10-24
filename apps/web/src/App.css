@@ -1624,6 +1624,21 @@ label.kryss {
     border-color 0.15s,
     background 0.15s;
 }
+/* The form for an analysis typed in by hand (#145), below the upload. Its type choice is a fieldset, whose browser
+   border and padding the field layout replaces; min-width lets it shrink on a small phone. */
+.manuell {
+  margin-bottom: 22px;
+}
+.manuell fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 18px;
+  min-width: 0;
+}
+.manuell legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
 .uppladdning strong {
   color: var(--gron);
 }
