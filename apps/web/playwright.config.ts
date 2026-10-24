@@ -12,6 +12,10 @@ const API_PORT = '3100'
 
 export default defineConfig({
   testDir: 'e2e',
+  // Tests run in any order and split across workers and CI's shards one by one, not file by file (#167): each test
+  // has its own account, mail address and client IP, and a product an admin test creates is its own, which no other
+  // test plans with.
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   // A broad breakage stops early in CI, so the run ends within its step's limit and the report is written (#146).

@@ -1301,7 +1301,7 @@
   font-size: 14px;
 }
 /* Fälten är 44 px höga med 16 px text, så att de är lätta att träffa och mobiler inte zoomar. */
-.falt input:not([type='checkbox']):not([type='range']),
+.falt input:not([type='checkbox']):not([type='range']):not([type='radio']),
 .falt select,
 .falt textarea,
 .foderrad input,
@@ -1324,7 +1324,7 @@ input.smal {
 }
 /* As specific as the fields' own rule above, or its grey border wins; a solid green ring of 2 px with the glow outside
    it, at least 3:1 against the page (#44). */
-.falt input:not([type='checkbox']):not([type='range']):focus,
+.falt input:not([type='checkbox']):not([type='range']):not([type='radio']):focus,
 .falt select:focus,
 .falt textarea:focus,
 .foderrad input:focus,
@@ -1359,7 +1359,11 @@ input[type='checkbox'] {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
-.segment button {
+/* A choice is a button ("Typ", a toggle) or a native radio (the transition sensitivity, #170), whose card is the span
+   beside an invisible input covering it, styled through sibling selectors because the build targets browsers
+   without :has(). */
+.segment button,
+.segment label > span {
   min-height: 60px;
   border: 1px solid var(--falt-kant);
   background: var(--falt-bg);
@@ -1373,18 +1377,52 @@ input[type='checkbox'] {
   font-weight: 600;
   font-size: 16px;
 }
-.segment button small {
+.segment button small,
+.segment label > span small {
   font-weight: 400;
   color: var(--text-2);
   font-size: 14px;
 }
-.segment button:hover {
+.segment button:hover,
+.segment label:hover > span {
   border-color: var(--text-3);
 }
-.segment button.aktiv {
+.segment button.aktiv,
+.segment input:checked + span {
   border-color: var(--gron);
   background: var(--gron-bg);
   box-shadow: inset 0 0 0 1px var(--gron);
+}
+.segment label {
+  position: relative;
+  display: grid;
+}
+.segment input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+/* :focus with :focus-visible taking it back from a click, so that a browser without :focus-visible (Safari before
+   15.4) drops the second rule and still draws the ring. */
+.segment input:focus + span {
+  outline: 3px solid var(--gron);
+  outline-offset: 2px;
+}
+.segment input:focus:not(:focus-visible) + span {
+  outline: none;
+}
+/* Forced colours (Windows high contrast) drops the background and the shadow, so the chosen card keeps a thicker border
+   in the highlight colour, its padding taking up the difference. */
+@media (forced-colors: active) {
+  .segment button.aktiv,
+  .segment input:checked + span {
+    border: 3px solid Highlight;
+    padding: 8px 12px;
+  }
 }
 @media (max-width: 600px) {
   .segment {
@@ -2188,8 +2226,8 @@ label.kryss {
   gap: 10px;
 }
 
-/* The start page's note after an account was deleted (#41). */
-.konto-raderat {
+/* A notice at the top of the landing page: the account was deleted (#41), a log out failed (#169). */
+.startsida-besked {
   max-width: 960px;
   margin: 16px auto 0;
 }
