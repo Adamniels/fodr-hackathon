@@ -1,6 +1,16 @@
 // CF1 in the browser against the real API (#23): sign up with verification, log in and out, a wrong password,
 // magic link and password reset, with the mail read from Mailpit.
-import { createAccount, expect, horseList, logIn, PASSWORD, seededAccount, seedWithCli, test } from './support/helpers'
+import {
+  createAccount,
+  createAccountWithHorses,
+  expect,
+  horseList,
+  logIn,
+  PASSWORD,
+  seededAccount,
+  seedWithCli,
+  test,
+} from './support/helpers'
 import { expectAccessible } from './support/accessibility'
 import { E2E_WEB, linkIn, mailCount, uniqueEmail, waitForMail } from './support/mailpit'
 
@@ -128,6 +138,72 @@ test('log out, then log in again with the password', async ({ page }) => {
 
   await logIn(page, account.email, account.password)
   await expect(horseList(page).getByText('E2E Test')).toBeVisible()
+})
+
+test('logging out ends the session even when the tab is closed at once (#169)', async ({ page, context }) => {
+  await createAccountWithHorses(page)
+  // /api/v1 belongs to the real backend and is otherwise never intercepted: the profile's save is only held back, so the
+  // tab is certain to be closed while logging out still waits for it.
+  await page.route('**/api/v1/horses/*', async (route) => {
+    if (route.request().method() === 'PUT') await new Promise((resolve) => setTimeout(resolve, 3000))
+    await route.fallback().catch(() => undefined)
+  })
+  await page.getByLabel('Namn').fill('Sixten Andra')
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  // As a user closes the tab: the page's unload handlers run.
+  await page.close({ runBeforeUnload: true })
+
+  const next = await context.newPage()
+  // The sign-out left with the closed tab; its answer is not waited for there, so the next visit waits for it here.
+  await expect.poll(async () => (await next.request.get('/api/v1/me')).status()).toBe(401)
+  await next.goto('/horses')
+  await expect(next.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+  await expectAccessible(next, 'the next visit')
+})
+
+test('a failed log out says the session is still signed in, and logging out again ends it (#169)', async ({ page }) => {
+  await createAccount(page, 'Kvar Inloggad', 'kvar@example.se')
+  // /api/auth belongs to the real backend and is otherwise never intercepted; only a stubbed answer can make the
+  // sign-out fail.
+  await page.route('**/api/auth/sign-out', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
+  )
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  const failed = page.getByRole('alert').filter({ hasText: 'Utloggningen misslyckades' })
+  await expect(failed).toContainText('Du är fortfarande inloggad.')
+  await expectAccessible(page, 'failed log out')
+
+  await page.unroute('**/api/auth/sign-out')
+  await failed.getByRole('button', { name: 'Försök igen' }).click()
+  await expect(failed).toHaveCount(0)
+  await page.goto('/horses')
+  await expect(page.getByRole('dialog', { name: 'Logga in' })).toBeVisible()
+})
+
+test('a log out the server carried out but answered with an error is not said later, to anyone who logs in (#169)', async ({
+  page,
+}) => {
+  const account = await createAccount(page, 'Halvt Utloggad', 'halvt@example.se')
+  // /api/auth belongs to the real backend and is otherwise never intercepted: the sign-out reaches it and ends the
+  // session, and only its answer is replaced, as when the response is lost on the way back.
+  await page.route('**/api/auth/sign-out', async (route) => {
+    await route.fetch()
+    await route.fulfill({ status: 500, contentType: 'application/json', body: '{}' })
+  })
+  const signedOut = page.waitForResponse('**/api/auth/sign-out')
+  await horseList(page).getByRole('button', { name: 'Logga ut' }).click()
+  await signedOut
+  await page.unroute('**/api/auth/sign-out')
+  // All in the same page from here, as in a tab that stays open: a page load would forget anything the app kept.
+  await page.getByRole('button', { name: 'Logga in', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Logga in' })
+  await dialog.getByLabel('E-post').fill(account.email)
+  await dialog.getByLabel('Lösenord').fill(account.password)
+  await dialog.getByRole('button', { name: 'Logga in', exact: true }).click()
+  await expect(horseList(page).getByText('Halvt Utloggad')).toBeVisible()
+  await horseList(page).getByRole('button', { name: 'Till startsidan' }).click()
+  await expect(page.getByRole('button', { name: 'Fortsätt som Halvt Utloggad' })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
 test('the password is checked: a wrong one is refused', async ({ page }) => {

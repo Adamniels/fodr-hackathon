@@ -905,6 +905,10 @@
     }
   },
   "account": {
+    "logOutFailed": {
+      "text": "Utloggningen misslyckades. Du är fortfarande inloggad.",
+      "retry": "Försök igen"
+    },
     "delete": {
       "title": "Radera ditt konto",
       "body": "Kontot raderas direkt, tillsammans med dina hästar, analyser och rapporter, foderplaner och journal. Det går inte att ångra.",

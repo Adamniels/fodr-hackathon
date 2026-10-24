@@ -84,11 +84,11 @@ export const test = base.extend<{ ai: AiMock; accessible: null }, { seedDatabase
     { auto: true },
   ],
   // Every test's final page passes axe (#44). Only after a pass: a failed test's page shows its own failure, and a
-  // test that ends on a blank page has nothing of Fodr's to check.
+  // test that ends on a blank page, or closed its page as a user closes a tab (#169), has nothing of Fodr's to check.
   accessible: [
     async ({ page }, provide, testInfo) => {
       await provide(null)
-      if (testInfo.status === 'passed' && page.url() !== 'about:blank') {
+      if (testInfo.status === 'passed' && !page.isClosed() && page.url() !== 'about:blank') {
         await expectAccessible(page, 'final page')
       }
     },

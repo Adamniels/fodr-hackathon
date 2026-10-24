@@ -18,6 +18,9 @@ export class AutoSaver<T extends { id: string }> {
   private readonly failed = new Map<string, { record: T; refused: boolean }>()
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>()
   private readonly inFlight = new Map<string, Promise<void>>()
+  // Set by a flush with keepalive (logging out, #169): every save from then on outlives the page, also an edit that
+  // waits behind a save on its way.
+  private keepalive = false
 
   private readonly save: (record: T, keepalive: boolean) => Promise<void>
   private readonly onState: (id: string, state: SaveState) => void
@@ -63,9 +66,11 @@ export class AutoSaver<T extends { id: string }> {
 
   /**
    * Sends every waiting edit now, and once more every failed one that a retry could fix; resolves when every save has
-   * settled, failed or not.
+   * settled, failed or not. With `keepalive` (the page may be left before then, as when logging out), the saves outlive
+   * the page.
    */
-  async flush(): Promise<void> {
+  async flush(keepalive = false): Promise<void> {
+    if (keepalive) this.keepalive = true
     for (const [id, failed] of this.failed) if (!failed.refused) this.retry(id)
     for (const id of [...this.waiting.keys()]) this.send(id)
     await Promise.all(this.inFlight.values())
@@ -113,7 +118,7 @@ export class AutoSaver<T extends { id: string }> {
         clearTimeout(this.timers.get(id))
         this.timers.delete(id)
         try {
-          await this.save(record, false)
+          await this.save(record, this.keepalive)
         } catch (e) {
           if (!this.waiting.has(id)) this.failed.set(id, { record, refused: this.refused(e) })
         }

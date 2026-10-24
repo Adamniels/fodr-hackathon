@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LandingPage } from '../components/LandingPage'
 import { Login, type LoginMode } from '../components/Login'
+import { LogOutFailed } from '../components/LogOutFailed'
 import { useCatalogue } from '../products'
 import { useSession } from './session'
 
@@ -47,10 +48,11 @@ export function Landing({ login = false }: { login?: boolean }) {
   return (
     <>
       {accountDeleted && (
-        <p className="ruta ok konto-raderat" role="status" tabIndex={-1} ref={(p) => p?.focus()}>
+        <p className="ruta ok startsida-besked" role="status" tabIndex={-1} ref={(p) => p?.focus()}>
           {t('account.delete.done')}
         </p>
       )}
+      <LogOutFailed className="startsida-besked" />
       <LandingPage
         produkter={catalogue.data?.products ?? null}
         loggedInAs={session.user?.name ?? null}
