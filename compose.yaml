@@ -30,7 +30,7 @@ services:
     # speaks the S3 API, so any S3 compatible store works. The S3 identity is written from the .env values. Each bucket
     # is a collection with volumes of its own (7 when it is first written), so the default of 8 volumes would hold one
     # bucket: 64 small, sparse volumes leave room for the dev, integration and e2e buckets (#26).
-    image: chrislusf/seaweedfs:4.48
+    image: chrislusf/seaweedfs:4.51
     environment:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-fodr}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-fodr-dev-secret}
