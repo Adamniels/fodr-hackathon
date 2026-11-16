@@ -53,7 +53,7 @@ services:
 
   mailpit:
     # Catches outgoing email; web inbox on MAILPIT_UI_PORT, http://localhost:8025 by default (ADR 0006, ADR 0009).
-    image: axllent/mailpit:v1.31.4
+    image: axllent/mailpit:v1.33.0
     ports:
       - "127.0.0.1:${SMTP_PORT:-1025}:1025"
       - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
