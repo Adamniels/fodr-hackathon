@@ -7,7 +7,7 @@
 #   docker run -e DATABASE_URL=postgres://... fodr node apps/api/dist/import-products.mjs   (#35, before the API starts)
 # The tag is the newest Node 24 release at least two weeks old (docs/architecture.md).
 
-FROM node:24.21.0-bookworm-slim AS build
+FROM node:24.22.1-bookworm-slim AS build
 WORKDIR /app
 # Manifests first, so the dependency layer is reused until one of them changes.
 COPY package.json package-lock.json ./
@@ -28,7 +28,7 @@ RUN VITE_SENTRY_DSN="$SENTRY_DSN_WEB" VITE_SENTRY_ENVIRONMENT="$SENTRY_ENVIRONME
 # The catalogue is served by the API, never bundled with the web app (#27).
 RUN node apps/web/scripts/check-bundle.mjs
 
-FROM node:24.21.0-bookworm-slim
+FROM node:24.22.1-bookworm-slim
 # The environment the reports name, the same for the API as for the browser bundle built above (#43); the runtime
 # SENTRY_ENVIRONMENT still overrides the API's.
 ARG SENTRY_ENVIRONMENT=production
