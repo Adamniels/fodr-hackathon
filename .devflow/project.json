@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "check": "bash scripts/devflow/check.sh",
+  "start": "bash scripts/devflow/start.sh",
+  "url": "http://localhost:5173"
+}
