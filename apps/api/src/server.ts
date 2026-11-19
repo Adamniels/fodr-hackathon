@@ -1,5 +1,5 @@
 // Starts the API with its dependencies: main.ts with the Anthropic provider, and the web app's e2e run
-// (test/e2e-server.ts) with a fake one, so both start the same server.
+// (test/e2e-server.ts) and Dev flow's screenshots (test/devflow-server.ts) with fake ones, so all start the same server.
 import { serve } from '@hono/node-server'
 import type { AiProvider } from './ai/provider'
 import { createApp } from './app'
@@ -21,7 +21,15 @@ import { explanationRepository } from './repositories/explanations'
 import { planRepository } from './repositories/plans'
 import { createFileStore } from './storage'
 
-export function runServer(createAi: (config: Config) => AiProvider): void {
+/** The app's request handler, as `serve` calls it. */
+export type ServerFetch = ReturnType<typeof createApp>['fetch']
+
+export interface ServerOptions {
+  /** Wraps the app's request handler. Only test entries pass one (test/devflow-server.ts); main.ts never does. */
+  wrapFetch?: (fetch: ServerFetch) => ServerFetch
+}
+
+export function runServer(createAi: (config: Config) => AiProvider, options: ServerOptions = {}): void {
   const result = parseConfig(process.env)
   if (!result.ok) {
     process.stderr.write(`${result.message}\n`)
@@ -63,7 +71,8 @@ export function runServer(createAi: (config: Config) => AiProvider): void {
     },
   })
 
-  const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
+  const fetch = options.wrapFetch ? options.wrapFetch(app.fetch) : app.fetch
+  const server = serve({ fetch, port: config.port }, (info) => {
     logger.info({ port: info.port }, 'listening')
   })
 
