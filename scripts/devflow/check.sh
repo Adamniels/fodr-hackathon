@@ -28,5 +28,7 @@ step npm test
 step npm run test:scripts
 devflow_services_up "$run"
 step npm run test:integration
-step npm run test:e2e
+# Two Playwright workers, not the default of half the CPUs: a worker's container has 2 GB, and four Chromiums beside the
+# services ran it out of memory (measured on the Mac mini: peak at the limit, one process killed, tests timing out).
+step npm run test:e2e -- --workers=2
 echo "devflow: the check passed"
