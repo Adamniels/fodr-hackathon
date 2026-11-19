@@ -7,7 +7,15 @@ import { AnalysisStep } from '../components/AnalysisStep'
 import { PlanStep } from '../components/PlanStep'
 import { InvalidInput } from '../components/InvalidInput'
 import { JournalStep } from '../components/JournalStep'
+import { usePageTitle } from '../page-title'
 import { STEP_PATH, useWorkspace } from './context'
+
+/** The tab's title for a horse's step: the step's heading, with the horse's name, or a word for it without one. */
+function useStepTitle(key: 'horse.title' | 'analysis.title' | 'plan.title' | 'journal.title') {
+  const { t } = useTranslation()
+  const { hast } = useWorkspace()
+  usePageTitle(hast ? t(key, { name: hast.namn || t('common.theHorse') }) : t('app.newHorse'))
+}
 
 /** /horses: the first horse's profile, or the empty profile step for an account with no horses. */
 export function HorsesIndex() {
@@ -18,6 +26,7 @@ export function HorsesIndex() {
 
 export function ProfileRoute() {
   const { hast, produkter, updateHorse, addHorse, removeHorse, goTo } = useWorkspace()
+  useStepTitle('horse.title')
   return (
     <HorseStep
       selected={hast}
@@ -32,6 +41,7 @@ export function ProfileRoute() {
 
 export function AnalysisRoute() {
   const { hast, analyses, goTo } = useWorkspace()
+  useStepTitle('analysis.title')
   if (!hast) return null
   // Keyed by horse, so an upload's message or a draft value never carries over to another horse.
   return <AnalysisStep key={hast.id} hast={hast} analyses={analyses} onNext={() => goTo('plan')} />
@@ -54,6 +64,7 @@ export function PlanRoute() {
     reloadCatalogue,
     goTo,
   } = useWorkspace()
+  useStepTitle('plan.title')
   if (!hast) return null
   if (!produkter) {
     return catalogueFailed ? (
@@ -95,6 +106,7 @@ export function PlanRoute() {
 export function JournalRoute() {
   const { t } = useTranslation()
   const { hast, journal, planOgonblick, today } = useWorkspace()
+  useStepTitle('journal.title')
   if (!hast) return null
   if (journal.loadFailed) {
     return (

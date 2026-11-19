@@ -7,6 +7,7 @@ import { LandingPage } from '../components/LandingPage'
 import { Login, type LoginMode } from '../components/Login'
 import { LogOutFailed } from '../components/LogOutFailed'
 import { useCatalogue } from '../products'
+import { usePageTitle } from '../page-title'
 import { useSession } from './session'
 
 export function Landing({ login = false }: { login?: boolean }) {
@@ -30,6 +31,7 @@ export function Landing({ login = false }: { login?: boolean }) {
   }, [accountDeleted, navigate])
   // The preview's catalogue from the API (#27); the page shows without it while it loads.
   const catalogue = useCatalogue()
+  usePageTitle(t(login ? 'login.dialogLabel' : 'titles.landing'))
 
   useEffect(() => {
     window.scrollTo({ top: 0 })

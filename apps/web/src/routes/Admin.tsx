@@ -10,6 +10,7 @@ import { adminApi, useAdminProduct, useAdminProducts, useAdminWrites } from '../
 import { ApiError } from '../api-v1'
 import { DecimalInput } from '../components/DecimalInput'
 import { formatDate, formatMoney, formatNumber, localIsoDate, nutrientLabel } from '../format'
+import { usePageTitle } from '../page-title'
 import { AcceptTerms } from './Legal'
 import { PageNotFound } from './RouteError'
 import { useSession } from './session'
@@ -39,6 +40,7 @@ export function AdminProductList() {
   const { t } = useTranslation()
   const { user } = useSession()
   const query = useAdminProducts(user?.id ?? '')
+  usePageTitle(t('admin.title'))
   const [search, setSearch] = useState('')
   const shown = useMemo(() => {
     const words = search.trim().toLowerCase()
@@ -174,6 +176,8 @@ export function AdminProductEdit() {
   // A product just created opens here, saved (its form drops the mark, so a reload does not show it again). Read on
   // every render: the new product's page reuses this component, and its form mounts afresh, keyed on the ID.
   const justCreated = (useLocation().state as { saved?: boolean } | null)?.saved === true
+  // The stored name, as the heading shows; a product still loading, or not found, is just a product.
+  usePageTitle(productId === undefined ? t('admin.newTitle') : (query.data?.data.namn ?? t('titles.product')))
   if (productId === undefined) return <ProductForm key="new" />
   if (query.isPending) return <p role="status">{t('admin.loading')}</p>
   if (query.isError) {

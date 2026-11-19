@@ -7,6 +7,7 @@ import { Link, useSearchParams } from 'react-router'
 import { Wordmark } from '../components/Brand'
 import { AuthError, authClient } from '../auth-client'
 import { authErrorText } from '../i18n/auth'
+import { usePageTitle } from '../page-title'
 
 export function ResetPassword() {
   const { t } = useTranslation()
@@ -17,6 +18,7 @@ export function ResetPassword() {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
+  usePageTitle(t('resetPassword.title'))
 
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()

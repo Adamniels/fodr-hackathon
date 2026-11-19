@@ -10,6 +10,7 @@ import { ApiError } from '../api-v1'
 import { DeleteAccount } from '../components/DeleteAccount'
 import { LogOutFailed } from '../components/LogOutFailed'
 import { formatDate } from '../format'
+import { usePageTitle } from '../page-title'
 import { useAcceptTerms } from '../terms'
 import { useSession } from './session'
 
@@ -21,6 +22,8 @@ interface Section {
 function LegalPage({ text }: { text: 'privacy' | 'terms' }) {
   const { t } = useTranslation()
   const sections = t(`legal.${text}.sections`, { returnObjects: true }) as Section[]
+  // The terms' heading names Fodr already.
+  usePageTitle(t(text === 'terms' ? 'titles.terms' : 'legal.privacy.title'))
   return (
     <main className="juridik">
       <p>
@@ -54,7 +57,10 @@ export function AcceptTerms({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<'acceptFailed' | 'outdated' | null>(null)
   const acceptTerms = useAcceptTerms()
-  if (!session.user || session.user.termsVersion === TERMS_VERSION) return <>{children}</>
+  const accepted = !session.user || session.user.termsVersion === TERMS_VERSION
+  // Accepted, the page inside titles the tab.
+  usePageTitle(accepted ? null : t('legal.consent.newTitle'))
+  if (accepted) return <>{children}</>
 
   const accept = async () => {
     setBusy(true)
