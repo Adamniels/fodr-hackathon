@@ -1073,5 +1073,11 @@
       "privacy": "Integritetspolicy"
     },
     "disclaimer": "Foderplanen är ett beslutsstöd, inte veterinärrådgivning. Kontakta veterinär vid sjukdom, viktförändringar eller om hästen inte mår bra."
+  },
+  "titles": {
+    "page": "{{page}} – Fodr",
+    "landing": "Foderplan från din grovfoderanalys",
+    "terms": "Villkor",
+    "product": "Produkt"
   }
 }

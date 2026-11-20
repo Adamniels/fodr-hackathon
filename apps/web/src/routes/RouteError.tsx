@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 import { reportError } from '../error-reporting'
+import { usePageTitle } from '../page-title'
 
 /**
  * `page` for a route whose boundary replaces the whole page; nested boundaries render inside the workspace, which
@@ -32,6 +33,7 @@ export function StepNotFound() {
 function ErrorContent({ page, notFound }: { page: boolean; notFound: boolean }) {
   const { t } = useTranslation()
   const Heading = page ? 'h1' : 'h2'
+  usePageTitle(t(notFound ? 'errors.notFoundTitle' : 'errors.pageTitle'))
   const content = (
     <div className="kort" role="alert">
       <Heading>{t(notFound ? 'errors.notFoundTitle' : 'errors.pageTitle')}</Heading>
