@@ -22,31 +22,31 @@
   "dependencies": {
     "@fodr/contracts": "*",
     "@fodr/domain": "*",
-    "@sentry/react": "11.5.0",
-    "@tanstack/react-query": "5.104.1",
+    "@sentry/react": "11.11.0",
+    "@tanstack/react-query": "5.107.1",
     "i18next": "^26.4.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-i18next": "^17.0.15",
-    "react-router": "8.4.0"
+    "react-router": "8.5.1"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
+    "@axe-core/playwright": "4.14.0",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "1.63.0",
-    "@types/node": "^24.19.1",
+    "@playwright/test": "1.65.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^6.1.2",
-    "eslint": "^10.12.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "fflate": "0.8.3",
-    "globals": "^17.13.0",
-    "prettier": "3.9.9",
+    "globals": "^17.14.0",
+    "prettier": "3.9.10",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.71.1",
-    "vite": "^8.3.3",
-    "vitest": "^5.0.4"
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
   }
 }
